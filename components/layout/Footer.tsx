@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Linkedin } from "lucide-react";
-import { siteConfig, whatsappLink } from "@/lib/site-config";
+import { siteConfig } from "@/lib/site-config";
 
 const menuLinks = [
   { label: "Inicio", href: "/" },
@@ -9,105 +8,94 @@ const menuLinks = [
   { label: "Ofertas", href: "/ofertas" },
   { label: "Nosotros", href: "/nosotros" },
   { label: "Blog", href: "/blog" },
-  { label: "Contacto", href: "/contacto" },
+  { label: "Contáctanos", href: "/contacto" },
 ];
 
-const legalLinks = [
+const policyLinks = [
   { label: "Política de Privacidad", href: "/legal/privacidad" },
-  { label: "Política de Cookies", href: "/legal/cookies" },
-  { label: "Política de Envíos", href: "/legal/envios" },
-  { label: "Términos y Condiciones", href: "/legal/terminos" },
-  { label: "Libro de Reclamaciones", href: "/legal/libro-de-reclamaciones" },
+  { label: "Política de Envío", href: "/legal/envios" },
+  { label: "Términos del Servicio", href: "/legal/terminos" },
+  { label: "Preferencias de Cookies", href: "/legal/cookies" },
 ];
 
 // Badges circulares blancos con glyph en azul marca (PLAN.md sección 8.8).
-// LinkedIn no vino en el set de assets — se arma con lucide-react (8.10) pero
-// con el mismo tratamiento visual de badge que los otros 4, para no desentonar.
 const socialIcons = [
   { label: "Facebook", href: siteConfig.redesSociales.facebook, icon: "/icons/social/facebook.png" },
   { label: "Instagram", href: siteConfig.redesSociales.instagram, icon: "/icons/social/instagram.png" },
   { label: "TikTok", href: siteConfig.redesSociales.tiktok, icon: "/icons/social/tiktok.png" },
-  { label: "WhatsApp", href: whatsappLink(siteConfig.whatsappB2C), icon: "/icons/social/whatsapp-circle.png" },
 ];
 
 export function Footer() {
   return (
     <footer className="bg-secondary text-secondary-foreground">
       <div className="mx-auto max-w-container px-mobile-margin py-12 md:px-gutter md:py-16">
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-4">
-          <div>
-            <Image
-              src="/logos/logo-white-mixed-horizontal.png"
-              alt="Suplevet"
-              width={160}
-              height={34}
-            />
-            <p className="mt-4 max-w-xs font-body text-sm text-secondary-foreground/70">
-              Nutrición funcional para fortalecer la salud de tu mascota desde adentro.
-            </p>
-            <div className="mt-5 flex gap-3">
-              {socialIcons.map((social) => (
-                <a
-                  key={social.label}
-                  href={social.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  aria-label={social.label}
-                >
-                  <Image src={social.icon} alt="" width={36} height={36} />
-                </a>
-              ))}
-              <a
-                href={siteConfig.redesSociales.linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label="LinkedIn"
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white text-secondary"
-              >
-                <Linkedin className="h-5 w-5" strokeWidth={1.75} />
-              </a>
+        <Image
+          src="/logos/logo-white-mixed-horizontal.png"
+          alt="Suplevet"
+          width={160}
+          height={34}
+        />
+
+        <div className="mt-10 flex flex-col gap-10 md:flex-row md:items-start md:justify-between">
+          <div className="flex flex-col gap-10 sm:flex-row sm:gap-16">
+            <div>
+              <p className="font-impact text-sm tracking-wide text-accent">MENÚ</p>
+              <ul className="mt-4 flex flex-col gap-2 font-body text-sm">
+                {menuLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link href={link.href} className="hover:text-accent">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div>
+              <p className="font-impact text-sm tracking-wide text-accent">POLÍTICAS</p>
+              <ul className="mt-4 flex flex-col gap-2 font-body text-sm">
+                {policyLinks.map((link) => (
+                  <li key={link.href}>
+                    <Link href={link.href} className="hover:text-accent">
+                      {link.label}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
 
-          <div>
-            <p className="font-impact text-sm tracking-wide text-accent">MENÚ</p>
-            <ul className="mt-4 flex flex-col gap-2 font-body text-sm">
-              {menuLinks.map((link) => (
-                <li key={link.href}>
-                  <Link href={link.href} className="hover:text-accent">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <p className="font-impact text-sm tracking-wide text-accent">LEGAL</p>
-            <ul className="mt-4 flex flex-col gap-2 font-body text-sm">
-              {legalLinks.map((link) => (
-                <li key={link.href}>
-                  <Link href={link.href} className="hover:text-accent">
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          <div>
-            <p className="font-impact text-sm tracking-wide text-accent">SÍGUENOS</p>
-            <p className="mt-4 font-body text-sm text-secondary-foreground/70">
-              {siteConfig.legal.razonSocial}
-              <br />
-              RUC {siteConfig.legal.ruc}
-            </p>
-          </div>
+          <Link
+            href="/legal/libro-de-reclamaciones"
+            aria-label="Libro de Reclamaciones"
+            className="shrink-0 self-start transition-opacity hover:opacity-80 md:self-center"
+          >
+            <Image
+              src="/icons/libro-reclamaciones-icon.png"
+              alt="Libro de Reclamaciones"
+              width={193}
+              height={132}
+              className="h-[110px] w-auto object-contain"
+            />
+          </Link>
         </div>
 
-        <div className="mt-10 border-t border-white/10 pt-6 font-body text-xs text-secondary-foreground/60">
-          © {new Date().getFullYear()} Suplevet — {siteConfig.legal.razonSocial}. Todos los derechos
-          reservados.
+        <div className="mt-10 flex justify-center gap-3">
+          {socialIcons.map((social) => (
+            <a
+              key={social.label}
+              href={social.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={social.label}
+            >
+              <Image src={social.icon} alt="" width={36} height={36} />
+            </a>
+          ))}
+        </div>
+
+        <div className="mt-8 border-t border-white/10 pt-6 text-center font-body text-xs text-secondary-foreground/60">
+          © {new Date().getFullYear()}, SUPLEVET. Todos los derechos reservados.
         </div>
       </div>
     </footer>
