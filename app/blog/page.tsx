@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { getPublishedPosts } from "@/lib/data/blog";
+import { getProductos } from "@/lib/data/productos";
 import { BlogCard } from "@/components/blog/BlogCard";
 import { BlogFilters } from "@/components/blog/BlogFilters";
 
@@ -16,7 +17,7 @@ interface BlogPageProps {
 
 export default async function BlogPage({ searchParams }: BlogPageProps) {
   const { producto, orden } = await searchParams;
-  const posts = await getPublishedPosts();
+  const [posts, productos] = await Promise.all([getPublishedPosts(), getProductos()]);
 
   let visibles = producto ? posts.filter((p) => p.producto_slug === producto) : posts;
   visibles = [...visibles].sort((a, b) => {
@@ -37,7 +38,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
 
       <Suspense>
         <div className="mb-10">
-          <BlogFilters />
+          <BlogFilters productos={productos} />
         </div>
       </Suspense>
 
@@ -48,7 +49,11 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
           </p>
           <div className="grid grid-cols-1 gap-gutter md:grid-cols-2 lg:grid-cols-3">
             {visibles.map((post) => (
-              <BlogCard key={post.slug} post={post} />
+              <BlogCard
+                key={post.slug}
+                post={post}
+                productoNombre={productos.find((p) => p.slug === post.producto_slug)?.nombre}
+              />
             ))}
           </div>
         </>

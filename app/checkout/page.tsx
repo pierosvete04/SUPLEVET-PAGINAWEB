@@ -52,12 +52,9 @@ export default function CheckoutPage() {
     setPaso("envio");
   }
 
-  function handleEnvioContinuar(dir: DireccionEnvio) {
+  function handleEnvioContinuar(dir: DireccionEnvio, costo: number) {
     setDireccion(dir);
-    const esLima = dir.departamento === "Lima";
-    const umbral = esLima ? 150 : 350;
-    const tarifa = esLima ? 15 : 25;
-    setCostoEnvio(subtotal >= umbral ? 0 : tarifa);
+    setCostoEnvio(costo);
     setPaso("pago");
   }
 

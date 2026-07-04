@@ -1,19 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
+import type { BlogPost } from "@/lib/data/blog-shared";
 
-export interface BlogPost {
-  id: string;
-  slug: string;
-  titulo: string;
-  fecha_publicacion: string;
-  contenido_html: string;
-  resumen: string | null;
-  imagen_destacada: string | null;
-  autor: string | null;
-  estado: "borrador" | "publicado";
-  producto_slug: string | null;
-  meta_title: string | null;
-  meta_description: string | null;
-}
+export type { BlogPost } from "@/lib/data/blog-shared";
+export { formatFechaPost } from "@/lib/data/blog-shared";
 
 const LISTADO_FIELDS =
   "id, slug, titulo, fecha_publicacion, resumen, imagen_destacada, producto_slug, estado";
@@ -57,12 +46,4 @@ export async function getRelatedPosts(slugActual: string, productoSlug: string |
   const mismoProducto = posts.filter((p) => p.producto_slug === productoSlug);
   const otros = posts.filter((p) => p.producto_slug !== productoSlug);
   return [...mismoProducto, ...otros].slice(0, 4);
-}
-
-export function formatFechaPost(iso: string): string {
-  return new Date(iso).toLocaleDateString("es-PE", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
 }

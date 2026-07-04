@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { ProductCard } from "@/components/productos/ProductCard";
-import { combos } from "@/lib/data/productos-temp";
+import { getCombos } from "@/lib/data/productos";
 
 export const metadata: Metadata = {
   title: "Ofertas y combos Suplevet",
@@ -8,7 +8,9 @@ export const metadata: Metadata = {
     "Aprovecha nuestros combos con mejor precio: Combo Mix, 2x150g y 2x250g. Envío gratis en Lima Metropolitana desde S/.150.",
 };
 
-export default function OfertasPage() {
+export default async function OfertasPage() {
+  const combos = await getCombos();
+
   return (
     <div className="bg-background pb-section-y">
       <div className="bg-primary py-16 text-center">

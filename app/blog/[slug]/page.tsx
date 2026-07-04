@@ -4,7 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { getPostBySlug, getRelatedPosts, formatFechaPost } from "@/lib/data/blog";
-import { productos } from "@/lib/data/productos-temp";
+import { getProductoBySlug } from "@/lib/data/productos";
 import { whatsappLink, siteConfig } from "@/lib/site-config";
 
 interface BlogPostPageProps {
@@ -34,7 +34,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   }
 
   const relacionados = await getRelatedPosts(post.slug, post.producto_slug);
-  const producto = productos.find((p) => p.slug === post.producto_slug);
+  const producto = post.producto_slug ? await getProductoBySlug(post.producto_slug) : null;
 
   return (
     <article className="mx-auto grid max-w-container grid-cols-1 gap-12 px-mobile-margin py-section-y md:px-gutter lg:grid-cols-12">

@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Check, ShoppingCart } from "lucide-react";
 import { useState } from "react";
-import { formatPrecio, type ProductoCombo } from "@/lib/data/productos-temp";
+import { formatPrecio, type ProductoCombo } from "@/lib/data/productos-shared";
 import { useCart } from "@/lib/cart/CartContext";
 
 interface ProductCardProps {

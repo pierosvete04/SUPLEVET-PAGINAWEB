@@ -8,19 +8,24 @@ import { ComparativaTable } from "@/components/producto/ComparativaTable";
 import { RelatedProducts } from "@/components/producto/RelatedProducts";
 import { ComoSePrepara } from "@/components/shared/ComoSePrepara";
 import { Faq } from "@/components/shared/Faq";
-import { getProductoBySlug, productos } from "@/lib/data/productos-temp";
+import { getProductoBySlug } from "@/lib/data/productos";
+import { createStaticClient } from "@/lib/supabase/static";
 
 interface ProductoPageProps {
   params: Promise<{ slug: string }>;
 }
 
-export function generateStaticParams() {
-  return productos.map((p) => ({ slug: p.slug }));
+export async function generateStaticParams() {
+  const { data } = await createStaticClient()
+    .from("productos_web")
+    .select("slug")
+    .eq("activo", true);
+  return (data ?? []).map((p: { slug: string }) => ({ slug: p.slug }));
 }
 
 export async function generateMetadata({ params }: ProductoPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const producto = getProductoBySlug(slug);
+  const producto = await getProductoBySlug(slug);
   if (!producto) return {};
 
   return {
@@ -31,7 +36,7 @@ export async function generateMetadata({ params }: ProductoPageProps): Promise<M
 
 export default async function ProductoPage({ params }: ProductoPageProps) {
   const { slug } = await params;
-  const producto = getProductoBySlug(slug);
+  const producto = await getProductoBySlug(slug);
 
   if (!producto) {
     notFound();

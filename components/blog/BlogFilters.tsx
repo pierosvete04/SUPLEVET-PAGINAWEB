@@ -1,11 +1,19 @@
 "use client";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
-import { productos } from "@/lib/data/productos-temp";
+
+interface ProductoOpcion {
+  slug: string;
+  nombre: string;
+}
+
+interface BlogFiltersProps {
+  productos: ProductoOpcion[];
+}
 
 // Filtros como estado de la URL (?producto=&orden=) — se puede compartir el
 // link ya filtrado, y la pagina sigue siendo un Server Component (SEO).
-export function BlogFilters() {
+export function BlogFilters({ productos }: BlogFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();

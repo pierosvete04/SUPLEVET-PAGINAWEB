@@ -1,11 +1,12 @@
 import { ProductCard } from "@/components/productos/ProductCard";
-import { productos } from "@/lib/data/productos-temp";
+import { getProductos } from "@/lib/data/productos";
 
 interface RelatedProductsProps {
   slugActual: string;
 }
 
-export function RelatedProducts({ slugActual }: RelatedProductsProps) {
+export async function RelatedProducts({ slugActual }: RelatedProductsProps) {
+  const productos = await getProductos();
   const relacionados = productos.filter((p) => p.slug !== slugActual).slice(0, 3);
 
   return (

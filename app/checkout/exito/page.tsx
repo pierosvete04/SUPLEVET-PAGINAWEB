@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CheckCircle2 } from "lucide-react";
-import { formatPrecio } from "@/lib/data/productos-temp";
+import { formatPrecio } from "@/lib/data/productos-shared";
 
 interface PedidoSimulado {
   numero: string;

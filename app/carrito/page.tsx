@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Minus, Plus, Trash2, PawPrint } from "lucide-react";
 import { useCart } from "@/lib/cart/CartContext";
-import { formatPrecio } from "@/lib/data/productos-temp";
+import { formatPrecio } from "@/lib/data/productos-shared";
 import { ShippingProgressBar } from "@/components/shared/ShippingProgressBar";
 
 export default function CarritoPage() {

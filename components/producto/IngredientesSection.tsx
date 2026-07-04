@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ingredientes } from "@/lib/data/productos-temp";
+import { ingredientes } from "@/lib/data/productos-shared";
 
 export function IngredientesSection() {
   const [activo, setActivo] = useState(0);

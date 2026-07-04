@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { ProductCard } from "@/components/productos/ProductCard";
-import type { CategoriaProducto, ProductoCombo } from "@/lib/data/productos-temp";
+import type { CategoriaProducto, ProductoCombo } from "@/lib/data/productos-shared";
 
 const filtros: { label: string; value: CategoriaProducto | "todos" }[] = [
   { label: "Todos", value: "todos" },

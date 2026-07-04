@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import { Bebas_Neue, DM_Sans, Fraunces } from "next/font/google";
 import "./globals.css";
-import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
-import { WhatsAppFloat } from "@/components/layout/WhatsAppFloat";
+import { SiteChrome } from "@/components/layout/SiteChrome";
 import { CartProvider } from "@/lib/cart/CartContext";
 
 // Manier Bold es la fuente de marca real (PLAN.md sección 2), pero no está
@@ -46,11 +43,7 @@ export default function RootLayout({
         className={`${fontDisplay.variable} ${fontImpact.variable} ${fontBody.variable} flex min-h-screen flex-col antialiased`}
       >
         <CartProvider>
-          <AnnouncementBar />
-          <Header />
-          <main className="flex-1">{children}</main>
-          <Footer />
-          <WhatsAppFloat />
+          <SiteChrome>{children}</SiteChrome>
         </CartProvider>
       </body>
     </html>

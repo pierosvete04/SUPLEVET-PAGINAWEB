@@ -1,5 +1,5 @@
 import { Check, Minus } from "lucide-react";
-import { comparativaFilas } from "@/lib/data/productos-temp";
+import { comparativaFilas } from "@/lib/data/productos-shared";
 
 // PLAN.md sección 5.4.3 — no se nombran marcas de competencia, columna genérica.
 export function ComparativaTable() {

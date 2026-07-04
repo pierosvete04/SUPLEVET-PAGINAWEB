@@ -1,25 +1,27 @@
-import { formatPrecio } from "@/lib/data/productos-temp";
+import { formatPrecio } from "@/lib/data/productos-shared";
+import type { EnvioZona } from "@/lib/shipping";
 
-// PLAN.md sección 9.4.1 — antes de tener la dirección del cliente se usa el
-// umbral de Lima Metropolitana por defecto (mayor volumen de clientes). Una
-// vez el checkout tenga la dirección real, este componente debe recibir el
-// monto_min real de la zona (`envio_tarifas`) en vez de la constante de abajo.
+// Antes de conocer la dirección del cliente (ej. en /carrito) se usa el
+// umbral de Lima Metropolitana como referencia por defecto (mayor volumen de
+// clientes). Una vez el checkout conoce la zona real, se le pasa por props.
 const UMBRAL_ENVIO_GRATIS_LIMA = 150;
 
 interface ShippingProgressBarProps {
   subtotal: number;
+  zona?: EnvioZona;
 }
 
-export function ShippingProgressBar({ subtotal }: ShippingProgressBarProps) {
-  const progreso = Math.min(subtotal / UMBRAL_ENVIO_GRATIS_LIMA, 1) * 100;
-  const faltante = Math.max(UMBRAL_ENVIO_GRATIS_LIMA - subtotal, 0);
+export function ShippingProgressBar({ subtotal, zona }: ShippingProgressBarProps) {
+  const umbral = zona?.monto_minimo_gratis ?? UMBRAL_ENVIO_GRATIS_LIMA;
+  const progreso = Math.min(subtotal / umbral, 1) * 100;
+  const faltante = Math.max(umbral - subtotal, 0);
   const cumplido = faltante === 0;
 
   return (
     <div className="rounded-xl bg-soft-gray p-4">
       <div className="flex items-center justify-between font-body text-xs font-bold text-secondary">
         <span>TÚ</span>
-        <span>{formatPrecio(UMBRAL_ENVIO_GRATIS_LIMA)}</span>
+        <span>{formatPrecio(umbral)}</span>
       </div>
       <div className="relative mt-2 h-3 overflow-hidden rounded-full bg-white">
         <div
@@ -37,7 +39,9 @@ export function ShippingProgressBar({ subtotal }: ShippingProgressBarProps) {
         )}
       </p>
       <p className="mt-1 font-body text-[11px] text-muted-foreground">
-        Envío gratis en Lima Metropolitana desde S/.150 — el monto varía según tu distrito.
+        {zona
+          ? `Envío gratis a ${zona.nombre} desde ${formatPrecio(zona.monto_minimo_gratis)}.`
+          : "Envío gratis en Lima Metropolitana desde S/.150 — el monto varía según tu zona."}
       </p>
     </div>
   );

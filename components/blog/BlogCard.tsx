@@ -3,14 +3,13 @@ import Link from "next/link";
 import { FileText } from "lucide-react";
 import type { BlogPost } from "@/lib/data/blog";
 import { formatFechaPost } from "@/lib/data/blog";
-import { productos } from "@/lib/data/productos-temp";
 
 interface BlogCardProps {
   post: BlogPost;
+  productoNombre?: string;
 }
 
-export function BlogCard({ post }: BlogCardProps) {
-  const producto = productos.find((p) => p.slug === post.producto_slug);
+export function BlogCard({ post, productoNombre }: BlogCardProps) {
 
   return (
     <Link
@@ -33,8 +32,8 @@ export function BlogCard({ post }: BlogCardProps) {
         )}
       </div>
       <div className="flex flex-1 flex-col gap-2 p-5">
-        {producto && (
-          <span className="font-impact text-xs tracking-wide text-accent">{producto.nombre}</span>
+        {productoNombre && (
+          <span className="font-impact text-xs tracking-wide text-accent">{productoNombre}</span>
         )}
         <h3 className="flex-1 font-display text-lg font-bold text-secondary">{post.titulo}</h3>
         <p className="font-body text-xs text-muted-foreground">

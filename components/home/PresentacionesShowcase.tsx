@@ -1,7 +1,12 @@
 import Image from "next/image";
-import { presentaciones } from "@/lib/data/productos-temp";
+import { getPresentaciones } from "@/lib/data/productos";
 
-export function PresentacionesShowcase() {
+export async function PresentacionesShowcase() {
+  const presentaciones = await getPresentaciones();
+  const items = [presentaciones.g150, presentaciones.g250].filter(
+    (p): p is { nombre: string; imagen: string } => p !== null
+  );
+
   return (
     <section className="bg-secondary pb-section-y">
       <div className="mx-auto max-w-container px-mobile-margin md:px-gutter">
@@ -9,7 +14,7 @@ export function PresentacionesShowcase() {
           Nuevas presentaciones
         </h2>
         <div className="mt-10 grid grid-cols-1 gap-gutter sm:grid-cols-2">
-          {Object.values(presentaciones).map((p) => (
+          {items.map((p) => (
             <div key={p.nombre} className="relative aspect-[4/3] overflow-hidden rounded-xl">
               <Image
                 src={p.imagen}

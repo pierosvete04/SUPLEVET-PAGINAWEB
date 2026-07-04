@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Minus, Plus, Gift, Truck, Check } from "lucide-react";
-import { formatPrecio, type ProductoCombo } from "@/lib/data/productos-temp";
+import { formatPrecio, type ProductoCombo } from "@/lib/data/productos-shared";
 import { useCart } from "@/lib/cart/CartContext";
 
 interface ProductBuyBoxProps {

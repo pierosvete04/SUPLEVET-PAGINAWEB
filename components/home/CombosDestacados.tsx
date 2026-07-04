@@ -1,8 +1,10 @@
 import { HillCurve } from "@/components/ui/HillCurve";
 import { ProductCard } from "@/components/productos/ProductCard";
-import { combos } from "@/lib/data/productos-temp";
+import { getCombos } from "@/lib/data/productos";
 
-export function CombosDestacados() {
+export async function CombosDestacados() {
+  const combos = await getCombos();
+
   return (
     <>
       <HillCurve fillClassName="fill-secondary" bgClassName="bg-white" />

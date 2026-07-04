@@ -1,6 +1,6 @@
 import Image from "next/image";
 import type { CartItem } from "@/lib/cart/CartContext";
-import { formatPrecio } from "@/lib/data/productos-temp";
+import { formatPrecio } from "@/lib/data/productos-shared";
 
 interface OrderSummaryProps {
   items: CartItem[];
