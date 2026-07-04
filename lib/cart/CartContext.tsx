@@ -17,6 +17,9 @@ interface CartContextValue {
   updateQuantity: (slug: string, cantidad: number) => void;
   subtotal: number;
   totalItems: number;
+  /** false hasta que se termina de leer localStorage — evita que páginas como
+   * /checkout redirijan por "carrito vacío" antes de que cargue el real. */
+  cargando: boolean;
 }
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
@@ -71,7 +74,17 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const totalItems = useMemo(() => items.reduce((acc, i) => acc + i.cantidad, 0), [items]);
 
   return (
-    <CartContext.Provider value={{ items, addItem, removeItem, updateQuantity, subtotal, totalItems }}>
+    <CartContext.Provider
+      value={{
+        items,
+        addItem,
+        removeItem,
+        updateQuantity,
+        subtotal,
+        totalItems,
+        cargando: !hidratado,
+      }}
+    >
       {children}
     </CartContext.Provider>
   );
