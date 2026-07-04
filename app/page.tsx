@@ -4,7 +4,7 @@ import { CombosDestacados } from "@/components/home/CombosDestacados";
 import { PresentacionesShowcase } from "@/components/home/PresentacionesShowcase";
 import { ComoSePrepara } from "@/components/shared/ComoSePrepara";
 import { AntesDespues } from "@/components/home/AntesDespues";
-import { Faq } from "@/components/home/Faq";
+import { Faq } from "@/components/shared/Faq";
 
 // Home — jerarquía de intención (PLAN.md sección 5.2):
 // gancho visual -> confianza -> producto -> cómo se usa -> antes/después -> objeciones

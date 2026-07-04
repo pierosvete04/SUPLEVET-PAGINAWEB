@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { ShoppingCart } from "lucide-react";
 import { formatPrecio, type ProductoCombo } from "@/lib/data/productos-temp";
 
@@ -9,7 +10,7 @@ interface ProductCardProps {
 export function ProductCard({ producto }: ProductCardProps) {
   return (
     <div className="flex flex-col overflow-hidden rounded-xl bg-white shadow-[0_8px_30px_rgba(37,60,97,0.08)]">
-      <div className="relative aspect-square bg-soft-gray">
+      <Link href={`/productos/${producto.slug}`} className="relative block aspect-square bg-soft-gray">
         {producto.descuentoPorcentaje > 0 && (
           <span className="absolute left-3 top-3 z-10 rounded-full bg-primary px-3 py-1 font-body text-xs font-bold text-primary-foreground">
             -{producto.descuentoPorcentaje}%
@@ -22,9 +23,13 @@ export function ProductCard({ producto }: ProductCardProps) {
           className="object-cover"
           sizes="(min-width: 768px) 33vw, 100vw"
         />
-      </div>
+      </Link>
       <div className="flex flex-1 flex-col gap-3 p-5">
-        <h3 className="font-display text-lg font-bold text-secondary">{producto.nombre}</h3>
+        <Link href={`/productos/${producto.slug}`}>
+          <h3 className="font-display text-lg font-bold text-secondary hover:text-primary">
+            {producto.nombre}
+          </h3>
+        </Link>
         <p className="font-body text-sm text-muted-foreground">{producto.descripcion}</p>
         <div className="mt-auto flex items-center justify-between pt-2">
           <div className="flex items-baseline gap-2">

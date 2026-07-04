@@ -1,0 +1,57 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+import { ProductGallery } from "@/components/producto/ProductGallery";
+import { ProductBuyBox } from "@/components/producto/ProductBuyBox";
+import { VideoCarousel } from "@/components/producto/VideoCarousel";
+import { IngredientesSection } from "@/components/producto/IngredientesSection";
+import { ComparativaTable } from "@/components/producto/ComparativaTable";
+import { RelatedProducts } from "@/components/producto/RelatedProducts";
+import { ComoSePrepara } from "@/components/shared/ComoSePrepara";
+import { Faq } from "@/components/shared/Faq";
+import { getProductoBySlug, productos } from "@/lib/data/productos-temp";
+
+interface ProductoPageProps {
+  params: Promise<{ slug: string }>;
+}
+
+export function generateStaticParams() {
+  return productos.map((p) => ({ slug: p.slug }));
+}
+
+export async function generateMetadata({ params }: ProductoPageProps): Promise<Metadata> {
+  const { slug } = await params;
+  const producto = getProductoBySlug(slug);
+  if (!producto) return {};
+
+  return {
+    title: `${producto.nombre} — Suplevet`,
+    description: producto.descripcion,
+  };
+}
+
+export default async function ProductoPage({ params }: ProductoPageProps) {
+  const { slug } = await params;
+  const producto = getProductoBySlug(slug);
+
+  if (!producto) {
+    notFound();
+  }
+
+  return (
+    <div>
+      <div className="mx-auto max-w-container px-mobile-margin py-section-y md:px-gutter">
+        <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
+          <ProductGallery imagenes={producto.galeria} nombre={producto.nombre} />
+          <ProductBuyBox producto={producto} />
+        </div>
+      </div>
+
+      <VideoCarousel />
+      <IngredientesSection />
+      <ComparativaTable />
+      <ComoSePrepara />
+      <Faq />
+      <RelatedProducts slugActual={producto.slug} />
+    </div>
+  );
+}
