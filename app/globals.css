@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+  Tokens de shadcn/ui mapeados a la paleta de marca Suplevet (PLAN.md sección 2):
+  - primary   = naranja vitalidad (#EA8C43) — CTA, botones principales
+  - secondary = azul marino (#253C61) — confianza, fondos oscuros, outline
+  - accent    = celeste (#99D3DA) — acentos, íconos, subtítulos
+  - muted     = gris claro (#F2F2F2) — fondos neutros
+*/
+@layer base {
+  :root {
+    --background: 0 0% 98%;
+    --foreground: 217 45% 15%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 217 45% 15%;
+
+    --primary: 26 80% 59%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 217 45% 26%;
+    --secondary-foreground: 0 0% 100%;
+
+    --accent: 186 47% 73%;
+    --accent-foreground: 217 45% 15%;
+
+    --muted: 0 0% 95%;
+    --muted-foreground: 217 15% 40%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 0 0% 88%;
+    --input: 0 0% 88%;
+    --ring: 26 80% 59%;
+
+    --radius: 1rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground font-body;
+  }
+}
+
+/* Curva orgánica convexa — separador de secciones, firma visual de marca (PLAN.md sección 2) */
+.organic-hill {
+  clip-path: ellipse(60% 100% at 50% 100%);
+}
