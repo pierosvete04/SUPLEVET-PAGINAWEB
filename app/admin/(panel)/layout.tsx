@@ -1,7 +1,8 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { AdminSidebar } from "@/components/admin/AdminSidebar";
-import { LogoutButton } from "@/components/admin/LogoutButton";
+import { AppSidebar } from "@/components/admin/AppSidebar";
+import { SiteHeader } from "@/components/admin/SiteHeader";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default async function AdminPanelLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
@@ -13,25 +14,19 @@ export default async function AdminPanelLayout({ children }: { children: React.R
 
   const { data: admin } = await supabase
     .from("admins")
-    .select("nombre, activo")
+    .select("nombre, usuario, activo")
     .eq("id", user.id)
     .maybeSingle();
 
   if (!admin || !admin.activo) redirect("/admin/login");
 
   return (
-    <div className="flex font-body">
-      <AdminSidebar />
-      <div className="flex min-h-screen flex-1 flex-col bg-soft-gray">
-        <header className="flex items-center justify-between border-b border-border bg-white px-6 py-4">
-          <div />
-          <div className="flex items-center gap-4">
-            <span className="font-body text-sm text-secondary">{admin.nombre}</span>
-            <LogoutButton />
-          </div>
-        </header>
-        <main className="flex-1 p-6">{children}</main>
-      </div>
-    </div>
+    <SidebarProvider className="font-body">
+      <AppSidebar admin={{ nombre: admin.nombre, usuario: admin.usuario }} variant="inset" />
+      <SidebarInset>
+        <SiteHeader />
+        <main className="flex flex-1 flex-col gap-4 bg-soft-gray p-4 md:p-6">{children}</main>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

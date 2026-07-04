@@ -37,6 +37,18 @@
     --ring: 26 80% 59%;
 
     --radius: 1rem;
+
+    /* Panel admin (/admin) — mismo azul marino / naranja de marca, no la
+       paleta gris genérica de shadcn (PLAN.md / frontend/15-admin-panel.md:
+       "Azul oscuro (sidebar, headers) · Naranja (acentos, botones)"). */
+    --sidebar-background: 217 45% 26%;
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 26 80% 59%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 217 40% 34%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 217 35% 34%;
+    --sidebar-ring: 26 80% 59%;
   }
 }
 

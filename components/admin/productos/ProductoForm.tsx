@@ -5,6 +5,18 @@ import Image from "next/image";
 import { X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Modal } from "@/components/admin/Modal";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 export interface ProductoWeb {
   id: string;
@@ -108,130 +120,112 @@ export function ProductoForm({ producto, onClose, onSaved }: ProductoFormProps) 
     <Modal titulo={producto ? "Editar producto" : "Agregar producto"} onClose={onClose}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              Nombre
-            </label>
-            <input
+          <div className="grid gap-1.5">
+            <Label htmlFor="p-nombre">Nombre</Label>
+            <Input
+              id="p-nombre"
               required
               value={form.nombre}
               onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))}
-              className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm"
             />
           </div>
-          <div>
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              Slug (URL)
-            </label>
-            <input
+          <div className="grid gap-1.5">
+            <Label htmlFor="p-slug">Slug (URL)</Label>
+            <Input
+              id="p-slug"
               required
               value={form.slug}
               onChange={(e) => setForm((f) => ({ ...f, slug: e.target.value }))}
-              className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm"
             />
           </div>
         </div>
 
-        <div>
-          <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-            Descripción
-          </label>
-          <textarea
+        <div className="grid gap-1.5">
+          <Label htmlFor="p-descripcion">Descripción</Label>
+          <Textarea
+            id="p-descripcion"
             rows={3}
             value={form.descripcion}
             onChange={(e) => setForm((f) => ({ ...f, descripcion: e.target.value }))}
-            className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              Categoría
-            </label>
-            <select
+          <div className="grid gap-1.5">
+            <Label>Categoría</Label>
+            <Select
               value={form.categoria}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, categoria: e.target.value as "producto" | "combo" }))
-              }
-              className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm"
+              onValueChange={(v) => setForm((f) => ({ ...f, categoria: v as "producto" | "combo" }))}
             >
-              <option value="producto">Producto</option>
-              <option value="combo">Combo</option>
-            </select>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="producto">Producto</SelectItem>
+                <SelectItem value="combo">Combo</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
-          <div>
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              SKU
-            </label>
-            <input
+          <div className="grid gap-1.5">
+            <Label htmlFor="p-sku">SKU</Label>
+            <Input
+              id="p-sku"
               value={form.sku ?? ""}
               onChange={(e) => setForm((f) => ({ ...f, sku: e.target.value }))}
-              className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm"
             />
           </div>
         </div>
 
         <div className="grid grid-cols-3 gap-4">
-          <div>
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              Precio (S/.)
-            </label>
-            <input
+          <div className="grid gap-1.5">
+            <Label htmlFor="p-precio">Precio (S/.)</Label>
+            <Input
+              id="p-precio"
               required
               type="number"
               step="0.01"
               value={form.precio}
               onChange={(e) => setForm((f) => ({ ...f, precio: Number(e.target.value) }))}
-              className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm"
             />
           </div>
-          <div>
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              Precio comparación
-            </label>
-            <input
+          <div className="grid gap-1.5">
+            <Label htmlFor="p-precio-comp">Precio comparación</Label>
+            <Input
+              id="p-precio-comp"
               type="number"
               step="0.01"
               value={form.precio_comparacion}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, precio_comparacion: Number(e.target.value) }))
-              }
-              className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm"
+              onChange={(e) => setForm((f) => ({ ...f, precio_comparacion: Number(e.target.value) }))}
             />
           </div>
-          <div>
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              Stock
-            </label>
-            <input
+          <div className="grid gap-1.5">
+            <Label htmlFor="p-stock">Stock</Label>
+            <Input
+              id="p-stock"
               type="number"
               value={form.stock ?? ""}
               onChange={(e) =>
                 setForm((f) => ({ ...f, stock: e.target.value === "" ? null : Number(e.target.value) }))
               }
-              className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm"
             />
           </div>
         </div>
 
-        <div>
-          <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-            Imágenes
-          </label>
-          <input
+        <div className="grid gap-1.5">
+          <Label htmlFor="p-imagenes">Imágenes</Label>
+          <Input
+            id="p-imagenes"
             type="file"
             accept="image/*"
             multiple
             disabled={subiendo}
             onChange={(e) => e.target.files && subirImagenes(e.target.files)}
-            className="w-full font-body text-sm"
           />
-          {subiendo && <p className="mt-1 font-body text-xs text-muted-foreground">Subiendo…</p>}
+          {subiendo && <p className="text-xs text-muted-foreground">Subiendo…</p>}
           {form.galeria.length > 0 && (
-            <div className="mt-2 flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2">
               {form.galeria.map((url) => (
-                <div key={url} className="relative h-16 w-16 overflow-hidden rounded-lg border border-border">
+                <div key={url} className="relative h-16 w-16 overflow-hidden rounded-lg border">
                   <Image src={url} alt="" fill className="object-cover" sizes="64px" />
                   <button
                     type="button"
@@ -241,7 +235,7 @@ export function ProductoForm({ producto, onClose, onSaved }: ProductoFormProps) 
                     <X className="h-3 w-3" />
                   </button>
                   {form.imagen === url && (
-                    <span className="absolute bottom-0 left-0 right-0 bg-primary/90 text-center font-body text-[9px] font-bold text-white">
+                    <span className="absolute bottom-0 left-0 right-0 bg-primary/90 text-center text-[9px] font-bold text-white">
                       Principal
                     </span>
                   )}
@@ -251,24 +245,19 @@ export function ProductoForm({ producto, onClose, onSaved }: ProductoFormProps) 
           )}
         </div>
 
-        <label className="flex items-center gap-2 font-body text-sm text-secondary">
-          <input
-            type="checkbox"
+        <label className="flex items-center gap-2 text-sm">
+          <Checkbox
             checked={form.activo}
-            onChange={(e) => setForm((f) => ({ ...f, activo: e.target.checked }))}
+            onCheckedChange={(checked) => setForm((f) => ({ ...f, activo: checked === true }))}
           />
           Activo (visible en la tienda)
         </label>
 
-        {error && <p className="font-body text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-destructive">{error}</p>}
 
-        <button
-          type="submit"
-          disabled={guardando || subiendo}
-          className="mt-2 w-fit rounded-full bg-primary px-6 py-2.5 font-body font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50"
-        >
+        <Button type="submit" disabled={guardando || subiendo} className="w-fit">
           {guardando ? "Guardando…" : "Guardar"}
-        </button>
+        </Button>
       </form>
     </Modal>
   );

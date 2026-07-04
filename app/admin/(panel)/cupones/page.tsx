@@ -4,6 +4,16 @@ import { useCallback, useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Badge } from "@/components/admin/Badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { CuponForm, type Cupon } from "@/components/admin/cupones/CuponForm";
 
 const LABEL_TIPO: Record<Cupon["tipo"], string> = {
@@ -44,71 +54,67 @@ export default function AdminCuponesPage() {
   }
 
   return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="font-body text-xl font-bold text-secondary">Cupones</h1>
-        <button
-          onClick={() => setCreando(true)}
-          className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 font-body text-sm font-bold text-primary-foreground hover:opacity-90"
-        >
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Cupones</h2>
+        <Button onClick={() => setCreando(true)}>
           <Plus className="h-4 w-4" /> Nuevo cupón
-        </button>
+        </Button>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-border bg-white">
-        <table className="w-full font-body text-sm">
-          <thead className="bg-soft-gray text-left text-xs font-bold uppercase text-muted-foreground">
-            <tr>
-              <th className="px-4 py-3">Código</th>
-              <th className="px-4 py-3">Tipo</th>
-              <th className="px-4 py-3">Valor</th>
-              <th className="px-4 py-3">Condiciones</th>
-              <th className="px-4 py-3">Usos</th>
-              <th className="px-4 py-3">Estado</th>
-              <th className="px-4 py-3" />
-            </tr>
-          </thead>
-          <tbody>
-            {!cargando && cupones.length === 0 && (
-              <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
-                  Sin cupones todavía.
-                </td>
-              </tr>
-            )}
-            {cupones.map((c) => (
-              <tr key={c.id} className="border-t border-border">
-                <td className="px-4 py-3 font-bold text-secondary">{c.codigo}</td>
-                <td className="px-4 py-3 text-secondary">{LABEL_TIPO[c.tipo]}</td>
-                <td className="px-4 py-3 text-secondary">
-                  {c.tipo === "envio_gratis"
-                    ? "—"
-                    : c.tipo.startsWith("pct")
-                      ? `${c.valor}%`
-                      : `S/.${c.valor.toFixed(2)}`}
-                </td>
-                <td className="px-4 py-3 text-muted-foreground">
-                  {c.monto_minimo > 0 ? `Compra ≥ S/.${c.monto_minimo.toFixed(2)}` : "Sin mínimo"}
-                </td>
-                <td className="px-4 py-3 text-secondary">
-                  {c.usos_actuales} / {c.usos_maximos ?? "∞"}
-                </td>
-                <td className="px-4 py-3">
-                  <Badge color={c.activo ? "verde" : "gris"}>{c.activo ? "Activo" : "Inactivo"}</Badge>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <button
-                    onClick={() => setEditando(c)}
-                    className="font-body text-sm font-bold text-primary hover:underline"
-                  >
-                    Editar
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Código</TableHead>
+                <TableHead>Tipo</TableHead>
+                <TableHead>Valor</TableHead>
+                <TableHead>Condiciones</TableHead>
+                <TableHead>Usos</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {!cargando && cupones.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-muted-foreground">
+                    Sin cupones todavía.
+                  </TableCell>
+                </TableRow>
+              )}
+              {cupones.map((c) => (
+                <TableRow key={c.id}>
+                  <TableCell className="font-medium">{c.codigo}</TableCell>
+                  <TableCell>{LABEL_TIPO[c.tipo]}</TableCell>
+                  <TableCell>
+                    {c.tipo === "envio_gratis"
+                      ? "—"
+                      : c.tipo.startsWith("pct")
+                        ? `${c.valor}%`
+                        : `S/.${c.valor.toFixed(2)}`}
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {c.monto_minimo > 0 ? `Compra ≥ S/.${c.monto_minimo.toFixed(2)}` : "Sin mínimo"}
+                  </TableCell>
+                  <TableCell>
+                    {c.usos_actuales} / {c.usos_maximos ?? "∞"}
+                  </TableCell>
+                  <TableCell>
+                    <Badge color={c.activo ? "verde" : "gris"}>{c.activo ? "Activo" : "Inactivo"}</Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="sm" onClick={() => setEditando(c)}>
+                      Editar
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       {(creando || editando) && (
         <CuponForm cupon={editando} onClose={cerrar} onSaved={recargarYCerrar} />

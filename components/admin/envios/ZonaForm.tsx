@@ -3,6 +3,10 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Modal } from "@/components/admin/Modal";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import type { EnvioZona } from "@/lib/shipping";
 
 interface ZonaFormProps {
@@ -58,105 +62,86 @@ export function ZonaForm({ zona, onClose, onSaved }: ZonaFormProps) {
   return (
     <Modal titulo={zona ? "Editar zona de envío" : "Nueva zona de envío"} onClose={onClose}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div>
-          <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-            Nombre de la zona
-          </label>
-          <input
+        <div className="grid gap-1.5">
+          <Label htmlFor="z-nombre">Nombre de la zona</Label>
+          <Input
+            id="z-nombre"
             required
             value={form.nombre}
             onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))}
-            className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm"
           />
         </div>
 
-        <div>
-          <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-            Departamentos (separados por coma)
-          </label>
-          <input
+        <div className="grid gap-1.5">
+          <Label htmlFor="z-departamentos">Departamentos (separados por coma)</Label>
+          <Input
+            id="z-departamentos"
             required
             value={departamentosTexto}
             onChange={(e) => setDepartamentosTexto(e.target.value)}
             placeholder="Lima Metropolitana"
-            className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm"
           />
         </div>
 
-        <div>
-          <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-            Tiempo estimado
-          </label>
-          <input
+        <div className="grid gap-1.5">
+          <Label htmlFor="z-tiempo">Tiempo estimado</Label>
+          <Input
+            id="z-tiempo"
             required
             value={form.tiempo_estimado}
             onChange={(e) => setForm((f) => ({ ...f, tiempo_estimado: e.target.value }))}
             placeholder="24–48 horas hábiles"
-            className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm"
           />
         </div>
 
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              Costo de envío (S/.)
-            </label>
-            <input
+          <div className="grid gap-1.5">
+            <Label htmlFor="z-costo">Costo de envío (S/.)</Label>
+            <Input
+              id="z-costo"
               required
               type="number"
               step="0.01"
               value={form.costo_envio}
               onChange={(e) => setForm((f) => ({ ...f, costo_envio: Number(e.target.value) }))}
-              className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm"
             />
           </div>
-          <div>
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              Monto mínimo envío gratis (S/.)
-            </label>
-            <input
+          <div className="grid gap-1.5">
+            <Label htmlFor="z-gratis">Monto mínimo envío gratis (S/.)</Label>
+            <Input
+              id="z-gratis"
               required
               type="number"
               step="0.01"
               value={form.monto_minimo_gratis}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, monto_minimo_gratis: Number(e.target.value) }))
-              }
-              className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm"
+              onChange={(e) => setForm((f) => ({ ...f, monto_minimo_gratis: Number(e.target.value) }))}
             />
           </div>
         </div>
 
-        <div>
-          <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-            Orden
-          </label>
-          <input
+        <div className="grid gap-1.5">
+          <Label htmlFor="z-orden">Orden</Label>
+          <Input
+            id="z-orden"
             type="number"
             value={form.orden}
             onChange={(e) => setForm((f) => ({ ...f, orden: Number(e.target.value) }))}
-            className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm"
           />
         </div>
 
-        <label className="flex items-center gap-2 font-body text-sm text-secondary">
-          <input
-            type="checkbox"
+        <label className="flex items-center gap-2 text-sm">
+          <Checkbox
             checked={form.activo}
-            onChange={(e) => setForm((f) => ({ ...f, activo: e.target.checked }))}
+            onCheckedChange={(checked) => setForm((f) => ({ ...f, activo: checked === true }))}
           />
           Activa
         </label>
 
-        {error && <p className="font-body text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-destructive">{error}</p>}
 
-        <button
-          type="submit"
-          disabled={guardando}
-          className="mt-2 w-fit rounded-full bg-primary px-6 py-2.5 font-body font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50"
-        >
+        <Button type="submit" disabled={guardando} className="w-fit">
           {guardando ? "Guardando…" : "Guardar"}
-        </button>
+        </Button>
       </form>
     </Modal>
   );

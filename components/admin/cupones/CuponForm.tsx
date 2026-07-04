@@ -3,6 +3,17 @@
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Modal } from "@/components/admin/Modal";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export interface Cupon {
   id: string;
@@ -72,70 +83,66 @@ export function CuponForm({ cupon, onClose, onSaved }: CuponFormProps) {
     <Modal titulo={cupon ? "Editar cupón" : "Nuevo cupón"} onClose={onClose}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              Código
-            </label>
-            <input
+          <div className="grid gap-1.5">
+            <Label htmlFor="c-codigo">Código</Label>
+            <Input
+              id="c-codigo"
               required
               value={form.codigo}
               onChange={(e) => setForm((f) => ({ ...f, codigo: e.target.value }))}
-              className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm uppercase"
+              className="uppercase"
             />
           </div>
-          <div>
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              Tipo de descuento
-            </label>
-            <select
+          <div className="grid gap-1.5">
+            <Label>Tipo de descuento</Label>
+            <Select
               value={form.tipo}
-              onChange={(e) => setForm((f) => ({ ...f, tipo: e.target.value as Cupon["tipo"] }))}
-              className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm"
+              onValueChange={(v) => setForm((f) => ({ ...f, tipo: v as Cupon["tipo"] }))}
             >
-              {TIPOS.map((t) => (
-                <option key={t.value} value={t.value}>
-                  {t.label}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TIPOS.map((t) => (
+                  <SelectItem key={t.value} value={t.value}>
+                    {t.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
         <div className="grid grid-cols-2 gap-4">
           {requiereValor && (
-            <div>
-              <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-                Valor {form.tipo.startsWith("pct") ? "(%)" : "(S/.)"}
-              </label>
-              <input
+            <div className="grid gap-1.5">
+              <Label htmlFor="c-valor">Valor {form.tipo.startsWith("pct") ? "(%)" : "(S/.)"}</Label>
+              <Input
+                id="c-valor"
                 type="number"
                 step="0.01"
                 value={form.valor}
                 onChange={(e) => setForm((f) => ({ ...f, valor: Number(e.target.value) }))}
-                className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm"
               />
             </div>
           )}
-          <div>
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              Monto mínimo de compra (S/.)
-            </label>
-            <input
+          <div className="grid gap-1.5">
+            <Label htmlFor="c-minimo">Monto mínimo de compra (S/.)</Label>
+            <Input
+              id="c-minimo"
               type="number"
               step="0.01"
               value={form.monto_minimo}
               onChange={(e) => setForm((f) => ({ ...f, monto_minimo: Number(e.target.value) }))}
-              className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm"
             />
           </div>
         </div>
 
         <div className="grid grid-cols-3 gap-4">
-          <div>
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              Usos máximos
-            </label>
-            <input
+          <div className="grid gap-1.5">
+            <Label htmlFor="c-usos">Usos máximos</Label>
+            <Input
+              id="c-usos"
               type="number"
               value={form.usos_maximos ?? ""}
               onChange={(e) =>
@@ -145,51 +152,41 @@ export function CuponForm({ cupon, onClose, onSaved }: CuponFormProps) {
                 }))
               }
               placeholder="Ilimitado"
-              className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm"
             />
           </div>
-          <div>
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              Vigente desde
-            </label>
-            <input
+          <div className="grid gap-1.5">
+            <Label htmlFor="c-desde">Vigente desde</Label>
+            <Input
+              id="c-desde"
               type="date"
               value={form.fecha_inicio ?? ""}
               onChange={(e) => setForm((f) => ({ ...f, fecha_inicio: e.target.value || null }))}
-              className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm"
             />
           </div>
-          <div>
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              Vigente hasta
-            </label>
-            <input
+          <div className="grid gap-1.5">
+            <Label htmlFor="c-hasta">Vigente hasta</Label>
+            <Input
+              id="c-hasta"
               type="date"
               value={form.fecha_fin ?? ""}
               onChange={(e) => setForm((f) => ({ ...f, fecha_fin: e.target.value || null }))}
-              className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm"
             />
           </div>
         </div>
 
-        <label className="flex items-center gap-2 font-body text-sm text-secondary">
-          <input
-            type="checkbox"
+        <label className="flex items-center gap-2 text-sm">
+          <Checkbox
             checked={form.activo}
-            onChange={(e) => setForm((f) => ({ ...f, activo: e.target.checked }))}
+            onCheckedChange={(checked) => setForm((f) => ({ ...f, activo: checked === true }))}
           />
           Activo
         </label>
 
-        {error && <p className="font-body text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-destructive">{error}</p>}
 
-        <button
-          type="submit"
-          disabled={guardando}
-          className="mt-2 w-fit rounded-full bg-primary px-6 py-2.5 font-body font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50"
-        >
+        <Button type="submit" disabled={guardando} className="w-fit">
           {guardando ? "Guardando…" : "Guardar"}
-        </button>
+        </Button>
       </form>
     </Modal>
   );

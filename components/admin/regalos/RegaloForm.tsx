@@ -4,6 +4,18 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { Modal } from "@/components/admin/Modal";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 
 interface ProductoOpcion {
   slug: string;
@@ -91,142 +103,126 @@ export function RegaloForm({ regalo, onClose, onSaved }: RegaloFormProps) {
   return (
     <Modal titulo={regalo ? "Editar regalo" : "Nuevo regalo"} onClose={onClose}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <div>
-          <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-            Nombre
-          </label>
-          <input
+        <div className="grid gap-1.5">
+          <Label htmlFor="r-nombre">Nombre</Label>
+          <Input
+            id="r-nombre"
             required
             value={form.nombre}
             onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))}
-            className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm"
           />
         </div>
 
-        <div>
-          <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-            Descripción
-          </label>
-          <textarea
+        <div className="grid gap-1.5">
+          <Label htmlFor="r-descripcion">Descripción</Label>
+          <Textarea
+            id="r-descripcion"
             rows={2}
             value={form.descripcion ?? ""}
             onChange={(e) => setForm((f) => ({ ...f, descripcion: e.target.value }))}
-            className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm"
           />
         </div>
 
-        <div>
-          <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-            Imagen
-          </label>
-          <input
+        <div className="grid gap-1.5">
+          <Label htmlFor="r-imagen">Imagen</Label>
+          <Input
+            id="r-imagen"
             type="file"
             accept="image/*"
             disabled={subiendo}
             onChange={(e) => e.target.files?.[0] && subirImagen(e.target.files[0])}
-            className="w-full font-body text-sm"
           />
           {form.imagen && (
-            <div className="relative mt-2 h-16 w-16 overflow-hidden rounded-lg border border-border">
+            <div className="relative h-16 w-16 overflow-hidden rounded-lg border">
               <Image src={form.imagen} alt="" fill className="object-cover" sizes="64px" />
             </div>
           )}
         </div>
 
-        <div>
-          <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-            Condición
-          </label>
-          <select
+        <div className="grid gap-1.5">
+          <Label>Condición</Label>
+          <Select
             value={form.condicion_tipo}
-            onChange={(e) =>
-              setForm((f) => ({ ...f, condicion_tipo: e.target.value as Regalo["condicion_tipo"] }))
+            onValueChange={(v) =>
+              setForm((f) => ({ ...f, condicion_tipo: v as Regalo["condicion_tipo"] }))
             }
-            className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm"
           >
-            <option value="monto_minimo">Monto mínimo de compra</option>
-            <option value="producto_especifico">Compra de un producto específico</option>
-          </select>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="monto_minimo">Monto mínimo de compra</SelectItem>
+              <SelectItem value="producto_especifico">Compra de un producto específico</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {form.condicion_tipo === "monto_minimo" ? (
-          <div>
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              Monto mínimo (S/.)
-            </label>
-            <input
+          <div className="grid gap-1.5">
+            <Label htmlFor="r-monto">Monto mínimo (S/.)</Label>
+            <Input
+              id="r-monto"
               type="number"
               step="0.01"
               value={form.condicion_monto_minimo ?? 0}
-              onChange={(e) =>
-                setForm((f) => ({ ...f, condicion_monto_minimo: Number(e.target.value) }))
-              }
-              className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm"
+              onChange={(e) => setForm((f) => ({ ...f, condicion_monto_minimo: Number(e.target.value) }))}
             />
           </div>
         ) : (
-          <div>
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              Producto
-            </label>
-            <select
-              value={form.condicion_producto_slug ?? ""}
-              onChange={(e) => setForm((f) => ({ ...f, condicion_producto_slug: e.target.value }))}
-              className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm"
+          <div className="grid gap-1.5">
+            <Label>Producto</Label>
+            <Select
+              value={form.condicion_producto_slug ?? undefined}
+              onValueChange={(v) => setForm((f) => ({ ...f, condicion_producto_slug: v }))}
             >
-              <option value="">Selecciona un producto</option>
-              {productos.map((p) => (
-                <option key={p.slug} value={p.slug}>
-                  {p.nombre}
-                </option>
-              ))}
-            </select>
+              <SelectTrigger>
+                <SelectValue placeholder="Selecciona un producto" />
+              </SelectTrigger>
+              <SelectContent>
+                {productos.map((p) => (
+                  <SelectItem key={p.slug} value={p.slug}>
+                    {p.nombre}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         )}
 
         <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              Vigente desde
-            </label>
-            <input
+          <div className="grid gap-1.5">
+            <Label htmlFor="r-desde">Vigente desde</Label>
+            <Input
+              id="r-desde"
               type="date"
               value={form.fecha_inicio ?? ""}
               onChange={(e) => setForm((f) => ({ ...f, fecha_inicio: e.target.value || null }))}
-              className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm"
             />
           </div>
-          <div>
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              Vigente hasta
-            </label>
-            <input
+          <div className="grid gap-1.5">
+            <Label htmlFor="r-hasta">Vigente hasta</Label>
+            <Input
+              id="r-hasta"
               type="date"
               value={form.fecha_fin ?? ""}
               onChange={(e) => setForm((f) => ({ ...f, fecha_fin: e.target.value || null }))}
-              className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm"
             />
           </div>
         </div>
 
-        <label className="flex items-center gap-2 font-body text-sm text-secondary">
-          <input
-            type="checkbox"
+        <label className="flex items-center gap-2 text-sm">
+          <Checkbox
             checked={form.activo}
-            onChange={(e) => setForm((f) => ({ ...f, activo: e.target.checked }))}
+            onCheckedChange={(checked) => setForm((f) => ({ ...f, activo: checked === true }))}
           />
           Activo
         </label>
 
-        {error && <p className="font-body text-sm text-red-600">{error}</p>}
+        {error && <p className="text-sm text-destructive">{error}</p>}
 
-        <button
-          type="submit"
-          disabled={guardando || subiendo}
-          className="mt-2 w-fit rounded-full bg-primary px-6 py-2.5 font-body font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50"
-        >
+        <Button type="submit" disabled={guardando || subiendo} className="w-fit">
           {guardando ? "Guardando…" : "Guardar"}
-        </button>
+        </Button>
       </form>
     </Modal>
   );

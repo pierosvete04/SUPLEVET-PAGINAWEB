@@ -4,6 +4,16 @@ import { useCallback, useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Badge } from "@/components/admin/Badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { ZonaForm } from "@/components/admin/envios/ZonaForm";
 import type { EnvioZona } from "@/lib/shipping";
 
@@ -38,63 +48,59 @@ export default function AdminEnviosPage() {
   }
 
   return (
-    <div>
-      <div className="mb-6 flex items-center justify-between">
-        <h1 className="font-body text-xl font-bold text-secondary">Zonas de envío</h1>
-        <button
-          onClick={() => setCreando(true)}
-          className="flex items-center gap-1.5 rounded-lg bg-primary px-4 py-2 font-body text-sm font-bold text-primary-foreground hover:opacity-90"
-        >
+    <div className="flex flex-col gap-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold">Zonas de envío</h2>
+        <Button onClick={() => setCreando(true)}>
           <Plus className="h-4 w-4" /> Nueva zona
-        </button>
+        </Button>
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-border bg-white">
-        <table className="w-full font-body text-sm">
-          <thead className="bg-soft-gray text-left text-xs font-bold uppercase text-muted-foreground">
-            <tr>
-              <th className="px-4 py-3">Zona</th>
-              <th className="px-4 py-3">Departamentos</th>
-              <th className="px-4 py-3">Tiempo</th>
-              <th className="px-4 py-3">Costo</th>
-              <th className="px-4 py-3">Gratis desde</th>
-              <th className="px-4 py-3">Estado</th>
-              <th className="px-4 py-3" />
-            </tr>
-          </thead>
-          <tbody>
-            {!cargando && zonas.length === 0 && (
-              <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-muted-foreground">
-                  Sin zonas configuradas.
-                </td>
-              </tr>
-            )}
-            {zonas.map((z) => (
-              <tr key={z.id} className="border-t border-border align-top">
-                <td className="px-4 py-3 font-bold text-secondary">{z.nombre}</td>
-                <td className="max-w-xs px-4 py-3 text-muted-foreground">
-                  {z.departamentos.join(", ")}
-                </td>
-                <td className="px-4 py-3 text-secondary">{z.tiempo_estimado}</td>
-                <td className="px-4 py-3 text-secondary">S/.{z.costo_envio.toFixed(2)}</td>
-                <td className="px-4 py-3 text-secondary">S/.{z.monto_minimo_gratis.toFixed(2)}</td>
-                <td className="px-4 py-3">
-                  <Badge color={z.activo ? "verde" : "gris"}>{z.activo ? "Activa" : "Inactiva"}</Badge>
-                </td>
-                <td className="px-4 py-3 text-right">
-                  <button
-                    onClick={() => setEditando(z)}
-                    className="font-body text-sm font-bold text-primary hover:underline"
-                  >
-                    Editar
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Card>
+        <CardContent className="p-0">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Zona</TableHead>
+                <TableHead>Departamentos</TableHead>
+                <TableHead>Tiempo</TableHead>
+                <TableHead>Costo</TableHead>
+                <TableHead>Gratis desde</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {!cargando && zonas.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={7} className="text-center text-muted-foreground">
+                    Sin zonas configuradas.
+                  </TableCell>
+                </TableRow>
+              )}
+              {zonas.map((z) => (
+                <TableRow key={z.id} className="align-top">
+                  <TableCell className="font-medium">{z.nombre}</TableCell>
+                  <TableCell className="max-w-xs text-muted-foreground">
+                    {z.departamentos.join(", ")}
+                  </TableCell>
+                  <TableCell>{z.tiempo_estimado}</TableCell>
+                  <TableCell>S/.{z.costo_envio.toFixed(2)}</TableCell>
+                  <TableCell>S/.{z.monto_minimo_gratis.toFixed(2)}</TableCell>
+                  <TableCell>
+                    <Badge color={z.activo ? "verde" : "gris"}>{z.activo ? "Activa" : "Inactiva"}</Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="sm" onClick={() => setEditando(z)}>
+                      Editar
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
 
       {(creando || editando) && (
         <ZonaForm zona={editando} onClose={cerrar} onSaved={recargarYCerrar} />

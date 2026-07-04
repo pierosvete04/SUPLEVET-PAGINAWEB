@@ -7,6 +7,18 @@ import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { RichTextEditor } from "@/components/admin/blog/RichTextEditor";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import type { BlogPost } from "@/lib/data/blog-shared";
 
 interface ProductoOpcion {
@@ -17,6 +29,8 @@ interface ProductoOpcion {
 interface PostEditorProps {
   post: BlogPost | null;
 }
+
+const SIN_PRODUCTO = "ninguno";
 
 function slugify(texto: string): string {
   return texto
@@ -109,163 +123,141 @@ export function PostEditor({ post }: PostEditorProps) {
   }
 
   return (
-    <div>
-      <Link
-        href="/admin/blog"
-        className="mb-6 flex w-fit items-center gap-1 font-body text-sm font-bold text-primary"
-      >
+    <div className="flex flex-col gap-6">
+      <Link href="/admin/blog" className="flex w-fit items-center gap-1 text-sm font-medium text-primary">
         <ArrowLeft className="h-4 w-4" /> Volver al blog
       </Link>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="flex flex-col gap-4 lg:col-span-2">
-          <div>
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              Título
-            </label>
-            <input
+          <div className="grid gap-1.5">
+            <Label htmlFor="b-titulo">Título</Label>
+            <Input
+              id="b-titulo"
               value={titulo}
               onChange={(e) => handleTituloChange(e.target.value)}
-              className="w-full rounded-lg border border-border px-3 py-2 font-body text-lg font-bold text-secondary"
+              className="text-lg font-semibold"
             />
           </div>
 
-          <div>
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              Slug (URL)
-            </label>
-            <input
+          <div className="grid gap-1.5">
+            <Label htmlFor="b-slug">Slug (URL)</Label>
+            <Input
+              id="b-slug"
               value={slug}
               onChange={(e) => {
                 setSlug(e.target.value);
                 setSlugTocado(true);
               }}
-              className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm text-secondary"
             />
           </div>
 
-          <div>
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              Resumen corto
-            </label>
-            <textarea
-              rows={2}
-              value={resumen}
-              onChange={(e) => setResumen(e.target.value)}
-              className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm text-secondary"
-            />
+          <div className="grid gap-1.5">
+            <Label htmlFor="b-resumen">Resumen corto</Label>
+            <Textarea id="b-resumen" rows={2} value={resumen} onChange={(e) => setResumen(e.target.value)} />
           </div>
 
-          <div>
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              Contenido
-            </label>
+          <div className="grid gap-1.5">
+            <Label>Contenido</Label>
             <RichTextEditor value={contenidoHtml} onChange={setContenidoHtml} />
           </div>
 
-          <div className="rounded-xl border border-border bg-white p-4">
-            <h2 className="mb-3 font-body text-sm font-bold uppercase text-muted-foreground">SEO</h2>
-            <div className="flex flex-col gap-3">
-              <div>
-                <label className="mb-1 block font-body text-xs font-bold text-muted-foreground">
-                  Meta título
-                </label>
-                <input
-                  value={metaTitle}
-                  onChange={(e) => setMetaTitle(e.target.value)}
-                  className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm text-secondary"
-                />
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm text-muted-foreground">SEO</CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-3">
+              <div className="grid gap-1.5">
+                <Label htmlFor="b-meta-title">Meta título</Label>
+                <Input id="b-meta-title" value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)} />
               </div>
-              <div>
-                <label className="mb-1 block font-body text-xs font-bold text-muted-foreground">
-                  Meta descripción
-                </label>
-                <textarea
+              <div className="grid gap-1.5">
+                <Label htmlFor="b-meta-desc">Meta descripción</Label>
+                <Textarea
+                  id="b-meta-desc"
                   rows={2}
                   value={metaDescription}
                   onChange={(e) => setMetaDescription(e.target.value)}
-                  className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm text-secondary"
                 />
               </div>
-            </div>
-          </div>
+            </CardContent>
+          </Card>
         </div>
 
         <div className="flex flex-col gap-4">
-          <div className="rounded-xl border border-border bg-white p-4">
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              Fecha de publicación
-            </label>
-            <input
-              type="date"
-              value={fechaPublicacion}
-              onChange={(e) => setFechaPublicacion(e.target.value)}
-              className="mb-3 w-full rounded-lg border border-border px-3 py-2 font-body text-sm text-secondary"
-            />
-
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              Autor
-            </label>
-            <input
-              value={autor}
-              onChange={(e) => setAutor(e.target.value)}
-              className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm text-secondary"
-            />
-          </div>
-
-          <div className="rounded-xl border border-border bg-white p-4">
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              Producto relacionado
-            </label>
-            <select
-              value={productoSlug}
-              onChange={(e) => setProductoSlug(e.target.value)}
-              className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm text-secondary"
-            >
-              <option value="">Ninguno</option>
-              {productos.map((p) => (
-                <option key={p.slug} value={p.slug}>
-                  {p.nombre}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="rounded-xl border border-border bg-white p-4">
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              Imagen destacada
-            </label>
-            <input
-              type="file"
-              accept="image/*"
-              disabled={subiendo}
-              onChange={(e) => e.target.files?.[0] && subirImagenDestacada(e.target.files[0])}
-              className="w-full font-body text-sm"
-            />
-            {imagenDestacada && (
-              <div className="relative mt-3 h-32 w-full overflow-hidden rounded-lg">
-                <Image src={imagenDestacada} alt="" fill className="object-cover" sizes="300px" />
+          <Card>
+            <CardContent className="flex flex-col gap-3 pt-6">
+              <div className="grid gap-1.5">
+                <Label htmlFor="b-fecha">Fecha de publicación</Label>
+                <Input
+                  id="b-fecha"
+                  type="date"
+                  value={fechaPublicacion}
+                  onChange={(e) => setFechaPublicacion(e.target.value)}
+                />
               </div>
-            )}
-          </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="b-autor">Autor</Label>
+                <Input id="b-autor" value={autor} onChange={(e) => setAutor(e.target.value)} />
+              </div>
+            </CardContent>
+          </Card>
 
-          {error && <p className="font-body text-sm text-red-600">{error}</p>}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="grid gap-1.5">
+                <Label>Producto relacionado</Label>
+                <Select
+                  value={productoSlug || SIN_PRODUCTO}
+                  onValueChange={(v) => setProductoSlug(v === SIN_PRODUCTO ? "" : v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value={SIN_PRODUCTO}>Ninguno</SelectItem>
+                    {productos.map((p) => (
+                      <SelectItem key={p.slug} value={p.slug}>
+                        {p.nombre}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="flex flex-col gap-2 pt-6">
+              <Label htmlFor="b-imagen">Imagen destacada</Label>
+              <Input
+                id="b-imagen"
+                type="file"
+                accept="image/*"
+                disabled={subiendo}
+                onChange={(e) => e.target.files?.[0] && subirImagenDestacada(e.target.files[0])}
+              />
+              {imagenDestacada && (
+                <div className="relative h-32 w-full overflow-hidden rounded-lg">
+                  <Image src={imagenDestacada} alt="" fill className="object-cover" sizes="300px" />
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {error && <p className="text-sm text-destructive">{error}</p>}
 
           <div className="flex flex-col gap-2">
-            <button
-              onClick={() => guardar("publicado")}
-              disabled={guardando || subiendo}
-              className="rounded-full bg-primary px-6 py-2.5 font-body font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50"
-            >
+            <Button onClick={() => guardar("publicado")} disabled={guardando || subiendo}>
               {guardando ? "Guardando…" : "Publicar"}
-            </button>
-            <button
+            </Button>
+            <Button
+              variant="outline"
               onClick={() => guardar("borrador")}
               disabled={guardando || subiendo}
-              className="rounded-full border border-border px-6 py-2.5 font-body font-bold text-secondary hover:bg-soft-gray disabled:opacity-50"
             >
               Guardar borrador
-            </button>
+            </Button>
           </div>
         </div>
       </div>

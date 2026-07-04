@@ -3,6 +3,11 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 interface ConfiguracionSitio {
   announcement_bar_activo: boolean;
@@ -24,24 +29,20 @@ interface ConfiguracionSitio {
 }
 
 function Campo({
+  id,
   label,
   value,
   onChange,
 }: {
+  id: string;
   label: string;
   value: string;
   onChange: (v: string) => void;
 }) {
   return (
-    <div>
-      <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-        {label}
-      </label>
-      <input
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="w-full rounded-lg border border-border px-3 py-2 font-body text-sm text-secondary"
-      />
+    <div className="grid gap-1.5">
+      <Label htmlFor={id}>{label}</Label>
+      <Input id={id} value={value} onChange={(e) => onChange(e.target.value)} />
     </div>
   );
 }
@@ -86,154 +87,169 @@ export default function AdminConfiguracionPage() {
     setGuardado(true);
   }
 
-  if (!config) return <p className="font-body text-sm text-muted-foreground">Cargando…</p>;
+  if (!config) return <p className="text-sm text-muted-foreground">Cargando…</p>;
 
   return (
-    <div className="max-w-3xl">
-      <h1 className="mb-6 font-body text-xl font-bold text-secondary">Configuración</h1>
+    <div className="flex max-w-3xl flex-col gap-6">
+      <h2 className="text-lg font-semibold">Configuración</h2>
 
-      <div className="flex flex-col gap-6">
-        <div className="rounded-xl border border-border bg-white p-5">
-          <h2 className="mb-4 font-body text-sm font-bold uppercase text-muted-foreground">
-            Barra de anuncios
-          </h2>
-          <label className="mb-3 flex items-center gap-2 font-body text-sm text-secondary">
-            <input
-              type="checkbox"
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm text-muted-foreground">Barra de anuncios</CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox
               checked={config.announcement_bar_activo}
-              onChange={(e) => actualizar("announcement_bar_activo", e.target.checked)}
+              onCheckedChange={(checked) => actualizar("announcement_bar_activo", checked === true)}
             />
             Mostrar barra de anuncios
           </label>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Campo
+              id="ab-texto"
               label="Texto"
               value={config.announcement_bar_texto ?? ""}
               onChange={(v) => actualizar("announcement_bar_texto", v)}
             />
             <Campo
+              id="ab-link"
               label="Link (opcional)"
               value={config.announcement_bar_link ?? ""}
               onChange={(v) => actualizar("announcement_bar_link", v)}
             />
           </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        <div className="rounded-xl border border-border bg-white p-5">
-          <h2 className="mb-4 font-body text-sm font-bold uppercase text-muted-foreground">
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm text-muted-foreground">
             Yape / Plin (pago manual en checkout)
-          </h2>
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-4">
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <Campo
+              id="yp-numero"
               label="Número"
               value={config.yape_plin_numero ?? ""}
               onChange={(v) => actualizar("yape_plin_numero", v)}
             />
             <Campo
+              id="yp-titular"
               label="Titular"
               value={config.yape_plin_titular ?? ""}
               onChange={(v) => actualizar("yape_plin_titular", v)}
             />
           </div>
-          <div className="mt-3">
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              QR
-            </label>
-            <input
+          <div className="grid gap-1.5">
+            <Label htmlFor="yp-qr">QR</Label>
+            <Input
+              id="yp-qr"
               type="file"
               accept="image/*"
               disabled={subiendo}
               onChange={(e) => e.target.files?.[0] && subirQr(e.target.files[0])}
-              className="font-body text-sm"
             />
             {config.yape_plin_qr_url && (
-              <div className="relative mt-2 h-24 w-24 overflow-hidden rounded-lg border border-border">
+              <div className="relative mt-1 h-24 w-24 overflow-hidden rounded-lg border">
                 <Image src={config.yape_plin_qr_url} alt="QR" fill className="object-contain" />
               </div>
             )}
           </div>
-        </div>
+        </CardContent>
+      </Card>
 
-        <div className="rounded-xl border border-border bg-white p-5">
-          <h2 className="mb-4 font-body text-sm font-bold uppercase text-muted-foreground">
-            Cuenta bancaria (transferencia)
-          </h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Campo
-              label="Banco"
-              value={config.banco_nombre ?? ""}
-              onChange={(v) => actualizar("banco_nombre", v)}
-            />
-            <Campo
-              label="Titular"
-              value={config.banco_titular ?? ""}
-              onChange={(v) => actualizar("banco_titular", v)}
-            />
-            <Campo
-              label="N° de cuenta"
-              value={config.banco_cuenta ?? ""}
-              onChange={(v) => actualizar("banco_cuenta", v)}
-            />
-            <Campo label="CCI" value={config.banco_cci ?? ""} onChange={(v) => actualizar("banco_cci", v)} />
-          </div>
-        </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm text-muted-foreground">Cuenta bancaria (transferencia)</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Campo
+            id="banco-nombre"
+            label="Banco"
+            value={config.banco_nombre ?? ""}
+            onChange={(v) => actualizar("banco_nombre", v)}
+          />
+          <Campo
+            id="banco-titular"
+            label="Titular"
+            value={config.banco_titular ?? ""}
+            onChange={(v) => actualizar("banco_titular", v)}
+          />
+          <Campo
+            id="banco-cuenta"
+            label="N° de cuenta"
+            value={config.banco_cuenta ?? ""}
+            onChange={(v) => actualizar("banco_cuenta", v)}
+          />
+          <Campo
+            id="banco-cci"
+            label="CCI"
+            value={config.banco_cci ?? ""}
+            onChange={(v) => actualizar("banco_cci", v)}
+          />
+        </CardContent>
+      </Card>
 
-        <div className="rounded-xl border border-border bg-white p-5">
-          <h2 className="mb-4 font-body text-sm font-bold uppercase text-muted-foreground">
-            WhatsApp
-          </h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Campo
-              label="B2C (clientes)"
-              value={config.whatsapp_b2c ?? ""}
-              onChange={(v) => actualizar("whatsapp_b2c", v)}
-            />
-            <Campo
-              label="B2B (veterinarias)"
-              value={config.whatsapp_b2b ?? ""}
-              onChange={(v) => actualizar("whatsapp_b2b", v)}
-            />
-          </div>
-        </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm text-muted-foreground">WhatsApp</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Campo
+            id="wa-b2c"
+            label="B2C (clientes)"
+            value={config.whatsapp_b2c ?? ""}
+            onChange={(v) => actualizar("whatsapp_b2c", v)}
+          />
+          <Campo
+            id="wa-b2b"
+            label="B2B (veterinarias)"
+            value={config.whatsapp_b2b ?? ""}
+            onChange={(v) => actualizar("whatsapp_b2b", v)}
+          />
+        </CardContent>
+      </Card>
 
-        <div className="rounded-xl border border-border bg-white p-5">
-          <h2 className="mb-4 font-body text-sm font-bold uppercase text-muted-foreground">
-            Redes sociales
-          </h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Campo
-              label="Facebook"
-              value={config.facebook_url ?? ""}
-              onChange={(v) => actualizar("facebook_url", v)}
-            />
-            <Campo
-              label="Instagram"
-              value={config.instagram_url ?? ""}
-              onChange={(v) => actualizar("instagram_url", v)}
-            />
-            <Campo
-              label="TikTok"
-              value={config.tiktok_url ?? ""}
-              onChange={(v) => actualizar("tiktok_url", v)}
-            />
-            <Campo
-              label="LinkedIn"
-              value={config.linkedin_url ?? ""}
-              onChange={(v) => actualizar("linkedin_url", v)}
-            />
-          </div>
-        </div>
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-sm text-muted-foreground">Redes sociales</CardTitle>
+        </CardHeader>
+        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Campo
+            id="rs-facebook"
+            label="Facebook"
+            value={config.facebook_url ?? ""}
+            onChange={(v) => actualizar("facebook_url", v)}
+          />
+          <Campo
+            id="rs-instagram"
+            label="Instagram"
+            value={config.instagram_url ?? ""}
+            onChange={(v) => actualizar("instagram_url", v)}
+          />
+          <Campo
+            id="rs-tiktok"
+            label="TikTok"
+            value={config.tiktok_url ?? ""}
+            onChange={(v) => actualizar("tiktok_url", v)}
+          />
+          <Campo
+            id="rs-linkedin"
+            label="LinkedIn"
+            value={config.linkedin_url ?? ""}
+            onChange={(v) => actualizar("linkedin_url", v)}
+          />
+        </CardContent>
+      </Card>
 
-        <div className="flex items-center gap-3">
-          <button
-            onClick={guardar}
-            disabled={guardando || subiendo}
-            className="w-fit rounded-full bg-primary px-6 py-2.5 font-body font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50"
-          >
-            {guardando ? "Guardando…" : "Guardar cambios"}
-          </button>
-          {guardado && <span className="font-body text-sm text-green-600">Guardado ✓</span>}
-        </div>
+      <div className="flex items-center gap-3">
+        <Button onClick={guardar} disabled={guardando || subiendo}>
+          {guardando ? "Guardando…" : "Guardar cambios"}
+        </Button>
+        {guardado && <span className="text-sm text-green-600">Guardado ✓</span>}
       </div>
     </div>
   );
