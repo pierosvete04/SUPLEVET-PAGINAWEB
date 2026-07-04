@@ -16,6 +16,8 @@ export const siteConfig = {
   legal: {
     razonSocial: "Nutrova for Pets S.A.C.",
     ruc: "20613665995",
+    domicilioFiscal: "Calle Río Elba 132, La Molina, Lima, Perú",
+    correoAtencion: "paolosvete04@gmail.com", // mismo correo que ya usa el Libro de Reclamaciones del portal
   },
 } as const;
 
