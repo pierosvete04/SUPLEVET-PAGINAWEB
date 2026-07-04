@@ -87,10 +87,10 @@ export function ProductBuyBox({ producto }: ProductBuyBoxProps) {
         >
           {agregado ? (
             <>
-              <Check className="h-5 w-5" strokeWidth={2} /> Agregado
+              <Check className="h-5 w-5" strokeWidth={2} /> Añadido
             </>
           ) : (
-            "Agregar al carrito"
+            "Añadir al carrito"
           )}
         </button>
         <button

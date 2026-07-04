@@ -78,6 +78,17 @@ const config: Config = {
   		},
   		maxWidth: {
   			container: '1280px'
+  		},
+  		keyframes: {
+  			marquee: {
+  				'0%': { transform: 'translateX(0)' },
+  				'100%': { transform: 'translateX(-50%)' }
+  			}
+  		},
+  		animation: {
+  			// Duración configurable vía la variable CSS --marquee-duration
+  			// (default 25s si no se define) — ver components/home/TrustBar.tsx
+  			marquee: 'marquee var(--marquee-duration, 25s) linear infinite'
   		}
   	}
   },

@@ -65,3 +65,11 @@
 .organic-hill {
   clip-path: ellipse(60% 100% at 50% 100%);
 }
+
+/* Respeta el ajuste de accesibilidad del sistema operativo — detiene la
+   barra de confianza en movimiento (components/home/TrustBar.tsx). */
+@media (prefers-reduced-motion: reduce) {
+  .animate-marquee {
+    animation: none;
+  }
+}

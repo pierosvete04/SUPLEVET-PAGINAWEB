@@ -49,7 +49,7 @@ export function ProductCard({ producto }: ProductCardProps) {
           </h3>
         </Link>
         <p className="font-body text-sm text-muted-foreground">{producto.descripcion}</p>
-        <div className="mt-auto flex items-center justify-between pt-2">
+        <div className="mt-auto flex flex-col gap-3 pt-2">
           <div className="flex items-baseline gap-2">
             <span className="font-body text-xl font-bold text-primary">
               {formatPrecio(producto.precio)}
@@ -63,15 +63,19 @@ export function ProductCard({ producto }: ProductCardProps) {
           <button
             type="button"
             onClick={handleAgregar}
-            aria-label={`Agregar ${producto.nombre} al carrito`}
-            className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+            aria-label={`Añadir ${producto.nombre} al carrito`}
+            className={`flex w-full items-center justify-center gap-2 rounded-full py-2.5 font-body text-sm font-bold transition-colors ${
               agregado ? "bg-green-500 text-white" : "bg-accent text-secondary hover:opacity-90"
             }`}
           >
             {agregado ? (
-              <Check className="h-5 w-5" strokeWidth={2} />
+              <>
+                <Check className="h-4 w-4" strokeWidth={2} /> Añadido
+              </>
             ) : (
-              <ShoppingCart className="h-5 w-5" strokeWidth={1.75} />
+              <>
+                <ShoppingCart className="h-4 w-4" strokeWidth={1.75} /> Añadir al carrito
+              </>
             )}
           </button>
         </div>

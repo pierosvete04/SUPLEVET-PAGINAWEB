@@ -36,48 +36,48 @@ export function Footer() {
           height={34}
         />
 
-        <div className="mt-10 flex flex-col gap-10 md:flex-row md:items-start md:justify-between">
-          <div className="flex flex-col gap-10 sm:flex-row sm:gap-16">
-            <div>
-              <p className="font-impact text-sm tracking-wide text-accent">MENÚ</p>
-              <ul className="mt-4 flex flex-col gap-2 font-body text-sm">
-                {menuLinks.map((link) => (
-                  <li key={link.href}>
-                    <Link href={link.href} className="hover:text-accent">
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div>
-              <p className="font-impact text-sm tracking-wide text-accent">POLÍTICAS</p>
-              <ul className="mt-4 flex flex-col gap-2 font-body text-sm">
-                {policyLinks.map((link) => (
-                  <li key={link.href}>
-                    <Link href={link.href} className="hover:text-accent">
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+        <div className="mt-10 grid grid-cols-1 gap-10 sm:grid-cols-3">
+          <div>
+            <p className="font-impact text-sm tracking-wide text-accent">MENÚ</p>
+            <ul className="mt-4 flex flex-col gap-2 font-body text-sm">
+              {menuLinks.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="hover:text-accent">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
           </div>
 
-          <Link
-            href="/legal/libro-de-reclamaciones"
-            aria-label="Libro de Reclamaciones"
-            className="shrink-0 self-start transition-opacity hover:opacity-80 md:self-center"
-          >
-            <Image
-              src="/icons/libro-reclamaciones-icon.png"
-              alt="Libro de Reclamaciones"
-              width={193}
-              height={132}
-              className="h-[110px] w-auto object-contain"
-            />
-          </Link>
+          <div>
+            <p className="font-impact text-sm tracking-wide text-accent">POLÍTICAS</p>
+            <ul className="mt-4 flex flex-col gap-2 font-body text-sm">
+              {policyLinks.map((link) => (
+                <li key={link.href}>
+                  <Link href={link.href} className="hover:text-accent">
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <Link
+              href="/legal/libro-de-reclamaciones"
+              aria-label="Libro de Reclamaciones"
+              className="inline-block transition-opacity hover:opacity-80"
+            >
+              <Image
+                src="/icons/libro-reclamaciones-icon.png"
+                alt="Libro de Reclamaciones"
+                width={193}
+                height={132}
+                className="h-[110px] w-auto object-contain"
+              />
+            </Link>
+          </div>
         </div>
 
         <div className="mt-10 flex justify-center gap-3">
