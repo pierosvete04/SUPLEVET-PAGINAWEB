@@ -7,21 +7,45 @@
 const STORAGE_BASE =
   "https://bcahhdszzwearqaafhpa.supabase.co/storage/v1/object/public/productos-web-fotos";
 
+export type CategoriaProducto = "producto" | "combo";
+
 export interface ProductoCombo {
   slug: string;
   nombre: string;
   descripcion: string;
+  categoria: CategoriaProducto;
   precio: number;
   precioComparacion: number;
   imagen: string;
   descuentoPorcentaje: number;
 }
 
-export const combos: ProductoCombo[] = [
+export const productos: ProductoCombo[] = [
+  {
+    slug: "suplevet-150g",
+    nombre: "Suplevet 150g",
+    descripcion: "Suplemento hiperproteico para uso veterinario.",
+    categoria: "producto",
+    precio: 99.9,
+    precioComparacion: 99.9,
+    imagen: `${STORAGE_BASE}/suplevet-150g/hero-estudio.png`,
+    descuentoPorcentaje: 0,
+  },
+  {
+    slug: "suplevet-250g",
+    nombre: "Suplevet 250g",
+    descripcion: "Mayor contenido para tratamientos prolongados.",
+    categoria: "producto",
+    precio: 139.99,
+    precioComparacion: 139.99,
+    imagen: `${STORAGE_BASE}/suplevet-250g/hero-estudio.png`,
+    descuentoPorcentaje: 0,
+  },
   {
     slug: "combo-mix",
     nombre: "Combo Mix (150g + 250g)",
     descripcion: "Una bolsa de cada presentación, ideal para probar y abastecerte.",
+    categoria: "combo",
     precio: 215.9,
     precioComparacion: 239.89,
     imagen: `${STORAGE_BASE}/combo-mix/hero-estudio.png`,
@@ -31,6 +55,7 @@ export const combos: ProductoCombo[] = [
     slug: "combo-150g-x2",
     nombre: "Combo 150g x2",
     descripcion: "Dos bolsas de 150g con descuento especial.",
+    categoria: "combo",
     precio: 169.9,
     precioComparacion: 199.8,
     imagen: `${STORAGE_BASE}/combo-150g-x2/hero-estudio.png`,
@@ -40,12 +65,15 @@ export const combos: ProductoCombo[] = [
     slug: "combo-250g-x2",
     nombre: "Combo 250g x2",
     descripcion: "Máximo ahorro para el cuidado continuo de tu mascota.",
+    categoria: "combo",
     precio: 259.9,
     precioComparacion: 279.98,
     imagen: `${STORAGE_BASE}/combo-250g-x2/hero-estudio.png`,
     descuentoPorcentaje: 7,
   },
 ];
+
+export const combos = productos.filter((p) => p.categoria === "combo");
 
 export const presentaciones = {
   g150: {
