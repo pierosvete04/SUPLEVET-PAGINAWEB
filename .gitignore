@@ -28,3 +28,6 @@ next-env.d.ts
 # staging local de fotos de producto — ya subidas a Supabase Storage (PLAN.md 8.7),
 # esto es solo respaldo local, no hace falta versionarlo (20MB+ de binarios)
 /assets-fuente
+
+.vercel
+.env*

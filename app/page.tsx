@@ -1,18 +1,9 @@
-import Image from "next/image";
-
-// Placeholder de Fase 0 — confirma que Next.js, Tailwind y los tokens de marca
-// funcionan correctamente. El diseño real del Home (basado en los prompts de
-// frontend/01-home.md y las pantallas de Stitch) se construye en la Fase 7.
+// Placeholder — el Home real (hero de video, combos, showcase, etc.) se
+// construye en la Fase 7 siguiendo frontend/01-home.md y las pantallas de Stitch.
+// Header/Footer/AnnouncementBar ya viven en app/layout.tsx, no se repiten acá.
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-6 bg-background px-mobile-margin text-center">
-      <Image
-        src="/logos/logo-color-horizontal.png"
-        alt="Suplevet"
-        width={280}
-        height={60}
-        priority
-      />
+    <div className="flex min-h-[70vh] flex-col items-center justify-center gap-6 bg-background px-mobile-margin py-section-y text-center">
       <p className="font-impact text-sky text-lg tracking-wide">
         SUPLEMENTO NUTRICIONAL FUNCIONAL
       </p>
@@ -20,7 +11,8 @@ export default function Home() {
         Tu mascota merece lo mejor por dentro
       </h1>
       <p className="max-w-xl font-body text-muted-foreground">
-        Setup de Next.js + Tailwind + tokens de marca — Fase 0 completa.
+        Fórmula veterinaria para perros y gatos. Inmunidad, digestión, energía y pelaje en un solo
+        producto.
       </p>
       <div className="flex gap-4">
         <button className="rounded-full bg-primary px-6 py-3 font-body font-bold text-primary-foreground">
@@ -30,6 +22,6 @@ export default function Home() {
           ¿Cómo funciona?
         </button>
       </div>
-    </main>
+    </div>
   );
 }

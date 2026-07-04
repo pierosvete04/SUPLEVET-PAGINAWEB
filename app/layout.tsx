@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { Bebas_Neue, DM_Sans, Fraunces } from "next/font/google";
 import "./globals.css";
+import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
+import { Header } from "@/components/layout/Header";
+import { Footer } from "@/components/layout/Footer";
+import { WhatsAppFloat } from "@/components/layout/WhatsAppFloat";
 
 // Manier Bold es la fuente de marca real (PLAN.md sección 2), pero no está
 // disponible en Google Fonts y todavía no se recibieron los archivos licenciados.
@@ -38,9 +42,13 @@ export default function RootLayout({
   return (
     <html lang="es">
       <body
-        className={`${fontDisplay.variable} ${fontImpact.variable} ${fontBody.variable} antialiased`}
+        className={`${fontDisplay.variable} ${fontImpact.variable} ${fontBody.variable} flex min-h-screen flex-col antialiased`}
       >
-        {children}
+        <AnnouncementBar />
+        <Header />
+        <main className="flex-1">{children}</main>
+        <Footer />
+        <WhatsAppFloat />
       </body>
     </html>
   );
