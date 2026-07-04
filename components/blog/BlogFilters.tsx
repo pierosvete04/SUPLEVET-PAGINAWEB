@@ -1,0 +1,54 @@
+"use client";
+
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { productos } from "@/lib/data/productos-temp";
+
+// Filtros como estado de la URL (?producto=&orden=) — se puede compartir el
+// link ya filtrado, y la pagina sigue siendo un Server Component (SEO).
+export function BlogFilters() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  function updateParam(key: string, value: string) {
+    const params = new URLSearchParams(searchParams.toString());
+    if (value) params.set(key, value);
+    else params.delete(key);
+    router.push(`${pathname}?${params.toString()}`);
+  }
+
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-4">
+      <div>
+        <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
+          Tipo de producto
+        </label>
+        <select
+          defaultValue={searchParams.get("producto") ?? ""}
+          onChange={(e) => updateParam("producto", e.target.value)}
+          className="rounded-lg border border-border bg-white px-4 py-2.5 font-body text-sm text-secondary"
+        >
+          <option value="">Todos</option>
+          {productos.map((p) => (
+            <option key={p.slug} value={p.slug}>
+              {p.nombre}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
+          Ordenar por
+        </label>
+        <select
+          defaultValue={searchParams.get("orden") ?? "recientes"}
+          onChange={(e) => updateParam("orden", e.target.value)}
+          className="rounded-lg border border-border bg-white px-4 py-2.5 font-body text-sm text-secondary"
+        >
+          <option value="recientes">Más recientes</option>
+          <option value="antiguos">Más antiguos</option>
+        </select>
+      </div>
+    </div>
+  );
+}
