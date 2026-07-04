@@ -5,9 +5,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { Menu, X, ShoppingCart, User } from "lucide-react";
 import { mainNav, siteConfig, whatsappLink } from "@/lib/site-config";
+import { useCart } from "@/lib/cart/CartContext";
 
 export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { totalItems } = useCart();
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-white">
@@ -42,8 +44,13 @@ export function Header() {
           >
             ¿Eres veterinario? Escríbenos aquí
           </a>
-          <Link href="/carrito" aria-label="Carrito" className="text-secondary">
+          <Link href="/carrito" aria-label="Carrito" className="relative text-secondary">
             <ShoppingCart className="h-6 w-6" strokeWidth={1.75} />
+            {totalItems > 0 && (
+              <span className="absolute -right-2 -top-2 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                {totalItems}
+              </span>
+            )}
           </Link>
           <a
             href={siteConfig.portalClientesUrl}
@@ -77,6 +84,7 @@ export function Header() {
             </a>
             <Link href="/carrito" className="flex items-center gap-2">
               <ShoppingCart className="h-5 w-5" strokeWidth={1.75} /> Carrito
+              {totalItems > 0 && ` (${totalItems})`}
             </Link>
             <a
               href={whatsappLink(

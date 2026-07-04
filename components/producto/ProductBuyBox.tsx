@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Minus, Plus, Gift, Truck } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { Minus, Plus, Gift, Truck, Check } from "lucide-react";
 import { formatPrecio, type ProductoCombo } from "@/lib/data/productos-temp";
+import { useCart } from "@/lib/cart/CartContext";
 
 interface ProductBuyBoxProps {
   producto: ProductoCombo;
@@ -10,6 +12,26 @@ interface ProductBuyBoxProps {
 
 export function ProductBuyBox({ producto }: ProductBuyBoxProps) {
   const [cantidad, setCantidad] = useState(1);
+  const [agregado, setAgregado] = useState(false);
+  const { addItem } = useCart();
+  const router = useRouter();
+
+  function handleAgregar() {
+    addItem(
+      { slug: producto.slug, nombre: producto.nombre, precio: producto.precio, imagen: producto.imagen },
+      cantidad
+    );
+    setAgregado(true);
+    setTimeout(() => setAgregado(false), 1500);
+  }
+
+  function handleComprarAhora() {
+    addItem(
+      { slug: producto.slug, nombre: producto.nombre, precio: producto.precio, imagen: producto.imagen },
+      cantidad
+    );
+    router.push("/carrito");
+  }
 
   return (
     <div>
@@ -56,12 +78,24 @@ export function ProductBuyBox({ producto }: ProductBuyBoxProps) {
       <div className="mt-6 flex flex-col gap-3">
         <button
           type="button"
-          className="rounded-full bg-primary px-6 py-3 font-body font-bold text-primary-foreground transition-opacity hover:opacity-90"
+          onClick={handleAgregar}
+          className={`flex items-center justify-center gap-2 rounded-full px-6 py-3 font-body font-bold transition-colors ${
+            agregado
+              ? "bg-green-500 text-white"
+              : "bg-primary text-primary-foreground hover:opacity-90"
+          }`}
         >
-          Agregar al carrito
+          {agregado ? (
+            <>
+              <Check className="h-5 w-5" strokeWidth={2} /> Agregado
+            </>
+          ) : (
+            "Agregar al carrito"
+          )}
         </button>
         <button
           type="button"
+          onClick={handleComprarAhora}
           className="rounded-full border-2 border-secondary px-6 py-3 font-body font-bold text-secondary transition-colors hover:bg-secondary hover:text-white"
         >
           Comprar ahora

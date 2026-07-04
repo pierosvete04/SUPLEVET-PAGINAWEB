@@ -5,6 +5,7 @@ import { AnnouncementBar } from "@/components/layout/AnnouncementBar";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { WhatsAppFloat } from "@/components/layout/WhatsAppFloat";
+import { CartProvider } from "@/lib/cart/CartContext";
 
 // Manier Bold es la fuente de marca real (PLAN.md sección 2), pero no está
 // disponible en Google Fonts y todavía no se recibieron los archivos licenciados.
@@ -44,11 +45,13 @@ export default function RootLayout({
       <body
         className={`${fontDisplay.variable} ${fontImpact.variable} ${fontBody.variable} flex min-h-screen flex-col antialiased`}
       >
-        <AnnouncementBar />
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
-        <WhatsAppFloat />
+        <CartProvider>
+          <AnnouncementBar />
+          <Header />
+          <main className="flex-1">{children}</main>
+          <Footer />
+          <WhatsAppFloat />
+        </CartProvider>
       </body>
     </html>
   );

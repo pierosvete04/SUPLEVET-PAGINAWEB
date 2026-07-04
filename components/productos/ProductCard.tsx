@@ -1,13 +1,31 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
-import { ShoppingCart } from "lucide-react";
+import { Check, ShoppingCart } from "lucide-react";
+import { useState } from "react";
 import { formatPrecio, type ProductoCombo } from "@/lib/data/productos-temp";
+import { useCart } from "@/lib/cart/CartContext";
 
 interface ProductCardProps {
   producto: ProductoCombo;
 }
 
 export function ProductCard({ producto }: ProductCardProps) {
+  const { addItem } = useCart();
+  const [agregado, setAgregado] = useState(false);
+
+  function handleAgregar() {
+    addItem({
+      slug: producto.slug,
+      nombre: producto.nombre,
+      precio: producto.precio,
+      imagen: producto.imagen,
+    });
+    setAgregado(true);
+    setTimeout(() => setAgregado(false), 1500);
+  }
+
   return (
     <div className="flex flex-col overflow-hidden rounded-xl bg-white shadow-[0_8px_30px_rgba(37,60,97,0.08)]">
       <Link href={`/productos/${producto.slug}`} className="relative block aspect-square bg-soft-gray">
@@ -44,10 +62,17 @@ export function ProductCard({ producto }: ProductCardProps) {
           </div>
           <button
             type="button"
+            onClick={handleAgregar}
             aria-label={`Agregar ${producto.nombre} al carrito`}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-secondary transition-opacity hover:opacity-90"
+            className={`flex h-10 w-10 items-center justify-center rounded-full transition-colors ${
+              agregado ? "bg-green-500 text-white" : "bg-accent text-secondary hover:opacity-90"
+            }`}
           >
-            <ShoppingCart className="h-5 w-5" strokeWidth={1.75} />
+            {agregado ? (
+              <Check className="h-5 w-5" strokeWidth={2} />
+            ) : (
+              <ShoppingCart className="h-5 w-5" strokeWidth={1.75} />
+            )}
           </button>
         </div>
       </div>
