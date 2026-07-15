@@ -11,6 +11,8 @@ interface ProductoWebRow {
   imagen: string;
   galeria: string[];
   descuento_porcentaje: number;
+  videos: string[];
+  shopify_product_id: string | null;
 }
 
 function mapRow(row: ProductoWebRow): ProductoCombo {
@@ -24,11 +26,13 @@ function mapRow(row: ProductoWebRow): ProductoCombo {
     imagen: row.imagen,
     galeria: row.galeria,
     descuentoPorcentaje: row.descuento_porcentaje,
+    videos: row.videos ?? [],
+    shopifyProductId: row.shopify_product_id,
   };
 }
 
 const FIELDS =
-  "slug, nombre, descripcion, categoria, precio, precio_comparacion, imagen, galeria, descuento_porcentaje";
+  "slug, nombre, descripcion, categoria, precio, precio_comparacion, imagen, galeria, descuento_porcentaje, videos, shopify_product_id";
 
 export async function getProductos(): Promise<ProductoCombo[]> {
   const supabase = await createClient();
@@ -61,7 +65,7 @@ export async function getPresentaciones() {
   const g150 = productos.find((p) => p.slug === "suplevet-150g");
   const g250 = productos.find((p) => p.slug === "suplevet-250g");
   return {
-    g150: g150 ? { nombre: g150.nombre, imagen: g150.imagen } : null,
-    g250: g250 ? { nombre: g250.nombre, imagen: g250.imagen } : null,
+    g150: g150 ?? null,
+    g250: g250 ?? null,
   };
 }

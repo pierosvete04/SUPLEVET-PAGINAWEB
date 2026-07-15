@@ -1,17 +1,16 @@
-// Franja superior desactivable (PLAN.md sección 16). Hoy son mensajes fijos;
-// cuando exista `site_settings` en Supabase (Fase 4), este componente pasa a
-// leer `activo`/`texto` de la base de datos en vez de la constante de abajo.
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 
-const MENSAJES = [
-  "📦 Envíos a todo el Perú",
-  "🐾 Especialistas en suplementos veterinarios",
-  "💳 Aceptamos todas las tarjetas",
-];
-
+// Franja superior de oferta (PLAN.md sección 5.1) — enlaza a la política de
+// envíos real (app/legal/envios), donde vive el detalle de zonas/tiempos/costos.
 export function AnnouncementBar() {
   return (
-    <div className="bg-secondary py-2 text-center font-body text-xs font-bold tracking-wide text-secondary-foreground md:text-sm">
-      {MENSAJES.join("   ·   ")}
-    </div>
+    <Link
+      href="/legal/envios"
+      className="flex items-center justify-center gap-1.5 bg-accent py-2 text-center font-body text-xs font-bold tracking-wide text-white transition-opacity hover:opacity-90 md:text-sm"
+    >
+      Envío GRATIS por compras desde S/.150 Lima Metropolitana (Aplican TyC)
+      <ArrowRight className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />
+    </Link>
   );
 }

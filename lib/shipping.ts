@@ -41,6 +41,17 @@ export function montoFaltanteParaGratis(zona: EnvioZona, subtotal: number): numb
   return Math.max(0, zona.monto_minimo_gratis - subtotal);
 }
 
+// La columna `pedidos.zona_envio` tiene un CHECK legado que solo acepta
+// 'lima' | 'costa_sierra' | 'selva' (agrupación previa a las 5 zonas actuales
+// de envio_zonas) — se deriva del nombre de la zona real al momento de
+// registrar el pedido, sin tocar el constraint existente en una tabla
+// compartida con otros sistemas.
+export function zonaEnvioSlug(nombreZona: string): "lima" | "costa_sierra" | "selva" {
+  if (nombreZona.includes("Lima") || nombreZona.includes("Callao")) return "lima";
+  if (/costa|sierra/i.test(nombreZona)) return "costa_sierra";
+  return "selva";
+}
+
 // Lista de departamentos para el select del checkout — Lima se divide en 3
 // zonas de envío reales (Metropolitana / Callao / Provincias), igual que en
 // _context/05_Suplevet_Shipping_Operations.md y en la semilla de envio_zonas.

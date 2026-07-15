@@ -20,14 +20,19 @@ interface CartContextValue {
   /** false hasta que se termina de leer localStorage — evita que páginas como
    * /checkout redirijan por "carrito vacío" antes de que cargue el real. */
   cargando: boolean;
+  /** Color de bandana elegido para el regalo (si aplica) — null si no ha elegido. */
+  colorRegaloSeleccionado: string | null;
+  setColorRegaloSeleccionado: (color: string | null) => void;
 }
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
 const STORAGE_KEY = "suplevet_carrito";
+const STORAGE_KEY_REGALO = "suplevet_color_regalo";
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [hidratado, setHidratado] = useState(false);
+  const [colorRegaloSeleccionado, setColorRegaloSeleccionadoState] = useState<string | null>(null);
 
   // Carga inicial desde localStorage — el carrito es solo del navegador por
   // ahora (Fase 2 lo persiste en Supabase junto con el checkout real).
@@ -35,6 +40,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       const guardado = window.localStorage.getItem(STORAGE_KEY);
       if (guardado) setItems(JSON.parse(guardado));
+      const colorGuardado = window.localStorage.getItem(STORAGE_KEY_REGALO);
+      if (colorGuardado) setColorRegaloSeleccionadoState(colorGuardado);
     } catch {
       // localStorage no disponible o dato corrupto — se empieza con carrito vacío
     }
@@ -45,6 +52,12 @@ export function CartProvider({ children }: { children: ReactNode }) {
     if (!hidratado) return;
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }, [items, hidratado]);
+
+  function setColorRegaloSeleccionado(color: string | null) {
+    setColorRegaloSeleccionadoState(color);
+    if (color) window.localStorage.setItem(STORAGE_KEY_REGALO, color);
+    else window.localStorage.removeItem(STORAGE_KEY_REGALO);
+  }
 
   function addItem(item: Omit<CartItem, "cantidad">, cantidad = 1) {
     setItems((prev) => {
@@ -83,6 +96,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         subtotal,
         totalItems,
         cargando: !hidratado,
+        colorRegaloSeleccionado,
+        setColorRegaloSeleccionado,
       }}
     >
       {children}

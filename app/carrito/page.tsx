@@ -34,7 +34,7 @@ export default function CarritoPage() {
           {items.map((item) => (
             <div
               key={item.slug}
-              className="flex items-center gap-4 rounded-xl border border-border p-4"
+              className="flex items-center gap-4 rounded-md border border-border p-4"
             >
               <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-lg bg-soft-gray">
                 <Image src={item.imagen} alt={item.nombre} fill className="object-cover" sizes="80px" />
@@ -84,7 +84,7 @@ export default function CarritoPage() {
         </div>
 
         <div className="flex flex-col gap-4">
-          <div className="rounded-xl border border-border p-5">
+          <div className="rounded-md border border-border p-5">
             <div className="flex justify-between font-body text-sm text-secondary">
               <span>Subtotal</span>
               <span className="font-bold">{formatPrecio(subtotal)}</span>
@@ -93,19 +93,10 @@ export default function CarritoPage() {
               El envío se calcula en el checkout según tu dirección.
             </p>
 
-            <div className="mt-4 flex gap-2">
-              <input
-                type="text"
-                placeholder="¿Tienes un código de descuento?"
-                className="w-full rounded-full border border-border px-4 py-2 font-body text-sm"
-              />
-              <button
-                type="button"
-                className="shrink-0 rounded-full bg-secondary px-4 py-2 font-body text-sm font-bold text-white"
-              >
-                Aplicar
-              </button>
-            </div>
+            <p className="mt-4 font-body text-xs text-muted-foreground">
+              ¿Tienes un código de descuento o de canje de SuplePoints? Lo aplicas en el siguiente
+              paso, al confirmar tu pedido.
+            </p>
 
             <Link
               href="/checkout"

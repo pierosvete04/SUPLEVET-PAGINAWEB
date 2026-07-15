@@ -33,6 +33,8 @@ export interface ProductoWeb {
   stock: number | null;
   activo: boolean;
   orden: number;
+  videos: string[];
+  shopify_product_id: string | null;
 }
 
 interface ProductoFormProps {
@@ -55,6 +57,8 @@ const VACIO: Omit<ProductoWeb, "id"> = {
   stock: null,
   activo: true,
   orden: 0,
+  videos: [],
+  shopify_product_id: "",
 };
 
 export function ProductoForm({ producto, onClose, onSaved }: ProductoFormProps) {
@@ -91,6 +95,28 @@ export function ProductoForm({ producto, onClose, onSaved }: ProductoFormProps) 
       galeria: f.galeria.filter((g) => g !== url),
       imagen: f.imagen === url ? f.galeria.find((g) => g !== url) ?? "" : f.imagen,
     }));
+  }
+
+  async function subirVideos(files: FileList) {
+    setSubiendo(true);
+    const supabase = createClient();
+    const urls: string[] = [];
+    for (const file of Array.from(files)) {
+      const path = `${form.slug || "sin-slug"}/${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("productos-web-videos")
+        .upload(path, file);
+      if (!uploadError) {
+        const { data } = supabase.storage.from("productos-web-videos").getPublicUrl(path);
+        urls.push(data.publicUrl);
+      }
+    }
+    setForm((f) => ({ ...f, videos: [...f.videos, ...urls] }));
+    setSubiendo(false);
+  }
+
+  function quitarVideo(url: string) {
+    setForm((f) => ({ ...f, videos: f.videos.filter((v) => v !== url) }));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -176,6 +202,17 @@ export function ProductoForm({ producto, onClose, onSaved }: ProductoFormProps) 
           </div>
         </div>
 
+        <div className="grid gap-1.5">
+          <Label htmlFor="p-shopify-id">
+            ID de producto en Shopify (opcional — para vincular reseñas de este producto)
+          </Label>
+          <Input
+            id="p-shopify-id"
+            value={form.shopify_product_id ?? ""}
+            onChange={(e) => setForm((f) => ({ ...f, shopify_product_id: e.target.value }))}
+          />
+        </div>
+
         <div className="grid grid-cols-3 gap-4">
           <div className="grid gap-1.5">
             <Label htmlFor="p-precio">Precio (S/.)</Label>
@@ -239,6 +276,35 @@ export function ProductoForm({ producto, onClose, onSaved }: ProductoFormProps) 
                       Principal
                     </span>
                   )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="grid gap-1.5">
+          <Label htmlFor="p-videos">Videos ("Mira a Suplevet en acción")</Label>
+          <Input
+            id="p-videos"
+            type="file"
+            accept="video/*"
+            multiple
+            disabled={subiendo}
+            onChange={(e) => e.target.files && subirVideos(e.target.files)}
+          />
+          {subiendo && <p className="text-xs text-muted-foreground">Subiendo…</p>}
+          {form.videos.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {form.videos.map((url) => (
+                <div key={url} className="relative h-16 w-16 overflow-hidden rounded-lg border bg-black">
+                  <video src={url} className="h-full w-full object-cover" muted />
+                  <button
+                    type="button"
+                    onClick={() => quitarVideo(url)}
+                    className="absolute right-0 top-0 rounded-bl bg-black/60 p-0.5 text-white"
+                  >
+                    <X className="h-3 w-3" />
+                  </button>
                 </div>
               ))}
             </div>

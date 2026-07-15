@@ -17,6 +17,9 @@
     --card: 0 0% 100%;
     --card-foreground: 217 45% 15%;
 
+    --popover: 0 0% 100%;
+    --popover-foreground: 217 45% 15%;
+
     --primary: 26 80% 59%;
     --primary-foreground: 0 0% 100%;
 
@@ -72,4 +75,15 @@
   .animate-marquee {
     animation: none;
   }
+}
+
+/* Carruseles horizontales con scroll táctil (AntesDespues, ComoSePrepara) sin
+   la barra de scroll del navegador — el desplazamiento sigue funcionando con
+   mouse/touch, solo se oculta el indicador visual. */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
 }

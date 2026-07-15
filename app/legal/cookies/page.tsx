@@ -3,7 +3,7 @@ import { LegalDoc } from "@/components/legal/LegalDoc";
 import { BorradorNotice } from "@/components/legal/BorradorNotice";
 
 export const metadata: Metadata = {
-  title: "Política de Cookies — Suplevet",
+  title: "Política de Cookies",
   description: "Cómo usamos cookies y tecnologías similares en este sitio.",
 };
 

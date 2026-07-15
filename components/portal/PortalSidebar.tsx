@@ -1,0 +1,137 @@
+"use client";
+
+import Image from "next/image";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { NOMBRE_NIVEL } from "@/lib/data/portal/logros";
+
+interface PortalSidebarUsuario {
+  nombre: string;
+  email: string;
+  nivel: string;
+  saldo: number;
+}
+
+const NAV_SECTIONS = [
+  {
+    label: "Principal",
+    items: [
+      { title: "Inicio", url: "/mi-cuenta", icon: "home" },
+      { title: "SuplePoints", url: "/mi-cuenta/puntos", icon: "star", showSaldo: true },
+    ],
+  },
+  {
+    label: "Mis Cosas",
+    items: [
+      { title: "Mis Mascotas", url: "/mi-cuenta/mascotas", icon: "pets" },
+      { title: "Mis Pedidos", url: "/mi-cuenta/pedidos", icon: "shopping_bag" },
+    ],
+  },
+  {
+    label: "Comunidad",
+    items: [
+      { title: "Ranking", url: "/mi-cuenta/ranking", icon: "leaderboard" },
+      { title: "Cursos", url: "/mi-cuenta/cursos", icon: "school" },
+      { title: "Alianzas", url: "/mi-cuenta/alianzas", icon: "handshake" },
+    ],
+  },
+  {
+    label: "Cuenta",
+    items: [{ title: "Mi Perfil", url: "/mi-cuenta/perfil", icon: "manage_accounts" }],
+  },
+];
+
+function iniciales(nombre: string): string {
+  const base = nombre.trim() || "?";
+  return base
+    .split(" ")
+    .map((p) => p[0])
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+}
+
+function esActivo(pathname: string, url: string): boolean {
+  if (url === "/mi-cuenta") return pathname === "/mi-cuenta";
+  return pathname.startsWith(url);
+}
+
+export function PortalSidebar({ usuario }: { usuario: PortalSidebarUsuario }) {
+  const pathname = usePathname() ?? "";
+  const router = useRouter();
+
+  async function handleLogout() {
+    await createClient().auth.signOut();
+    router.push("/mi-cuenta/login");
+    router.refresh();
+  }
+
+  return (
+    <aside className="portal-sidebar print:hidden">
+      <div className="p-4">
+        <Link href="/mi-cuenta" className="flex items-center gap-2.5">
+          <Image
+            src="/logos/icon-only/icon-outline-celeste.png"
+            alt="Suplevet"
+            width={36}
+            height={36}
+            className="shrink-0"
+          />
+          <span className="font-display text-xl font-semibold">Suplevet</span>
+        </Link>
+      </div>
+
+      <Link
+        href="/mi-cuenta/perfil"
+        className="mx-2 mb-2 flex items-center gap-3 rounded-xl p-4 transition-colors hover:bg-white/5"
+      >
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-portal-orange font-bold text-white">
+          {iniciales(usuario.nombre)}
+        </div>
+        <div className="min-w-0 flex-1">
+          <div className="truncate text-sm font-semibold text-white">{usuario.nombre || "Sin nombre"}</div>
+          <div className="mt-0.5 text-xs font-medium text-portal-orange">
+            {NOMBRE_NIVEL[usuario.nivel] ?? usuario.nivel}
+          </div>
+        </div>
+        <span className="material-symbols-rounded text-[18px] text-white/50">edit</span>
+      </Link>
+
+      <nav className="flex-1 space-y-1 overflow-y-auto p-3">
+        {NAV_SECTIONS.map((seccion) => (
+          <div key={seccion.label}>
+            <div className="mb-2 mt-4 px-3 text-xs font-bold uppercase tracking-wider text-white/40">
+              {seccion.label}
+            </div>
+            {seccion.items.map((item) => {
+              const activo = esActivo(pathname, item.url);
+              return (
+                <Link key={item.url} href={item.url} className={`portal-nav-item ${activo ? "active" : ""}`}>
+                  <span className="material-symbols-rounded text-[20px]">{item.icon}</span>
+                  <span className="flex-1">{item.title}</span>
+                  {item.showSaldo && usuario.saldo > 0 && (
+                    <span className="rounded-full bg-gradient-to-br from-portal-orange to-portal-orange-dark px-2 py-0.5 text-[10px] font-bold text-white">
+                      {usuario.saldo.toLocaleString()}
+                    </span>
+                  )}
+                </Link>
+              );
+            })}
+          </div>
+        ))}
+      </nav>
+
+      <div className="border-t border-white/10 p-4">
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm text-white/50 transition-colors portal-sidebar-logout"
+        >
+          <span className="material-symbols-rounded text-[18px]">logout</span>
+          Cerrar sesión
+        </button>
+      </div>
+    </aside>
+  );
+}

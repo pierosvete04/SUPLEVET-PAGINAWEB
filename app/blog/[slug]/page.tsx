@@ -5,7 +5,9 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { getPostBySlug, getRelatedPosts, formatFechaPost } from "@/lib/data/blog";
 import { getProductoBySlug } from "@/lib/data/productos";
+import { getConfiguracionSitio } from "@/lib/data/configuracion";
 import { whatsappLink, siteConfig } from "@/lib/site-config";
+import { createClient } from "@/lib/supabase/server";
 
 interface BlogPostPageProps {
   params: Promise<{ slug: string }>;
@@ -16,9 +18,30 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
   const post = await getPostBySlug(slug);
   if (!post) return {};
 
+  const titulo = post.meta_title || post.titulo;
+  const tituloCompleto = `${titulo} — Suplevet`;
+  const descripcion = post.meta_description || post.resumen || undefined;
+  const url = `${siteConfig.siteUrl}/blog/${post.slug}`;
+
   return {
-    title: post.meta_title || `${post.titulo} — Suplevet`,
-    description: post.meta_description || post.resumen || undefined,
+    title: titulo,
+    description: descripcion,
+    alternates: { canonical: url },
+    openGraph: {
+      type: "article",
+      title: tituloCompleto,
+      description: descripcion,
+      url,
+      publishedTime: post.fecha_publicacion,
+      authors: post.autor ? [post.autor] : undefined,
+      images: post.imagen_destacada ? [{ url: post.imagen_destacada, width: 1200, height: 630 }] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: tituloCompleto,
+      description: descripcion,
+      images: post.imagen_destacada ? [post.imagen_destacada] : undefined,
+    },
   };
 }
 
@@ -33,11 +56,34 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     notFound();
   }
 
-  const relacionados = await getRelatedPosts(post.slug, post.producto_slug);
-  const producto = post.producto_slug ? await getProductoBySlug(post.producto_slug) : null;
+  const [relacionados, producto, config] = await Promise.all([
+    getRelatedPosts(post.slug, post.producto_slug),
+    post.producto_slug ? getProductoBySlug(post.producto_slug) : Promise.resolve(null),
+    getConfiguracionSitio(await createClient()),
+  ]);
+  const whatsappB2C = config?.whatsapp_b2c || siteConfig.whatsappB2C;
+
+  // JSON-LD (schema.org BlogPosting) — le da a Google el contexto explícito
+  // del artículo (autor, fecha, imagen) para habilitar resultados enriquecidos.
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    headline: post.titulo,
+    description: post.meta_description || post.resumen || undefined,
+    image: post.imagen_destacada || undefined,
+    datePublished: post.fecha_publicacion,
+    author: { "@type": "Person", name: post.autor || "Equipo Suplevet" },
+    publisher: {
+      "@type": "Organization",
+      name: "Suplevet",
+      logo: { "@type": "ImageObject", url: `${siteConfig.siteUrl}/logos/icon-only/icon-celeste.png` },
+    },
+    mainEntityOfPage: { "@type": "WebPage", "@id": `${siteConfig.siteUrl}/blog/${post.slug}` },
+  };
 
   return (
     <article className="mx-auto grid max-w-container grid-cols-1 gap-12 px-mobile-margin py-section-y md:px-gutter lg:grid-cols-12">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="lg:col-span-8">
         <Link
           href="/blog"
@@ -47,7 +93,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         </Link>
 
         {post.imagen_destacada && (
-          <div className="relative mb-8 h-[280px] overflow-hidden rounded-2xl md:h-[400px]">
+          <div className="relative mb-8 h-[280px] overflow-hidden rounded-md md:h-[400px]">
             <Image
               src={post.imagen_destacada}
               alt={post.titulo}
@@ -72,7 +118,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           dangerouslySetInnerHTML={{ __html: post.contenido_html }}
         />
 
-        <div className="mt-12 flex flex-col items-center justify-between gap-5 rounded-2xl bg-secondary p-6 md:flex-row md:p-8">
+        <div className="mt-12 flex flex-col items-center justify-between gap-5 rounded-md bg-secondary p-6 md:flex-row md:p-8">
           <div>
             <h3 className="font-display text-lg font-bold text-white">
               {producto ? `¿Quieres ver ${producto.nombre}?` : "¿Quieres conocer nuestros productos?"}
@@ -91,7 +137,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
         <div className="mt-4 text-center">
           <a
-            href={whatsappLink(siteConfig.whatsappB2C, `Hola, tengo una consulta sobre "${post.titulo}"`)}
+            href={whatsappLink(whatsappB2C, `Hola, tengo una consulta sobre "${post.titulo}"`)}
             target="_blank"
             rel="noopener noreferrer"
             className="font-body text-sm font-bold text-primary underline"
@@ -102,7 +148,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       </div>
 
       <aside className="lg:col-span-4">
-        <div className="sticky top-24 rounded-2xl bg-soft-gray p-6">
+        <div className="sticky top-24 rounded-md bg-soft-gray p-6">
           <h3 className="mb-5 font-display text-lg font-bold text-secondary">Más artículos</h3>
           <div className="flex flex-col gap-5">
             {relacionados.length > 0 ? (

@@ -18,12 +18,20 @@ interface NavMainProps {
 export function NavMain({ items }: NavMainProps) {
   const pathname = usePathname();
 
+  // El item activo es el que tenga el prefijo de ruta más largo que
+  // coincida — así "/mi-cuenta" (Inicio) no queda marcado junto con
+  // "/mi-cuenta/perfil" solo por ser un prefijo de este último.
+  const urlActiva = items
+    .map((item) => item.url)
+    .filter((url) => pathname === url || pathname?.startsWith(`${url}/`))
+    .sort((a, b) => b.length - a.length)[0];
+
   return (
     <SidebarGroup>
       <SidebarGroupContent className="flex flex-col gap-2">
         <SidebarMenu>
           {items.map((item) => {
-            const activo = pathname?.startsWith(item.url);
+            const activo = item.url === urlActiva;
             return (
               <SidebarMenuItem key={item.url}>
                 <SidebarMenuButton

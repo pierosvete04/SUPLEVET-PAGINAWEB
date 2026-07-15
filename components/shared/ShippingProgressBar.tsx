@@ -18,7 +18,7 @@ export function ShippingProgressBar({ subtotal, zona }: ShippingProgressBarProps
   const cumplido = faltante === 0;
 
   return (
-    <div className="rounded-xl bg-soft-gray p-4">
+    <div className="rounded-md bg-soft-gray p-4">
       <div className="flex items-center justify-between font-body text-xs font-bold text-secondary">
         <span>TÚ</span>
         <span>{formatPrecio(umbral)}</span>

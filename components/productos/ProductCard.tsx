@@ -9,9 +9,12 @@ import { useCart } from "@/lib/cart/CartContext";
 
 interface ProductCardProps {
   producto: ProductoCombo;
+  /** Texto del botón de acción — "Añadir al carrito" en el catálogo, "Comprar
+   * ahora" en secciones de la home donde se busca una llamada más directa. */
+  ctaLabel?: string;
 }
 
-export function ProductCard({ producto }: ProductCardProps) {
+export function ProductCard({ producto, ctaLabel = "Añadir al carrito" }: ProductCardProps) {
   const { addItem } = useCart();
   const [agregado, setAgregado] = useState(false);
 
@@ -27,8 +30,17 @@ export function ProductCard({ producto }: ProductCardProps) {
   }
 
   return (
-    <div className="flex flex-col overflow-hidden rounded-xl bg-white shadow-[0_8px_30px_rgba(37,60,97,0.08)]">
-      <Link href={`/productos/${producto.slug}`} className="relative block aspect-square bg-soft-gray">
+    <div className="relative flex flex-col overflow-hidden rounded-[var(--radius-card)] bg-white shadow-[0_8px_30px_rgba(37,60,97,0.08)]">
+      {/* Link "estirado" — cubre toda la tarjeta para que cualquier click fuera
+          del botón de carrito navegue al producto. El contenido va con
+          pointer-events-none y solo el botón recupera pointer-events-auto. */}
+      <Link
+        href={`/productos/${producto.slug}`}
+        aria-label={`Ver ${producto.nombre}`}
+        className="absolute inset-0 z-0"
+      />
+
+      <div className="pointer-events-none relative aspect-square bg-soft-gray">
         {producto.descuentoPorcentaje > 0 && (
           <span className="absolute left-3 top-3 z-10 rounded-full bg-primary px-3 py-1 font-body text-xs font-bold text-primary-foreground">
             -{producto.descuentoPorcentaje}%
@@ -41,21 +53,17 @@ export function ProductCard({ producto }: ProductCardProps) {
           className="object-cover"
           sizes="(min-width: 768px) 33vw, 100vw"
         />
-      </Link>
-      <div className="flex flex-1 flex-col gap-3 p-5">
-        <Link href={`/productos/${producto.slug}`}>
-          <h3 className="font-display text-lg font-bold text-secondary hover:text-primary">
-            {producto.nombre}
-          </h3>
-        </Link>
-        <p className="font-body text-sm text-muted-foreground">{producto.descripcion}</p>
-        <div className="mt-auto flex flex-col gap-3 pt-2">
+      </div>
+      <div className="pointer-events-none flex flex-1 flex-col gap-2 p-3.5">
+        <h3 className="font-display text-base font-bold text-secondary">{producto.nombre}</h3>
+        <p className="line-clamp-2 font-body text-xs text-muted-foreground">{producto.descripcion}</p>
+        <div className="mt-auto flex flex-col gap-2 pt-1">
           <div className="flex items-baseline gap-2">
-            <span className="font-body text-xl font-bold text-primary">
+            <span className="font-body text-lg font-bold text-primary">
               {formatPrecio(producto.precio)}
             </span>
             {producto.precioComparacion > producto.precio && (
-              <span className="font-body text-sm text-muted-foreground line-through">
+              <span className="font-body text-xs text-muted-foreground line-through">
                 {formatPrecio(producto.precioComparacion)}
               </span>
             )}
@@ -64,17 +72,19 @@ export function ProductCard({ producto }: ProductCardProps) {
             type="button"
             onClick={handleAgregar}
             aria-label={`Añadir ${producto.nombre} al carrito`}
-            className={`flex w-full items-center justify-center gap-2 rounded-full py-2.5 font-body text-sm font-bold transition-colors ${
-              agregado ? "bg-green-500 text-white" : "bg-accent text-secondary hover:opacity-90"
+            className={`pointer-events-auto relative z-10 flex w-full items-center justify-center gap-2 rounded-full py-3 font-body text-sm font-bold transition-opacity md:text-base ${
+              agregado
+                ? "bg-green-500 text-white"
+                : "bg-gradient-to-br from-accent to-portal-teal-mid text-secondary hover:opacity-90"
             }`}
           >
             {agregado ? (
               <>
-                <Check className="h-4 w-4" strokeWidth={2} /> Añadido
+                <Check className="h-5 w-5" strokeWidth={2} /> Añadido
               </>
             ) : (
               <>
-                <ShoppingCart className="h-4 w-4" strokeWidth={1.75} /> Añadir al carrito
+                <ShoppingCart className="h-5 w-5" strokeWidth={1.75} /> {ctaLabel}
               </>
             )}
           </button>

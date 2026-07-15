@@ -14,7 +14,7 @@ export function BlogCard({ post, productoNombre }: BlogCardProps) {
   return (
     <Link
       href={`/blog/${post.slug}`}
-      className="group flex flex-col overflow-hidden rounded-xl border border-border bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(37,60,97,0.12)]"
+      className="group flex flex-col overflow-hidden rounded-md border border-border bg-white transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_8px_24px_rgba(37,60,97,0.12)]"
     >
       <div className="relative h-44 w-full overflow-hidden bg-soft-gray">
         {post.imagen_destacada ? (

@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { CatalogoGrid } from "@/components/productos/CatalogoGrid";
+import { BannerCarousel } from "@/components/shared/BannerCarousel";
 import { getProductos } from "@/lib/data/productos";
+import { getBannersActivos } from "@/lib/banners";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = {
   title: "Productos Suplevet — Suplemento nutricional para mascotas",
@@ -10,10 +13,16 @@ export const metadata: Metadata = {
 
 export default async function ProductosPage() {
   const productos = await getProductos();
+  const banners = await getBannersActivos(await createClient(), "productos");
 
   return (
-    <div className="bg-background py-section-y">
+    <div className="bg-background pb-section-y pt-8 md:pt-10">
       <div className="mx-auto max-w-container px-mobile-margin text-center md:px-gutter">
+        {banners.length > 0 && (
+          <div className="mb-10 text-left">
+            <BannerCarousel banners={banners} />
+          </div>
+        )}
         <h1 className="font-display text-4xl font-bold text-secondary md:text-5xl">
           Catálogo de Productos
         </h1>

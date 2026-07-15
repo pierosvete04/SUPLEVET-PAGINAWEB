@@ -1,0 +1,12 @@
+import { createClient } from "@/lib/supabase/server";
+import { MascotasGrid } from "@/components/portal/mascotas/MascotasGrid";
+
+export default async function PortalMascotasPage() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return null;
+
+  return <MascotasGrid clienteId={user.id} />;
+}

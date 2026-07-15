@@ -48,6 +48,36 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
     setActualizando(false);
   }
 
+  // A diferencia de actualizarCampo(), este pasa por una ruta API en vez de
+  // actualizar la tabla directo desde el navegador, porque acá además hay que
+  // mandar el correo de pago_confirmado/pago_error — y RESEND_API_KEY no
+  // puede vivir en el cliente. La ruta reutiliza la misma RLS ("Solo admin
+  // actualiza pedidos") así que la autorización no cambia.
+  async function actualizarEstadoPago(estado: "pagado" | "rechazado") {
+    setActualizando(true);
+    await fetch(`/api/admin/pedidos/${id}/estado-pago`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ estado }),
+    });
+    await cargar();
+    setActualizando(false);
+  }
+
+  // Igual que actualizarEstadoPago(): al marcar "entregado" la ruta además
+  // acredita SuplePoints (a la entrega, no al pago — evita fraude por
+  // devolución inmediata) y manda el correo correspondiente.
+  async function actualizarEstadoPreparacion(estado: string) {
+    setActualizando(true);
+    await fetch(`/api/admin/pedidos/${id}/estado-preparacion`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ estado }),
+    });
+    await cargar();
+    setActualizando(false);
+  }
+
   if (cargando) return <p className="text-sm text-muted-foreground">Cargando…</p>;
   if (!pedido) return <p className="text-sm text-muted-foreground">Pedido no encontrado.</p>;
 
@@ -135,14 +165,14 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
             <CardContent className="flex gap-2">
               <Button
                 disabled={actualizando}
-                onClick={() => actualizarCampo("estado_pago", "pagado")}
+                onClick={() => actualizarEstadoPago("pagado")}
                 className="flex-1 bg-green-600 hover:bg-green-600/90"
               >
                 Confirmar
               </Button>
               <Button
                 disabled={actualizando}
-                onClick={() => actualizarCampo("estado_pago", "rechazado")}
+                onClick={() => actualizarEstadoPago("rechazado")}
                 variant="destructive"
                 className="flex-1"
               >
@@ -159,7 +189,7 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
               <Select
                 value={pedido.estado_preparacion}
                 disabled={actualizando}
-                onValueChange={(valor) => actualizarCampo("estado_preparacion", valor)}
+                onValueChange={actualizarEstadoPreparacion}
               >
                 <SelectTrigger>
                   <SelectValue />

@@ -1,38 +1,38 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { ImageOff } from "lucide-react";
-import { HillCurve } from "@/components/ui/HillCurve";
+import { InfiniteCarousel } from "@/components/shared/InfiniteCarousel";
+import type { ResultadoReal } from "@/lib/resultados-reales";
 
-// Pendiente operativo (PLAN.md sección 15): recolectar fotos/testimonios
-// reales de clientes. Mientras tanto se muestra un placeholder honesto (no se
-// inventan fotos de "antes/después" con imágenes que no son reales).
-interface Caso {
-  id: string;
-  semanas: number;
-  titulo: string;
+interface AntesDespuesProps {
+  resultados: ResultadoReal[];
 }
 
-const casos: Caso[] = [
-  { id: "1", semanas: 4, titulo: "Mejora de pelaje" },
-  { id: "2", semanas: 3, titulo: "Más energía" },
-  { id: "3", semanas: 6, titulo: "Mejor digestión" },
-  { id: "4", semanas: 5, titulo: "Recuperación articular" },
-];
-
-function CasoCard({ caso }: { caso: Caso }) {
+function CasoCard({ caso }: { caso: ResultadoReal }) {
   const [mostrarDespues, setMostrarDespues] = useState(false);
+  const foto = mostrarDespues ? caso.foto_despues_url : caso.foto_antes_url;
 
   return (
-    <div className="w-64 shrink-0 overflow-hidden rounded-xl border border-border bg-white">
-      <div className="relative flex aspect-[3/4] flex-col items-center justify-center gap-2 bg-soft-gray text-muted-foreground">
-        <span className="absolute top-3 rounded-full bg-white px-3 py-1 font-body text-xs font-bold text-secondary shadow-sm">
+    <div className="w-72 shrink-0 overflow-hidden rounded-[var(--radius-card)] border border-border bg-white sm:w-80">
+      {/* Ratio 9:16 (formato foto de celular), para que las fotos reales de
+          clientes se vean a tamaño natural sin recortes raros. */}
+      <div className="relative flex aspect-[9/16] flex-col items-center justify-center gap-2 bg-soft-gray text-muted-foreground">
+        <span className="absolute top-3 z-10 rounded-full bg-white px-3 py-1 font-body text-xs font-bold text-secondary shadow-sm">
           {caso.semanas} semanas
         </span>
-        <ImageOff className="h-8 w-8" strokeWidth={1.5} />
-        <span className="font-body text-xs">Foto pendiente</span>
 
-        <div className="absolute bottom-3 flex rounded-full bg-secondary/90 p-1 font-body text-xs font-bold">
+        {foto ? (
+          <Image src={foto} alt={caso.titulo} fill className="object-cover" sizes="320px" />
+        ) : (
+          <>
+            <ImageOff className="h-8 w-8" strokeWidth={1.5} />
+            <span className="font-body text-xs">Foto pendiente</span>
+          </>
+        )}
+
+        <div className="absolute bottom-3 z-10 flex rounded-full bg-secondary/90 p-1 font-body text-xs font-bold">
           <button
             type="button"
             onClick={() => setMostrarDespues(false)}
@@ -54,22 +54,24 @@ function CasoCard({ caso }: { caso: Caso }) {
   );
 }
 
-export function AntesDespues() {
+export function AntesDespues({ resultados }: AntesDespuesProps) {
+  if (resultados.length === 0) return null;
+
   return (
-    <>
-      <HillCurve fillClassName="fill-white" bgClassName="bg-secondary" />
-      <section className="bg-white py-section-y">
-        <div className="mx-auto max-w-container px-mobile-margin md:px-gutter">
-          <h2 className="text-center font-display text-3xl font-bold text-secondary md:text-4xl">
-            Resultados reales, mascotas reales
-          </h2>
-          <div className="mt-10 flex gap-4 overflow-x-auto pb-4">
-            {casos.map((caso) => (
-              <CasoCard key={caso.id} caso={caso} />
-            ))}
-          </div>
-        </div>
-      </section>
-    </>
+    <section className="pb-section-y pt-6 md:pt-8">
+      <div className="mx-auto max-w-container px-mobile-margin md:px-gutter">
+        <h2 className="text-center font-display text-3xl font-bold text-secondary md:text-4xl">
+          Resultados reales, mascotas reales
+        </h2>
+        <InfiniteCarousel
+          ariaLabel="Resultados reales de clientes"
+          className="mt-10"
+          autoScroll
+          items={resultados.map((caso) => (
+            <CasoCard key={caso.id} caso={caso} />
+          ))}
+        />
+      </div>
+    </section>
   );
 }

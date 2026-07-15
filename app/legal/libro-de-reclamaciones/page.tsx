@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { BookOpen, CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { siteConfig } from "@/lib/site-config";
+import { useConfiguracionSitio } from "@/hooks/use-configuracion-sitio";
 
 // Inserta directo en `libro_reclamaciones` (Supabase) — la tabla ya existe con
 // las políticas RLS correctas ("Cualquiera registra reclamo": INSERT para
@@ -21,6 +21,7 @@ function formatCorrelativo(n: number) {
 }
 
 export default function LibroReclamacionesPage() {
+  const config = useConfiguracionSitio();
   const [tipoSolicitud, setTipoSolicitud] = useState<TipoSolicitud>("reclamo");
   const [tipoBien, setTipoBien] = useState<TipoBien>("producto");
   const [esMenor, setEsMenor] = useState(false);
@@ -142,8 +143,8 @@ export default function LibroReclamacionesPage() {
 
   return (
     <div className="mx-auto max-w-3xl px-mobile-margin py-section-y md:px-gutter">
-      <div className="flex items-center gap-4 rounded-2xl bg-gradient-to-br from-secondary to-accent p-6 text-white">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-white/15">
+      <div className="flex items-center gap-4 rounded-md bg-gradient-to-br from-secondary to-accent p-6 text-white">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-white/15">
           <BookOpen className="h-7 w-7" strokeWidth={1.5} />
         </div>
         <div>
@@ -155,38 +156,38 @@ export default function LibroReclamacionesPage() {
         </div>
       </div>
 
-      <div className="mt-6 rounded-xl border border-border p-5">
+      <div className="mt-6 rounded-md border border-border p-5">
         <p className="font-body text-xs font-bold uppercase tracking-wide text-primary">
           Datos del proveedor
         </p>
         <div className="mt-3 grid grid-cols-1 gap-3 font-body text-sm sm:grid-cols-2">
           <div>
             <p className="text-xs text-muted-foreground">Razón social</p>
-            <p className="font-bold text-secondary">{siteConfig.legal.razonSocial}</p>
+            <p className="font-bold text-secondary">{config.legalRazonSocial}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">RUC</p>
-            <p className="font-bold text-secondary">{siteConfig.legal.ruc}</p>
+            <p className="font-bold text-secondary">{config.legalRuc}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Domicilio fiscal</p>
-            <p className="font-bold text-secondary">{siteConfig.legal.domicilioFiscal}</p>
+            <p className="font-bold text-secondary">{config.legalDomicilioFiscal}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground">Correo de atención</p>
-            <p className="font-bold text-secondary">{siteConfig.legal.correoAtencion}</p>
+            <p className="font-bold text-secondary">{config.legalCorreoAtencion.join(" y ")}</p>
           </div>
         </div>
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        <div className="rounded-xl bg-soft-gray p-4">
+        <div className="rounded-md bg-soft-gray p-4">
           <p className="font-body text-sm font-bold text-secondary">⚠️ Reclamo</p>
           <p className="mt-1 font-body text-xs text-muted-foreground">
             Disconformidad relacionada con el producto o servicio adquirido.
           </p>
         </div>
-        <div className="rounded-xl bg-soft-gray p-4">
+        <div className="rounded-md bg-soft-gray p-4">
           <p className="font-body text-sm font-bold text-secondary">💬 Queja</p>
           <p className="mt-1 font-body text-xs text-muted-foreground">
             Disconformidad no relacionada con el producto, sino con la atención al cliente.
@@ -203,7 +204,7 @@ export default function LibroReclamacionesPage() {
                 key={t}
                 type="button"
                 onClick={() => setTipoSolicitud(t)}
-                className={`flex-1 rounded-xl border-2 p-3 text-left font-body text-sm font-bold capitalize transition-colors ${
+                className={`flex-1 rounded-md border-2 p-3 text-left font-body text-sm font-bold capitalize transition-colors ${
                   tipoSolicitud === t ? "border-primary bg-primary/5" : "border-border"
                 }`}
               >
@@ -296,7 +297,7 @@ export default function LibroReclamacionesPage() {
                 key={b}
                 type="button"
                 onClick={() => setTipoBien(b)}
-                className={`flex-1 rounded-xl border-2 p-3 text-center font-body text-sm font-bold capitalize transition-colors ${
+                className={`flex-1 rounded-md border-2 p-3 text-center font-body text-sm font-bold capitalize transition-colors ${
                   tipoBien === b ? "border-primary bg-primary/5" : "border-border"
                 }`}
               >
@@ -341,7 +342,7 @@ export default function LibroReclamacionesPage() {
           />
         </div>
 
-        <div className="rounded-xl bg-soft-gray p-5">
+        <div className="rounded-md bg-soft-gray p-5">
           <p className="font-body text-xs text-muted-foreground">
             El proveedor debe dar respuesta en un plazo no mayor a <strong>15 días hábiles</strong>,
             ampliable por otro plazo igual. Formular este reclamo no impide acudir a otras vías de

@@ -5,7 +5,7 @@ import { AlertTriangle } from "lucide-react";
 // PLAN.md pendientes operativos. Se retira cuando el texto final este listo.
 export function BorradorNotice() {
   return (
-    <div className="mb-6 flex items-start gap-3 rounded-xl border-2 border-dashed border-primary bg-primary/5 p-4">
+    <div className="mb-6 flex items-start gap-3 rounded-md border-2 border-dashed border-primary bg-primary/5 p-4">
       <AlertTriangle className="h-5 w-5 shrink-0 text-primary" strokeWidth={1.75} />
       <p className="font-body text-xs text-secondary">
         <strong>Borrador pendiente de revisión legal.</strong> Este texto es una plantilla estándar

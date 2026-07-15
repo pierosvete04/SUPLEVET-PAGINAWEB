@@ -31,6 +31,8 @@ interface PostEditorProps {
 }
 
 const SIN_PRODUCTO = "ninguno";
+const META_TITLE_SUGERIDO = 60;
+const META_DESC_SUGERIDO = 155;
 
 function slugify(texto: string): string {
   return texto
@@ -168,18 +170,49 @@ export function PostEditor({ post }: PostEditorProps) {
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
               <div className="grid gap-1.5">
-                <Label htmlFor="b-meta-title">Meta título</Label>
-                <Input id="b-meta-title" value={metaTitle} onChange={(e) => setMetaTitle(e.target.value)} />
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="b-meta-title">Meta título</Label>
+                  <span
+                    className={`text-xs ${
+                      metaTitle.length > META_TITLE_SUGERIDO ? "text-destructive" : "text-muted-foreground"
+                    }`}
+                  >
+                    {metaTitle.length}/{META_TITLE_SUGERIDO}
+                  </span>
+                </div>
+                <Input
+                  id="b-meta-title"
+                  value={metaTitle}
+                  onChange={(e) => setMetaTitle(e.target.value)}
+                  placeholder={titulo || "Si lo dejas vacío, se usa el título del artículo"}
+                />
               </div>
               <div className="grid gap-1.5">
-                <Label htmlFor="b-meta-desc">Meta descripción</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="b-meta-desc">Meta descripción</Label>
+                  <span
+                    className={`text-xs ${
+                      metaDescription.length > META_DESC_SUGERIDO
+                        ? "text-destructive"
+                        : "text-muted-foreground"
+                    }`}
+                  >
+                    {metaDescription.length}/{META_DESC_SUGERIDO}
+                  </span>
+                </div>
                 <Textarea
                   id="b-meta-desc"
                   rows={2}
                   value={metaDescription}
                   onChange={(e) => setMetaDescription(e.target.value)}
+                  placeholder="Si lo dejas vacío, se usa el resumen del artículo"
                 />
               </div>
+              <p className="text-xs text-muted-foreground">
+                Google suele cortar el título cerca de {META_TITLE_SUGERIDO} caracteres y la
+                descripción cerca de {META_DESC_SUGERIDO} — pasarte de largo no rompe nada, pero se
+                verá truncado en los resultados de búsqueda.
+              </p>
             </CardContent>
           </Card>
         </div>

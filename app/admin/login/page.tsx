@@ -48,7 +48,7 @@ export default function AdminLoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-secondary px-mobile-margin">
-      <div className="w-full max-w-sm rounded-2xl bg-white p-8 shadow-lg">
+      <div className="w-full max-w-sm rounded-md bg-white p-8 shadow-lg">
         <div className="mb-8 flex flex-col items-center gap-2">
           <Image src="/logos/logo-color-horizontal.png" alt="Suplevet" width={150} height={32} priority />
           <h1 className="font-body text-lg font-bold text-secondary">Panel administrativo</h1>
