@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -19,6 +19,14 @@ interface RegistrarResultado {
 }
 
 export default function VetRegistrarPage() {
+  return (
+    <Suspense fallback={null}>
+      <VetRegistrarContent />
+    </Suspense>
+  );
+}
+
+function VetRegistrarContent() {
   const router = useRouter();
   const params = useSearchParams();
   const [monto, setMonto] = useState("");

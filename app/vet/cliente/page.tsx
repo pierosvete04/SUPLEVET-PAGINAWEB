@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { PawPrint, Star } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -21,6 +21,14 @@ interface ClienteQr {
 }
 
 export default function VetClientePage() {
+  return (
+    <Suspense fallback={<p className="p-6 text-center font-body text-sm text-muted-foreground">Buscando cliente…</p>}>
+      <VetClienteContent />
+    </Suspense>
+  );
+}
+
+function VetClienteContent() {
   const router = useRouter();
   const params = useSearchParams();
   const [resultado, setResultado] = useState<ClienteQr | null>(null);
