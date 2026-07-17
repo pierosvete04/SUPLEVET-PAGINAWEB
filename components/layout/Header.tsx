@@ -284,7 +284,21 @@ export function Header() {
           </div>
         </div>
 
-        {menuOpen && <MobileMenu onNavigate={() => setMenuOpen(false)} />}
+        {/* Solo se monta si el header completo es el que está a la vista: si
+            está montado mientras la barra condensada domina la pantalla, su
+            despliegue (en flujo normal, no fijo) empuja el resto de la página
+            hacia abajo y el "scroll anchoring" del navegador compensa
+            disparando un evento de scroll hacia abajo — que este mismo
+            componente interpreta como "el usuario bajó" y cierra el menú que
+            acaba de abrir, produciendo el parpadeo. */}
+        {/* Solo se monta si el header completo es el que está a la vista: si
+            está montado mientras la barra condensada domina la pantalla, su
+            despliegue (en flujo normal, no fijo) empuja el resto de la página
+            hacia abajo y el "scroll anchoring" del navegador compensa
+            disparando un evento de scroll hacia abajo — que este mismo
+            componente interpreta como "el usuario bajó" y cierra el menú que
+            acaba de abrir, produciendo el parpadeo. */}
+        {menuOpen && !showCondensed && <MobileMenu onNavigate={() => setMenuOpen(false)} />}
       </header>
 
       {/* Barra condensada — fija, se revela al subir y se esconde al bajar.

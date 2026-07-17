@@ -35,8 +35,8 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
 
   return (
     <div>
-      <PageBreadcrumbs items={[{ label: "Blog" }]} />
       <section className="relative flex min-h-[42vh] items-center justify-center overflow-hidden bg-secondary text-center">
+        <PageBreadcrumbs items={[{ label: "Blog" }]} overlay />
         <Image src={HERO_IMG} alt="" fill className="object-cover opacity-40" sizes="100vw" priority />
         <div className="absolute inset-0 bg-gradient-to-b from-secondary/70 via-secondary/60 to-secondary" />
         <ScrollReveal className="relative mx-auto max-w-2xl px-mobile-margin">

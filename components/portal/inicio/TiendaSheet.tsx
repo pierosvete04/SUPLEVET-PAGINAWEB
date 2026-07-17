@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useCart } from "@/lib/cart/CartContext";
 import { formatPrecio, type MetodoPago } from "@/lib/data/productos-shared";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { RegaloBandanaSelector } from "@/components/cart/RegaloBandanaSelector";
 
 interface ProductoTienda {
   slug: string;
@@ -75,9 +76,9 @@ export function TiendaSheet({ open, onOpenChange }: TiendaSheetProps) {
                 return (
                   <div
                     key={p.slug}
-                    className="flex items-center gap-3 rounded-2xl border border-portal-surface-variant p-3"
+                    className="flex items-center gap-3 rounded-lg border border-portal-surface-variant p-3"
                   >
-                    <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-xl bg-portal-surface-low">
+                    <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-md bg-portal-surface-low">
                       <Image src={p.imagen} alt={p.nombre} fill className="object-cover" sizes="64px" />
                     </div>
                     <div className="flex-1">
@@ -135,6 +136,11 @@ export function TiendaSheet({ open, onOpenChange }: TiendaSheetProps) {
             <span>Subtotal ({totalItems} {totalItems === 1 ? "producto" : "productos"})</span>
             <span className="font-bold">{formatPrecio(subtotal)}</span>
           </div>
+
+          <div className="mt-3">
+            <RegaloBandanaSelector />
+          </div>
+
           <button
             type="button"
             disabled={totalItems === 0}

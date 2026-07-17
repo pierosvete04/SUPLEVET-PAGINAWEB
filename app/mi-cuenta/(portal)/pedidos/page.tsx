@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ShoppingBag, Star, Clock } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { formatFecha } from "@/lib/portal/formato";
@@ -90,8 +91,13 @@ export default async function PortalPedidosPage() {
           const estado = ESTADO_PEDIDO[estadoParaMostrar(p)] ?? ESTADO_PEDIDO.pagado;
           const productos = Array.isArray(p.productos) ? p.productos : [];
           return (
-            <div key={p.id} className="rounded-sm bg-white p-5 shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-2">
+            <div key={p.id} className="relative rounded-sm bg-white p-5 shadow-sm">
+              <Link
+                href={`/mi-cuenta/pedidos/${p.id}`}
+                aria-label={`Ver detalle del pedido ${p.shopify_order_number || p.shopify_order_id}`}
+                className="absolute inset-0 z-0"
+              />
+              <div className="pointer-events-none relative flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <p className="font-display text-base font-bold text-secondary">
                     {p.shopify_order_number || `#${p.shopify_order_id}`}
@@ -113,7 +119,7 @@ export default async function PortalPedidosPage() {
                 </div>
               </div>
               {productos.length > 0 && (
-                <div className="mt-3 rounded-sm bg-soft-gray p-3">
+                <div className="pointer-events-none relative mt-3 rounded-sm bg-soft-gray p-3">
                   {productos.slice(0, 3).map((pr, i) => {
                     const nombreProducto = pr.nombre || pr.name || "Producto";
                     const productoShopifyId = pr.producto_id ?? null;
@@ -157,7 +163,7 @@ export default async function PortalPedidosPage() {
                   )}
                 </div>
               )}
-              <div className="mt-3 flex flex-wrap gap-4">
+              <div className="pointer-events-none relative mt-3 flex flex-wrap gap-4">
                 {!!p.puntos_acreditados && p.puntos_acreditados > 0 && (
                   <span className="flex items-center gap-1 font-body text-xs font-bold text-primary">
                     <Star className="h-3.5 w-3.5" strokeWidth={1.75} />

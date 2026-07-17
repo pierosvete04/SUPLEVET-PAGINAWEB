@@ -48,8 +48,8 @@ export default async function NosotrosPage() {
 
   return (
     <div>
-      <PageBreadcrumbs items={[{ label: "Nosotros" }]} />
       <section className="relative flex min-h-[50vh] items-center justify-center overflow-hidden bg-secondary text-center">
+        <PageBreadcrumbs items={[{ label: "Nosotros" }]} overlay />
         {config?.nosotros_hero_imagen && (
           <Image src={config.nosotros_hero_imagen} alt="" fill className="object-cover opacity-40" sizes="100vw" />
         )}

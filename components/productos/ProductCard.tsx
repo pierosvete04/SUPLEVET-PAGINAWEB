@@ -73,7 +73,7 @@ export function ProductCard({ producto, ctaLabel = "Añadir al carrito" }: Produ
             type="button"
             onClick={handleAgregar}
             aria-label={`Añadir ${producto.nombre} al carrito`}
-            className={`pointer-events-auto relative z-10 flex w-full items-center justify-center gap-2 rounded-[17px] py-3 font-body text-sm font-bold transition-opacity md:text-base ${
+            className={`pointer-events-auto relative z-10 flex w-full items-center justify-center gap-1.5 whitespace-nowrap rounded-[17px] py-3 font-body text-xs font-bold transition-opacity sm:gap-2 sm:text-sm md:text-base ${
               agregado
                 ? "bg-green-500 text-white"
                 : "bg-gradient-to-br from-accent to-portal-teal-mid text-secondary hover:opacity-90"
@@ -81,11 +81,13 @@ export function ProductCard({ producto, ctaLabel = "Añadir al carrito" }: Produ
           >
             {agregado ? (
               <>
-                <Check className="h-5 w-5" strokeWidth={2} /> Añadido
+                <Check className="h-4 w-4 shrink-0 sm:h-5 sm:w-5" strokeWidth={2} /> Añadido
               </>
             ) : (
               <>
-                <ShoppingCart className="h-5 w-5" strokeWidth={1.75} /> {ctaLabel}
+                <ShoppingCart className="h-4 w-4 shrink-0 sm:h-5 sm:w-5" strokeWidth={1.75} />
+                <span className="sm:hidden">Añadir</span>
+                <span className="hidden sm:inline">{ctaLabel}</span>
               </>
             )}
           </button>

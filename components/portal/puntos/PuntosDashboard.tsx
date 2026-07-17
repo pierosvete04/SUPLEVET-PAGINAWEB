@@ -100,6 +100,7 @@ export function PuntosDashboard({ user }: PuntosDashboardProps) {
   const [canjeConfirmado, setCanjeConfirmado] = useState<CanjeConNombre | null>(null);
   const [misCodigos, setMisCodigos] = useState<CanjeConNombre[]>([]);
   const [codigoCopiado, setCodigoCopiado] = useState(false);
+  const [codigoListaCopiado, setCodigoListaCopiado] = useState<string | null>(null);
   const [procesando, setProcesando] = useState(false);
   const [cargando, setCargando] = useState(true);
 
@@ -187,6 +188,12 @@ export function PuntosDashboard({ user }: PuntosDashboardProps) {
       await cargar();
     }
     setProcesando(false);
+  }
+
+  async function copiarCodigoDeLista(id: string, codigo: string) {
+    await navigator.clipboard.writeText(codigo);
+    setCodigoListaCopiado(id);
+    setTimeout(() => setCodigoListaCopiado((actual) => (actual === id ? null : actual)), 1500);
   }
 
   if (cargando || !puntos) {
@@ -427,21 +434,32 @@ export function PuntosDashboard({ user }: PuntosDashboardProps) {
           <div className="divide-y divide-portal-surface-variant/30">
             {misCodigos.map((c) => {
               const estado = ESTADO_LABEL[c.estado] ?? ESTADO_LABEL.pendiente;
+              const copiado = codigoListaCopiado === c.id;
               return (
-                <div key={c.id} className="flex items-center justify-between gap-3 p-4">
-                  <div>
-                    <div className="text-sm font-bold text-portal-navy">
+                <div key={c.id} className="flex flex-nowrap items-center justify-between gap-3 p-4">
+                  <div className="min-w-0 shrink truncate">
+                    <div className="truncate text-sm font-bold text-portal-navy">
                       {c.suplepuntos_config?.nombre ?? "Canje"}
                     </div>
                     <div className="text-xs text-portal-muted">{formatFecha(c.created_at)}</div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex shrink-0 items-center gap-2">
                     {c.codigo_canje && (
-                      <code className="rounded-lg bg-portal-surface-low px-3 py-1.5 font-mono text-sm font-bold tracking-wide text-portal-navy">
+                      <button
+                        type="button"
+                        onClick={() => copiarCodigoDeLista(c.id, c.codigo_canje!)}
+                        title="Copiar código"
+                        className="flex items-center gap-1.5 rounded-md bg-portal-surface-low px-3 py-1.5 font-mono text-sm font-bold tracking-wide text-portal-navy transition-colors hover:bg-portal-surface-variant"
+                      >
                         {c.codigo_canje}
-                      </code>
+                        {copiado ? (
+                          <Check className="h-3.5 w-3.5 shrink-0 text-portal-teal-mid" />
+                        ) : (
+                          <Copy className="h-3.5 w-3.5 shrink-0 text-portal-muted" />
+                        )}
+                      </button>
                     )}
-                    <span className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${estado.clase}`}>
+                    <span className={`whitespace-nowrap rounded-md px-2.5 py-1 text-[11px] font-bold ${estado.clase}`}>
                       {estado.texto}
                     </span>
                   </div>

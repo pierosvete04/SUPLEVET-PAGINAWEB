@@ -17,11 +17,11 @@ export default async function OfertasPage() {
   const banners = await getBannersActivos(await createClient(), "ofertas");
 
   return (
-    <div className="bg-background pb-section-y pt-8 md:pt-10">
+    <div className="bg-background pb-section-y">
       <PageBreadcrumbs items={[{ label: "Ofertas" }]} />
       <div className="mx-auto max-w-container px-mobile-margin md:px-gutter">
         {banners.length > 0 && (
-          <div>
+          <div className="mt-6">
             <BannerCarousel banners={banners} />
           </div>
         )}

@@ -201,7 +201,7 @@ export function InicioDashboard({ user, perfil }: InicioDashboardProps) {
             <span className="material-symbols-rounded text-3xl text-portal-teal-mid">shopping_basket</span>
           </div>
           <h3 className="mb-2 font-display text-lg font-semibold text-portal-navy">¿Necesitas suplevet?</h3>
-          <p className="mb-4 text-sm text-portal-muted">Gana el doble de puntos en tu próxima compra de alimento.</p>
+          <p className="mb-4 text-sm text-portal-muted">Compra tu próxima bolsa de Suplevet y sigue sumando SuplePoints.</p>
           <button
             type="button"
             onClick={() => setTiendaAbierta(true)}

@@ -4,8 +4,7 @@ import { asegurarClienteInicializado } from "@/lib/data/portal/cliente";
 import { createClient } from "@/lib/supabase/server";
 
 // Confirma los enlaces de recuperación de contraseña y cambio de correo que
-// arma el Edge Function send-auth-email (?token_hash=&type=), a diferencia
-// de app/auth/callback/route.ts que maneja el ?code= de OAuth/PKCE.
+// arma el Edge Function send-auth-email (?token_hash=&type=).
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const tokenHash = searchParams.get("token_hash");

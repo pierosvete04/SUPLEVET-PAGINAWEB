@@ -155,7 +155,7 @@ export function PedidoProductoDialog({
       <button
         type="button"
         onClick={() => setAbierto(true)}
-        className={`shrink-0 rounded-[17px] px-3 py-1.5 font-body text-[11px] font-bold transition-colors ${
+        className={`pointer-events-auto relative z-10 shrink-0 rounded-[17px] px-3 py-1.5 font-body text-[11px] font-bold transition-colors ${
           badge
             ? `bg-soft-gray ${badge.color}`
             : puedeResenar
