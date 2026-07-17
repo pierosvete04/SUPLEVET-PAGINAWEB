@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { getPostBySlug, getRelatedPosts, formatFechaPost } from "@/lib/data/blog";
+import { PageBreadcrumbs } from "@/components/shared/PageBreadcrumbs";
 import { getProductoBySlug } from "@/lib/data/productos";
 import { getConfiguracionSitio } from "@/lib/data/configuracion";
 import { whatsappLink, siteConfig } from "@/lib/site-config";
@@ -82,7 +83,9 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   };
 
   return (
-    <article className="mx-auto grid max-w-container grid-cols-1 gap-12 px-mobile-margin py-section-y md:px-gutter lg:grid-cols-12">
+    <>
+      <PageBreadcrumbs items={[{ label: "Blog", href: "/blog" }, { label: post.titulo }]} />
+      <article className="mx-auto grid max-w-container grid-cols-1 gap-12 px-mobile-margin py-section-y md:px-gutter lg:grid-cols-12">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="lg:col-span-8">
         <Link
@@ -129,7 +132,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           </div>
           <Link
             href={producto ? `/productos/${producto.slug}` : "/productos"}
-            className="shrink-0 whitespace-nowrap rounded-full bg-primary px-6 py-3 font-body font-bold text-primary-foreground hover:opacity-90"
+            className="shrink-0 whitespace-nowrap rounded-[17px] bg-primary px-6 py-3 font-body font-bold text-primary-foreground hover:opacity-90"
           >
             Ver producto
           </Link>
@@ -181,6 +184,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           </div>
         </div>
       </aside>
-    </article>
+      </article>
+    </>
   );
 }

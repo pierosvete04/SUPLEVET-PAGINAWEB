@@ -70,7 +70,7 @@ export default async function FichaPublicaPage({ params }: { params: Promise<{ i
         </div>
 
         {/* Hero */}
-        <div className="relative overflow-hidden rounded-[8px] bg-portal-navy p-6 text-white">
+        <div className="relative overflow-hidden rounded-[17px] bg-portal-navy p-6 text-white">
           <div className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-white/5" />
           <div className="relative z-10 flex flex-wrap items-center gap-4">
             <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white/30 bg-portal-orange">
@@ -112,7 +112,7 @@ export default async function FichaPublicaPage({ params }: { params: Promise<{ i
         </div>
 
         {/* Estado de salud */}
-        <div className="mt-4 rounded-[8px] border border-portal-surface-variant bg-white p-5 print:break-inside-avoid print:p-3">
+        <div className="mt-4 rounded-[17px] border border-portal-surface-variant bg-white p-5 print:break-inside-avoid print:p-3">
           <h3 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold text-portal-navy">
             <span className="material-symbols-rounded text-portal-teal-mid">medical_services</span> Estado de Salud
           </h3>
@@ -125,7 +125,7 @@ export default async function FichaPublicaPage({ params }: { params: Promise<{ i
         </div>
 
         {/* Información general */}
-        <div className="mt-4 rounded-[8px] border border-portal-surface-variant bg-white p-5 print:break-inside-avoid print:p-3">
+        <div className="mt-4 rounded-[17px] border border-portal-surface-variant bg-white p-5 print:break-inside-avoid print:p-3">
           <h3 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold text-portal-navy">
             <span className="material-symbols-rounded text-portal-navy">description</span> Información General
           </h3>
@@ -148,7 +148,7 @@ export default async function FichaPublicaPage({ params }: { params: Promise<{ i
             />
           </div>
           {mascota.historia && (
-            <div className="mt-4 rounded-[8px] bg-red-50 p-4">
+            <div className="mt-4 rounded-[17px] bg-red-50 p-4">
               <div className="mb-1 flex items-center gap-2 text-sm font-bold text-portal-navy">
                 <span className="material-symbols-rounded text-[16px] text-portal-error">healing</span>
                 Condiciones Médicas
@@ -169,7 +169,7 @@ export default async function FichaPublicaPage({ params }: { params: Promise<{ i
 function EventoTile({ titulo, evento, vacio }: { titulo: string; evento?: EventoPublico; vacio: string }) {
   if (!evento) {
     return (
-      <div className="flex min-h-[90px] flex-col items-center justify-center gap-1 rounded-[8px] border border-dashed border-portal-surface-variant bg-portal-surface-low/40 p-4 text-center">
+      <div className="flex min-h-[90px] flex-col items-center justify-center gap-1 rounded-[17px] border border-dashed border-portal-surface-variant bg-portal-surface-low/40 p-4 text-center">
         <span className="text-xs text-portal-muted">{vacio}</span>
       </div>
     );
@@ -179,7 +179,7 @@ function EventoTile({ titulo, evento, vacio }: { titulo: string; evento?: Evento
   const vencido = detalle.proxima_fecha && new Date(detalle.proxima_fecha) < new Date();
 
   return (
-    <div className="flex flex-col rounded-[8px] bg-portal-surface-low p-4 text-left">
+    <div className="flex flex-col rounded-[17px] bg-portal-surface-low p-4 text-left">
       <span
         className={`mb-2 self-start rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
           vencido ? "bg-red-100 text-portal-error" : "bg-portal-teal-light/40 text-portal-teal"
@@ -197,7 +197,7 @@ function EventoTile({ titulo, evento, vacio }: { titulo: string; evento?: Evento
 
 function InfoTile({ etiqueta, valor, icono }: { etiqueta: string; valor: string; icono: string }) {
   return (
-    <div className="rounded-[8px] bg-portal-surface-low p-3">
+    <div className="rounded-[17px] bg-portal-surface-low p-3">
       <span className="material-symbols-rounded text-[18px] text-portal-orange">{icono}</span>
       <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-portal-muted">{etiqueta}</p>
       <p className="truncate text-sm font-bold text-portal-navy">{valor}</p>

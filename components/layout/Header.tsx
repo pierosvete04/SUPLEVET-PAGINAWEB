@@ -27,7 +27,7 @@ function WhatsappCta({ className = "" }: { className?: string }) {
       rel="noopener noreferrer"
       style={{ backgroundColor: WHATSAPP_GREEN }}
       onClick={() => trackEvent("whatsapp_click", { origen: "header_veterinarias" })}
-      className={`flex items-center justify-center gap-2 rounded-full px-5 py-2.5 font-body text-sm font-bold text-white transition-opacity hover:opacity-90 ${className}`}
+      className={`flex items-center justify-center gap-2 rounded-[17px] px-5 py-2.5 font-body text-sm font-bold text-white transition-opacity hover:opacity-90 ${className}`}
     >
       <WhatsAppIcon className="h-5 w-5 shrink-0" />
       Veterinarias / Mayoristas
@@ -46,7 +46,7 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
             key={item.href}
             href={item.href}
             onClick={onNavigate}
-            className="rounded-full bg-accent px-5 py-2 text-accent-foreground transition-opacity hover:opacity-90"
+            className="rounded-[17px] bg-accent px-5 py-2 text-accent-foreground transition-opacity hover:opacity-90"
           >
             {item.label}
           </Link>
@@ -79,7 +79,7 @@ function AccountCart({
       <Link
         href="/mi-cuenta"
         aria-label="Mi cuenta"
-        className="flex items-center gap-2 rounded-full border border-white/30 px-4 py-2.5 font-body text-sm font-bold text-secondary-foreground transition-colors hover:bg-white/10 md:text-base lg:px-5"
+        className="flex items-center gap-2 rounded-[17px] border border-white/30 px-4 py-2.5 font-body text-sm font-bold text-secondary-foreground transition-colors hover:bg-white/10 md:text-base lg:px-5"
       >
         <User className="h-5 w-5 shrink-0" strokeWidth={1.75} />
         <span className="hidden lg:inline">Mi cuenta</span>
@@ -88,7 +88,7 @@ function AccountCart({
         type="button"
         aria-label="Carrito"
         onClick={onOpenCart}
-        className="flex items-center gap-2 rounded-full bg-accent px-4 py-2.5 font-body text-sm font-bold text-accent-foreground transition-opacity hover:opacity-90 md:text-base lg:px-5"
+        className="flex items-center gap-2 rounded-[17px] bg-accent px-4 py-2.5 font-body text-sm font-bold text-accent-foreground transition-opacity hover:opacity-90 md:text-base lg:px-5"
       >
         <ShoppingCart className="h-5 w-5 shrink-0" strokeWidth={1.75} />
         <span className="hidden lg:inline">Carrito</span>
@@ -114,7 +114,7 @@ function MobileMenu({ onNavigate }: { onNavigate: () => void }) {
               key={item.href}
               href={item.href}
               onClick={onNavigate}
-              className="rounded-full bg-accent px-4 py-1.5 text-accent-foreground"
+              className="rounded-[17px] bg-accent px-4 py-1.5 text-accent-foreground"
             >
               {item.label}
             </Link>

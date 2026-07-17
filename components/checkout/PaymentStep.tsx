@@ -3,12 +3,17 @@
 import { useState } from "react";
 import Image from "next/image";
 import { CreditCard, Smartphone, Landmark, Copy, Check } from "lucide-react";
+import type { MetodoPago } from "@/lib/data/productos-shared";
 
-export type MetodoPago = "tarjeta" | "yape_plin" | "transferencia";
+export type { MetodoPago };
 
 interface PaymentStepProps {
   metodo: MetodoPago | null;
   onChange: (metodo: MetodoPago) => void;
+  /** Intersección de métodos admitidos por todos los productos del carrito
+   * (ver app/checkout/page.tsx) — un combo restringido a Yape/transferencia
+   * oculta la opción de tarjeta aunque el resto del catálogo sí la admita. */
+  metodosPermitidos: MetodoPago[];
 }
 
 const metodos: { id: MetodoPago; label: string; icon: typeof CreditCard }[] = [
@@ -54,7 +59,7 @@ function CopyField({ label, value }: { label: string; value: string }) {
       <button
         type="button"
         onClick={copiar}
-        className="flex shrink-0 items-center gap-1 rounded-full border border-border bg-white px-3 py-1.5 font-body text-xs font-bold text-secondary hover:bg-soft-gray"
+        className="flex shrink-0 items-center gap-1 rounded-[17px] border border-border bg-white px-3 py-1.5 font-body text-xs font-bold text-secondary hover:bg-soft-gray"
       >
         {copiado ? (
           <>
@@ -70,16 +75,23 @@ function CopyField({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function PaymentStep({ metodo, onChange }: PaymentStepProps) {
+export function PaymentStep({ metodo, onChange, metodosPermitidos }: PaymentStepProps) {
+  const metodosVisibles = metodos.filter(({ id }) => metodosPermitidos.includes(id));
+
   return (
     <div>
       <h2 className="font-display text-xl font-bold text-secondary">Pago</h2>
       <p className="mt-1 font-body text-xs text-muted-foreground">
         Todas las transacciones son seguras y están encriptadas.
       </p>
+      {metodosVisibles.length < metodos.length && (
+        <p className="mt-2 font-body text-xs text-muted-foreground">
+          Uno o más productos de tu carrito solo admiten los métodos de pago listados abajo.
+        </p>
+      )}
 
       <div className="mt-4 flex flex-col gap-3">
-        {metodos.map(({ id, label, icon: Icon }) => (
+        {metodosVisibles.map(({ id, label, icon: Icon }) => (
           <div
             key={id}
             className={`overflow-hidden rounded-md border-2 transition-colors ${
@@ -152,8 +164,8 @@ export function PaymentStep({ metodo, onChange }: PaymentStepProps) {
                         <CopyField label="Yapea o plinea al número" value={DATOS_YAPE_PLIN.numero} />
                         <CopyField label="Titular" value={DATOS_YAPE_PLIN.titular} />
                       </div>
-                      <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-md border border-border bg-white">
-                        <Image src="/pago/yape-qr.png" alt="Código QR de Yape" fill className="object-contain p-1" sizes="112px" />
+                      <div className="relative h-40 w-40 shrink-0 overflow-hidden rounded-md border border-border bg-white">
+                        <Image src="/pago/yape-qr.png" alt="Código QR de Yape" fill className="object-contain p-1" sizes="160px" />
                       </div>
                     </div>
 

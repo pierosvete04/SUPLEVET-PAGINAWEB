@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { formatFecha } from "@/lib/portal/formato";
+import { formatPrecio } from "@/lib/data/productos-shared";
 import { NOMBRE_NIVEL } from "@/lib/data/portal/logros";
 import { LinkQrCode } from "@/components/shared/LinkQrCode";
 import type { ClientePerfil } from "@/lib/data/portal/cliente";
@@ -73,7 +74,7 @@ export default async function PortalCarnetPage() {
                   <p className="font-body text-[10px] text-muted-foreground">{formatFecha(c.created_at)}</p>
                 </div>
                 <div className="text-right">
-                  <p className="font-body text-sm font-bold text-secondary">S/ {Number(c.monto_total).toFixed(2)}</p>
+                  <p className="font-body text-sm font-bold text-secondary">{formatPrecio(Number(c.monto_total))}</p>
                   {!!c.puntos_acreditados && (
                     <p className="font-body text-[10px] font-bold text-primary">+{c.puntos_acreditados} pts</p>
                   )}

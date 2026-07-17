@@ -81,7 +81,7 @@ export function MascotasGrid({ clienteId }: MascotasGridProps) {
             setMascotaEditar(null);
             setFormAbierto(true);
           }}
-          className="flex items-center gap-2 rounded-full bg-portal-navy-dark px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-portal-navy"
+          className="flex items-center gap-2 rounded-[17px] bg-portal-navy-dark px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-portal-navy"
         >
           <span className="material-symbols-rounded text-[20px]">add</span> Añadir mascota
         </button>
@@ -98,7 +98,7 @@ export function MascotasGrid({ clienteId }: MascotasGridProps) {
               setMascotaEditar(null);
               setFormAbierto(true);
             }}
-            className="mt-4 rounded-full bg-portal-navy-dark px-6 py-2 text-white"
+            className="mt-4 rounded-[17px] bg-portal-navy-dark px-6 py-2 text-white"
           >
             Registrar primera mascota
           </button>
@@ -159,7 +159,7 @@ export function MascotasGrid({ clienteId }: MascotasGridProps) {
             <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-portal-surface-variant">
               <span className="material-symbols-rounded text-2xl text-portal-muted">add</span>
             </div>
-            <span className="text-sm font-semibold text-portal-navy">Añadir Mascota</span>
+            <span className="text-sm font-semibold text-portal-navy">Añadir mascota</span>
           </button>
         </div>
       )}

@@ -6,6 +6,7 @@ import { LogOut } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { clearVetSesion, getVetSesion, type VetSesion } from "@/lib/vet-auth";
 import { formatFecha } from "@/lib/portal/formato";
+import { formatPrecio } from "@/lib/data/productos-shared";
 
 interface VentaVet {
   id: string;
@@ -81,7 +82,7 @@ export default function VetHistorialPage() {
                 </p>
               </div>
               <div className="text-right">
-                <p className="font-body text-sm font-bold text-secondary">S/ {Number(v.monto_total).toFixed(2)}</p>
+                <p className="font-body text-sm font-bold text-secondary">{formatPrecio(Number(v.monto_total))}</p>
                 {!!v.puntos_acreditados && (
                   <p className="font-body text-[10px] font-bold text-primary">+{v.puntos_acreditados} pts</p>
                 )}

@@ -29,6 +29,7 @@ export interface PedidoAdmin {
   productos: ItemPedido[];
   zona_envio: string | null;
   direccion_envio: DireccionEnvioPedido | null;
+  regalo_bandana: string | null;
   created_at: string;
 }
 

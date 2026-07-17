@@ -5,6 +5,7 @@ import Link from "next/link";
 import { BookOpen, CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useConfiguracionSitio } from "@/hooks/use-configuracion-sitio";
+import { PageBreadcrumbs } from "@/components/shared/PageBreadcrumbs";
 
 // Inserta directo en `libro_reclamaciones` (Supabase) — la tabla ya existe con
 // las políticas RLS correctas ("Cualquiera registra reclamo": INSERT para
@@ -133,7 +134,7 @@ export default function LibroReclamacionesPage() {
         </p>
         <Link
           href="/"
-          className="mt-2 rounded-full bg-primary px-6 py-3 font-body font-bold text-primary-foreground hover:opacity-90"
+          className="mt-2 rounded-[17px] bg-primary px-6 py-3 font-body font-bold text-primary-foreground hover:opacity-90"
         >
           Volver al inicio
         </Link>
@@ -142,7 +143,9 @@ export default function LibroReclamacionesPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl px-mobile-margin py-section-y md:px-gutter">
+    <>
+      <PageBreadcrumbs items={[{ label: "Legal" }, { label: "Libro de Reclamaciones" }]} />
+      <div className="mx-auto max-w-3xl px-mobile-margin py-section-y md:px-gutter">
       <div className="flex items-center gap-4 rounded-md bg-gradient-to-br from-secondary to-accent p-6 text-white">
         <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md bg-white/15">
           <BookOpen className="h-7 w-7" strokeWidth={1.5} />
@@ -369,12 +372,13 @@ export default function LibroReclamacionesPage() {
           <button
             type="submit"
             disabled={enviando}
-            className="mt-4 w-full rounded-full bg-primary px-6 py-3 font-body font-bold text-primary-foreground disabled:opacity-60 sm:w-fit"
+            className="mt-4 w-full rounded-[17px] bg-primary px-6 py-3 font-body font-bold text-primary-foreground disabled:opacity-60 sm:w-fit"
           >
             {enviando ? "Registrando…" : "Registrar en el Libro"}
           </button>
         </div>
       </form>
-    </div>
+      </div>
+    </>
   );
 }

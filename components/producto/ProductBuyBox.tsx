@@ -9,6 +9,7 @@ import { trackEvent } from "@/lib/analytics";
 import type { Regalo } from "@/lib/regalos";
 import type { ResenaProducto } from "@/lib/resenas";
 import { ProductRatingSummary } from "@/components/producto/ProductRatingSummary";
+import { RegaloBandanaCarousel } from "@/components/producto/RegaloBandanaCarousel";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 interface ProductBuyBoxProps {
@@ -26,7 +27,13 @@ export function ProductBuyBox({ producto, regalos, resenas }: ProductBuyBoxProps
 
   function handleAgregar() {
     addItem(
-      { slug: producto.slug, nombre: producto.nombre, precio: producto.precio, imagen: producto.imagen },
+      {
+        slug: producto.slug,
+        nombre: producto.nombre,
+        precio: producto.precio,
+        imagen: producto.imagen,
+        metodosPagoPermitidos: producto.metodosPagoPermitidos,
+      },
       cantidad
     );
     trackEvent("add_to_cart", {
@@ -41,7 +48,13 @@ export function ProductBuyBox({ producto, regalos, resenas }: ProductBuyBoxProps
 
   function handleComprarAhora() {
     addItem(
-      { slug: producto.slug, nombre: producto.nombre, precio: producto.precio, imagen: producto.imagen },
+      {
+        slug: producto.slug,
+        nombre: producto.nombre,
+        precio: producto.precio,
+        imagen: producto.imagen,
+        metodosPagoPermitidos: producto.metodosPagoPermitidos,
+      },
       cantidad
     );
     trackEvent("begin_checkout", {
@@ -75,7 +88,7 @@ export function ProductBuyBox({ producto, regalos, resenas }: ProductBuyBoxProps
 
       <div className="mt-6 flex items-center gap-3">
         <span className="font-body text-sm font-bold text-secondary">Cantidad</span>
-        <div className="flex items-center rounded-full border border-border">
+        <div className="flex items-center rounded-[17px] border border-border">
           <button
             type="button"
             aria-label="Restar cantidad"
@@ -100,7 +113,7 @@ export function ProductBuyBox({ producto, regalos, resenas }: ProductBuyBoxProps
         <button
           type="button"
           onClick={handleAgregar}
-          className={`flex items-center justify-center gap-2 rounded-full px-6 py-3 font-body font-bold transition-colors ${
+          className={`flex items-center justify-center gap-2 rounded-[17px] px-6 py-3 font-body font-bold transition-colors ${
             agregado
               ? "bg-green-500 text-white"
               : "bg-primary text-primary-foreground hover:opacity-90"
@@ -117,7 +130,7 @@ export function ProductBuyBox({ producto, regalos, resenas }: ProductBuyBoxProps
         <button
           type="button"
           onClick={handleComprarAhora}
-          className="rounded-full border-2 border-secondary px-6 py-3 font-body font-bold text-secondary transition-colors hover:bg-secondary hover:text-white"
+          className="rounded-[17px] border-2 border-secondary px-6 py-3 font-body font-bold text-secondary transition-colors hover:bg-secondary hover:text-white"
         >
           Comprar ahora
         </button>
@@ -137,10 +150,10 @@ export function ProductBuyBox({ producto, regalos, resenas }: ProductBuyBoxProps
                 type="button"
                 onClick={() => setVideoAbierto(url)}
                 aria-label={`Ver video ${i + 1}`}
-                className="relative flex aspect-[9/16] w-16 shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-card)] bg-soft-gray text-white transition-opacity hover:opacity-90"
+                className="relative flex aspect-[9/16] w-24 shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-card)] bg-soft-gray text-white transition-opacity hover:opacity-90"
               >
                 <video src={`${url}#t=0.5`} className="absolute inset-0 h-full w-full object-cover" muted preload="metadata" />
-                <Play className="relative h-5 w-5 drop-shadow" strokeWidth={1.5} fill="white" />
+                <Play className="relative h-6 w-6 drop-shadow" strokeWidth={1.5} fill="white" />
               </button>
             ))}
           </div>
@@ -154,24 +167,32 @@ export function ProductBuyBox({ producto, regalos, resenas }: ProductBuyBoxProps
 
       {/* Banner de regalo — solo se muestra si hay un regalo activo y vigente
           configurado desde /admin/regalos (PLAN.md sección 5.4.1). Sin
-          regalos activos, este bloque no aparece. */}
+          regalos activos, este bloque no aparece. Tarjeta sólida con acento
+          lateral (en vez del borde punteado anterior, que se leía como cupón
+          genérico) para que se sienta parte de la buy box, no un elemento aparte. */}
       {regalos.length > 0 && (
-        <div className="mt-4 flex flex-col gap-2">
+        <div className="mt-4 flex flex-col gap-3">
           {regalos.map((regalo) => (
             <div
               key={regalo.id}
-              className="flex items-start gap-3 rounded-[var(--radius-card)] border-2 border-dashed border-accent bg-accent/10 p-4"
+              className="overflow-hidden rounded-[var(--radius-card)] border border-border bg-white shadow-[0_4px_20px_rgba(37,60,97,0.06)]"
             >
-              <Gift className="h-6 w-6 shrink-0 text-secondary" strokeWidth={1.75} />
-              <div>
-                <p className="font-body text-sm font-bold text-secondary">
-                  {regalo.condicion_tipo === "monto_minimo"
-                    ? `Regalo gratis en compras desde ${formatPrecio(regalo.condicion_monto_minimo ?? 0)}`
-                    : `Regalo gratis con ${producto.nombre}`}
-                </p>
-                {regalo.descripcion && (
-                  <p className="font-body text-xs text-muted-foreground">{regalo.descripcion}</p>
-                )}
+              <div className="flex border-l-4 border-l-accent p-4">
+                <div className="flex-1">
+                  <span className="inline-flex items-center gap-1 rounded-[8px] bg-accent/15 px-2 py-1 font-body text-[11px] font-bold uppercase tracking-wide text-accent">
+                    <Gift className="h-3.5 w-3.5" strokeWidth={2} />
+                    Regalo incluido
+                  </span>
+                  <p className="mt-2 font-body text-sm font-bold text-secondary">
+                    {regalo.condicion_tipo === "monto_minimo"
+                      ? `Gratis en compras mayores a ${formatPrecio(regalo.condicion_monto_minimo ?? 0)}`
+                      : `Gratis con ${producto.nombre}`}
+                  </p>
+                  {regalo.descripcion && (
+                    <p className="mt-0.5 font-body text-xs text-muted-foreground">{regalo.descripcion}</p>
+                  )}
+                  {regalo.condicion_tipo === "monto_minimo" && <RegaloBandanaCarousel />}
+                </div>
               </div>
             </div>
           ))}

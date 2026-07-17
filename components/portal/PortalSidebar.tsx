@@ -11,6 +11,7 @@ interface PortalSidebarUsuario {
   email: string;
   nivel: string;
   saldo: number;
+  fotoUrl: string | null;
 }
 
 const NAV_SECTIONS = [
@@ -86,8 +87,12 @@ export function PortalSidebar({ usuario }: { usuario: PortalSidebarUsuario }) {
         href="/mi-cuenta/perfil"
         className="mx-2 mb-2 flex items-center gap-3 rounded-xl p-4 transition-colors hover:bg-white/5"
       >
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-portal-orange font-bold text-white">
-          {iniciales(usuario.nombre)}
+        <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-portal-orange font-bold text-white">
+          {usuario.fotoUrl ? (
+            <Image src={usuario.fotoUrl} alt="" fill className="object-cover" sizes="40px" />
+          ) : (
+            iniciales(usuario.nombre)
+          )}
         </div>
         <div className="min-w-0 flex-1">
           <div className="truncate text-sm font-semibold text-white">{usuario.nombre || "Sin nombre"}</div>

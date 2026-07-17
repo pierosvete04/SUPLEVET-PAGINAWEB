@@ -15,6 +15,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { ScrollReveal } from "@/components/shared/ScrollReveal";
+import { PageBreadcrumbs } from "@/components/shared/PageBreadcrumbs";
 import { TestimoniosCarousel } from "@/components/nosotros/TestimoniosCarousel";
 import { ResenasCarousel } from "@/components/shared/ResenasCarousel";
 import { ImagenConOverlay } from "@/components/shared/ImagenConOverlay";
@@ -47,6 +48,7 @@ export default async function NosotrosPage() {
 
   return (
     <div>
+      <PageBreadcrumbs items={[{ label: "Nosotros" }]} />
       <section className="relative flex min-h-[50vh] items-center justify-center overflow-hidden bg-secondary text-center">
         {config?.nosotros_hero_imagen && (
           <Image src={config.nosotros_hero_imagen} alt="" fill className="object-cover opacity-40" sizes="100vw" />

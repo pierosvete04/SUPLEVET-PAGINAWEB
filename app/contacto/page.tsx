@@ -6,6 +6,7 @@ import { whatsappLink } from "@/lib/site-config";
 import { useConfiguracionSitio } from "@/hooks/use-configuracion-sitio";
 import { WhatsAppIcon } from "@/components/shared/WhatsAppIcon";
 import { LinkQrCode } from "@/components/shared/LinkQrCode";
+import { PageBreadcrumbs } from "@/components/shared/PageBreadcrumbs";
 
 const CAMPOS_VACIOS = { nombre: "", correo: "", telefono: "", mensaje: "" };
 
@@ -53,8 +54,10 @@ export default function ContactoPage() {
   }
 
   return (
-    <div className="mx-auto max-w-container px-mobile-margin py-section-y md:px-gutter">
-      <div className="text-center">
+    <>
+      <PageBreadcrumbs items={[{ label: "Contáctanos" }]} />
+      <div className="mx-auto max-w-container px-mobile-margin py-section-y md:px-gutter">
+        <div className="text-center">
         <h1 className="font-impact text-3xl tracking-wide text-secondary md:text-4xl">
           CONTÁCTANOS
         </h1>
@@ -107,7 +110,7 @@ export default function ContactoPage() {
           <div className="flex flex-col gap-2 sm:flex-row">
             <button
               type="submit"
-              className="flex-1 rounded-full bg-primary px-6 py-3 font-body font-bold text-primary-foreground hover:opacity-90"
+              className="flex-1 rounded-[17px] bg-primary px-6 py-3 font-body font-bold text-primary-foreground hover:opacity-90"
             >
               Enviar por correo
             </button>
@@ -117,7 +120,7 @@ export default function ContactoPage() {
               disabled={!linkWhatsappFormulario}
               title={!linkWhatsappFormulario ? "Completa nombre, correo y mensaje primero" : undefined}
               style={{ backgroundColor: "#25D366" }}
-              className="flex flex-1 items-center justify-center gap-2 rounded-full px-6 py-3 font-body font-bold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex flex-1 items-center justify-center gap-2 rounded-[17px] px-6 py-3 font-body font-bold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <WhatsAppIcon className="h-4 w-4" />
               Enviar por WhatsApp
@@ -172,6 +175,7 @@ export default function ContactoPage() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </>
   );
 }

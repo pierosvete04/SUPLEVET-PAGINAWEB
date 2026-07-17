@@ -22,13 +22,13 @@ export function CatalogoGrid({ productos }: CatalogoGridProps) {
 
   return (
     <div>
-      <div className="mx-auto flex w-fit gap-1 rounded-full bg-soft-gray p-1">
+      <div className="mx-auto flex w-fit gap-1 rounded-[17px] bg-soft-gray p-1">
         {filtros.map((f) => (
           <button
             key={f.value}
             type="button"
             onClick={() => setFiltro(f.value)}
-            className={`rounded-full px-5 py-2 font-body text-sm font-bold transition-colors ${
+            className={`rounded-[17px] px-5 py-2 font-body text-sm font-bold transition-colors ${
               filtro === f.value
                 ? "bg-white text-secondary shadow-sm"
                 : "text-muted-foreground hover:text-secondary"

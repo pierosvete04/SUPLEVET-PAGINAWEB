@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import type { MetodoPago } from "@/lib/data/productos-shared";
 import { Modal } from "@/components/admin/Modal";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -35,6 +36,7 @@ export interface ProductoWeb {
   orden: number;
   videos: string[];
   shopify_product_id: string | null;
+  metodos_pago_permitidos: MetodoPago[];
 }
 
 interface ProductoFormProps {
@@ -42,6 +44,12 @@ interface ProductoFormProps {
   onClose: () => void;
   onSaved: () => void;
 }
+
+const TODOS_LOS_METODOS: { id: MetodoPago; label: string }[] = [
+  { id: "tarjeta", label: "Tarjeta (Mercado Pago)" },
+  { id: "yape_plin", label: "Yape / Plin" },
+  { id: "transferencia", label: "Transferencia bancaria" },
+];
 
 const VACIO: Omit<ProductoWeb, "id"> = {
   slug: "",
@@ -59,6 +67,7 @@ const VACIO: Omit<ProductoWeb, "id"> = {
   orden: 0,
   videos: [],
   shopify_product_id: "",
+  metodos_pago_permitidos: ["tarjeta", "yape_plin", "transferencia"],
 };
 
 export function ProductoForm({ producto, onClose, onSaved }: ProductoFormProps) {
@@ -119,10 +128,23 @@ export function ProductoForm({ producto, onClose, onSaved }: ProductoFormProps) 
     setForm((f) => ({ ...f, videos: f.videos.filter((v) => v !== url) }));
   }
 
+  function toggleMetodoPago(id: MetodoPago) {
+    setForm((f) => ({
+      ...f,
+      metodos_pago_permitidos: f.metodos_pago_permitidos.includes(id)
+        ? f.metodos_pago_permitidos.filter((m) => m !== id)
+        : [...f.metodos_pago_permitidos, id],
+    }));
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.slug || !form.nombre || !form.imagen) {
       setError("Slug, nombre e imagen principal son obligatorios.");
+      return;
+    }
+    if (form.metodos_pago_permitidos.length === 0) {
+      setError("Selecciona al menos un método de pago.");
       return;
     }
     setGuardando(true);
@@ -309,6 +331,21 @@ export function ProductoForm({ producto, onClose, onSaved }: ProductoFormProps) 
               ))}
             </div>
           )}
+        </div>
+
+        <div className="grid gap-1.5">
+          <Label>Métodos de pago admitidos</Label>
+          <div className="flex flex-col gap-2">
+            {TODOS_LOS_METODOS.map(({ id, label }) => (
+              <label key={id} className="flex items-center gap-2 text-sm">
+                <Checkbox
+                  checked={form.metodos_pago_permitidos.includes(id)}
+                  onCheckedChange={() => toggleMetodoPago(id)}
+                />
+                {label}
+              </label>
+            ))}
+          </div>
         </div>
 
         <label className="flex items-center gap-2 text-sm">

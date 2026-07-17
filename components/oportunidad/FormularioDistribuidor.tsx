@@ -109,7 +109,7 @@ export function FormularioDistribuidor() {
           target="_blank"
           rel="noopener noreferrer"
           style={{ backgroundColor: "#25D366" }}
-          className="flex items-center justify-center gap-2 rounded-full px-6 py-3 font-body font-bold text-white transition-opacity hover:opacity-90"
+          className="flex items-center justify-center gap-2 rounded-[17px] px-6 py-3 font-body font-bold text-white transition-opacity hover:opacity-90"
         >
           <WhatsAppIcon className="h-5 w-5" />
           Abrir WhatsApp
@@ -180,7 +180,7 @@ export function FormularioDistribuidor() {
         type="submit"
         disabled={!formValido || enviando}
         style={{ backgroundColor: "#25D366" }}
-        className="mt-1 flex items-center justify-center gap-2 rounded-full px-6 py-3.5 font-body text-base font-bold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+        className="mt-1 flex items-center justify-center gap-2 rounded-[17px] px-6 py-3.5 font-body text-base font-bold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {enviando ? (
           <Loader2 className="h-5 w-5 animate-spin" />

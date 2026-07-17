@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Minus, Plus, ShoppingBag } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useCart } from "@/lib/cart/CartContext";
-import { formatPrecio } from "@/lib/data/productos-shared";
+import { formatPrecio, type MetodoPago } from "@/lib/data/productos-shared";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 interface ProductoTienda {
@@ -17,6 +17,7 @@ interface ProductoTienda {
   precio_comparacion: number;
   imagen: string;
   descuento_porcentaje: number;
+  metodos_pago_permitidos: MetodoPago[];
 }
 
 interface TiendaSheetProps {
@@ -25,8 +26,8 @@ interface TiendaSheetProps {
 }
 
 // Sidebar de compra rápida desde el portal — muestra el catálogo (productos y
-// combos) para añadir al carrito sin salir de /mi-cuenta; "Ir a pagar" lleva
-// al checkout real (mismo carrito global de lib/cart/CartContext).
+// combos) para añadir al carrito sin salir de /mi-cuenta; "Continuar al
+// checkout" lleva al checkout real (mismo carrito global de lib/cart/CartContext).
 export function TiendaSheet({ open, onOpenChange }: TiendaSheetProps) {
   const [productos, setProductos] = useState<ProductoTienda[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -37,7 +38,9 @@ export function TiendaSheet({ open, onOpenChange }: TiendaSheetProps) {
     if (!open) return;
     createClient()
       .from("productos_web")
-      .select("slug, nombre, categoria, precio, precio_comparacion, imagen, descuento_porcentaje")
+      .select(
+        "slug, nombre, categoria, precio, precio_comparacion, imagen, descuento_porcentaje, metodos_pago_permitidos"
+      )
       .eq("activo", true)
       .order("orden", { ascending: true })
       .then(({ data }) => {
@@ -85,14 +88,20 @@ export function TiendaSheet({ open, onOpenChange }: TiendaSheetProps) {
                       <button
                         type="button"
                         onClick={() =>
-                          addItem({ slug: p.slug, nombre: p.nombre, precio: p.precio, imagen: p.imagen })
+                          addItem({
+                            slug: p.slug,
+                            nombre: p.nombre,
+                            precio: p.precio,
+                            imagen: p.imagen,
+                            metodosPagoPermitidos: p.metodos_pago_permitidos,
+                          })
                         }
-                        className="shrink-0 rounded-full bg-portal-navy-dark px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-portal-navy"
+                        className="shrink-0 rounded-[17px] bg-portal-navy-dark px-4 py-2 text-xs font-bold text-white transition-colors hover:bg-portal-navy"
                       >
                         Añadir
                       </button>
                     ) : (
-                      <div className="flex shrink-0 items-center rounded-full border border-portal-surface-variant">
+                      <div className="flex shrink-0 items-center rounded-[17px] border border-portal-surface-variant">
                         <button
                           type="button"
                           aria-label="Restar cantidad"
@@ -130,10 +139,10 @@ export function TiendaSheet({ open, onOpenChange }: TiendaSheetProps) {
             type="button"
             disabled={totalItems === 0}
             onClick={irAPagar}
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-full bg-portal-orange px-6 py-3 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-[17px] bg-portal-orange px-6 py-3 text-sm font-bold text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <ShoppingBag className="h-4 w-4" />
-            Ir a pagar
+            Continuar al checkout
           </button>
         </div>
       </SheetContent>

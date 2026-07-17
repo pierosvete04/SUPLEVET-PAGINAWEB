@@ -134,7 +134,7 @@ export function LoginPanel({ className, next = "/mi-cuenta", onAuthenticated }: 
             <button
               type="button"
               onClick={handleGoogleLogin}
-              className="flex w-full items-center justify-center gap-2 rounded-full border border-border px-4 py-3 font-body text-sm font-bold text-secondary transition-colors hover:bg-soft-gray"
+              className="flex w-full items-center justify-center gap-2 rounded-[17px] border border-border px-4 py-3 font-body text-sm font-bold text-secondary transition-colors hover:bg-soft-gray"
             >
               <GoogleIcon />
               Continuar con Google
@@ -160,7 +160,7 @@ export function LoginPanel({ className, next = "/mi-cuenta", onAuthenticated }: 
             <button
               type="submit"
               disabled={cargando}
-              className="rounded-full bg-primary px-6 py-3 font-body font-bold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+              className="rounded-[17px] bg-primary px-6 py-3 font-body font-bold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
             >
               {cargando ? "Enviando…" : "Enviar código"}
             </button>
@@ -200,7 +200,7 @@ export function LoginPanel({ className, next = "/mi-cuenta", onAuthenticated }: 
             <button
               type="submit"
               disabled={cargando}
-              className="rounded-full bg-primary px-6 py-3 font-body font-bold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+              className="rounded-[17px] bg-primary px-6 py-3 font-body font-bold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
             >
               {cargando ? "Verificando…" : "Confirmar"}
             </button>

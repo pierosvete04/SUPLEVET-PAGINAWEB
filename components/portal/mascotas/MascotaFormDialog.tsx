@@ -231,7 +231,7 @@ export function MascotaFormDialog({
               <button
                 type="button"
                 onClick={handleEliminar}
-                className="flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold text-portal-error/70 hover:bg-red-50 hover:text-portal-error"
+                className="flex items-center gap-1 rounded-[17px] px-2 py-1 text-xs font-semibold text-portal-error/70 hover:bg-red-50 hover:text-portal-error"
               >
                 <span className="material-symbols-rounded text-[16px]">delete</span>
                 Eliminar
@@ -438,7 +438,7 @@ export function MascotaFormDialog({
           <Button
             type="submit"
             disabled={guardando}
-            className="h-12 w-full rounded-full bg-portal-orange text-base font-semibold text-white shadow-md hover:bg-portal-orange-dark"
+            className="h-12 w-full rounded-[17px] bg-portal-orange text-base font-semibold text-white shadow-md hover:bg-portal-orange-dark"
           >
             {guardando ? "Guardando…" : mascota ? "Guardar cambios" : "Agregar mascota"}
           </Button>

@@ -24,6 +24,7 @@ export function ProductCard({ producto, ctaLabel = "Añadir al carrito" }: Produ
       nombre: producto.nombre,
       precio: producto.precio,
       imagen: producto.imagen,
+      metodosPagoPermitidos: producto.metodosPagoPermitidos,
     });
     setAgregado(true);
     setTimeout(() => setAgregado(false), 1500);
@@ -55,8 +56,8 @@ export function ProductCard({ producto, ctaLabel = "Añadir al carrito" }: Produ
         />
       </div>
       <div className="pointer-events-none flex flex-1 flex-col gap-2 p-3.5">
-        <h3 className="font-display text-base font-bold text-secondary">{producto.nombre}</h3>
-        <p className="line-clamp-2 font-body text-xs text-muted-foreground">{producto.descripcion}</p>
+        <h3 className="font-display text-xl font-bold text-secondary">{producto.nombre}</h3>
+        <p className="line-clamp-2 font-body text-sm text-muted-foreground">{producto.descripcion}</p>
         <div className="mt-auto flex flex-col gap-2 pt-1">
           <div className="flex items-baseline gap-2">
             <span className="font-body text-lg font-bold text-primary">
@@ -72,7 +73,7 @@ export function ProductCard({ producto, ctaLabel = "Añadir al carrito" }: Produ
             type="button"
             onClick={handleAgregar}
             aria-label={`Añadir ${producto.nombre} al carrito`}
-            className={`pointer-events-auto relative z-10 flex w-full items-center justify-center gap-2 rounded-full py-3 font-body text-sm font-bold transition-opacity md:text-base ${
+            className={`pointer-events-auto relative z-10 flex w-full items-center justify-center gap-2 rounded-[17px] py-3 font-body text-sm font-bold transition-opacity md:text-base ${
               agregado
                 ? "bg-green-500 text-white"
                 : "bg-gradient-to-br from-accent to-portal-teal-mid text-secondary hover:opacity-90"

@@ -32,18 +32,18 @@ function CasoCard({ caso }: { caso: ResultadoReal }) {
           </>
         )}
 
-        <div className="absolute bottom-3 z-10 flex rounded-full bg-secondary/90 p-1 font-body text-xs font-bold">
+        <div className="absolute bottom-3 z-10 flex rounded-[17px] bg-secondary/90 p-1 font-body text-xs font-bold">
           <button
             type="button"
             onClick={() => setMostrarDespues(false)}
-            className={`rounded-full px-3 py-1 ${!mostrarDespues ? "bg-white text-secondary" : "text-white"}`}
+            className={`rounded-[17px] px-3 py-1 ${!mostrarDespues ? "bg-white text-secondary" : "text-white"}`}
           >
             Antes
           </button>
           <button
             type="button"
             onClick={() => setMostrarDespues(true)}
-            className={`rounded-full px-3 py-1 ${mostrarDespues ? "bg-white text-secondary" : "text-white"}`}
+            className={`rounded-[17px] px-3 py-1 ${mostrarDespues ? "bg-white text-secondary" : "text-white"}`}
           >
             Después
           </button>

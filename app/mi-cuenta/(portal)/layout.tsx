@@ -18,7 +18,7 @@ export default async function PortalLayout({ children }: { children: React.React
   await asegurarFilasCliente(supabase, user.id);
 
   const [{ data: perfil }, { data: puntos }] = await Promise.all([
-    supabase.from("clientes_perfil").select("nombre, apellido").eq("id", user.id).maybeSingle(),
+    supabase.from("clientes_perfil").select("nombre, apellido, foto_url").eq("id", user.id).maybeSingle(),
     supabase.from("suplepuntos_clientes").select("saldo_actual, nivel").eq("cliente_id", user.id).maybeSingle(),
   ]);
 
@@ -28,6 +28,7 @@ export default async function PortalLayout({ children }: { children: React.React
     email: user.email ?? "",
     nivel: puntos?.nivel ?? "basico",
     saldo: puntos?.saldo_actual ?? 0,
+    fotoUrl: perfil?.foto_url ?? null,
   };
 
   return (

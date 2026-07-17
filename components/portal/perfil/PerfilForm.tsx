@@ -35,11 +35,6 @@ export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTiene
   const [guardado, setGuardado] = useState(false);
   const [copiado, setCopiado] = useState(false);
 
-  const [passwordAbierto, setPasswordAbierto] = useState(false);
-  const [password, setPassword] = useState("");
-  const [passwordGuardando, setPasswordGuardando] = useState(false);
-  const [passwordMsg, setPasswordMsg] = useState<string | null>(null);
-
   const [codigoInvitado, setCodigoInvitado] = useState("");
   const [referidoAplicando, setReferidoAplicando] = useState(false);
   const [referidoMsg, setReferidoMsg] = useState<string | null>(null);
@@ -104,25 +99,6 @@ export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTiene
     setTimeout(() => setCopiado(false), 2000);
   }
 
-  async function handleGuardarPassword(e: React.FormEvent) {
-    e.preventDefault();
-    if (password.length < 8) {
-      setPasswordMsg("La contraseña debe tener al menos 8 caracteres");
-      return;
-    }
-    setPasswordGuardando(true);
-    setPasswordMsg(null);
-    const { error } = await createClient().auth.updateUser({ password });
-    setPasswordGuardando(false);
-    if (error) {
-      setPasswordMsg(error.message);
-      return;
-    }
-    setPassword("");
-    setPasswordAbierto(false);
-    setPasswordMsg("Contraseña guardada ✓");
-  }
-
   async function aplicarCodigoInvitado() {
     const codigo = codigoInvitado.trim().toUpperCase();
     if (!codigo) {
@@ -156,14 +132,21 @@ export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTiene
 
       {/* Hero */}
       <div className="mb-6 flex flex-wrap items-center gap-4 rounded-2xl bg-portal-navy p-6 text-white">
-        <div className="relative flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/15">
-          {fotoUrl ? (
-            <Image src={fotoUrl} alt="" fill className="object-cover" sizes="80px" />
-          ) : (
-            <span className="font-display text-2xl font-bold">{inicial}</span>
-          )}
-          <label className="absolute bottom-0 right-0 flex h-6 w-6 cursor-pointer items-center justify-center rounded-full bg-portal-orange">
-            <span className="material-symbols-rounded text-[14px]">photo_camera</span>
+        <div className="relative h-20 w-20 shrink-0">
+          <div className="flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-white/15">
+            {fotoUrl ? (
+              <Image src={fotoUrl} alt="" fill className="rounded-full object-cover" sizes="80px" />
+            ) : (
+              <span className="font-display text-2xl font-bold">{inicial}</span>
+            )}
+          </div>
+          {/* Fuera del círculo con overflow-hidden de arriba — si va adentro,
+              el propio recorte circular del avatar se come la mitad del
+              badge al estar pegado a la esquina inferior derecha. Sin borde
+              (se perdía contra el navy del fondo) — usa sombra para
+              despegarse en su lugar. */}
+          <label className="absolute bottom-0 right-0 z-10 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-portal-orange shadow-[0_1px_4px_rgba(0,0,0,0.4)]">
+            <span className="material-symbols-rounded text-base leading-none text-white">photo_camera</span>
             <input
               type="file"
               accept="image/*"
@@ -217,38 +200,6 @@ export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTiene
               {guardado && <span className="text-sm text-green-600">Guardado ✓</span>}
             </div>
           </form>
-
-          <div className="rounded-2xl border border-portal-surface-variant bg-white p-6">
-            <h3 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold text-portal-navy">
-              <span className="material-symbols-rounded text-portal-navy">lock</span> Seguridad y Acceso
-            </h3>
-            <div className="flex items-center justify-between rounded-xl border border-portal-surface-variant p-4">
-              <div>
-                <p className="text-sm font-bold text-portal-navy">Contraseña de acceso</p>
-                <p className="text-xs text-portal-muted">Añade una contraseña para iniciar sesión sin código OTP.</p>
-              </div>
-              <Button type="button" variant="outline" onClick={() => setPasswordAbierto((v) => !v)}>
-                <span className="material-symbols-rounded text-[16px]">add</span> Añadir
-              </Button>
-            </div>
-            {passwordAbierto && (
-              <form onSubmit={handleGuardarPassword} className="mt-4 flex flex-wrap items-end gap-3">
-                <div className="grid flex-1 gap-1.5">
-                  <Label>Nueva contraseña</Label>
-                  <Input
-                    type="password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    placeholder="Mínimo 8 caracteres"
-                  />
-                </div>
-                <Button type="submit" disabled={passwordGuardando} className="bg-portal-navy-dark hover:bg-portal-navy">
-                  {passwordGuardando ? "Guardando…" : "Guardar"}
-                </Button>
-              </form>
-            )}
-            {passwordMsg && <p className="mt-2 text-xs text-portal-muted">{passwordMsg}</p>}
-          </div>
         </div>
 
         <div className="space-y-6">

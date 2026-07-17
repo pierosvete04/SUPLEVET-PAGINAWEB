@@ -80,7 +80,7 @@ export function ComoSePrepara({
             <div className="mt-10 text-center">
               <a
                 href="/productos"
-                className="inline-block rounded-full bg-primary px-6 py-3 font-body font-bold text-primary-foreground transition-opacity hover:opacity-90"
+                className="inline-block rounded-[17px] bg-primary px-6 py-3 font-body font-bold text-primary-foreground transition-opacity hover:opacity-90"
               >
                 Comprar ahora
               </a>

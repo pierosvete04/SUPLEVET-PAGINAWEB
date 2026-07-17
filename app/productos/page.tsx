@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { CatalogoGrid } from "@/components/productos/CatalogoGrid";
 import { BannerCarousel } from "@/components/shared/BannerCarousel";
+import { PageBreadcrumbs } from "@/components/shared/PageBreadcrumbs";
 import { getProductos } from "@/lib/data/productos";
 import { getBannersActivos } from "@/lib/banners";
 import { createClient } from "@/lib/supabase/server";
@@ -17,6 +18,7 @@ export default async function ProductosPage() {
 
   return (
     <div className="bg-background pb-section-y pt-8 md:pt-10">
+      <PageBreadcrumbs items={[{ label: "Productos" }]} />
       <div className="mx-auto max-w-container px-mobile-margin text-center md:px-gutter">
         {banners.length > 0 && (
           <div className="mb-10 text-left">

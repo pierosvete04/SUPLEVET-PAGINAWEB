@@ -1,13 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, Gift } from "lucide-react";
 import { formatPrecio } from "@/lib/data/productos-shared";
 import { whatsappLink } from "@/lib/site-config";
 import { useConfiguracionSitio } from "@/hooks/use-configuracion-sitio";
 import { WhatsAppIcon } from "@/components/shared/WhatsAppIcon";
 import { LinkQrCode } from "@/components/shared/LinkQrCode";
+import { getBandanaRegaloPorSlug } from "@/lib/data/bandanas-regalo";
 
 interface PedidoSimulado {
   numero: string;
@@ -18,7 +20,7 @@ interface PedidoSimulado {
   direccionTexto?: string;
   metodoEnvio?: string;
   productos?: { nombre: string; cantidad: number }[];
-  colorRegalo?: string | null;
+  regaloBandana?: string | null;
 }
 
 const mensajePorMetodo: Record<PedidoSimulado["metodo"], string> = {
@@ -30,11 +32,12 @@ const mensajePorMetodo: Record<PedidoSimulado["metodo"], string> = {
 function construirMensajeWhatsapp(pedido: PedidoSimulado): string {
   const lineasProductos =
     pedido.productos?.map((p) => `- ${p.nombre} x${p.cantidad}`).join("\n") ?? "";
+  const bandana = getBandanaRegaloPorSlug(pedido.regaloBandana ?? null);
   return [
     `Hola, soy ${pedido.nombre || "[nombre]"}.`,
     `Acabo de hacer el pedido N° ${pedido.numero} por ${formatPrecio(pedido.total)}.`,
     lineasProductos && `Productos:\n${lineasProductos}`,
-    pedido.colorRegalo && `Color de bandana de regalo: ${pedido.colorRegalo}`,
+    bandana && `Bandana de regalo: ${bandana.nombre}`,
     pedido.direccionTexto && `Dirección de envío: ${pedido.direccionTexto}`,
     pedido.metodoEnvio && `Método de envío: ${pedido.metodoEnvio}`,
     "Les envío el comprobante de pago a continuación.",
@@ -55,6 +58,7 @@ export default function CheckoutExitoPage() {
   const linkWhatsapp = pedido
     ? whatsappLink(config.whatsappB2C, construirMensajeWhatsapp(pedido))
     : null;
+  const bandanaElegida = getBandanaRegaloPorSlug(pedido?.regaloBandana ?? null);
 
   return (
     <div className="mx-auto flex max-w-lg flex-col items-center gap-4 px-mobile-margin py-section-y text-center">
@@ -73,6 +77,23 @@ export default function CheckoutExitoPage() {
             <span>Total</span>
             <span className="font-bold text-primary">{formatPrecio(pedido.total)}</span>
           </div>
+          {bandanaElegida && (
+            <div className="mt-3 flex items-center gap-3 rounded-md bg-soft-gray p-2.5">
+              <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md bg-white">
+                <Image
+                  src={bandanaElegida.imagen}
+                  alt={`Bandana ${bandanaElegida.nombre}`}
+                  fill
+                  className="object-cover"
+                  sizes="48px"
+                />
+              </div>
+              <p className="flex items-center gap-1.5 font-body text-xs">
+                <Gift className="h-4 w-4 shrink-0 text-secondary" strokeWidth={1.75} />
+                Tu regalo: <strong>Bandana {bandanaElegida.nombre}</strong>
+              </p>
+            </div>
+          )}
           {pedido.metodo !== "tarjeta" && (
             <p className="mt-3 text-xs text-muted-foreground">
               Te enviaremos las instrucciones de pago y confirmaremos por WhatsApp y correo en las
@@ -96,7 +117,7 @@ export default function CheckoutExitoPage() {
               target="_blank"
               rel="noopener noreferrer"
               style={{ backgroundColor: "#25D366" }}
-              className="flex w-full items-center justify-center gap-2 rounded-full px-5 py-3 font-body text-sm font-bold text-white hover:opacity-90 sm:flex-1"
+              className="flex w-full items-center justify-center gap-2 rounded-[17px] px-5 py-3 font-body text-sm font-bold text-white hover:opacity-90 sm:flex-1"
             >
               <WhatsAppIcon className="h-4 w-4" />
               Escribir por WhatsApp
@@ -109,7 +130,7 @@ export default function CheckoutExitoPage() {
 
           <Link
             href="/mi-cuenta/pedidos"
-            className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border-2 border-secondary px-5 py-3 font-body text-sm font-bold text-secondary hover:bg-secondary hover:text-white"
+            className="mt-4 flex w-full items-center justify-center gap-2 rounded-[17px] border-2 border-secondary px-5 py-3 font-body text-sm font-bold text-secondary hover:bg-secondary hover:text-white"
           >
             Ver mi pedido en Mi cuenta
           </Link>
@@ -119,7 +140,7 @@ export default function CheckoutExitoPage() {
       <div className="mt-4 flex gap-3">
         <Link
           href="/productos"
-          className="rounded-full bg-primary px-6 py-3 font-body font-bold text-primary-foreground hover:opacity-90"
+          className="rounded-[17px] bg-primary px-6 py-3 font-body font-bold text-primary-foreground hover:opacity-90"
         >
           Seguir comprando
         </Link>

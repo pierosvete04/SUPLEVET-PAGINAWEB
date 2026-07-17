@@ -12,8 +12,9 @@ interface TestimoniosCarouselProps {
 const AUTOPLAY_MS = 4500;
 
 // Carrusel "coverflow": la tarjeta activa queda al centro, grande y al
-// frente; las vecinas se ven de perfil, más chicas y detrás — igual que la
-// referencia de diseño adjuntada (PLAN de correcciones, sección Nosotros).
+// frente; las vecinas se ven más chicas y detrás — misma mecánica plana
+// (sin rotación ni oscurecido) que BlogCoverflowSlider, para que ambos
+// carruseles del sitio se vean consistentes.
 export function TestimoniosCarousel({ testimonios }: TestimoniosCarouselProps) {
   const [abierto, setAbierto] = useState<TestimonioVideo | null>(null);
   const [activo, setActivo] = useState(0);
@@ -39,7 +40,7 @@ export function TestimoniosCarousel({ testimonios }: TestimoniosCarouselProps) {
   return (
     <>
       <div
-        className="relative flex h-[380px] items-center justify-center overflow-hidden sm:h-[420px]"
+        className="relative flex h-[420px] items-center justify-center overflow-hidden sm:h-[480px]"
         onMouseEnter={() => (pausado.current = true)}
         onMouseLeave={() => (pausado.current = false)}
       >
@@ -49,9 +50,8 @@ export function TestimoniosCarousel({ testimonios }: TestimoniosCarouselProps) {
           if (offset < -total / 2) offset += total;
 
           const visible = Math.abs(offset) <= 2;
-          const escala = offset === 0 ? 1 : Math.abs(offset) === 1 ? 0.8 : 0.65;
-          const traslado = offset * 130;
-          const rotacion = offset === 0 ? 0 : offset > 0 ? 8 : -8;
+          const escala = offset === 0 ? 1 : Math.abs(offset) === 1 ? 0.86 : 0.74;
+          const traslado = offset * 190;
 
           return (
             <button
@@ -60,14 +60,11 @@ export function TestimoniosCarousel({ testimonios }: TestimoniosCarouselProps) {
               aria-label={`Ver testimonio: ${t.titulo}`}
               onClick={() => (offset === 0 ? setAbierto(t) : irA(i))}
               style={{
-                transform: `translateX(${traslado}px) scale(${escala}) rotate(${rotacion}deg)`,
+                transform: `translateX(${traslado}px) scale(${escala})`,
                 zIndex: 10 - Math.abs(offset),
                 opacity: visible ? 1 : 0,
               }}
-              className={cn(
-                "group absolute flex aspect-[9/16] w-52 shrink-0 flex-col items-center justify-center overflow-hidden rounded-[var(--radius-card)] text-white shadow-xl transition-all duration-500 ease-out sm:w-60",
-                offset === 0 ? "cursor-pointer" : "cursor-pointer brightness-[0.55]"
-              )}
+              className="group absolute flex aspect-[9/16] w-60 shrink-0 cursor-pointer flex-col items-center justify-center overflow-hidden rounded-[var(--radius-card)] text-white shadow-xl transition-all duration-500 ease-out sm:w-72"
             >
               {t.thumbnail_url && (
                 // eslint-disable-next-line @next/next/no-img-element

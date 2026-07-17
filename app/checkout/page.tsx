@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
@@ -12,14 +12,16 @@ import { PaymentStep, type MetodoPago } from "@/components/checkout/PaymentStep"
 import { OrderSummary, type DescuentoAplicado } from "@/components/checkout/OrderSummary";
 import { zonaEnvioSlug, type EnvioZona } from "@/lib/shipping";
 
+const TODOS_LOS_METODOS: MetodoPago[] = ["tarjeta", "yape_plin", "transferencia"];
+
 export default function CheckoutPage() {
   const {
     items,
     subtotal,
     removeItem,
     cargando: carritoCargando,
-    colorRegaloSeleccionado,
-    setColorRegaloSeleccionado,
+    bandanaRegaloSeleccionada,
+    setBandanaRegaloSeleccionada,
   } = useCart();
   const router = useRouter();
 
@@ -68,6 +70,26 @@ export default function CheckoutPage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [carritoCargando, items.length]);
+
+  // Intersección de métodos admitidos por todos los items del carrito — si
+  // hay un combo (solo Yape/transferencia) junto a un producto individual
+  // (los 3 métodos), el pedido completo queda limitado a lo que admiten
+  // todos los items a la vez (el más restrictivo manda).
+  const metodosPermitidos = useMemo(() => {
+    return items.reduce<MetodoPago[]>(
+      (acc, item) => acc.filter((m) => (item.metodosPagoPermitidos ?? TODOS_LOS_METODOS).includes(m)),
+      TODOS_LOS_METODOS
+    );
+  }, [items]);
+
+  // Si el carrito cambia (se agrega un combo, se quita un producto, etc.) y
+  // el método ya elegido deja de estar permitido, hay que pedirle que elija
+  // de nuevo en vez de dejar seleccionada una opción inválida.
+  useEffect(() => {
+    if (metodoPago && !metodosPermitidos.includes(metodoPago)) {
+      setMetodoPago(null);
+    }
+  }, [metodosPermitidos, metodoPago]);
 
   function handleLoginExitoso(user: User) {
     setUsuario(user);
@@ -131,6 +153,7 @@ export default function CheckoutPage() {
       },
       p_cliente_nombre: `${direccion.nombre} ${direccion.apellidos}`.trim(),
       p_cliente_telefono: direccion.telefono,
+      p_regalo_bandana: bandanaRegaloSeleccionada,
     });
 
     if (error || !data?.ok) {
@@ -173,11 +196,11 @@ export default function CheckoutPage() {
           .join(", "),
         metodoEnvio: direccion.metodoEnvio === "shalom" ? "Agencia Shalom" : "Delivery motorizado",
         productos: items.map((i) => ({ nombre: i.nombre, cantidad: i.cantidad })),
-        colorRegalo: colorRegaloSeleccionado,
+        regaloBandana: bandanaRegaloSeleccionada,
       })
     );
     items.forEach((i) => removeItem(i.slug));
-    setColorRegaloSeleccionado(null);
+    setBandanaRegaloSeleccionada(null);
     router.push("/checkout/exito");
   }
 
@@ -213,7 +236,7 @@ export default function CheckoutPage() {
             }}
           />
 
-          <PaymentStep metodo={metodoPago} onChange={setMetodoPago} />
+          <PaymentStep metodo={metodoPago} onChange={setMetodoPago} metodosPermitidos={metodosPermitidos} />
 
           {errorPedido && <p className="font-body text-sm text-destructive">{errorPedido}</p>}
 
@@ -221,7 +244,7 @@ export default function CheckoutPage() {
             type="button"
             disabled={!puedeConfirmar || procesando}
             onClick={handleConfirmarPedido}
-            className="w-full rounded-full bg-primary px-6 py-3.5 font-body font-bold text-primary-foreground disabled:opacity-50 sm:w-fit"
+            className="w-full rounded-[17px] bg-primary px-6 py-3.5 font-body font-bold text-primary-foreground disabled:opacity-50 sm:w-fit"
           >
             {procesando ? "Procesando…" : "Pagar ahora"}
           </button>
@@ -235,6 +258,7 @@ export default function CheckoutPage() {
             clienteId={usuario.id}
             descuento={descuento}
             onDescuentoChange={setDescuento}
+            bandanaRegaloSlug={bandanaRegaloSeleccionada}
           />
         </div>
       </div>

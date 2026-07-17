@@ -6,6 +6,7 @@ import { Tag, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { CartItem } from "@/lib/cart/CartContext";
 import { formatPrecio } from "@/lib/data/productos-shared";
+import { getBandanaRegaloPorSlug } from "@/lib/data/bandanas-regalo";
 
 export interface DescuentoAplicado {
   codigo: string;
@@ -21,6 +22,7 @@ interface OrderSummaryProps {
   clienteId: string;
   descuento: DescuentoAplicado | null;
   onDescuentoChange: (descuento: DescuentoAplicado | null) => void;
+  bandanaRegaloSlug?: string | null;
 }
 
 export function OrderSummary({
@@ -30,7 +32,9 @@ export function OrderSummary({
   clienteId,
   descuento,
   onDescuentoChange,
+  bandanaRegaloSlug,
 }: OrderSummaryProps) {
+  const bandanaRegalo = getBandanaRegaloPorSlug(bandanaRegaloSlug ?? null);
   const [codigoInput, setCodigoInput] = useState("");
   const [validando, setValidando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -80,7 +84,7 @@ export function OrderSummary({
       <div className="mt-4 flex flex-col gap-3">
         {items.map((item) => (
           <div key={item.slug} className="flex items-center gap-3">
-            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-soft-gray">
+            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-[17px] bg-soft-gray">
               <Image src={item.imagen} alt={item.nombre} fill className="object-cover" sizes="48px" />
             </div>
             <div className="flex-1 font-body text-xs text-secondary">
@@ -92,6 +96,24 @@ export function OrderSummary({
             </span>
           </div>
         ))}
+        {bandanaRegalo && (
+          <div className="flex items-center gap-3">
+            <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-[17px] bg-soft-gray">
+              <Image
+                src={bandanaRegalo.imagen}
+                alt={`Bandana ${bandanaRegalo.nombre}`}
+                fill
+                className="object-cover"
+                sizes="48px"
+              />
+            </div>
+            <div className="flex-1 font-body text-xs text-secondary">
+              <p className="font-bold">Bandana {bandanaRegalo.nombre}</p>
+              <p className="text-muted-foreground">Regalo · Cantidad: 1</p>
+            </div>
+            <span className="font-body text-sm font-bold text-green-600">Gratis</span>
+          </div>
+        )}
       </div>
 
       <div className="mt-4 border-t border-border pt-4">
@@ -121,13 +143,13 @@ export function OrderSummary({
                 value={codigoInput}
                 onChange={(e) => setCodigoInput(e.target.value)}
                 disabled={envio == null}
-                className="w-full rounded-full border border-border px-4 py-2 font-body text-sm uppercase disabled:opacity-50"
+                className="w-full rounded-[17px] border border-border px-4 py-2 font-body text-sm uppercase disabled:opacity-50"
               />
               <button
                 type="button"
                 onClick={aplicarCodigo}
                 disabled={validando || !codigoInput.trim() || envio == null}
-                className="shrink-0 rounded-full bg-secondary px-4 py-2 font-body text-sm font-bold text-white disabled:opacity-50"
+                className="shrink-0 rounded-[17px] bg-secondary px-4 py-2 font-body text-sm font-bold text-white disabled:opacity-50"
               >
                 {validando ? "..." : "Aplicar"}
               </button>

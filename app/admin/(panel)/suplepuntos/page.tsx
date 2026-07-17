@@ -91,7 +91,7 @@ export default function AdminSuplepuntosPage() {
             key={f.valor}
             type="button"
             onClick={() => setFiltro(f.valor)}
-            className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors ${
+            className={`rounded-[17px] px-4 py-1.5 text-sm font-medium transition-colors ${
               filtro === f.valor ? "bg-secondary text-white" : "bg-soft-gray text-muted-foreground hover:bg-soft-gray/70"
             }`}
           >

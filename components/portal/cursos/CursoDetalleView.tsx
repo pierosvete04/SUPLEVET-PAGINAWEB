@@ -176,7 +176,7 @@ export function CursoDetalleView({ curso, leccionesCompletadasIniciales }: Curso
                     <button
                       type="button"
                       onClick={() => marcarCompletada(leccionActual.id)}
-                      className="mt-5 rounded-full bg-portal-navy-dark px-6 py-2.5 text-sm font-semibold text-white hover:bg-portal-navy"
+                      className="mt-5 rounded-[17px] bg-portal-navy-dark px-6 py-2.5 text-sm font-semibold text-white hover:bg-portal-navy"
                     >
                       Marcar lección como completada
                     </button>

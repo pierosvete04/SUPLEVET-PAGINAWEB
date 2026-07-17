@@ -3,7 +3,7 @@
 import { useEffect, useState, use as usePromise } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, MessageCircle } from "lucide-react";
+import { ArrowLeft, Gift, MessageCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Badge } from "@/components/admin/Badge";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import {
   formatFechaPedido,
   type PedidoAdmin,
 } from "@/lib/data/pedidos-admin";
+import { getBandanaRegaloPorSlug } from "@/lib/data/bandanas-regalo";
 
 export default function AdminPedidoDetallePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = usePromise(params);
@@ -83,6 +84,7 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
 
   const dir = pedido.direccion_envio;
   const pago = BADGE_ESTADO_PAGO[pedido.estado_pago];
+  const bandanaRegalo = getBandanaRegaloPorSlug(pedido.regalo_bandana);
 
   return (
     <div className="flex flex-col gap-6">
@@ -116,6 +118,23 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
                 <span>Total</span>
                 <span className="text-primary">S/.{Number(pedido.total).toFixed(2)}</span>
               </div>
+              {bandanaRegalo && (
+                <div className="mt-2 flex items-center gap-3 rounded-md bg-soft-gray p-2.5">
+                  <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-white">
+                    <Image
+                      src={bandanaRegalo.imagen}
+                      alt={`Bandana ${bandanaRegalo.nombre}`}
+                      fill
+                      className="object-cover"
+                      sizes="40px"
+                    />
+                  </div>
+                  <p className="flex items-center gap-1.5 text-sm">
+                    <Gift className="h-4 w-4 shrink-0 text-secondary" strokeWidth={1.75} />
+                    Regalo: <strong>Bandana {bandanaRegalo.nombre}</strong>
+                  </p>
+                </div>
+              )}
             </CardContent>
           </Card>
 

@@ -1,5 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
-import type { ProductoCombo } from "@/lib/data/productos-shared";
+import type { MetodoPago, ProductoCombo } from "@/lib/data/productos-shared";
 
 interface ProductoWebRow {
   slug: string;
@@ -13,6 +13,7 @@ interface ProductoWebRow {
   descuento_porcentaje: number;
   videos: string[];
   shopify_product_id: string | null;
+  metodos_pago_permitidos: MetodoPago[];
 }
 
 function mapRow(row: ProductoWebRow): ProductoCombo {
@@ -28,11 +29,12 @@ function mapRow(row: ProductoWebRow): ProductoCombo {
     descuentoPorcentaje: row.descuento_porcentaje,
     videos: row.videos ?? [],
     shopifyProductId: row.shopify_product_id,
+    metodosPagoPermitidos: row.metodos_pago_permitidos,
   };
 }
 
 const FIELDS =
-  "slug, nombre, descripcion, categoria, precio, precio_comparacion, imagen, galeria, descuento_porcentaje, videos, shopify_product_id";
+  "slug, nombre, descripcion, categoria, precio, precio_comparacion, imagen, galeria, descuento_porcentaje, videos, shopify_product_id, metodos_pago_permitidos";
 
 export async function getProductos(): Promise<ProductoCombo[]> {
   const supabase = await createClient();

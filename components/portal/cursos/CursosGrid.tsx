@@ -101,7 +101,7 @@ export function CursosGrid({ cursos }: CursosGridProps) {
             <button
               type="button"
               onClick={() => setFiltro("todos")}
-              className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+              className={`rounded-[17px] px-4 py-2 text-sm font-semibold transition-colors ${
                 filtro === "todos" ? "bg-portal-navy text-white" : "bg-white text-portal-muted hover:bg-portal-surface-low"
               }`}
             >
@@ -112,7 +112,7 @@ export function CursosGrid({ cursos }: CursosGridProps) {
                 key={cat}
                 type="button"
                 onClick={() => setFiltro(cat)}
-                className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+                className={`rounded-[17px] px-4 py-2 text-sm font-semibold transition-colors ${
                   filtro === cat ? "bg-portal-navy text-white" : "bg-white text-portal-muted hover:bg-portal-surface-low"
                 }`}
               >
@@ -164,7 +164,7 @@ export function CursosGrid({ cursos }: CursosGridProps) {
                   </p>
                 </div>
                 <div className="flex items-center">
-                  <span className="rounded-full bg-portal-navy-dark px-6 py-2.5 text-sm font-semibold text-white">
+                  <span className="rounded-[17px] bg-portal-navy-dark px-6 py-2.5 text-sm font-semibold text-white">
                     Continuar
                   </span>
                 </div>
@@ -213,7 +213,7 @@ export function CursosGrid({ cursos }: CursosGridProps) {
                       </span>
                     )}
                   </div>
-                  <span className="mt-4 block w-full rounded-full bg-portal-navy-dark py-2 text-center text-sm font-semibold text-white">
+                  <span className="mt-4 block w-full rounded-[17px] bg-portal-navy-dark py-2 text-center text-sm font-semibold text-white">
                     Ver curso
                   </span>
                 </div>

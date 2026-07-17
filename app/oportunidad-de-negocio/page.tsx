@@ -10,6 +10,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { ScrollReveal } from "@/components/shared/ScrollReveal";
+import { PageBreadcrumbs } from "@/components/shared/PageBreadcrumbs";
 import { FormularioDistribuidor } from "@/components/oportunidad/FormularioDistribuidor";
 
 export const metadata: Metadata = {
@@ -89,6 +90,7 @@ const pasos = [
 export default function OportunidadDeNegocioPage() {
   return (
     <div>
+      <PageBreadcrumbs items={[{ label: "Oportunidad de negocio" }]} />
       {/* HERO */}
       <section className="relative flex min-h-[60vh] items-center overflow-hidden bg-gradient-to-br from-secondary to-[#0f1b2e] text-white">
         <Image
@@ -116,14 +118,14 @@ export default function OportunidadDeNegocioPage() {
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <a
                 href="#postular"
-                className="flex items-center justify-center gap-2 rounded-full bg-accent px-7 py-3.5 font-body text-base font-bold text-accent-foreground transition-opacity hover:opacity-90"
+                className="flex items-center justify-center gap-2 rounded-[17px] bg-accent px-7 py-3.5 font-body text-base font-bold text-accent-foreground transition-opacity hover:opacity-90"
               >
                 Quiero ser distribuidor
                 <ArrowRight className="h-5 w-5" strokeWidth={2} />
               </a>
               <a
                 href="#ventajas"
-                className="flex items-center justify-center gap-2 rounded-full border border-white/40 px-7 py-3.5 font-body text-base font-bold text-white transition-colors hover:bg-white/10"
+                className="flex items-center justify-center gap-2 rounded-[17px] border border-white/40 px-7 py-3.5 font-body text-base font-bold text-white transition-colors hover:bg-white/10"
               >
                 Ver ventajas
               </a>

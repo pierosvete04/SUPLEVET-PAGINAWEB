@@ -44,7 +44,7 @@ export function BlogCoverflowSlider({ posts }: BlogCoverflowSliderProps) {
       onMouseEnter={() => (pausado.current = true)}
       onMouseLeave={() => (pausado.current = false)}
     >
-      <div className="relative flex h-[420px] items-center justify-center overflow-hidden sm:h-[480px]">
+      <div className="relative flex h-[460px] items-center justify-center overflow-hidden sm:h-[540px]">
         {posts.map((post, i) => {
           let offset = i - activo;
           if (offset > total / 2) offset -= total;
@@ -52,7 +52,7 @@ export function BlogCoverflowSlider({ posts }: BlogCoverflowSliderProps) {
 
           const visible = Math.abs(offset) <= 2;
           const escala = offset === 0 ? 1 : Math.abs(offset) === 1 ? 0.86 : 0.74;
-          const traslado = offset * 250;
+          const traslado = offset * 280;
 
           const tarjeta = (
             <div
@@ -61,7 +61,7 @@ export function BlogCoverflowSlider({ posts }: BlogCoverflowSliderProps) {
                 zIndex: 10 - Math.abs(offset),
                 opacity: visible ? 1 : 0,
               }}
-              className="group absolute flex aspect-[4/5] w-72 shrink-0 flex-col overflow-hidden rounded-[var(--radius-card)] bg-secondary text-white shadow-xl transition-all duration-500 ease-out sm:w-80"
+              className="group absolute flex aspect-[4/5] w-80 shrink-0 flex-col overflow-hidden rounded-[var(--radius-card)] bg-secondary text-white shadow-xl transition-all duration-500 ease-out sm:w-[26rem]"
             >
               {post.imagen_destacada ? (
                 <Image
@@ -69,7 +69,7 @@ export function BlogCoverflowSlider({ posts }: BlogCoverflowSliderProps) {
                   alt=""
                   fill
                   className="object-cover"
-                  sizes="320px"
+                  sizes="416px"
                 />
               ) : (
                 <div className="flex h-full items-center justify-center bg-secondary">
@@ -90,7 +90,7 @@ export function BlogCoverflowSlider({ posts }: BlogCoverflowSliderProps) {
                   <span className="font-body text-sm text-white/70">
                     {formatFechaPost(post.fecha_publicacion)}
                   </span>
-                  <span className="rounded-full bg-white px-4 py-1.5 font-body text-sm font-bold text-secondary transition-opacity group-hover:opacity-90">
+                  <span className="rounded-[17px] bg-white px-4 py-1.5 font-body text-sm font-bold text-secondary transition-opacity group-hover:opacity-90">
                     Ver
                   </span>
                 </div>

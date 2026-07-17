@@ -36,7 +36,7 @@ export function IngredientesSection({ ingredientes }: IngredientesSectionProps) 
                 key={ing.id}
                 type="button"
                 onClick={() => setActivo(i)}
-                className={`rounded-full border px-4 py-2 font-body text-sm font-bold transition-colors md:text-left ${
+                className={`rounded-[17px] border px-4 py-2 font-body text-sm font-bold transition-colors md:text-left ${
                   activo === i
                     ? "border-secondary bg-secondary text-white"
                     : "border-border bg-white text-secondary"

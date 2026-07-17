@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { acreditarPuntos } from "@/lib/data/portal/puntos";
 import { trackEvent } from "@/lib/analytics";
 import { formatFecha } from "@/lib/portal/formato";
+import { formatPrecio } from "@/lib/data/productos-shared";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -154,7 +155,7 @@ export function PedidoProductoDialog({
       <button
         type="button"
         onClick={() => setAbierto(true)}
-        className={`shrink-0 rounded-full px-3 py-1.5 font-body text-[11px] font-bold transition-colors ${
+        className={`shrink-0 rounded-[17px] px-3 py-1.5 font-body text-[11px] font-bold transition-colors ${
           badge
             ? `bg-soft-gray ${badge.color}`
             : puedeResenar
@@ -192,7 +193,7 @@ export function PedidoProductoDialog({
               <div className="min-w-0 flex-1">
                 <p className="truncate font-body text-sm font-bold text-secondary">{productoNombre}</p>
                 <p className="font-body text-xs text-muted-foreground">
-                  {cantidad > 1 ? `${cantidad} unidades · ` : ""}S/ {precio.toFixed(2)}
+                  {cantidad > 1 ? `${cantidad} unidades · ` : ""}{formatPrecio(precio)}
                 </p>
               </div>
             </div>

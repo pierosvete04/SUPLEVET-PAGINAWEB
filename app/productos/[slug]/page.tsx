@@ -3,11 +3,13 @@ import { notFound } from "next/navigation";
 import { ProductGallery } from "@/components/producto/ProductGallery";
 import { ProductBuyBox } from "@/components/producto/ProductBuyBox";
 import { IngredientesSection } from "@/components/producto/IngredientesSection";
+import { FuncionesApoyadas } from "@/components/producto/FuncionesApoyadas";
 import { ComparativaTable } from "@/components/producto/ComparativaTable";
 import { ProductReviewsSection } from "@/components/producto/ProductReviewsSection";
 import { RelatedProducts } from "@/components/producto/RelatedProducts";
 import { ComoSePrepara } from "@/components/shared/ComoSePrepara";
 import { Faq } from "@/components/shared/Faq";
+import { PageBreadcrumbs } from "@/components/shared/PageBreadcrumbs";
 import { getProductoBySlug } from "@/lib/data/productos";
 import { getRegalosAplicables } from "@/lib/regalos";
 import { getResenasDeProducto } from "@/lib/resenas";
@@ -59,7 +61,8 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
 
   return (
     <div>
-      <div className="mx-auto max-w-container px-mobile-margin py-section-y md:px-gutter">
+      <PageBreadcrumbs items={[{ label: "Productos", href: "/productos" }, { label: producto.nombre }]} />
+      <div className="mx-auto max-w-container px-mobile-margin pb-section-y pt-4 md:px-gutter md:pt-6">
         <div className="grid grid-cols-1 gap-10 md:grid-cols-2">
           <ProductGallery imagenes={producto.galeria} nombre={producto.nombre} />
           <ProductBuyBox producto={producto} regalos={regalos} resenas={resenas} />
@@ -68,6 +71,7 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
 
       <ComoSePrepara mostrarBotonComprar={false} />
       <IngredientesSection ingredientes={ingredientes} />
+      <FuncionesApoyadas />
       <ComparativaTable filas={comparativa} />
       <ProductReviewsSection resenas={resenas} />
       <Faq preguntas={faqs} />

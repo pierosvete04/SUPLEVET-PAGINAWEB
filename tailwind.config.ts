@@ -98,7 +98,11 @@ const config: Config = {
   			'section-y': '100px'
   		},
   		maxWidth: {
-  			container: '1280px'
+  			// Fluido: igual que antes (1280px) en mobile/tablet, y se ensancha
+  			// hasta 1800px en pantallas grandes para que el contenido llegue
+  			// casi borde a borde (como el header/TrustBar) en vez de quedar
+  			// "flotando" en una caja angosta con márgenes blancos enormes.
+  			container: 'clamp(1280px, 94vw, 1800px)'
   		},
   		keyframes: {
   			// Arranca ya desplazado (translateX negativo) y termina en 0 — el

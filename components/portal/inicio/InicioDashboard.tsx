@@ -205,7 +205,7 @@ export function InicioDashboard({ user, perfil }: InicioDashboardProps) {
           <button
             type="button"
             onClick={() => setTiendaAbierta(true)}
-            className="w-full rounded-full bg-portal-navy-dark py-2.5 text-sm font-semibold text-white transition-colors hover:bg-portal-navy"
+            className="w-full rounded-[17px] bg-portal-navy-dark py-2.5 text-sm font-semibold text-white transition-colors hover:bg-portal-navy"
           >
             Comprar ahora
           </button>
@@ -280,7 +280,7 @@ export function InicioDashboard({ user, perfil }: InicioDashboardProps) {
               <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-portal-surface-variant">
                 <span className="material-symbols-rounded text-2xl text-portal-muted">add</span>
               </div>
-              <span className="text-sm font-semibold text-portal-navy">Añadir Mascota</span>
+              <span className="text-sm font-semibold text-portal-navy">Añadir mascota</span>
             </Link>
           </div>
         )}

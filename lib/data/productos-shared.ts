@@ -4,6 +4,11 @@
 // /admin/productos.
 export type CategoriaProducto = "producto" | "combo";
 
+// Métodos de pago disponibles en checkout (components/checkout/PaymentStep.tsx)
+// — cada producto declara cuáles admite vía metodosPagoPermitidos, editable
+// desde /admin/productos.
+export type MetodoPago = "tarjeta" | "yape_plin" | "transferencia";
+
 export interface ProductoCombo {
   slug: string;
   nombre: string;
@@ -16,6 +21,7 @@ export interface ProductoCombo {
   descuentoPorcentaje: number;
   videos: string[];
   shopifyProductId: string | null;
+  metodosPagoPermitidos: MetodoPago[];
 }
 
 export function formatPrecio(valor: number): string {

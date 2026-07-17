@@ -70,7 +70,7 @@ export default function BienvenidaPage() {
           <button
             type="submit"
             disabled={cargando}
-            className="rounded-full bg-primary px-6 py-3 font-body font-bold text-primary-foreground disabled:opacity-60"
+            className="rounded-[17px] bg-primary px-6 py-3 font-body font-bold text-primary-foreground disabled:opacity-60"
           >
             {cargando ? "Aplicando…" : "Aplicar código y entrar"}
           </button>

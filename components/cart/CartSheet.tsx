@@ -1,14 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Minus, Plus, Trash2, PawPrint, Gift, Check } from "lucide-react";
+import { Minus, Plus, Trash2, PawPrint } from "lucide-react";
 import { useCart } from "@/lib/cart/CartContext";
 import { formatPrecio } from "@/lib/data/productos-shared";
-import { createClient } from "@/lib/supabase/client";
-import { getRegalosPorMontoMinimo } from "@/lib/regalos";
+import { RegaloBandanaSelector } from "@/components/cart/RegaloBandanaSelector";
 import {
   Sheet,
   SheetContent,
@@ -21,30 +19,9 @@ interface CartSheetProps {
   onOpenChange: (open: boolean) => void;
 }
 
-// Colores fijos de bandana — sin gestión desde admin por ahora.
-const BANDANA_COLORES = [
-  { nombre: "Rojo", hex: "#D33F3F" },
-  { nombre: "Azul", hex: "#2563EB" },
-  { nombre: "Verde", hex: "#16A34A" },
-  { nombre: "Negro", hex: "#111827" },
-];
-
 export function CartSheet({ open, onOpenChange }: CartSheetProps) {
-  const { items, updateQuantity, removeItem, subtotal, colorRegaloSeleccionado, setColorRegaloSeleccionado } =
-    useCart();
+  const { items, updateQuantity, removeItem, subtotal } = useCart();
   const router = useRouter();
-  const [montoMinimoRegalo, setMontoMinimoRegalo] = useState<number | null>(null);
-
-  useEffect(() => {
-    getRegalosPorMontoMinimo(createClient()).then((regalos) => {
-      const montos = regalos
-        .map((r) => r.condicion_monto_minimo)
-        .filter((m): m is number => m !== null);
-      setMontoMinimoRegalo(montos.length > 0 ? Math.min(...montos) : null);
-    });
-  }, []);
-
-  const calificaParaRegalo = montoMinimoRegalo !== null && subtotal >= montoMinimoRegalo;
 
   function handlePagarPedido() {
     onOpenChange(false);
@@ -65,7 +42,7 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
             <Link
               href="/productos"
               onClick={() => onOpenChange(false)}
-              className="rounded-full bg-primary px-5 py-2.5 font-body text-sm font-bold text-primary-foreground hover:opacity-90"
+              className="rounded-[17px] bg-primary px-5 py-2.5 font-body text-sm font-bold text-primary-foreground hover:opacity-90"
             >
               Ver productos
             </Link>
@@ -84,7 +61,7 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
                       <p className="font-body text-xs text-muted-foreground">
                         {formatPrecio(item.precio)} c/u
                       </p>
-                      <div className="mt-1.5 flex items-center rounded-full border border-border w-fit">
+                      <div className="mt-1.5 flex items-center rounded-[17px] border border-border w-fit">
                         <button
                           type="button"
                           aria-label="Restar cantidad"
@@ -133,42 +110,16 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
                 El envío se calcula en el checkout según tu dirección.
               </p>
 
-              {calificaParaRegalo && (
-                <div className="mt-3 rounded-[var(--radius-card,1rem)] border-2 border-dashed border-accent bg-accent/10 p-3">
-                  <p className="flex items-center gap-1.5 font-body text-xs font-bold text-secondary">
-                    <Gift className="h-4 w-4 text-secondary" strokeWidth={1.75} />
-                    Elige el color de tu bandana de regalo
-                  </p>
-                  <div className="mt-2 flex gap-2">
-                    {BANDANA_COLORES.map((color) => (
-                      <button
-                        key={color.nombre}
-                        type="button"
-                        aria-label={`Bandana ${color.nombre}`}
-                        onClick={() => setColorRegaloSeleccionado(color.nombre)}
-                        className="relative flex h-8 w-8 items-center justify-center rounded-full border-2 border-white shadow-sm ring-1 ring-border"
-                        style={{ backgroundColor: color.hex }}
-                      >
-                        {colorRegaloSeleccionado === color.nombre && (
-                          <Check className="h-4 w-4 text-white" strokeWidth={3} />
-                        )}
-                      </button>
-                    ))}
-                  </div>
-                  {!colorRegaloSeleccionado && (
-                    <p className="mt-1.5 font-body text-[11px] text-muted-foreground">
-                      Selecciona un color, se añade gratis a tu pedido.
-                    </p>
-                  )}
-                </div>
-              )}
+              <div className="mt-3">
+                <RegaloBandanaSelector />
+              </div>
 
               <button
                 type="button"
                 onClick={handlePagarPedido}
-                className="mt-4 w-full rounded-full bg-primary px-6 py-3 font-body font-bold text-primary-foreground hover:opacity-90"
+                className="mt-4 w-full rounded-[17px] bg-primary px-6 py-3 font-body font-bold text-primary-foreground hover:opacity-90"
               >
-                Pagar pedido
+                Continuar al checkout
               </button>
               <Link
                 href="/carrito"

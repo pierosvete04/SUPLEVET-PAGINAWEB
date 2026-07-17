@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import type { MetodoPago } from "@/lib/data/productos-shared";
 
 export interface CartItem {
   slug: string;
@@ -8,6 +9,10 @@ export interface CartItem {
   precio: number;
   imagen: string;
   cantidad: number;
+  /** Opcional por compatibilidad con carritos guardados en localStorage antes
+   * de esta feature — ausente se trata como "admite todos" (ver
+   * app/checkout/page.tsx). */
+  metodosPagoPermitidos?: MetodoPago[];
 }
 
 interface CartContextValue {
@@ -20,19 +25,19 @@ interface CartContextValue {
   /** false hasta que se termina de leer localStorage — evita que páginas como
    * /checkout redirijan por "carrito vacío" antes de que cargue el real. */
   cargando: boolean;
-  /** Color de bandana elegido para el regalo (si aplica) — null si no ha elegido. */
-  colorRegaloSeleccionado: string | null;
-  setColorRegaloSeleccionado: (color: string | null) => void;
+  /** Slug del diseño de bandana elegido como regalo (ver BANDANAS_REGALO) — null si no ha elegido. */
+  bandanaRegaloSeleccionada: string | null;
+  setBandanaRegaloSeleccionada: (slug: string | null) => void;
 }
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
 const STORAGE_KEY = "suplevet_carrito";
-const STORAGE_KEY_REGALO = "suplevet_color_regalo";
+const STORAGE_KEY_REGALO = "suplevet_bandana_regalo";
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [hidratado, setHidratado] = useState(false);
-  const [colorRegaloSeleccionado, setColorRegaloSeleccionadoState] = useState<string | null>(null);
+  const [bandanaRegaloSeleccionada, setBandanaRegaloSeleccionadaState] = useState<string | null>(null);
 
   // Carga inicial desde localStorage — el carrito es solo del navegador por
   // ahora (Fase 2 lo persiste en Supabase junto con el checkout real).
@@ -40,8 +45,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     try {
       const guardado = window.localStorage.getItem(STORAGE_KEY);
       if (guardado) setItems(JSON.parse(guardado));
-      const colorGuardado = window.localStorage.getItem(STORAGE_KEY_REGALO);
-      if (colorGuardado) setColorRegaloSeleccionadoState(colorGuardado);
+      const bandanaGuardada = window.localStorage.getItem(STORAGE_KEY_REGALO);
+      if (bandanaGuardada) setBandanaRegaloSeleccionadaState(bandanaGuardada);
     } catch {
       // localStorage no disponible o dato corrupto — se empieza con carrito vacío
     }
@@ -53,9 +58,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
   }, [items, hidratado]);
 
-  function setColorRegaloSeleccionado(color: string | null) {
-    setColorRegaloSeleccionadoState(color);
-    if (color) window.localStorage.setItem(STORAGE_KEY_REGALO, color);
+  function setBandanaRegaloSeleccionada(slug: string | null) {
+    setBandanaRegaloSeleccionadaState(slug);
+    if (slug) window.localStorage.setItem(STORAGE_KEY_REGALO, slug);
     else window.localStorage.removeItem(STORAGE_KEY_REGALO);
   }
 
@@ -96,8 +101,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         subtotal,
         totalItems,
         cargando: !hidratado,
-        colorRegaloSeleccionado,
-        setColorRegaloSeleccionado,
+        bandanaRegaloSeleccionada,
+        setBandanaRegaloSeleccionada,
       }}
     >
       {children}

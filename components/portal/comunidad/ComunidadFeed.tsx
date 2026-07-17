@@ -133,7 +133,7 @@ export function ComunidadFeed({ user }: ComunidadFeedProps) {
           <button
             type="submit"
             disabled={publicando || !texto.trim()}
-            className="flex items-center gap-1.5 rounded-full bg-primary px-4 py-2 font-body text-xs font-bold text-primary-foreground disabled:opacity-50"
+            className="flex items-center gap-1.5 rounded-[17px] bg-primary px-4 py-2 font-body text-xs font-bold text-primary-foreground disabled:opacity-50"
           >
             <Send className="h-3.5 w-3.5" /> {publicando ? "Publicando…" : "Publicar"}
           </button>

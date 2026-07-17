@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ProductCard } from "@/components/productos/ProductCard";
 import { BannerCarousel } from "@/components/shared/BannerCarousel";
+import { PageBreadcrumbs } from "@/components/shared/PageBreadcrumbs";
 import { getCombos } from "@/lib/data/productos";
 import { getBannersActivos } from "@/lib/banners";
 import { createClient } from "@/lib/supabase/server";
@@ -16,19 +17,11 @@ export default async function OfertasPage() {
   const banners = await getBannersActivos(await createClient(), "ofertas");
 
   return (
-    <div className="bg-background pb-section-y">
-      <div className="bg-primary py-16 text-center">
-        <h1 className="font-display text-4xl font-bold text-primary-foreground md:text-5xl">
-          Más Suplevet, mejor precio
-        </h1>
-        <p className="mx-auto mt-3 max-w-lg font-body text-primary-foreground/90">
-          Ahorra comprando combos — misma nutrición funcional, mejor precio por bolsa.
-        </p>
-      </div>
-
+    <div className="bg-background pb-section-y pt-8 md:pt-10">
+      <PageBreadcrumbs items={[{ label: "Ofertas" }]} />
       <div className="mx-auto max-w-container px-mobile-margin md:px-gutter">
         {banners.length > 0 && (
-          <div className="mt-10">
+          <div>
             <BannerCarousel banners={banners} />
           </div>
         )}

@@ -31,3 +31,7 @@ next-env.d.ts
 
 .vercel
 .env*
+
+# python cache de scripts de skills (ui-ux-pro-max)
+__pycache__/
+*.pyc

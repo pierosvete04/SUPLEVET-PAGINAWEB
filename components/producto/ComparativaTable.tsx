@@ -43,28 +43,57 @@ export function ComparativaTable({ filas }: ComparativaTableProps) {
             </div>
           </div>
 
-          {/* Filas */}
-          <div className="mt-6 flex flex-col gap-4">
-            {filas.map((fila) => (
-              <div
-                key={fila.id}
-                className="rounded-sm bg-white/5 p-4 md:grid md:grid-cols-[200px_1fr_1fr] md:items-center md:gap-4 md:p-5"
-              >
-                <p className="font-display text-base font-bold text-white md:text-sm md:text-white/90">
-                  {fila.beneficio}
-                </p>
+          {/* Filas — scroll horizontal en vez de apilarse verticalmente, así
+              la sección no se estira tanto en pantallas con muchos beneficios. */}
+          <div className="-mx-mobile-margin md:mx-0">
+            <div className="flex snap-x snap-mandatory gap-4 overflow-x-auto px-mobile-margin pb-2 [-ms-overflow-style:none] [scrollbar-width:none] md:px-0 [&::-webkit-scrollbar]:hidden">
+              {filas.map((fila) => (
+                <div
+                  key={fila.id}
+                  className="w-[80vw] shrink-0 snap-center rounded-sm bg-white/5 p-4 sm:w-[360px] md:p-5"
+                >
+                  <p className="font-display text-base font-bold text-white">{fila.beneficio}</p>
 
-                <div className="mt-3 rounded-sm border border-accent/30 bg-accent/10 p-4 md:mt-0">
-                  <p className="font-body text-sm font-bold text-accent">{fila.suplevet_titulo}</p>
-                  <p className="mt-1 font-body text-xs leading-relaxed text-white/80">{fila.suplevet_texto}</p>
-                </div>
+                  <div className="mt-3 rounded-sm border border-accent/30 bg-accent/10 p-4">
+                    <p className="font-body text-sm font-bold text-accent">{fila.suplevet_titulo}</p>
+                    <p className="mt-1 font-body text-xs leading-relaxed text-white/80">{fila.suplevet_texto}</p>
+                  </div>
 
-                <div className="mt-3 rounded-sm border border-white/10 bg-white/5 p-4 md:mt-0">
-                  <p className="font-body text-sm font-bold text-white/50">{fila.otros_titulo}</p>
-                  <p className="mt-1 font-body text-xs leading-relaxed text-white/40">{fila.otros_texto}</p>
+                  <div className="mt-3 rounded-sm border border-white/10 bg-white/5 p-4">
+                    <p className="font-body text-sm font-bold text-white/50">{fila.otros_titulo}</p>
+                    <p className="mt-1 font-body text-xs leading-relaxed text-white/40">{fila.otros_texto}</p>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+          </div>
+          <p className="mt-1 text-center font-body text-[11px] text-white/30 md:hidden">
+            Desliza para ver más beneficios →
+          </p>
+
+          {/* Cierre de marca — resume la diferencia en una frase, sin
+              afirmaciones clínicas (evitar "previene/cura/trata"). */}
+          <div className="mt-8 border-t border-white/10 pt-8 text-center">
+            <p className="mx-auto max-w-2xl font-body text-sm leading-relaxed text-white/70">
+              Suplevet no solo aporta nutrientes: combina ingredientes bioactivos que apoyan
+              múltiples funciones fisiológicas del organismo, contribuyendo a una mejor
+              recuperación, bienestar y calidad de vida de la mascota.
+            </p>
+            <p className="mt-4 font-display text-lg font-bold text-white">
+              Suplevet<span className="align-super text-xs">®</span> Nutrición Funcional
+            </p>
+            <p className="font-body text-xs text-accent">para una vida más saludable.</p>
+
+            {/* Nota separada del cuerpo del comparativo a propósito — casos
+                oncológicos exigen el máximo cuidado regulatorio: solo soporte
+                nutricional/inmunológico complementario, nunca un beneficio
+                terapéutico ni sustituto del tratamiento del veterinario. */}
+            <p className="mx-auto mt-6 max-w-xl font-body text-[11px] leading-relaxed text-white/40">
+              En pacientes bajo tratamiento veterinario —incluyendo casos oncológicos— Suplevet
+              puede brindar soporte nutricional e inmunológico complementario, siempre como apoyo
+              adicional y bajo indicación del médico veterinario, nunca como sustituto del
+              tratamiento.
+            </p>
           </div>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { ShoppingBag, Star, Clock } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { formatFecha } from "@/lib/portal/formato";
+import { formatPrecio } from "@/lib/data/productos-shared";
 import { ESTADO_PEDIDO, estadoParaMostrar, type Pedido, type PedidoVet } from "@/lib/data/portal/pedidos";
 import { getProductos } from "@/lib/data/productos";
 import { PedidoProductoDialog } from "@/components/portal/pedidos/PedidoProductoDialog";
@@ -107,7 +108,7 @@ export default async function PortalPedidosPage() {
                     {estado.texto}
                   </span>
                   <span className="font-display text-lg font-bold text-secondary">
-                    S/ {Number(p.total).toFixed(2)}
+                    {formatPrecio(Number(p.total))}
                   </span>
                 </div>
               </div>
@@ -126,7 +127,7 @@ export default async function PortalPedidosPage() {
                             {nombreProducto}
                             {(pr.cantidad ?? 1) > 1 ? ` ×${pr.cantidad}` : ""}
                           </p>
-                          <p className="font-bold text-secondary">S/ {Number(pr.precio ?? 0).toFixed(2)}</p>
+                          <p className="font-bold text-secondary">{formatPrecio(Number(pr.precio ?? 0))}</p>
                         </div>
                         <PedidoProductoDialog
                           clienteId={user.id}
@@ -190,7 +191,7 @@ export default async function PortalPedidosPage() {
                   Compra en veterinaria
                 </span>
                 <span className="font-display text-lg font-bold text-secondary">
-                  S/ {Number(p.monto_total).toFixed(2)}
+                  {formatPrecio(Number(p.monto_total))}
                 </span>
               </div>
             </div>

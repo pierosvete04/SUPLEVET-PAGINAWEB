@@ -126,7 +126,7 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
       </div>
 
       {/* Hero */}
-      <div className="relative overflow-hidden rounded-[8px] bg-portal-navy p-6 text-white">
+      <div className="relative overflow-hidden rounded-[17px] bg-portal-navy p-6 text-white">
         <div className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-white/5" />
         <div className="pointer-events-none absolute bottom-4 right-16 h-16 w-16 rounded-full bg-white/5" />
         <div className="relative z-10 flex flex-wrap items-center gap-4">
@@ -200,7 +200,7 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
       <div className="mt-4 grid grid-cols-1 gap-4 print:mt-3 print:gap-3 lg:grid-cols-3">
         <div className="space-y-4 print:space-y-3 lg:col-span-2">
           {vacunaVencidaDias !== null && (
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-[8px] border border-portal-error/20 bg-red-50 p-4 print:hidden">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-[17px] border border-portal-error/20 bg-red-50 p-4 print:hidden">
               <div className="flex items-start gap-3">
                 <span className="material-symbols-rounded mt-0.5 text-portal-error">error</span>
                 <div>
@@ -218,7 +218,7 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
           )}
 
           {/* Estado de salud */}
-          <div className="rounded-[8px] border border-portal-surface-variant bg-white p-5 print:break-inside-avoid print:p-3">
+          <div className="rounded-[17px] border border-portal-surface-variant bg-white p-5 print:break-inside-avoid print:p-3">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="flex items-center gap-2 font-display text-lg font-semibold text-portal-navy">
                 <span className="material-symbols-rounded text-portal-teal-mid">medical_services</span> Estado de Salud
@@ -276,7 +276,7 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
           </div>
 
           {/* Información general */}
-          <div className="rounded-[8px] border border-portal-surface-variant bg-white p-5 print:break-inside-avoid print:p-3">
+          <div className="rounded-[17px] border border-portal-surface-variant bg-white p-5 print:break-inside-avoid print:p-3">
             <h3 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold text-portal-navy">
               <span className="material-symbols-rounded text-portal-navy">description</span> Información General
             </h3>
@@ -305,7 +305,7 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
               />
             </div>
             {mascota.historia && (
-              <div className="mt-4 rounded-[8px] bg-red-50 p-4">
+              <div className="mt-4 rounded-[17px] bg-red-50 p-4">
                 <div className="mb-1 flex items-center gap-2 text-sm font-bold text-portal-navy">
                   <span className="material-symbols-rounded text-[16px] text-portal-error">healing</span>
                   Condiciones Médicas
@@ -321,7 +321,7 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
           {/* Mezcla eventos de salud con transacciones de SuplePoints ("+40 pts") —
               relevante en el panel, pero fuera de lugar en una ficha para el
               veterinario, así que no se imprime. */}
-          <div className="rounded-[8px] border border-portal-surface-variant bg-white p-5 print:hidden">
+          <div className="rounded-[17px] border border-portal-surface-variant bg-white p-5 print:hidden">
             <h3 className="mb-3 flex items-center gap-2 font-display text-base font-semibold text-portal-navy">
               <span className="material-symbols-rounded text-[18px] text-portal-navy">history</span> Actividad Reciente
             </h3>
@@ -343,7 +343,7 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
             )}
           </div>
 
-          <div className="rounded-[8px] bg-portal-teal-light/20 p-5 print:hidden">
+          <div className="rounded-[17px] bg-portal-teal-light/20 p-5 print:hidden">
             <h3 className="mb-1 font-display text-base font-semibold text-portal-navy">
               Lleva la ficha de {mascota.nombre} a su próxima consulta
             </h3>
@@ -421,7 +421,7 @@ function EventoResumenCard({
       <button
         type="button"
         onClick={onAgregar}
-        className="flex min-h-[110px] flex-col items-center justify-center gap-1 rounded-[8px] border border-dashed border-portal-surface-variant bg-portal-surface-low/40 p-4 text-center hover:bg-portal-surface-low"
+        className="flex min-h-[110px] flex-col items-center justify-center gap-1 rounded-[17px] border border-dashed border-portal-surface-variant bg-portal-surface-low/40 p-4 text-center hover:bg-portal-surface-low"
       >
         <span className="material-symbols-rounded text-2xl text-portal-muted">add_circle</span>
         <span className="text-xs text-portal-muted">{vacio}</span>
@@ -436,7 +436,7 @@ function EventoResumenCard({
     <button
       type="button"
       onClick={() => onEditar(evento)}
-      className="flex flex-col rounded-[8px] bg-portal-surface-low p-4 text-left"
+      className="flex flex-col rounded-[17px] bg-portal-surface-low p-4 text-left"
     >
       <span
         className={`mb-2 self-start rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
@@ -455,7 +455,7 @@ function EventoResumenCard({
 
 function InfoTile({ etiqueta, valor, icono }: { etiqueta: string; valor: string; icono: string }) {
   return (
-    <div className="rounded-[8px] bg-portal-surface-low p-3">
+    <div className="rounded-[17px] bg-portal-surface-low p-3">
       <span className="material-symbols-rounded text-[18px] text-portal-orange">{icono}</span>
       <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-portal-muted">{etiqueta}</p>
       <p className="truncate text-sm font-bold text-portal-navy">{valor}</p>

@@ -6,6 +6,7 @@ import { Minus, Plus, Trash2, PawPrint } from "lucide-react";
 import { useCart } from "@/lib/cart/CartContext";
 import { formatPrecio } from "@/lib/data/productos-shared";
 import { ShippingProgressBar } from "@/components/shared/ShippingProgressBar";
+import { RegaloBandanaSelector } from "@/components/cart/RegaloBandanaSelector";
 
 export default function CarritoPage() {
   const { items, updateQuantity, removeItem, subtotal } = useCart();
@@ -17,7 +18,7 @@ export default function CarritoPage() {
         <h1 className="font-display text-2xl font-bold text-secondary">Tu carrito está vacío</h1>
         <Link
           href="/productos"
-          className="mt-2 rounded-full bg-primary px-6 py-3 font-body font-bold text-primary-foreground hover:opacity-90"
+          className="mt-2 rounded-[17px] bg-primary px-6 py-3 font-body font-bold text-primary-foreground hover:opacity-90"
         >
           Ver productos
         </Link>
@@ -44,7 +45,7 @@ export default function CarritoPage() {
                 <p className="font-body text-sm text-muted-foreground">
                   {formatPrecio(item.precio)} c/u
                 </p>
-                <div className="mt-2 flex items-center rounded-full border border-border w-fit">
+                <div className="mt-2 flex items-center rounded-[17px] border border-border w-fit">
                   <button
                     type="button"
                     aria-label="Restar cantidad"
@@ -100,11 +101,13 @@ export default function CarritoPage() {
 
             <Link
               href="/checkout"
-              className="mt-5 block rounded-full bg-primary px-6 py-3 text-center font-body font-bold text-primary-foreground hover:opacity-90"
+              className="mt-5 block rounded-[17px] bg-primary px-6 py-3 text-center font-body font-bold text-primary-foreground hover:opacity-90"
             >
               Continuar al checkout
             </Link>
           </div>
+
+          <RegaloBandanaSelector />
 
           <ShippingProgressBar subtotal={subtotal} />
         </div>

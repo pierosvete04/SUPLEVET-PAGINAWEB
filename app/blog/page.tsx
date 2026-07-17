@@ -6,6 +6,7 @@ import { getProductos } from "@/lib/data/productos";
 import { BlogCard } from "@/components/blog/BlogCard";
 import { BlogFilters } from "@/components/blog/BlogFilters";
 import { ScrollReveal } from "@/components/shared/ScrollReveal";
+import { PageBreadcrumbs } from "@/components/shared/PageBreadcrumbs";
 
 export const metadata: Metadata = {
   title: "Blog Suplevet — Consejos de nutrición y salud para mascotas",
@@ -34,6 +35,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
 
   return (
     <div>
+      <PageBreadcrumbs items={[{ label: "Blog" }]} />
       <section className="relative flex min-h-[42vh] items-center justify-center overflow-hidden bg-secondary text-center">
         <Image src={HERO_IMG} alt="" fill className="object-cover opacity-40" sizes="100vw" priority />
         <div className="absolute inset-0 bg-gradient-to-b from-secondary/70 via-secondary/60 to-secondary" />
