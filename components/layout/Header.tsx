@@ -147,11 +147,20 @@ export function Header() {
   const pathname = usePathname();
   const headerRef = useRef<HTMLElement>(null);
   const condensedRef = useRef<HTMLDivElement>(null);
+  // El listener de scroll vive en un efecto con deps [] (para no reengancharse
+  // en cada scroll), así que lee menuOpen a través de este ref en vez de la
+  // variable de estado directamente — si no, quedaría con el valor stale de
+  // cuando se montó (siempre false) y el freeze de abajo nunca se activaría.
+  const menuOpenRef = useRef(menuOpen);
 
   // Cierra el menú mobile en cualquier cambio de ruta.
   useEffect(() => {
     setMenuOpen(false);
   }, [pathname]);
+
+  useEffect(() => {
+    menuOpenRef.current = menuOpen;
+  }, [menuOpen]);
 
   // Entrada del sitio: el header completo aparece deslizándose al montar.
   // Solo una vez por sesión (flag en sessionStorage, marcado en onComplete
@@ -194,6 +203,16 @@ export function Header() {
     const DELTA = 5; // ignora micro-movimientos para no parpadear
 
     function update() {
+      // Con el menú abierto no tocamos nada por scroll: ni lo escondemos ni
+      // lo cerramos. Antes, cualquier pixel de scroll incidental justo al
+      // abrir el menú (momentum táctil, la barra de direcciones del celular
+      // ocultándose, etc.) se leía como "el usuario bajó" y lo cerraba solo,
+      // a veces en menos de un segundo.
+      if (menuOpenRef.current) {
+        ticking = false;
+        return;
+      }
+
       const y = window.scrollY;
       const el = headerRef.current;
       // Punto donde el header completo ya terminó de salir de pantalla.
