@@ -95,7 +95,7 @@ const config: Config = {
   		spacing: {
   			gutter: '24px',
   			'mobile-margin': '20px',
-  			'section-y': '100px'
+  			'section-y': '64px'
   		},
   		maxWidth: {
   			// Fluido: igual que antes (1280px) en mobile/tablet, y se ensancha
