@@ -13,6 +13,12 @@ interface BlogCoverflowSliderProps {
 }
 
 const AUTOPLAY_MS = 4000;
+const UMBRAL_SWIPE_PX = 45;
+
+// Separación horizontal entre tarjetas vecinas. Vive en CSS —y no en estado—
+// para que siga al viewport sin listeners: las tarjetas miden 320px en móvil y
+// con la separación de escritorio las vecinas quedarían fuera de pantalla.
+const SEPARACION = "[--coverflow-sep:200px] sm:[--coverflow-sep:280px]";
 
 // Carrusel "coverflow" de artículos del blog — misma mecánica que
 // TestimoniosCarousel (Nosotros): la tarjeta activa queda al centro, grande y
@@ -21,6 +27,8 @@ const AUTOPLAY_MS = 4000;
 export function BlogCoverflowSlider({ posts }: BlogCoverflowSliderProps) {
   const [activo, setActivo] = useState(0);
   const pausado = useRef(false);
+  const inicioSwipe = useRef<number | null>(null);
+  const seHaDeslizado = useRef(false);
 
   const total = posts.length;
 
@@ -39,29 +47,84 @@ export function BlogCoverflowSlider({ posts }: BlogCoverflowSliderProps) {
     setActivo(((index % total) + total) % total);
   }
 
+  function alTocarInicio(e: React.TouchEvent) {
+    pausado.current = true;
+    inicioSwipe.current = e.touches[0].clientX;
+    seHaDeslizado.current = false;
+  }
+
+  // El click sintético llega después del touchend: marcar el arrastre permite
+  // descartarlo y que deslizar no navegue al artículo.
+  function alTocarMover(e: React.TouchEvent) {
+    if (inicioSwipe.current === null) return;
+    if (Math.abs(e.touches[0].clientX - inicioSwipe.current) > UMBRAL_SWIPE_PX) {
+      seHaDeslizado.current = true;
+    }
+  }
+
+  function alTocarFin(e: React.TouchEvent) {
+    if (inicioSwipe.current === null) return;
+    const recorrido = e.changedTouches[0].clientX - inicioSwipe.current;
+    inicioSwipe.current = null;
+    if (Math.abs(recorrido) < UMBRAL_SWIPE_PX) return;
+    irA(activo + (recorrido < 0 ? 1 : -1));
+  }
+
   return (
     <div
       onMouseEnter={() => (pausado.current = true)}
       onMouseLeave={() => (pausado.current = false)}
+      onTouchStart={alTocarInicio}
+      onTouchMove={alTocarMover}
+      onTouchEnd={alTocarFin}
     >
-      <div className="relative flex h-[460px] items-center justify-center overflow-hidden sm:h-[540px]">
+      <div
+        className={cn(
+          "relative flex h-[460px] items-center justify-center overflow-hidden sm:h-[540px]",
+          SEPARACION
+        )}
+      >
         {posts.map((post, i) => {
           let offset = i - activo;
           if (offset > total / 2) offset -= total;
           if (offset < -total / 2) offset += total;
 
-          const visible = Math.abs(offset) <= 2;
-          const escala = offset === 0 ? 1 : Math.abs(offset) === 1 ? 0.86 : 0.74;
-          const traslado = offset * 280;
+          const distancia = Math.abs(offset);
+          const visible = distancia <= 2;
+          const escala = offset === 0 ? 1 : distancia === 1 ? 0.86 : 0.74;
+          const esActiva = offset === 0;
 
-          const tarjeta = (
-            <div
+          // El tipo de elemento se mantiene estable en todas las posiciones: si
+          // alternara entre <a> y <button> según la tarjeta activa, React
+          // desmontaría y remontaría ese nodo en cada avance y la tarjeta
+          // aparecería de golpe en su sitio en vez de deslizarse.
+          return (
+            <Link
+              key={post.slug}
+              href={`/blog/${post.slug}`}
+              aria-label={
+                esActiva ? `Leer artículo: ${post.titulo}` : `Ver artículo: ${post.titulo}`
+              }
+              aria-hidden={!visible}
+              tabIndex={visible ? undefined : -1}
+              onClick={(e) => {
+                // Las tarjetas laterales primero se traen al centro; solo la
+                // activa navega al artículo, y nunca si se venía deslizando.
+                if (seHaDeslizado.current) {
+                  e.preventDefault();
+                  return;
+                }
+                if (!esActiva) {
+                  e.preventDefault();
+                  irA(i);
+                }
+              }}
               style={{
-                transform: `translateX(${traslado}px) scale(${escala})`,
-                zIndex: 10 - Math.abs(offset),
+                transform: `translateX(calc(var(--coverflow-sep) * ${offset})) scale(${escala})`,
+                zIndex: 10 - distancia,
                 opacity: visible ? 1 : 0,
               }}
-              className="group absolute flex aspect-[4/5] w-80 shrink-0 flex-col overflow-hidden rounded-[var(--radius-card)] bg-secondary text-white shadow-xl transition-all duration-500 ease-out sm:w-[26rem]"
+              className="group absolute flex aspect-[4/5] w-80 shrink-0 flex-col overflow-hidden rounded-[var(--radius-card)] bg-secondary text-white shadow-xl transition-[transform,opacity] duration-500 ease-out sm:w-[26rem]"
             >
               {post.imagen_destacada ? (
                 <Image
@@ -69,7 +132,7 @@ export function BlogCoverflowSlider({ posts }: BlogCoverflowSliderProps) {
                   alt=""
                   fill
                   className="object-cover"
-                  sizes="416px"
+                  sizes="(max-width: 640px) 320px, 416px"
                 />
               ) : (
                 <div className="flex h-full items-center justify-center bg-secondary">
@@ -95,28 +158,7 @@ export function BlogCoverflowSlider({ posts }: BlogCoverflowSliderProps) {
                   </span>
                 </div>
               </div>
-            </div>
-          );
-
-          return offset === 0 ? (
-            <Link
-              key={post.slug}
-              href={`/blog/${post.slug}`}
-              aria-label={`Leer artículo: ${post.titulo}`}
-              className="contents"
-            >
-              {tarjeta}
             </Link>
-          ) : (
-            <button
-              key={post.slug}
-              type="button"
-              aria-label={`Ver artículo: ${post.titulo}`}
-              onClick={() => irA(i)}
-              className="contents cursor-pointer"
-            >
-              {tarjeta}
-            </button>
           );
         })}
 

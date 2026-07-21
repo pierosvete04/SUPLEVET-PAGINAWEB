@@ -1,6 +1,6 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-export type PaginaBanner = "productos" | "ofertas" | "ambas" | "home";
+export type PaginaBanner = "productos" | "ofertas" | "ambas" | "home" | "hero";
 
 export interface Banner {
   id: string;
@@ -33,6 +33,18 @@ export async function getBannersHome(supabase: SupabaseClient): Promise<Banner[]
     .select("*")
     .eq("activo", true)
     .eq("pagina", "home")
+    .order("orden", { ascending: true });
+  return (data as Banner[]) ?? [];
+}
+
+// "hero" es el banner de portada, arriba de todo (full-bleed) — independiente
+// de "home", que es el carrusel de "Nuevas presentaciones" más abajo.
+export async function getBannersHero(supabase: SupabaseClient): Promise<Banner[]> {
+  const { data } = await supabase
+    .from("banners")
+    .select("*")
+    .eq("activo", true)
+    .eq("pagina", "hero")
     .order("orden", { ascending: true });
   return (data as Banner[]) ?? [];
 }

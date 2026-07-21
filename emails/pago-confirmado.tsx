@@ -1,7 +1,14 @@
 import * as React from "react";
 import { brand, gradients } from "./components/brand";
 import { EmailLayout } from "./components/EmailLayout";
-import { BodyText, CategoryLabel, CtaButton, DarkBanner, Headline } from "./components/primitives";
+import {
+  BodyText,
+  CategoryLabel,
+  CtaButton,
+  DarkBanner,
+  Headline,
+  WhatsAppCard,
+} from "./components/primitives";
 
 export interface PagoConfirmadoProps {
   nombre: string;
@@ -9,6 +16,7 @@ export interface PagoConfirmadoProps {
   puntosGanados?: number;
   tiempoEstimadoEnvio?: string;
   portalUrl?: string;
+  whatsappUrl?: string;
 }
 
 export default function PagoConfirmado({
@@ -17,6 +25,7 @@ export default function PagoConfirmado({
   puntosGanados = 150,
   tiempoEstimadoEnvio = "2 a 4 días hábiles",
   portalUrl = `${brand.portalUrl}/pedidos`,
+  whatsappUrl = "https://wa.me/51999999999",
 }: PagoConfirmadoProps) {
   return (
     <EmailLayout previewText={`¡Tu pago fue confirmado! Pedido #${numeroPedido}`} stripeGradient={gradients.green}>
@@ -39,6 +48,14 @@ export default function PagoConfirmado({
           caption={`Se sumaron a tu cuenta. Envío estimado: ${tiempoEstimadoEnvio}.`}
         />
       )}
+
+      {whatsappUrl ? (
+        <WhatsAppCard
+          title="¿Quieres saber cuándo te llega?"
+          description="Escríbenos por WhatsApp y te contamos el estado de tu envío al toque."
+          whatsappUrl={whatsappUrl}
+        />
+      ) : null}
 
       <CtaButton href={portalUrl}>Ver mi pedido →</CtaButton>
     </EmailLayout>

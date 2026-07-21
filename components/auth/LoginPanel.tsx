@@ -108,6 +108,19 @@ export function LoginPanel({ className, next = "/mi-cuenta", onAuthenticated }: 
     if (valor && i < 5) inputsRef.current[i + 1]?.focus();
   }
 
+  function handlePasteCodigo(e: React.ClipboardEvent<HTMLInputElement>) {
+    const pegado = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    if (!pegado) return;
+    e.preventDefault();
+    const nuevo = [...codigo];
+    pegado.split("").forEach((digito, idx) => {
+      nuevo[idx] = digito;
+    });
+    setCodigo(nuevo);
+    const siguiente = Math.min(pegado.length, 5);
+    inputsRef.current[siguiente]?.focus();
+  }
+
   return (
     <div
       className={cn(
@@ -119,9 +132,10 @@ export function LoginPanel({ className, next = "/mi-cuenta", onAuthenticated }: 
         {paso === "email" ? (
           <form onSubmit={handleEnviarCodigo} className="flex flex-col gap-5">
             <div className="flex flex-col items-center gap-1 text-center">
-              <h1 className="font-display text-2xl font-bold text-secondary">Bienvenido de vuelta</h1>
+              <h1 className="font-display text-2xl font-bold text-secondary">Ingresa a tu cuenta</h1>
               <p className="text-balance font-body text-sm text-muted-foreground">
-                Ingresa tu correo para recibir un código de acceso instantáneo.
+                Escribe tu correo: si ya tienes cuenta, inicias sesión; si es tu primera vez, la
+                creamos al instante. Todo con un código, sin contraseña.
               </p>
             </div>
 
@@ -169,6 +183,7 @@ export function LoginPanel({ className, next = "/mi-cuenta", onAuthenticated }: 
                   maxLength={1}
                   value={d}
                   onChange={(e) => handleDigitoChange(i, e.target.value)}
+                  onPaste={handlePasteCodigo}
                   className="h-12 w-10 rounded-lg border border-border text-center font-body text-lg font-bold text-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                 />
               ))}

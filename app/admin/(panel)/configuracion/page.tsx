@@ -350,7 +350,10 @@ export default function AdminConfiguracionPage() {
           </div>
           <p className="text-xs text-muted-foreground sm:col-span-2">
             El banner es la imagen principal de Inicio y enlaza a la sección de combos. Si no subes un
-            banner mobile, en celulares se muestra el mismo banner de escritorio.
+            banner mobile, en celulares se muestra el mismo banner de escritorio. Este banner solo se
+            usa si no hay banners activos con página &quot;Banner principal (Hero)&quot; en{" "}
+            <span className="font-medium">Contenido → Banners</span>; si configuras uno o más ahí, se
+            muestran esos en su lugar (con slide automático si hay más de uno).
           </p>
         </CardContent>
       </Card>

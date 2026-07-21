@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { LegalDoc } from "@/components/legal/LegalDoc";
+import { siteConfig } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: "Política de Privacidad",
   description: "Cómo Suplevet recopila, usa y protege tus datos personales.",
+  alternates: { canonical: `${siteConfig.siteUrl}/legal/privacidad` },
 };
 
 export default function PrivacidadPage() {

@@ -9,11 +9,25 @@ export interface ClientePerfil {
   direccion: string | null;
   distrito: string | null;
   ciudad: string | null;
+  tipo_documento: string | null;
+  numero_documento: string | null;
   perfil_completo: boolean | null;
 }
 
 function generarCodigoReferido(userId: string): string {
   return `SUPLE-${userId.replace(/-/g, "").slice(0, 6).toUpperCase()}`;
+}
+
+// vendedores y admins comparten el mismo auth.users que los clientes del
+// ecommerce (mismo proyecto Supabase que el CRM interno de ventas). Sin este
+// chequeo, cualquier vendedor/admin que entre a /mi-cuenta queda inscrito
+// como cliente en clientes_perfil y contamina el panel admin de "Clientes".
+async function esCuentaInterna(supabase: SupabaseClient, userId: string): Promise<boolean> {
+  const [{ data: vendedor }, { data: admin }] = await Promise.all([
+    supabase.from("vendedores").select("id").eq("id", userId).maybeSingle(),
+    supabase.from("admins").select("id").eq("id", userId).maybeSingle(),
+  ]);
+  return Boolean(vendedor || admin);
 }
 
 // Crea las filas base (clientes_perfil, suplepuntos_clientes) si no existen —
@@ -27,6 +41,10 @@ export async function asegurarFilasCliente(
   supabase: SupabaseClient,
   userId: string
 ): Promise<{ esNuevo: boolean }> {
+  if (await esCuentaInterna(supabase, userId)) {
+    return { esNuevo: false };
+  }
+
   const { data: perfil } = await supabase
     .from("clientes_perfil")
     .select("id")

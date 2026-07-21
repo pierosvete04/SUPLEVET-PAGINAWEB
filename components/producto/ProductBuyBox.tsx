@@ -76,7 +76,7 @@ export function ProductBuyBox({ producto, regalos, resenas }: ProductBuyBoxProps
       <p className="mt-2 font-body text-muted-foreground">{producto.descripcion}</p>
 
       <div className="mt-4 flex items-baseline gap-3">
-        <span className="font-body text-3xl font-bold text-primary">
+        <span className="font-body text-3xl font-bold text-secondary">
           {formatPrecio(producto.precio)}
         </span>
         {producto.precioComparacion > producto.precio && (
@@ -191,7 +191,9 @@ export function ProductBuyBox({ producto, regalos, resenas }: ProductBuyBoxProps
                   {regalo.descripcion && (
                     <p className="mt-0.5 font-body text-xs text-muted-foreground">{regalo.descripcion}</p>
                   )}
-                  {regalo.condicion_tipo === "monto_minimo" && <RegaloBandanaCarousel />}
+                  {regalo.condicion_tipo === "monto_minimo" && (
+                    <RegaloBandanaCarousel regaloId={regalo.id} />
+                  )}
                 </div>
               </div>
             </div>

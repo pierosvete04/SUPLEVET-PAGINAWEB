@@ -6,7 +6,18 @@ import { ArrowLeft, Star } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Badge } from "@/components/admin/Badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BADGE_NIVEL, formatFecha, type ClienteResumen } from "@/lib/data/clientes-admin";
+import { BADGE_NIVEL, formatFecha, nivelLabel, type ClienteResumen } from "@/lib/data/clientes-admin";
+import {
+  BADGE_ESTADO_PAGO,
+  BADGE_ESTADO_PREPARACION,
+  formatFechaPedido,
+  type PedidoAdmin,
+} from "@/lib/data/pedidos-admin";
+
+type PedidoResumen = Pick<
+  PedidoAdmin,
+  "id" | "shopify_order_number" | "created_at" | "total" | "estado_pago" | "estado_preparacion"
+>;
 
 interface Transaccion {
   id: string;
@@ -35,6 +46,7 @@ interface Resena {
 export default function AdminClienteDetallePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = usePromise(params);
   const [cliente, setCliente] = useState<ClienteResumen | null>(null);
+  const [pedidos, setPedidos] = useState<PedidoResumen[]>([]);
   const [transacciones, setTransacciones] = useState<Transaccion[]>([]);
   const [mascotas, setMascotas] = useState<Mascota[]>([]);
   const [resenas, setResenas] = useState<Resena[]>([]);
@@ -44,6 +56,11 @@ export default function AdminClienteDetallePage({ params }: { params: Promise<{ 
     const supabase = createClient();
     Promise.all([
       supabase.from("admin_clientes_resumen").select("*").eq("id", id).single(),
+      supabase
+        .from("pedidos")
+        .select("id, shopify_order_number, created_at, total, estado_pago, estado_preparacion")
+        .eq("cliente_id", id)
+        .order("created_at", { ascending: false }),
       supabase
         .from("suplepuntos_transacciones")
         .select("id, tipo, accion, puntos, descripcion, created_at")
@@ -55,8 +72,9 @@ export default function AdminClienteDetallePage({ params }: { params: Promise<{ 
         .from("resenas")
         .select("id, producto_nombre, calificacion, texto, estado")
         .eq("cliente_id", id),
-    ]).then(([clienteRes, txRes, mascotasRes, resenasRes]) => {
+    ]).then(([clienteRes, pedidosRes, txRes, mascotasRes, resenasRes]) => {
       setCliente(clienteRes.data as ClienteResumen);
+      setPedidos((pedidosRes.data as PedidoResumen[]) ?? []);
       setTransacciones((txRes.data as Transaccion[]) ?? []);
       setMascotas((mascotasRes.data as Mascota[]) ?? []);
       setResenas((resenasRes.data as Resena[]) ?? []);
@@ -69,7 +87,7 @@ export default function AdminClienteDetallePage({ params }: { params: Promise<{ 
 
   return (
     <div className="flex flex-col gap-6">
-      <Link href="/admin/clientes" className="flex w-fit items-center gap-1 text-sm font-medium text-primary">
+      <Link href="/admin/clientes" className="flex w-fit items-center gap-1 text-sm font-medium text-secondary">
         <ArrowLeft className="h-4 w-4" /> Volver a clientes
       </Link>
 
@@ -79,11 +97,48 @@ export default function AdminClienteDetallePage({ params }: { params: Promise<{ 
             ? `${cliente.nombre ?? ""} ${cliente.apellido ?? ""}`.trim()
             : "Sin nombre"}
         </h2>
-        <Badge color={BADGE_NIVEL[cliente.nivel ?? "basico"] ?? "gris"}>{cliente.nivel ?? "básico"}</Badge>
+        <Badge color={BADGE_NIVEL[cliente.nivel ?? "basico"] ?? "gris"}>{nivelLabel(cliente.nivel)}</Badge>
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="flex flex-col gap-6 lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm text-muted-foreground">Pedidos del cliente</CardTitle>
+            </CardHeader>
+            <CardContent>
+              {pedidos.length === 0 ? (
+                <p className="text-sm text-muted-foreground">Sin pedidos todavía.</p>
+              ) : (
+                <div className="flex flex-col gap-3">
+                  {pedidos.map((p) => {
+                    const pago = BADGE_ESTADO_PAGO[p.estado_pago];
+                    const prep = BADGE_ESTADO_PREPARACION[p.estado_preparacion];
+                    return (
+                      <Link
+                        key={p.id}
+                        href={`/admin/pedidos/${p.id}`}
+                        className="flex flex-col gap-2 rounded-md border p-3 text-sm hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between"
+                      >
+                        <div className="flex flex-col">
+                          <span className="font-medium text-secondary">
+                            {p.shopify_order_number ?? `W-${p.id.slice(0, 8)}`}
+                          </span>
+                          <span className="text-xs text-muted-foreground">{formatFechaPedido(p.created_at)}</span>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-medium">S/.{Number(p.total).toFixed(2)}</span>
+                          <Badge color={pago.color}>{pago.label}</Badge>
+                          <Badge color={prep.color}>{prep.label}</Badge>
+                        </div>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="text-sm text-muted-foreground">Transacciones de SuplePoints</CardTitle>
@@ -121,7 +176,7 @@ export default function AdminClienteDetallePage({ params }: { params: Promise<{ 
                       <div className="flex items-center justify-between">
                         <span className="text-sm font-medium">{r.producto_nombre}</span>
                         <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                          <Star className="h-3 w-3 fill-primary text-primary" /> {r.calificacion}/5
+                          <Star className="h-3 w-3 fill-secondary text-secondary" /> {r.calificacion}/5
                         </span>
                       </div>
                       <p className="text-sm text-muted-foreground">{r.texto}</p>
@@ -152,7 +207,7 @@ export default function AdminClienteDetallePage({ params }: { params: Promise<{ 
               <CardTitle className="text-sm text-muted-foreground">SuplePoints</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-2xl font-semibold text-primary">{cliente.saldo_actual ?? 0} pts</p>
+              <p className="text-2xl font-semibold text-secondary">{cliente.saldo_actual ?? 0} pts</p>
               <p className="text-sm text-muted-foreground">{cliente.total_compras ?? 0} compras totales</p>
             </CardContent>
           </Card>

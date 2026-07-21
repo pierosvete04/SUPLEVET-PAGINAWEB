@@ -126,7 +126,7 @@ export function PostEditor({ post }: PostEditorProps) {
 
   return (
     <div className="flex flex-col gap-6">
-      <Link href="/admin/blog" className="flex w-fit items-center gap-1 text-sm font-medium text-primary">
+      <Link href="/admin/blog" className="flex w-fit items-center gap-1 text-sm font-medium text-secondary">
         <ArrowLeft className="h-4 w-4" /> Volver al blog
       </Link>
 

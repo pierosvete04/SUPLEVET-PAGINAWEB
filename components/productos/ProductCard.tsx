@@ -60,7 +60,7 @@ export function ProductCard({ producto, ctaLabel = "Añadir al carrito" }: Produ
         <p className="line-clamp-2 font-body text-sm text-muted-foreground">{producto.descripcion}</p>
         <div className="mt-auto flex flex-col gap-2 pt-1">
           <div className="flex items-baseline gap-2">
-            <span className="font-body text-lg font-bold text-primary">
+            <span className="font-body text-lg font-bold text-secondary">
               {formatPrecio(producto.precio)}
             </span>
             {producto.precioComparacion > producto.precio && (

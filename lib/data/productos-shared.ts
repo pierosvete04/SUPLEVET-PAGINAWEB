@@ -7,7 +7,28 @@ export type CategoriaProducto = "producto" | "combo";
 // Métodos de pago disponibles en checkout (components/checkout/PaymentStep.tsx)
 // — cada producto declara cuáles admite vía metodosPagoPermitidos, editable
 // desde /admin/productos.
-export type MetodoPago = "tarjeta" | "yape_plin" | "transferencia";
+export type MetodoPago = "tarjeta" | "yape_plin" | "transferencia" | "contra_entrega";
+
+export const TODOS_LOS_METODOS_PAGO: MetodoPago[] = [
+  "tarjeta",
+  "yape_plin",
+  "transferencia",
+  "contra_entrega",
+];
+
+export const METODO_PAGO_LABEL: Record<MetodoPago, string> = {
+  tarjeta: "Tarjeta (Mercado Pago)",
+  yape_plin: "Yape / Plin",
+  transferencia: "Transferencia bancaria",
+  contra_entrega: "Pago contra entrega",
+};
+
+// Contra entrega es el único método donde el courier cobra al recibir — el
+// resto llega ya pagado/en verificación, así que el rótulo debe decir
+// "NO COBRAR" para que el motorizado no cobre dos veces.
+export function cobraAlEntregar(formaPago: string | null | undefined): boolean {
+  return formaPago === "contra_entrega";
+}
 
 export interface ProductoCombo {
   slug: string;

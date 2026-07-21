@@ -5,6 +5,10 @@ import Image from "next/image";
 import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Badge } from "@/components/admin/Badge";
+import { SortableTableHead } from "@/components/admin/table/SortableTableHead";
+import { TableCard } from "@/components/admin/table/TableCard";
+import { TablePagination } from "@/components/admin/table/TablePagination";
+import { useTableRows } from "@/components/admin/table/useTableRows";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -20,6 +24,19 @@ import {
 } from "@/components/ui/table";
 import { ValorForm } from "@/components/admin/nosotros/ValorForm";
 import type { ValorNosotros } from "@/lib/valores-nosotros";
+
+function valorOrden(v: ValorNosotros, columna: string) {
+  switch (columna) {
+    case "titulo":
+      return v.titulo;
+    case "orden":
+      return v.orden;
+    case "estado":
+      return v.activo ? 1 : 0;
+    default:
+      return null;
+  }
+}
 
 interface TextosNosotros {
   nosotros_hero_titulo: string | null;
@@ -125,6 +142,11 @@ export default function AdminNosotrosPage() {
     await cargar();
     cerrar();
   }
+
+  const { pageRows, totalRows, page, totalPages, setPage, sortColumn, sortDirection, toggleSort } = useTableRows({
+    rows: valores,
+    getSortValue: valorOrden,
+  });
 
   return (
     <div className="flex max-w-3xl flex-col gap-6">
@@ -243,45 +265,46 @@ export default function AdminNosotrosPage() {
         </Button>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
+      <TableCard badge={<Badge color="gris">{totalRows}</Badge>}>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <SortableTableHead columnId="titulo" label="Título" activeColumn={sortColumn} direction={sortDirection} onSort={toggleSort} />
+              <TableHead>Ícono</TableHead>
+              <SortableTableHead columnId="orden" label="Orden" activeColumn={sortColumn} direction={sortDirection} onSort={toggleSort} />
+              <SortableTableHead columnId="estado" label="Estado" activeColumn={sortColumn} direction={sortDirection} onSort={toggleSort} />
+              <TableHead className="px-4" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {!cargando && valores.length === 0 && (
               <TableRow>
-                <TableHead>Título</TableHead>
-                <TableHead>Ícono</TableHead>
-                <TableHead>Orden</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead />
+                <TableCell colSpan={5} className="text-center text-muted-foreground">
+                  Sin valores configurados.
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {!cargando && valores.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
-                    Sin valores configurados.
-                  </TableCell>
-                </TableRow>
-              )}
-              {valores.map((v) => (
-                <TableRow key={v.id}>
-                  <TableCell>{v.titulo}</TableCell>
-                  <TableCell className="text-muted-foreground">{v.icono}</TableCell>
-                  <TableCell className="text-muted-foreground">{v.orden}</TableCell>
-                  <TableCell>
-                    <Badge color={v.activo ? "verde" : "gris"}>{v.activo ? "Activo" : "Inactivo"}</Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
+            )}
+            {pageRows.map((v) => (
+              <TableRow key={v.id}>
+                <TableCell>{v.titulo}</TableCell>
+                <TableCell className="text-muted-foreground">{v.icono}</TableCell>
+                <TableCell className="text-muted-foreground">{v.orden}</TableCell>
+                <TableCell>
+                  <Badge color={v.activo ? "verde" : "gris"}>{v.activo ? "Activo" : "Inactivo"}</Badge>
+                </TableCell>
+                <TableCell className="px-4">
+                  <div className="flex justify-end">
                     <Button variant="ghost" size="sm" onClick={() => setEditando(v)}>
                       Editar
                     </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        <TablePagination page={page} totalPages={totalPages} totalRows={totalRows} onPageChange={setPage} />
+      </TableCard>
 
       {(creando || editando) && <ValorForm valor={editando} onClose={cerrar} onSaved={recargarYCerrar} />}
     </div>

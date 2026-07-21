@@ -27,7 +27,7 @@ export interface Regalo {
   nombre: string;
   descripcion: string | null;
   imagen: string | null;
-  condicion_tipo: "monto_minimo" | "producto_especifico";
+  condicion_tipo: "monto_minimo" | "producto_especifico" | "evento";
   condicion_monto_minimo: number | null;
   condicion_producto_slug: string | null;
   fecha_inicio: string | null;
@@ -153,11 +153,12 @@ export function RegaloForm({ regalo, onClose, onSaved }: RegaloFormProps) {
             <SelectContent>
               <SelectItem value="monto_minimo">Monto mínimo de compra</SelectItem>
               <SelectItem value="producto_especifico">Compra de un producto específico</SelectItem>
+              <SelectItem value="evento">Evento especial</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        {form.condicion_tipo === "monto_minimo" ? (
+        {form.condicion_tipo === "monto_minimo" && (
           <div className="grid gap-1.5">
             <Label htmlFor="r-monto">Monto mínimo (S/.)</Label>
             <Input
@@ -168,7 +169,9 @@ export function RegaloForm({ regalo, onClose, onSaved }: RegaloFormProps) {
               onChange={(e) => setForm((f) => ({ ...f, condicion_monto_minimo: Number(e.target.value) }))}
             />
           </div>
-        ) : (
+        )}
+
+        {form.condicion_tipo === "producto_especifico" && (
           <div className="grid gap-1.5">
             <Label>Producto</Label>
             <Select
@@ -187,6 +190,14 @@ export function RegaloForm({ regalo, onClose, onSaved }: RegaloFormProps) {
               </SelectContent>
             </Select>
           </div>
+        )}
+
+        {form.condicion_tipo === "evento" && (
+          <p className="text-sm text-muted-foreground">
+            Se activa manualmente para clientes que reciben el regalo por una fecha o campaña
+            especial, sin depender de un monto mínimo ni de un producto puntual. Usa las fechas de
+            vigencia y el interruptor &ldquo;Activo&rdquo; de abajo para controlarlo.
+          </p>
         )}
 
         <div className="grid grid-cols-2 gap-4">

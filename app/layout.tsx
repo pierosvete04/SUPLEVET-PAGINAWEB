@@ -3,6 +3,7 @@ import { unstable_cache } from "next/cache";
 import { Bebas_Neue, DM_Sans, Fraunces } from "next/font/google";
 import "./globals.css";
 import { AnalyticsScripts } from "@/components/analytics/AnalyticsScripts";
+import { ConsoleBanner } from "@/components/branding/ConsoleBanner";
 import { SiteChrome } from "@/components/layout/SiteChrome";
 import { CartProvider } from "@/lib/cart/CartContext";
 import { createStaticClient } from "@/lib/supabase/static";
@@ -101,6 +102,7 @@ export default async function RootLayout({
         className={`${fontDisplay.variable} ${fontImpact.variable} ${fontBody.variable} flex min-h-screen flex-col antialiased`}
       >
         <AnalyticsScripts />
+        <ConsoleBanner />
 
         <CartProvider>
           <SiteChrome>{children}</SiteChrome>

@@ -3,6 +3,10 @@ import { LoginPanel } from "@/components/auth/LoginPanel";
 
 export const metadata: Metadata = {
   title: "Portal de clientes",
+  // /mi-cuenta ya está en Disallow en robots.txt — este noindex es la señal
+  // explícita a nivel de página por si algún crawler llega igual (ej. desde
+  // un enlace externo).
+  robots: { index: false, follow: false },
 };
 
 export default function PortalLoginPage() {

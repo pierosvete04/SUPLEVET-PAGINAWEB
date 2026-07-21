@@ -32,7 +32,7 @@ const NAV_SECTIONS = [
   {
     label: "Comunidad",
     items: [
-      { title: "Ranking", url: "/mi-cuenta/ranking", icon: "leaderboard" },
+      // { title: "Ranking", url: "/mi-cuenta/ranking", icon: "leaderboard" }, // desactivado temporalmente
       { title: "Cursos", url: "/mi-cuenta/cursos", icon: "school" },
       { title: "Alianzas", url: "/mi-cuenta/alianzas", icon: "handshake" },
     ],

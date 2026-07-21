@@ -30,6 +30,10 @@ interface ComoSePreparaProps {
    * sigue directamente "Resultados reales" y el espacio entre el botón
    * "Comprar ahora" y esa sección quedaba demasiado separado. */
   paddingInferiorReducido?: boolean;
+  /** true = reduce el padding superior — se usa en Home, donde le precede
+   * directamente "Nuevas presentaciones" y el espacio entre ambas secciones
+   * quedaba demasiado separado. */
+  paddingSuperiorReducido?: boolean;
 }
 
 export function ComoSePrepara({
@@ -37,13 +41,14 @@ export function ComoSePrepara({
   mostrarBotonComprar = true,
   fondoPropio = true,
   paddingInferiorReducido = false,
+  paddingSuperiorReducido = false,
 }: ComoSePreparaProps) {
   return (
     <>
       {conCurvaSuperior && <HillCurve fillClassName="fill-soft-gray" bgClassName="bg-secondary" />}
       <section
         id="como-se-prepara"
-        className={`pt-section-y ${paddingInferiorReducido ? "pb-12 md:pb-16" : "pb-section-y"} ${fondoPropio ? "bg-gradient-to-b from-soft-gray to-accent" : ""}`}
+        className={`${paddingSuperiorReducido ? "pt-7" : "pt-section-y"} ${paddingInferiorReducido ? "pb-12 md:pb-16" : "pb-section-y"} ${fondoPropio ? "bg-gradient-to-b from-soft-gray to-accent" : ""}`}
       >
         <div className="mx-auto max-w-container px-mobile-margin md:px-gutter">
           <h2 className="text-center font-display text-3xl font-bold text-secondary md:text-4xl">
@@ -70,7 +75,7 @@ export function ComoSePrepara({
                   />
                 </div>
                 <div className="flex flex-col gap-2 p-5">
-                  <span className="font-impact text-sm text-primary">PASO {numero}</span>
+                  <span className="font-impact text-sm text-secondary">PASO {numero}</span>
                   <p className="font-body text-sm text-secondary">{texto}</p>
                 </div>
               </ScrollReveal>

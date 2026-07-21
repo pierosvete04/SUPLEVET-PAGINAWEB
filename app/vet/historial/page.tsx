@@ -84,7 +84,7 @@ export default function VetHistorialPage() {
               <div className="text-right">
                 <p className="font-body text-sm font-bold text-secondary">{formatPrecio(Number(v.monto_total))}</p>
                 {!!v.puntos_acreditados && (
-                  <p className="font-body text-[10px] font-bold text-primary">+{v.puntos_acreditados} pts</p>
+                  <p className="font-body text-[10px] font-bold text-secondary">+{v.puntos_acreditados} pts</p>
                 )}
               </div>
             </div>

@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { LegalDoc } from "@/components/legal/LegalDoc";
+import { siteConfig } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: "Política de envíos",
   description:
     "Tiempos y costos de envío de Suplevet a todo el Perú: Lima Metropolitana, costa, sierra y selva.",
+  alternates: { canonical: `${siteConfig.siteUrl}/legal/envios` },
 };
 
 export default function EnviosPage() {

@@ -6,35 +6,43 @@ import { ChevronDown, ChevronUp, Gift } from "lucide-react";
 import { useCart } from "@/lib/cart/CartContext";
 import { formatPrecio } from "@/lib/data/productos-shared";
 import { createClient } from "@/lib/supabase/client";
-import { getRegalosPorMontoMinimo } from "@/lib/regalos";
-import { BANDANAS_REGALO } from "@/lib/data/bandanas-regalo";
+import { getRegalosDisponiblesEnCarrito, type Regalo } from "@/lib/regalos";
+import { getVariantesActivas, type RegaloVariante } from "@/lib/regalo-variantes";
 
-// Selector del diseño de bandana de regalo — vive en el carrito (drawer y
-// /carrito) porque depende del subtotal, no de un producto en particular.
-// Debajo del monto mínimo solo se ve la barra de progreso; al alcanzarlo se
-// habilita el toggle "Ver regalos" que despliega las 4 tarjetas para elegir
-// diseño (patrón inspirado en las tiendas de plugins de audio: sección
-// colapsable + barra "te falta X para desbloquear" + lista con radio).
+// Selector del diseño de regalo (ej. bandana) — vive en el carrito (drawer y
+// /carrito). Prioriza regalos de "evento" (desbloqueados de entrada mientras
+// estén activos/vigentes) sobre los de monto mínimo (gateados por el
+// subtotal). Debajo del monto mínimo solo se ve la barra de progreso; al
+// alcanzarlo se habilita el toggle "Ver regalos" que despliega las tarjetas
+// para elegir diseño (patrón inspirado en las tiendas de plugins de audio:
+// sección colapsable + barra "te falta X para desbloquear" + lista con radio).
 export function RegaloBandanaSelector() {
   const { subtotal, bandanaRegaloSeleccionada, setBandanaRegaloSeleccionada } = useCart();
-  const [montoMinimo, setMontoMinimo] = useState<number | null>(null);
+  const [regalo, setRegalo] = useState<Regalo | null>(null);
+  const [variantes, setVariantes] = useState<RegaloVariante[]>([]);
   const [expandido, setExpandido] = useState(false);
 
   useEffect(() => {
-    getRegalosPorMontoMinimo(createClient()).then((regalos) => {
-      const montos = regalos
-        .map((r) => r.condicion_monto_minimo)
-        .filter((m): m is number => m !== null);
-      setMontoMinimo(montos.length > 0 ? Math.min(...montos) : null);
+    const supabase = createClient();
+    getRegalosDisponiblesEnCarrito(supabase).then((regalos) => {
+      const evento = regalos.find((r) => r.condicion_tipo === "evento");
+      const porMonto = regalos
+        .filter((r) => r.condicion_tipo === "monto_minimo")
+        .sort((a, b) => (a.condicion_monto_minimo ?? 0) - (b.condicion_monto_minimo ?? 0))[0];
+      const elegido = evento ?? porMonto ?? null;
+      setRegalo(elegido);
+      if (elegido) getVariantesActivas(supabase, elegido.id).then(setVariantes);
     });
   }, []);
 
-  if (montoMinimo === null) return null;
+  if (!regalo) return null;
 
-  const faltante = Math.max(montoMinimo - subtotal, 0);
-  const calificaParaRegalo = faltante === 0;
-  const progreso = Math.min(subtotal / montoMinimo, 1) * 100;
-  const bandanaElegida = BANDANAS_REGALO.find((b) => b.slug === bandanaRegaloSeleccionada);
+  const esEvento = regalo.condicion_tipo === "evento";
+  const montoMinimo = regalo.condicion_monto_minimo ?? 0;
+  const faltante = esEvento ? 0 : Math.max(montoMinimo - subtotal, 0);
+  const calificaParaRegalo = esEvento || faltante === 0;
+  const progreso = esEvento ? 100 : montoMinimo > 0 ? Math.min(subtotal / montoMinimo, 1) * 100 : 100;
+  const varianteElegida = variantes.find((v) => v.slug === bandanaRegaloSeleccionada);
 
   return (
     <div className="rounded-[17px] border border-border bg-soft-gray p-4">
@@ -58,22 +66,24 @@ export function RegaloBandanaSelector() {
       {!calificaParaRegalo && (
         <p className="mt-1 font-body text-xs text-secondary">
           Te faltan <strong>{formatPrecio(faltante)}</strong> para desbloquear tu regalo gratis:{" "}
-          <strong>bandana de regalo</strong>
+          <strong>{regalo.nombre}</strong>
         </p>
       )}
 
-      <div className="relative mt-2.5 h-2.5 overflow-hidden rounded-full bg-white">
-        <div
-          className="h-full rounded-full bg-accent transition-all"
-          style={{ width: `${progreso}%` }}
-        />
-      </div>
+      {!esEvento && (
+        <div className="relative mt-2.5 h-2.5 overflow-hidden rounded-full bg-white">
+          <div
+            className="h-full rounded-full bg-accent transition-all"
+            style={{ width: `${progreso}%` }}
+          />
+        </div>
+      )}
 
       {calificaParaRegalo && !expandido && (
         <p className="mt-2 font-body text-xs text-secondary">
-          {bandanaElegida ? (
+          {varianteElegida ? (
             <>
-              🎉 Tu regalo: <strong>Bandana {bandanaElegida.nombre}</strong>
+              🎉 Tu regalo: <strong>Bandana {varianteElegida.nombre}</strong>
             </>
           ) : (
             <>🎉 ¡Desbloqueaste tu regalo! Elige el diseño en &ldquo;Ver regalos&rdquo;.</>
@@ -83,34 +93,36 @@ export function RegaloBandanaSelector() {
 
       {calificaParaRegalo && expandido && (
         <div className="mt-3 flex flex-col gap-2">
-          {BANDANAS_REGALO.map((bandana) => {
-            const seleccionada = bandanaRegaloSeleccionada === bandana.slug;
+          {variantes.map((variante) => {
+            const seleccionada = bandanaRegaloSeleccionada === variante.slug;
             return (
               <button
-                key={bandana.slug}
+                key={variante.slug}
                 type="button"
                 role="radio"
                 aria-checked={seleccionada}
-                onClick={() => setBandanaRegaloSeleccionada(bandana.slug)}
+                onClick={() => setBandanaRegaloSeleccionada(variante.slug)}
                 className={`flex items-center gap-3 rounded-[17px] border bg-white p-2 text-left transition-colors ${
                   seleccionada ? "border-accent ring-1 ring-accent" : "border-border hover:border-secondary/40"
                 }`}
               >
                 <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-[17px] bg-soft-gray">
-                  <Image
-                    src={bandana.imagen}
-                    alt={`Bandana ${bandana.nombre}`}
-                    fill
-                    className="object-cover"
-                    sizes="48px"
-                  />
+                  {variante.imagen && (
+                    <Image
+                      src={variante.imagen}
+                      alt={variante.nombre}
+                      fill
+                      className="object-cover"
+                      sizes="48px"
+                    />
+                  )}
                 </div>
                 <div className="flex-1">
                   <span className="flex items-center gap-1 font-body text-[10px] font-bold text-green-600">
                     <span className="h-1.5 w-1.5 rounded-full bg-green-600" />
                     Desbloqueado
                   </span>
-                  <p className="font-body text-sm font-bold text-secondary">Bandana {bandana.nombre}</p>
+                  <p className="font-body text-sm font-bold text-secondary">Bandana {variante.nombre}</p>
                   <p className="font-body text-xs text-muted-foreground">Gratis</p>
                 </div>
                 <span

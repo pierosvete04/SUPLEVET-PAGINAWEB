@@ -4,8 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Badge } from "@/components/admin/Badge";
+import { SortableTableHead } from "@/components/admin/table/SortableTableHead";
+import { TableCard } from "@/components/admin/table/TableCard";
+import { TablePagination } from "@/components/admin/table/TablePagination";
+import { useTableRows } from "@/components/admin/table/useTableRows";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -16,6 +19,21 @@ import {
 } from "@/components/ui/table";
 import { IngredienteForm } from "@/components/admin/ingredientes/IngredienteForm";
 import type { IngredienteProducto } from "@/lib/ingredientes";
+
+function valorOrden(ing: IngredienteProducto, columna: string) {
+  switch (columna) {
+    case "nombre":
+      return ing.nombre;
+    case "beneficios":
+      return ing.beneficios.length;
+    case "orden":
+      return ing.orden;
+    case "estado":
+      return ing.activo ? 1 : 0;
+    default:
+      return null;
+  }
+}
 
 export default function AdminIngredientesPage() {
   const [ingredientes, setIngredientes] = useState<IngredienteProducto[]>([]);
@@ -47,6 +65,11 @@ export default function AdminIngredientesPage() {
     cerrar();
   }
 
+  const { pageRows, totalRows, page, totalPages, setPage, sortColumn, sortDirection, toggleSort } = useTableRows({
+    rows: ingredientes,
+    getSortValue: valorOrden,
+  });
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
@@ -61,47 +84,48 @@ export default function AdminIngredientesPage() {
         </Button>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
+      <TableCard badge={<Badge color="gris">{totalRows}</Badge>}>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <SortableTableHead columnId="nombre" label="Nombre" activeColumn={sortColumn} direction={sortDirection} onSort={toggleSort} />
+              <SortableTableHead columnId="beneficios" label="Beneficios" activeColumn={sortColumn} direction={sortDirection} onSort={toggleSort} />
+              <SortableTableHead columnId="orden" label="Orden" activeColumn={sortColumn} direction={sortDirection} onSort={toggleSort} />
+              <SortableTableHead columnId="estado" label="Estado" activeColumn={sortColumn} direction={sortDirection} onSort={toggleSort} />
+              <TableHead className="px-4" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {!cargando && ingredientes.length === 0 && (
               <TableRow>
-                <TableHead>Nombre</TableHead>
-                <TableHead>Beneficios</TableHead>
-                <TableHead>Orden</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead />
+                <TableCell colSpan={5} className="text-center text-muted-foreground">
+                  Sin ingredientes configurados.
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {!cargando && ingredientes.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
-                    Sin ingredientes configurados.
-                  </TableCell>
-                </TableRow>
-              )}
-              {ingredientes.map((ing) => (
-                <TableRow key={ing.id}>
-                  <TableCell>{ing.nombre}</TableCell>
-                  <TableCell className="text-muted-foreground">{ing.beneficios.length}</TableCell>
-                  <TableCell className="text-muted-foreground">{ing.orden}</TableCell>
-                  <TableCell>
-                    <Badge color={ing.activo ? "verde" : "gris"}>
-                      {ing.activo ? "Activo" : "Inactivo"}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
+            )}
+            {pageRows.map((ing) => (
+              <TableRow key={ing.id} className="cursor-pointer" onClick={() => setEditando(ing)}>
+                <TableCell>{ing.nombre}</TableCell>
+                <TableCell className="text-muted-foreground">{ing.beneficios.length}</TableCell>
+                <TableCell className="text-muted-foreground">{ing.orden}</TableCell>
+                <TableCell>
+                  <Badge color={ing.activo ? "verde" : "gris"}>
+                    {ing.activo ? "Activo" : "Inactivo"}
+                  </Badge>
+                </TableCell>
+                <TableCell className="px-4">
+                  <div className="flex justify-end">
                     <Button variant="ghost" size="sm" onClick={() => setEditando(ing)}>
                       Editar
                     </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        <TablePagination page={page} totalPages={totalPages} totalRows={totalRows} onPageChange={setPage} />
+      </TableCard>
 
       {(creando || editando) && (
         <IngredienteForm ingrediente={editando} onClose={cerrar} onSaved={recargarYCerrar} />

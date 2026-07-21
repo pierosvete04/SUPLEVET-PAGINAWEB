@@ -3,12 +3,14 @@ import { createClient } from "@/lib/supabase/server";
 import { sendTransactionalEmail } from "@/lib/emails/send";
 
 // Llamado por el selector de "Estado de preparación" en
-// app/admin/(panel)/pedidos/[id]. Cuando el nuevo estado es "entregado", además
-// de actualizar la fila dispara acreditar_puntos_pedido_web() (SuplePoints se
-// acreditan a la entrega, no al pago — SuplePoints_Documento_Corporativo.docx
-// §6, para evitar fraude por devolución inmediata) y manda el correo
-// puntos_acreditados con el saldo real.
-const ESTADOS_VALIDOS = ["no_preparado", "en_preparacion", "preparado", "entregado"] as const;
+// app/admin/(panel)/pedidos/[id]. Cada transición manda un aviso al cliente
+// (salvo el estado inicial "no_preparado", que no es una notificación útil).
+// Cuando el nuevo estado es "entregado", además de actualizar la fila dispara
+// acreditar_puntos_pedido_web() (SuplePoints se acreditan a la entrega, no al
+// pago — SuplePoints_Documento_Corporativo.docx §6, para evitar fraude por
+// devolución inmediata) y manda el correo puntos_acreditados con el saldo real
+// en vez del aviso genérico de entrega.
+const ESTADOS_VALIDOS = ["no_preparado", "en_preparacion", "preparado", "entregado", "devuelto"] as const;
 type EstadoPreparacion = (typeof ESTADOS_VALIDOS)[number];
 
 function esEstadoValido(valor: unknown): valor is EstadoPreparacion {
@@ -40,6 +42,31 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
 
   if (estado !== "entregado") {
+    if (pedido.cliente_email && estado !== "no_preparado") {
+      const numeroPedido = pedido.shopify_order_number ?? "";
+      const nombre = pedido.cliente_nombre ?? "cliente";
+
+      const { error: sendError } =
+        estado === "en_preparacion"
+          ? await sendTransactionalEmail(pedido.cliente_email, {
+              tipo: "pedido_en_preparacion",
+              data: { nombre, numeroPedido },
+            })
+          : estado === "preparado"
+            ? await sendTransactionalEmail(pedido.cliente_email, {
+                tipo: "pedido_en_camino",
+                data: { nombre, numeroPedido },
+              })
+            : await sendTransactionalEmail(pedido.cliente_email, {
+                tipo: "pedido_devuelto",
+                data: { nombre, numeroPedido },
+              });
+
+      if (sendError) {
+        console.error("No se pudo enviar el correo de estado de preparación:", sendError);
+      }
+    }
+
     return NextResponse.json({ ok: true });
   }
 

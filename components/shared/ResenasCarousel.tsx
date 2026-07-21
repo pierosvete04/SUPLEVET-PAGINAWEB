@@ -12,7 +12,7 @@ function Estrellas({ calificacion }: { calificacion: number }) {
       {Array.from({ length: 5 }, (_, i) => (
         <Star
           key={i}
-          className={`h-4 w-4 ${i < calificacion ? "fill-primary text-primary" : "fill-transparent text-border"}`}
+          className={`h-4 w-4 ${i < calificacion ? "fill-secondary text-secondary" : "fill-transparent text-border"}`}
           strokeWidth={1.5}
         />
       ))}
@@ -22,7 +22,7 @@ function Estrellas({ calificacion }: { calificacion: number }) {
 
 function ResenaCard({ resena }: { resena: ResenaPublica }) {
   return (
-    <div className="flex w-80 shrink-0 flex-col justify-between rounded-[var(--radius-card)] bg-soft-gray p-6 shadow-lg sm:w-96">
+    <div className="flex w-80 shrink-0 flex-col justify-between rounded-[var(--radius-card)] border border-border bg-white p-6 shadow-lg sm:w-96">
       <div>
         <div className="flex flex-wrap items-center justify-between gap-2">
           <span className="inline-flex rounded-full bg-secondary/10 px-3 py-1 font-body text-xs font-bold text-secondary">

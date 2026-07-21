@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { CreditCard, Smartphone, Landmark, Copy, Check } from "lucide-react";
-import type { MetodoPago } from "@/lib/data/productos-shared";
+import { CreditCard, Smartphone, Landmark, Banknote, Copy, Check } from "lucide-react";
+import { formatPrecio, METODO_PAGO_LABEL, type MetodoPago } from "@/lib/data/productos-shared";
 
 export type { MetodoPago };
 
@@ -14,12 +14,16 @@ interface PaymentStepProps {
    * (ver app/checkout/page.tsx) — un combo restringido a Yape/transferencia
    * oculta la opción de tarjeta aunque el resto del catálogo sí la admita. */
   metodosPermitidos: MetodoPago[];
+  /** Total del pedido (con envío y descuento). Solo se usa para decirle al
+   * cliente cuánto tener listo si elige pago contra entrega. */
+  totalACobrar?: number | null;
 }
 
 const metodos: { id: MetodoPago; label: string; icon: typeof CreditCard }[] = [
-  { id: "tarjeta", label: "Tarjeta (Mercado Pago)", icon: CreditCard },
-  { id: "transferencia", label: "Transferencia bancaria", icon: Landmark },
-  { id: "yape_plin", label: "Yape / Plin", icon: Smartphone },
+  { id: "tarjeta", label: METODO_PAGO_LABEL.tarjeta, icon: CreditCard },
+  { id: "transferencia", label: METODO_PAGO_LABEL.transferencia, icon: Landmark },
+  { id: "yape_plin", label: METODO_PAGO_LABEL.yape_plin, icon: Smartphone },
+  { id: "contra_entrega", label: METODO_PAGO_LABEL.contra_entrega, icon: Banknote },
 ];
 
 const DATOS_TRANSFERENCIA = {
@@ -75,7 +79,7 @@ function CopyField({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function PaymentStep({ metodo, onChange, metodosPermitidos }: PaymentStepProps) {
+export function PaymentStep({ metodo, onChange, metodosPermitidos, totalACobrar }: PaymentStepProps) {
   const metodosVisibles = metodos.filter(({ id }) => metodosPermitidos.includes(id));
 
   return (
@@ -119,6 +123,31 @@ export function PaymentStep({ metodo, onChange, metodosPermitidos }: PaymentStep
             {metodo === id && (
               <div className="border-t border-border bg-white px-4 py-4 font-body text-sm text-secondary">
                 {id === "tarjeta" && <p>Se te redirigirá a Mercado Pago para que completes la compra.</p>}
+
+                {id === "contra_entrega" && (
+                  <div className="flex flex-col gap-3">
+                    <p className="text-muted-foreground">
+                      Pagas al motorizado en el momento de la entrega, cuando ya tienes el pedido en
+                      la mano. Disponible solo para delivery en Lima Metropolitana y Callao.
+                    </p>
+
+                    {typeof totalACobrar === "number" && (
+                      <div className="rounded-md bg-soft-gray px-4 py-3">
+                        <p className="font-body text-[11px] uppercase tracking-wide text-muted-foreground">
+                          Ten listo al recibir
+                        </p>
+                        <p className="font-body text-lg font-bold text-secondary">
+                          {formatPrecio(totalACobrar)}
+                        </p>
+                      </div>
+                    )}
+
+                    <p className="text-xs text-muted-foreground">
+                      El motorizado acepta efectivo y también Yape/Plin en la puerta. Te
+                      recomendamos tener el monto exacto para agilizar la entrega.
+                    </p>
+                  </div>
+                )}
 
                 {id === "transferencia" && (
                   <div className="flex flex-col gap-3">

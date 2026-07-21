@@ -21,7 +21,10 @@
     --popover-foreground: 217 45% 15%;
 
     --primary: 26 80% 59%;
-    --primary-foreground: 0 0% 100%;
+    /* Blanco puro sobre este naranja da 2.53:1 — falla WCAG AA (mínimo 3:1
+       incluso en texto grande). El navy de --foreground da 6.28:1: pasa AA
+       cómodo en cualquier tamaño de texto sin tocar el naranja de marca. */
+    --primary-foreground: 217 45% 15%;
 
     --secondary: 217 45% 26%;
     --secondary-foreground: 0 0% 100%;
@@ -47,7 +50,7 @@
     --sidebar-background: 217 45% 26%;
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 26 80% 59%;
-    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-primary-foreground: 217 45% 15%;
     --sidebar-accent: 217 40% 34%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 217 35% 34%;
@@ -73,6 +76,30 @@
    barra de confianza en movimiento (components/home/TrustBar.tsx). */
 @media (prefers-reduced-motion: reduce) {
   .animate-marquee {
+    animation: none;
+  }
+}
+
+/* Entrada del header al cargar el sitio — animación 100% CSS (no depende de
+   que React hidrate ni de que GSAP cargue) para que el header sea visible
+   desde el primer HTML que manda el servidor. Antes se ocultaba con un
+   style={{opacity:0}} inline que solo GSAP revertía tras hidratar, dejando
+   el header invisible varios segundos en conexiones/dispositivos lentos. */
+@keyframes header-intro {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-header-intro {
+  animation: header-intro 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .animate-header-intro {
     animation: none;
   }
 }

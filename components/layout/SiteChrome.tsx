@@ -21,9 +21,18 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
 
   return (
     <>
+      {/* Visible solo al recibir foco de teclado (Tab) — deja saltar el menú
+          completo (Ofertas/Productos/Nosotros/Blog/Contáctanos/...) que se
+          repite en cada página. */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-md focus:bg-secondary focus:px-4 focus:py-2 focus:font-body focus:text-sm focus:font-bold focus:text-white focus:outline-none focus:ring-2 focus:ring-accent"
+      >
+        Saltar al contenido
+      </a>
       <AnnouncementBar />
       <Header />
-      <main className="flex-1">
+      <main id="main-content" className="flex-1">
         <PageTransition>{children}</PageTransition>
       </main>
       <Footer />

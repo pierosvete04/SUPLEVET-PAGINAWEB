@@ -1,23 +1,43 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Check } from "lucide-react";
+import { Check, Loader2, Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { provinciasPorDepartamento, distritosPorProvincia } from "@/lib/data/ubigeo";
 import {
   departamentosCheckout,
   getZonasEnvioActivas,
+  getDistritosEnvioActivos,
   encontrarZonaPorDepartamento,
+  encontrarCostoDistrito,
   calcularCostoEnvio,
+  esDepartamentoProvincia,
+  COSTO_SHALOM_PROVINCIA,
   type EnvioZona,
+  type EnvioDistrito,
 } from "@/lib/shipping";
 import { formatPrecio } from "@/lib/data/productos-shared";
+import {
+  consultarDocumento,
+  esConsultable,
+  largoEsperado,
+  TIPOS_DOCUMENTO,
+  type TipoDocumento,
+} from "@/lib/documento";
+import { tieneCoordenadas } from "@/lib/ubicacion";
+import { ubicarDistrito } from "@/lib/ubigeo-match";
+import {
+  DireccionAutocomplete,
+  type DireccionElegida,
+} from "@/components/checkout/DireccionAutocomplete";
 
 export type MetodoEnvio = "motorizado" | "shalom";
 
 export interface DireccionEnvio {
   nombre: string;
   apellidos: string;
+  tipoDocumento: TipoDocumento | "";
+  numeroDocumento: string;
   direccion: string;
   direccionSecundaria: string;
   departamento: string;
@@ -26,11 +46,16 @@ export interface DireccionEnvio {
   codigoPostal: string;
   telefono: string;
   metodoEnvio: MetodoEnvio | "";
+  /** Coordenadas de Google Places; null si escribió la dirección a mano. */
+  lat: number | null;
+  lng: number | null;
 }
 
 export const direccionVacia: DireccionEnvio = {
   nombre: "",
   apellidos: "",
+  tipoDocumento: "dni",
+  numeroDocumento: "",
   direccion: "",
   direccionSecundaria: "",
   departamento: "",
@@ -39,6 +64,8 @@ export const direccionVacia: DireccionEnvio = {
   codigoPostal: "",
   telefono: "",
   metodoEnvio: "",
+  lat: null,
+  lng: null,
 };
 
 interface ShippingStepProps {
@@ -61,9 +88,15 @@ const metodosEnvio: { value: MetodoEnvio; nombre: string; descripcion: string }[
 // página, igual al patrón de Shopify que pediste en vez del wizard por pasos.
 export function ShippingStep({ subtotal, value, onChange, onZonaChange }: ShippingStepProps) {
   const [zonas, setZonas] = useState<EnvioZona[]>([]);
+  const [costosDistrito, setCostosDistrito] = useState<EnvioDistrito[]>([]);
+  const [consultandoDoc, setConsultandoDoc] = useState(false);
+  const [errorDoc, setErrorDoc] = useState<string | null>(null);
+  const [docAutocompletado, setDocAutocompletado] = useState(false);
 
   useEffect(() => {
-    getZonasEnvioActivas(createClient()).then(setZonas);
+    const supabase = createClient();
+    getZonasEnvioActivas(supabase).then(setZonas);
+    getDistritosEnvioActivos(supabase).then(setCostosDistrito);
   }, []);
 
   // Ciudad = provincia (dropdown siempre, con datos reales de RENIEC para los
@@ -77,12 +110,35 @@ export function ShippingStep({ subtotal, value, onChange, onZonaChange }: Shippi
     : [];
 
   const zona = value.departamento ? encontrarZonaPorDepartamento(zonas, value.departamento) : undefined;
-  const costoEnvio = zona ? calcularCostoEnvio(zona, subtotal) : null;
+  const esProvincia = esDepartamentoProvincia(value.departamento);
+  const costoDistrito = encontrarCostoDistrito(costosDistrito, zona, value.distrito);
+  const costoEnvio = !zona
+    ? null
+    : esProvincia
+      ? calcularCostoEnvio(zona, subtotal, COSTO_SHALOM_PROVINCIA)
+      : calcularCostoEnvio(zona, subtotal, costoDistrito);
+
+  // Fuera de Lima Metropolitana/Callao el delivery motorizado no llega — solo
+  // se ofrece Agencia Shalom, a la tarifa plana nacional de provincia.
+  const metodosDisponibles = esProvincia
+    ? metodosEnvio.filter((m) => m.value === "shalom")
+    : metodosEnvio;
 
   useEffect(() => {
     onZonaChange(zona, costoEnvio);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [zona?.id, costoEnvio]);
+
+  // Si el método ya elegido deja de estar disponible (ej. tenía motorizado
+  // seleccionado en Lima y cambia a un departamento de provincia), hay que
+  // pedirle que elija de nuevo en vez de dejar seleccionada una opción que ya
+  // no aplica.
+  useEffect(() => {
+    if (value.metodoEnvio && !metodosDisponibles.some((m) => m.value === value.metodoEnvio)) {
+      set("metodoEnvio", "");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [esProvincia]);
 
   function set<K extends keyof DireccionEnvio>(campo: K, valor: DireccionEnvio[K]) {
     onChange({ ...value, [campo]: valor });
@@ -100,6 +156,65 @@ export function ShippingStep({ subtotal, value, onChange, onZonaChange }: Shippi
     onChange({ ...value, provincia: nuevaProvincia, distrito: "" });
   }
 
+  const docLargo = largoEsperado(value.tipoDocumento);
+  const puedeConsultarDoc =
+    esConsultable(value.tipoDocumento) && value.numeroDocumento.length === docLargo;
+
+  // Autocompleta nombre y apellidos desde RENIEC/SUNAT. Si la consulta falla
+  // (sin token, documento inexistente, sin red) no bloquea nada: el cliente
+  // escribe sus datos a mano igual que antes.
+  async function consultar() {
+    if (!puedeConsultarDoc || consultandoDoc) return;
+    setConsultandoDoc(true);
+    setErrorDoc(null);
+    const { datos, error } = await consultarDocumento(
+      value.tipoDocumento as "dni" | "ruc",
+      value.numeroDocumento
+    );
+    if (datos) {
+      onChange({ ...value, nombre: datos.nombre, apellidos: datos.apellidos });
+      setDocAutocompletado(true);
+    } else {
+      setErrorDoc(error);
+      setDocAutocompletado(false);
+    }
+    setConsultandoDoc(false);
+  }
+
+  function setNumeroDocumento(numero: string) {
+    const limpio = value.tipoDocumento === "pasaporte" ? numero : numero.replace(/\D/g, "");
+    setErrorDoc(null);
+    setDocAutocompletado(false);
+    set("numeroDocumento", docLargo ? limpio.slice(0, docLargo) : limpio.slice(0, 20));
+  }
+
+  // Al elegir una sugerencia de Google se guardan las coordenadas y, si el
+  // distrito es inequívoco, se preseleccionan los 3 dropdowns. Si el nombre es
+  // ambiguo se dejan como estaban: la zona define el precio del envío, así que
+  // un autocompletado errado le cobraría de más (o de menos) al cliente.
+  function elegirDireccionDeMaps(elegida: DireccionElegida) {
+    const ubigeo = ubicarDistrito(elegida.distrito);
+    onChange({
+      ...value,
+      direccion: elegida.direccion,
+      lat: elegida.lat,
+      lng: elegida.lng,
+      ...(ubigeo
+        ? {
+            departamento: ubigeo.departamento,
+            provincia: ubigeo.provincia,
+            distrito: ubigeo.distrito,
+          }
+        : {}),
+    });
+  }
+
+  function setTipoDocumento(tipo: TipoDocumento) {
+    setErrorDoc(null);
+    setDocAutocompletado(false);
+    onChange({ ...value, tipoDocumento: tipo, numeroDocumento: "" });
+  }
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-col gap-4">
@@ -113,6 +228,64 @@ export function ShippingStep({ subtotal, value, onChange, onZonaChange }: Shippi
         <select disabled className={`${inputClass} bg-soft-gray text-muted-foreground`} defaultValue="Perú">
           <option>Perú</option>
         </select>
+
+        {/* Documento opcional: ayuda al courier a validar identidad en la
+            entrega y, si es DNI/RUC, autocompleta el nombre para que el
+            rótulo salga exactamente como figura en RENIEC. */}
+        <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-[minmax(0,11rem)_1fr]">
+            <select
+              value={value.tipoDocumento}
+              onChange={(e) => setTipoDocumento(e.target.value as TipoDocumento)}
+              className={inputClass}
+            >
+              {TIPOS_DOCUMENTO.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.label}
+                </option>
+              ))}
+            </select>
+
+            <div className="flex gap-2">
+              <input
+                type="text"
+                inputMode={value.tipoDocumento === "pasaporte" ? "text" : "numeric"}
+                placeholder={`N° de documento (opcional)`}
+                value={value.numeroDocumento}
+                onChange={(e) => setNumeroDocumento(e.target.value)}
+                className={`${inputClass} min-w-0 flex-1`}
+              />
+              {esConsultable(value.tipoDocumento) && (
+                <button
+                  type="button"
+                  onClick={consultar}
+                  disabled={!puedeConsultarDoc || consultandoDoc}
+                  className="flex shrink-0 items-center gap-1.5 rounded-md border border-border px-3 font-body text-xs font-bold text-secondary transition-opacity hover:bg-soft-gray disabled:opacity-40"
+                >
+                  {consultandoDoc ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Search className="h-3.5 w-3.5" />
+                  )}
+                  Buscar
+                </button>
+              )}
+            </div>
+          </div>
+
+          {errorDoc ? (
+            <p className="font-body text-xs text-destructive">{errorDoc}</p>
+          ) : docAutocompletado ? (
+            <p className="flex items-center gap-1 font-body text-xs text-green-700">
+              <Check className="h-3.5 w-3.5" /> Datos encontrados y completados abajo.
+            </p>
+          ) : (
+            <p className="font-body text-xs text-muted-foreground">
+              Opcional, pero lo recomendamos: con tu documento el courier puede verificar tu
+              identidad al entregarte el pedido.
+            </p>
+          )}
+        </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <input
@@ -133,13 +306,14 @@ export function ShippingStep({ subtotal, value, onChange, onZonaChange }: Shippi
           />
         </div>
 
-        <input
-          required
-          type="text"
-          placeholder="Dirección"
+        <DireccionAutocomplete
           value={value.direccion}
-          onChange={(e) => set("direccion", e.target.value)}
+          ubicada={tieneCoordenadas(value)}
           className={inputClass}
+          // Escribir a mano invalida las coordenadas anteriores: si no, el
+          // courier recibiría el pin de una dirección que ya no es la del pedido.
+          onChange={(direccion) => onChange({ ...value, direccion, lat: null, lng: null })}
+          onElegir={elegirDireccionDeMaps}
         />
 
         <input
@@ -225,7 +399,7 @@ export function ShippingStep({ subtotal, value, onChange, onZonaChange }: Shippi
           </p>
         ) : zona && costoEnvio !== null ? (
           <div className="flex flex-col gap-2">
-            {metodosEnvio.map((metodo) => {
+            {metodosDisponibles.map((metodo) => {
               const seleccionado = value.metodoEnvio === metodo.value;
               return (
                 <button

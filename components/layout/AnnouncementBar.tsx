@@ -7,7 +7,7 @@ export function AnnouncementBar() {
   return (
     <Link
       href="/legal/envios"
-      className="flex items-center justify-center gap-1.5 bg-accent py-2 text-center font-body text-xs font-bold tracking-wide text-white transition-opacity hover:opacity-90 md:text-sm"
+      className="flex items-center justify-center gap-1.5 bg-accent py-2 text-center font-body text-xs font-bold tracking-wide text-accent-foreground transition-opacity hover:opacity-90 md:text-sm"
     >
       Envío GRATIS por compras desde S/.150 Lima Metropolitana (Aplican TyC)
       <ArrowRight className="h-3.5 w-3.5 shrink-0" strokeWidth={2.5} />

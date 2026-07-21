@@ -47,51 +47,80 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-secondary px-mobile-margin">
-      <div className="w-full max-w-sm rounded-md bg-white p-8 shadow-lg">
-        <div className="mb-8 flex flex-col items-center gap-2">
-          <Image src="/logos/logo-color-horizontal.png" alt="Suplevet" width={150} height={32} priority />
-          <h1 className="font-body text-lg font-bold text-secondary">Panel administrativo</h1>
+    <div className="flex min-h-screen bg-white">
+      {/* Columna izquierda — formulario */}
+      <div className="flex w-full flex-col justify-center px-mobile-margin py-12 lg:w-1/2 lg:px-20">
+        <div className="mx-auto w-full max-w-sm">
+          <Image
+            src="/logos/logo-color-horizontal.png"
+            alt="Suplevet"
+            width={140}
+            height={30}
+            priority
+            className="mb-12"
+          />
+
+          <h1 className="font-display text-3xl font-bold text-secondary">Iniciar sesión</h1>
+          <p className="mt-2 font-body text-sm text-muted-foreground">
+            Bienvenido de nuevo. Ingresa tus credenciales.
+          </p>
+
+          <form onSubmit={handleSubmit} className="mt-8 flex flex-col gap-5">
+            <div>
+              <label className="mb-1.5 block font-body text-sm font-medium text-secondary">
+                Correo
+              </label>
+              <input
+                required
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="tucorreo@suplevet.com"
+                className="w-full rounded-xl border border-border px-4 py-2.5 font-body text-sm text-secondary placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                autoComplete="username"
+              />
+            </div>
+            <div>
+              <label className="mb-1.5 block font-body text-sm font-medium text-secondary">
+                Contraseña
+              </label>
+              <input
+                required
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••••"
+                className="w-full rounded-xl border border-border px-4 py-2.5 font-body text-sm text-secondary focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                autoComplete="current-password"
+              />
+            </div>
+
+            {error && <p className="font-body text-sm text-red-600">{error}</p>}
+
+            <button
+              type="submit"
+              disabled={cargando}
+              className="mt-2 rounded-xl bg-primary px-4 py-2.5 font-body font-bold text-primary-foreground transition hover:opacity-90 disabled:opacity-50"
+            >
+              {cargando ? "Ingresando…" : "Ingresar"}
+            </button>
+          </form>
         </div>
+      </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <div>
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              Correo
-            </label>
-            <input
-              required
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-lg border border-border px-4 py-2.5 font-body text-sm text-secondary"
-              autoComplete="username"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
-              Contraseña
-            </label>
-            <input
-              required
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-lg border border-border px-4 py-2.5 font-body text-sm text-secondary"
-              autoComplete="current-password"
-            />
-          </div>
-
-          {error && <p className="font-body text-sm text-red-600">{error}</p>}
-
-          <button
-            type="submit"
-            disabled={cargando}
-            className="mt-2 rounded-lg bg-primary px-4 py-2.5 font-body font-bold text-primary-foreground hover:opacity-90 disabled:opacity-50"
-          >
-            {cargando ? "Ingresando…" : "Ingresar"}
-          </button>
-        </form>
+      {/* Columna derecha — identidad de marca */}
+      <div className="relative hidden w-1/2 items-center justify-center bg-secondary lg:flex">
+        <div className="absolute inset-0 organic-hill bg-secondary-foreground/[0.03]" />
+        <div className="relative flex flex-col items-center gap-6 px-12 text-center">
+          <Image
+            src="/logos/logo-white-full-horizontal.png"
+            alt="Suplevet"
+            width={280}
+            height={60}
+            priority
+          />
+          <p className="font-body text-sm text-white/70">Panel administrativo</p>
+        </div>
       </div>
     </div>
   );

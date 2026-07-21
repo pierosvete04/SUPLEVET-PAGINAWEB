@@ -26,12 +26,16 @@ export function BlogFilters({ productos }: BlogFiltersProps) {
   }
 
   return (
-    <div className="flex flex-wrap items-center justify-center gap-4">
+    <div className="flex flex-wrap items-end gap-4 sm:justify-end">
       <div>
-        <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
+        <label
+          htmlFor="filtro-producto"
+          className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground"
+        >
           Tipo de producto
         </label>
         <select
+          id="filtro-producto"
           defaultValue={searchParams.get("producto") ?? ""}
           onChange={(e) => updateParam("producto", e.target.value)}
           className="rounded-lg border border-border bg-white px-4 py-2.5 font-body text-sm text-secondary"
@@ -45,10 +49,14 @@ export function BlogFilters({ productos }: BlogFiltersProps) {
         </select>
       </div>
       <div>
-        <label className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground">
+        <label
+          htmlFor="filtro-orden"
+          className="mb-1 block font-body text-xs font-bold uppercase text-muted-foreground"
+        >
           Ordenar por
         </label>
         <select
+          id="filtro-orden"
           defaultValue={searchParams.get("orden") ?? "recientes"}
           onChange={(e) => updateParam("orden", e.target.value)}
           className="rounded-lg border border-border bg-white px-4 py-2.5 font-body text-sm text-secondary"

@@ -25,7 +25,7 @@ interface CartContextValue {
   /** false hasta que se termina de leer localStorage — evita que páginas como
    * /checkout redirijan por "carrito vacío" antes de que cargue el real. */
   cargando: boolean;
-  /** Slug del diseño de bandana elegido como regalo (ver BANDANAS_REGALO) — null si no ha elegido. */
+  /** Slug de la variante de regalo elegida (ver lib/regalo-variantes.ts) — null si no ha elegido. */
   bandanaRegaloSeleccionada: string | null;
   setBandanaRegaloSeleccionada: (slug: string | null) => void;
 }

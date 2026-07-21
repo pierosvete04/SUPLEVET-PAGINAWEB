@@ -11,9 +11,13 @@ const CAMPOS_VACIOS = { nombre: "", correo: "", mensaje: "" };
 
 interface FaqProps {
   preguntas: FaqItem[];
+  /** true = reduce el padding superior — se usa en Home, donde le precede
+   * directamente la sección del Blog y el espacio entre ambas quedaba
+   * demasiado separado. */
+  paddingSuperiorReducido?: boolean;
 }
 
-export function Faq({ preguntas }: FaqProps) {
+export function Faq({ preguntas, paddingSuperiorReducido = false }: FaqProps) {
   const config = useConfiguracionSitio();
   const [form, setForm] = useState(CAMPOS_VACIOS);
 
@@ -29,7 +33,7 @@ export function Faq({ preguntas }: FaqProps) {
   }
 
   return (
-    <section className="bg-soft-gray py-section-y">
+    <section className={`bg-soft-gray pb-section-y ${paddingSuperiorReducido ? "pt-7" : "pt-section-y"}`}>
       <div className="mx-auto max-w-container px-mobile-margin md:px-gutter">
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-secondary to-[#0f1b2e]">
           <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-white/5 blur-3xl" />

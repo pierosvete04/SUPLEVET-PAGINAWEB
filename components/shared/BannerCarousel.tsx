@@ -4,8 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Banner } from "@/lib/banners";
+import { optimizedImageSrc } from "@/lib/images";
 
 const AUTOPLAY_MS = 6000;
+// Mismo criterio de anchos que components/home/Hero.tsx.
+const MOBILE_OPTIMIZED_WIDTH = 1080;
+const DESKTOP_OPTIMIZED_WIDTH = 1920;
 
 interface BannerCarouselProps {
   banners: Banner[];
@@ -37,14 +41,20 @@ export function BannerCarousel({ banners }: BannerCarouselProps) {
           // de cada banner subido desde /admin, y forzar un aspect-ratio fijo
           // con object-cover recortaba texto/producto del banner. Con w-full
           // h-auto se respeta la proporción real del archivo, sin recortes.
+          // El peso sí se optimiza vía optimizedImageSrc (/_next/image) —
+          // sin esto, cada banner se sirve tal cual se subió (hasta 2-3MB).
           const imagen = (
             <>
               <img
-                src={banner.imagen_mobile ?? banner.imagen}
+                src={optimizedImageSrc(banner.imagen_mobile ?? banner.imagen, MOBILE_OPTIMIZED_WIDTH)}
                 alt=""
                 className="block w-full sm:hidden"
               />
-              <img src={banner.imagen} alt="" className="hidden w-full sm:block" />
+              <img
+                src={optimizedImageSrc(banner.imagen, DESKTOP_OPTIMIZED_WIDTH)}
+                alt=""
+                className="hidden w-full sm:block"
+              />
             </>
           );
           return (

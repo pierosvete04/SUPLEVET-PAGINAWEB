@@ -58,7 +58,7 @@ export function RichTextEditor({ value, onChange }: RichTextEditorProps) {
         suppressContentEditableWarning
         onInput={(e) => onChange(e.currentTarget.innerHTML)}
         dangerouslySetInnerHTML={{ __html: value }}
-        className="min-h-[240px] px-4 py-3 font-body text-sm text-secondary focus:outline-none [&_h2]:font-bold [&_h2]:text-lg [&_ul]:list-disc [&_ul]:pl-5 [&_a]:text-primary [&_a]:underline"
+        className="min-h-[240px] px-4 py-3 font-body text-sm text-secondary focus:outline-none [&_h2]:font-bold [&_h2]:text-lg [&_ul]:list-disc [&_ul]:pl-5 [&_a]:text-secondary [&_a]:underline"
       />
     </div>
   );

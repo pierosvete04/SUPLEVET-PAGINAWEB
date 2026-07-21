@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { LegalDoc } from "@/components/legal/LegalDoc";
+import { siteConfig } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: "Política de Devoluciones y Reembolsos",
   description:
     "Condiciones de reemplazo de producto de Suplevet: productos dañados o entregados por error.",
+  alternates: { canonical: `${siteConfig.siteUrl}/legal/devoluciones` },
 };
 
 export default function DevolucionesPage() {

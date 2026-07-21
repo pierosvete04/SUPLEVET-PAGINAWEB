@@ -128,7 +128,7 @@ export default async function PortalRankingPage() {
               <span className="w-16 shrink-0 text-right font-body text-xs text-muted-foreground">
                 {NOMBRE_NIVEL[u.nivel] ?? u.nivel}
               </span>
-              <span className="w-20 shrink-0 text-right font-display text-sm font-bold text-primary">
+              <span className="w-20 shrink-0 text-right font-display text-sm font-bold text-secondary">
                 {u.puntos_historicos.toLocaleString()}
               </span>
             </div>

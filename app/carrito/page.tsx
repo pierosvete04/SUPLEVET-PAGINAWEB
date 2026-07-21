@@ -68,7 +68,7 @@ export default function CarritoPage() {
                 </div>
               </div>
               <div className="flex flex-col items-end gap-3">
-                <span className="font-body font-bold text-primary">
+                <span className="font-body font-bold text-secondary">
                   {formatPrecio(item.precio * item.cantidad)}
                 </span>
                 <button

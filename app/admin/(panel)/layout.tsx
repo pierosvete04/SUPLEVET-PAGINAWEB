@@ -22,7 +22,7 @@ export default async function AdminPanelLayout({ children }: { children: React.R
 
   return (
     <SidebarProvider className="font-body">
-      <AppSidebar admin={{ nombre: admin.nombre, usuario: admin.usuario }} variant="inset" />
+      <AppSidebar admin={{ nombre: admin.nombre, usuario: admin.usuario }} />
       <SidebarInset>
         <SiteHeader />
         <main className="flex flex-1 flex-col gap-4 bg-soft-gray p-4 md:p-6">{children}</main>

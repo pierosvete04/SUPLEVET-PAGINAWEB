@@ -4,7 +4,13 @@ import CarritoAbandonado, { type CarritoAbandonadoProps } from "@/emails/carrito
 import PagoConfirmado, { type PagoConfirmadoProps } from "@/emails/pago-confirmado";
 import PagoEnVerificacion, { type PagoEnVerificacionProps } from "@/emails/pago-en-verificacion";
 import PagoRechazado, { type PagoRechazadoProps } from "@/emails/pago-rechazado";
+import PedidoCancelado, { type PedidoCanceladoProps } from "@/emails/pedido-cancelado";
 import PedidoConfirmado, { type PedidoConfirmadoProps } from "@/emails/pedido-confirmado";
+import PedidoDevuelto, { type PedidoDevueltoProps } from "@/emails/pedido-devuelto";
+import PedidoEnCamino, { type PedidoEnCaminoProps } from "@/emails/pedido-en-camino";
+import PedidoEnPreparacion, {
+  type PedidoEnPreparacionProps,
+} from "@/emails/pedido-en-preparacion";
 import SuplepointsAcreditados, {
   type SuplepointsAcreditadosProps,
 } from "@/emails/suplepoints-acreditados";
@@ -18,6 +24,10 @@ export type EmailPayload =
   | { tipo: "pago_confirmado"; data: PagoConfirmadoProps }
   | { tipo: "pago_pendiente_verificacion"; data: PagoEnVerificacionProps }
   | { tipo: "pago_error"; data: PagoRechazadoProps }
+  | { tipo: "pago_cancelado"; data: PedidoCanceladoProps }
+  | { tipo: "pedido_en_preparacion"; data: PedidoEnPreparacionProps }
+  | { tipo: "pedido_en_camino"; data: PedidoEnCaminoProps }
+  | { tipo: "pedido_devuelto"; data: PedidoDevueltoProps }
   | { tipo: "puntos_acreditados"; data: SuplepointsAcreditadosProps }
   | { tipo: "canje_confirmado"; data: CanjeConfirmadoProps }
   | { tipo: "carrito_abandonado"; data: CarritoAbandonadoProps };
@@ -48,6 +58,26 @@ function render(payload: EmailPayload): RenderedEmail {
       return {
         subject: `Hubo un problema con tu pago — pedido #${payload.data.numeroPedido}`,
         element: <PagoRechazado {...payload.data} />,
+      };
+    case "pago_cancelado":
+      return {
+        subject: `Tu pedido #${payload.data.numeroPedido} fue cancelado`,
+        element: <PedidoCancelado {...payload.data} />,
+      };
+    case "pedido_en_preparacion":
+      return {
+        subject: `Estamos preparando tu pedido #${payload.data.numeroPedido}`,
+        element: <PedidoEnPreparacion {...payload.data} />,
+      };
+    case "pedido_en_camino":
+      return {
+        subject: `¡Tu pedido #${payload.data.numeroPedido} está en camino! 🚚`,
+        element: <PedidoEnCamino {...payload.data} />,
+      };
+    case "pedido_devuelto":
+      return {
+        subject: `Tu pedido #${payload.data.numeroPedido} fue devuelto`,
+        element: <PedidoDevuelto {...payload.data} />,
       };
     case "puntos_acreditados":
       return {

@@ -76,7 +76,7 @@ export default async function PortalCarnetPage() {
                 <div className="text-right">
                   <p className="font-body text-sm font-bold text-secondary">{formatPrecio(Number(c.monto_total))}</p>
                   {!!c.puntos_acreditados && (
-                    <p className="font-body text-[10px] font-bold text-primary">+{c.puntos_acreditados} pts</p>
+                    <p className="font-body text-[10px] font-bold text-secondary">+{c.puntos_acreditados} pts</p>
                   )}
                 </div>
               </div>

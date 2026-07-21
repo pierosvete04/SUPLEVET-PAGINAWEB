@@ -84,7 +84,7 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
                       </div>
                     </div>
                     <div className="flex flex-col items-end gap-2">
-                      <span className="font-body text-sm font-bold text-primary">
+                      <span className="font-body text-sm font-bold text-secondary">
                         {formatPrecio(item.precio * item.cantidad)}
                       </span>
                       <button

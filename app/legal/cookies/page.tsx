@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import { LegalDoc } from "@/components/legal/LegalDoc";
 import { BorradorNotice } from "@/components/legal/BorradorNotice";
+import { siteConfig } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: "Política de Cookies",
   description: "Cómo usamos cookies y tecnologías similares en este sitio.",
+  alternates: { canonical: `${siteConfig.siteUrl}/legal/cookies` },
 };
 
 export default function CookiesPage() {

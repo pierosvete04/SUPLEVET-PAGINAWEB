@@ -4,8 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 import { Plus, Play } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Badge } from "@/components/admin/Badge";
+import { SortableTableHead } from "@/components/admin/table/SortableTableHead";
+import { TableCard } from "@/components/admin/table/TableCard";
+import { TablePagination } from "@/components/admin/table/TablePagination";
+import { useTableRows } from "@/components/admin/table/useTableRows";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -16,6 +19,19 @@ import {
 } from "@/components/ui/table";
 import { TestimonioForm } from "@/components/admin/testimonios/TestimonioForm";
 import type { TestimonioVideo } from "@/lib/testimonios";
+
+function valorOrden(t: TestimonioVideo, columna: string) {
+  switch (columna) {
+    case "titulo":
+      return t.titulo;
+    case "orden":
+      return t.orden;
+    case "estado":
+      return t.activo ? 1 : 0;
+    default:
+      return null;
+  }
+}
 
 export default function AdminTestimoniosPage() {
   const [testimonios, setTestimonios] = useState<TestimonioVideo[]>([]);
@@ -47,6 +63,11 @@ export default function AdminTestimoniosPage() {
     cerrar();
   }
 
+  const { pageRows, totalRows, page, totalPages, setPage, sortColumn, sortDirection, toggleSort } = useTableRows({
+    rows: testimonios,
+    getSortValue: valorOrden,
+  });
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
@@ -56,54 +77,55 @@ export default function AdminTestimoniosPage() {
         </Button>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
+      <TableCard badge={<Badge color="gris">{totalRows}</Badge>}>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Video</TableHead>
+              <SortableTableHead columnId="titulo" label="Título" activeColumn={sortColumn} direction={sortDirection} onSort={toggleSort} />
+              <SortableTableHead columnId="orden" label="Orden" activeColumn={sortColumn} direction={sortDirection} onSort={toggleSort} />
+              <SortableTableHead columnId="estado" label="Estado" activeColumn={sortColumn} direction={sortDirection} onSort={toggleSort} />
+              <TableHead className="px-4" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {!cargando && testimonios.length === 0 && (
               <TableRow>
-                <TableHead>Video</TableHead>
-                <TableHead>Título</TableHead>
-                <TableHead>Orden</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead />
+                <TableCell colSpan={5} className="text-center text-muted-foreground">
+                  Sin testimonios configurados.
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {!cargando && testimonios.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={5} className="text-center text-muted-foreground">
-                    Sin testimonios configurados.
-                  </TableCell>
-                </TableRow>
-              )}
-              {testimonios.map((t) => (
-                <TableRow key={t.id}>
-                  <TableCell>
-                    <div className="relative flex h-12 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md bg-soft-gray">
-                      {t.thumbnail_url ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={t.thumbnail_url} alt="" className="h-full w-full object-cover" />
-                      ) : (
-                        <Play className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground">{t.titulo}</TableCell>
-                  <TableCell className="text-muted-foreground">{t.orden}</TableCell>
-                  <TableCell>
-                    <Badge color={t.activo ? "verde" : "gris"}>{t.activo ? "Activo" : "Inactivo"}</Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
+            )}
+            {pageRows.map((t) => (
+              <TableRow key={t.id}>
+                <TableCell>
+                  <div className="relative flex h-12 w-9 shrink-0 items-center justify-center overflow-hidden rounded-md bg-soft-gray">
+                    {t.thumbnail_url ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={t.thumbnail_url} alt="" className="h-full w-full object-cover" />
+                    ) : (
+                      <Play className="h-4 w-4 text-muted-foreground" />
+                    )}
+                  </div>
+                </TableCell>
+                <TableCell className="text-muted-foreground">{t.titulo}</TableCell>
+                <TableCell className="text-muted-foreground">{t.orden}</TableCell>
+                <TableCell>
+                  <Badge color={t.activo ? "verde" : "gris"}>{t.activo ? "Activo" : "Inactivo"}</Badge>
+                </TableCell>
+                <TableCell className="px-4">
+                  <div className="flex justify-end">
                     <Button variant="ghost" size="sm" onClick={() => setEditando(t)}>
                       Editar
                     </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        <TablePagination page={page} totalPages={totalPages} totalRows={totalRows} onPageChange={setPage} />
+      </TableCard>
 
       {(creando || editando) && (
         <TestimonioForm testimonio={editando} onClose={cerrar} onSaved={recargarYCerrar} />

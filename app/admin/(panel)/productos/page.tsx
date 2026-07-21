@@ -1,12 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import Image from "next/image";
 import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Badge } from "@/components/admin/Badge";
+import { SortableTableHead } from "@/components/admin/table/SortableTableHead";
+import { TableCard } from "@/components/admin/table/TableCard";
+import { TablePagination } from "@/components/admin/table/TablePagination";
+import { useTableRows } from "@/components/admin/table/useTableRows";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -16,6 +19,23 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ProductoForm, type ProductoWeb } from "@/components/admin/productos/ProductoForm";
+
+function valorOrden(p: ProductoWeb, columna: string) {
+  switch (columna) {
+    case "nombre":
+      return p.nombre;
+    case "estado":
+      return p.activo ? 1 : 0;
+    case "categoria":
+      return p.categoria;
+    case "precio":
+      return p.precio;
+    case "stock":
+      return p.stock ?? -1;
+    default:
+      return null;
+  }
+}
 
 export default function AdminProductosPage() {
   const [productos, setProductos] = useState<ProductoWeb[]>([]);
@@ -47,6 +67,11 @@ export default function AdminProductosPage() {
     cerrarFormulario();
   }
 
+  const { pageRows, totalRows, page, totalPages, setPage, sortColumn, sortDirection, toggleSort } = useTableRows({
+    rows: productos,
+    getSortValue: valorOrden,
+  });
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
@@ -56,56 +81,58 @@ export default function AdminProductosPage() {
         </Button>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
+      <TableCard badge={<Badge color="gris">{totalRows}</Badge>}>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <SortableTableHead columnId="nombre" label="Producto" activeColumn={sortColumn} direction={sortDirection} onSort={toggleSort} className="w-full max-w-1/4" />
+              <SortableTableHead columnId="estado" label="Estado" activeColumn={sortColumn} direction={sortDirection} onSort={toggleSort} />
+              <SortableTableHead columnId="categoria" label="Categoría" activeColumn={sortColumn} direction={sortDirection} onSort={toggleSort} />
+              <SortableTableHead columnId="precio" label="Precio" activeColumn={sortColumn} direction={sortDirection} onSort={toggleSort} />
+              <SortableTableHead columnId="stock" label="Stock" activeColumn={sortColumn} direction={sortDirection} onSort={toggleSort} />
+              <TableHead>Proveedor</TableHead>
+              <TableHead className="px-4" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {!cargando && productos.length === 0 && (
               <TableRow>
-                <TableHead>Producto</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Categoría</TableHead>
-                <TableHead>Precio</TableHead>
-                <TableHead>Stock</TableHead>
-                <TableHead>Proveedor</TableHead>
-                <TableHead />
+                <TableCell colSpan={7} className="text-center text-muted-foreground">
+                  Sin productos todavía.
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {!cargando && productos.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground">
-                    Sin productos todavía.
-                  </TableCell>
-                </TableRow>
-              )}
-              {productos.map((p) => (
-                <TableRow key={p.id}>
-                  <TableCell className="flex items-center gap-3">
-                    <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-lg bg-soft-gray">
-                      {p.imagen && (
-                        <Image src={p.imagen} alt="" fill className="object-cover" sizes="40px" />
-                      )}
-                    </div>
-                    <span className="font-medium">{p.nombre}</span>
-                  </TableCell>
-                  <TableCell>
-                    <Badge color={p.activo ? "verde" : "gris"}>{p.activo ? "Activo" : "Inactivo"}</Badge>
-                  </TableCell>
-                  <TableCell className="capitalize">{p.categoria}</TableCell>
-                  <TableCell>S/.{p.precio.toFixed(2)}</TableCell>
-                  <TableCell>{p.stock ?? "—"}</TableCell>
-                  <TableCell className="text-muted-foreground">SUPLEVET</TableCell>
-                  <TableCell className="text-right">
+            )}
+            {pageRows.map((p) => (
+              <TableRow key={p.id}>
+                <TableCell>
+                  <div className="flex items-center gap-3">
+                    <Avatar className="h-10 w-10 rounded-md">
+                      <AvatarImage src={p.imagen ?? undefined} alt="" className="object-cover" />
+                      <AvatarFallback className="rounded-md bg-soft-gray" />
+                    </Avatar>
+                    <span className="font-medium whitespace-nowrap">{p.nombre}</span>
+                  </div>
+                </TableCell>
+                <TableCell>
+                  <Badge color={p.activo ? "verde" : "gris"}>{p.activo ? "Activo" : "Inactivo"}</Badge>
+                </TableCell>
+                <TableCell className="capitalize">{p.categoria}</TableCell>
+                <TableCell>S/.{p.precio.toFixed(2)}</TableCell>
+                <TableCell>{p.stock ?? "—"}</TableCell>
+                <TableCell className="text-muted-foreground">SUPLEVET</TableCell>
+                <TableCell className="px-4">
+                  <div className="flex justify-end">
                     <Button variant="ghost" size="sm" onClick={() => setEditando(p)}>
                       Editar
                     </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        <TablePagination page={page} totalPages={totalPages} totalRows={totalRows} onPageChange={setPage} />
+      </TableCard>
 
       {(creando || editando) && (
         <ProductoForm producto={editando} onClose={cerrarFormulario} onSaved={recargarYCerrar} />

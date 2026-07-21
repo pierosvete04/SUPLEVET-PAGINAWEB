@@ -13,7 +13,7 @@ const ITEMS_VISIBLES = [
 ];
 
 const ITEMS_MAS = [
-  { title: "Ranking", url: "/mi-cuenta/ranking", icon: "leaderboard" },
+  // { title: "Ranking", url: "/mi-cuenta/ranking", icon: "leaderboard" }, // desactivado temporalmente
   { title: "Cursos", url: "/mi-cuenta/cursos", icon: "school" },
   { title: "Alianzas", url: "/mi-cuenta/alianzas", icon: "handshake" },
   { title: "Mi Perfil", url: "/mi-cuenta/perfil", icon: "manage_accounts" },

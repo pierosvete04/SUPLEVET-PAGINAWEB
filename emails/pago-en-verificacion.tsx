@@ -6,7 +6,7 @@ import { BodyText, CategoryLabel, CtaButton, Headline, StepsList } from "./compo
 export interface PagoEnVerificacionProps {
   nombre: string;
   numeroPedido: string;
-  metodoPago: "Yape" | "Plin" | "transferencia" | "tarjeta";
+  metodoPago: "Yape" | "Plin" | "transferencia" | "tarjeta" | "contra entrega";
   whatsappUrl?: string;
 }
 
@@ -16,7 +16,53 @@ export default function PagoEnVerificacion({
   metodoPago = "Yape",
   whatsappUrl = "https://wa.me/51999999999",
 }: PagoEnVerificacionProps) {
+  // Contra entrega no tiene voucher que validar: el pedido ya está confirmado
+  // y lo único pendiente es coordinar la entrega, así que el correo cambia de
+  // "estamos validando tu pago" a "coordinemos tu entrega".
+  const esContraEntrega = metodoPago === "contra entrega";
   const textoMetodo = metodoPago === "tarjeta" ? "el comprobante de tu pago" : `tu voucher de ${metodoPago}`;
+
+  if (esContraEntrega) {
+    return (
+      <EmailLayout
+        previewText={`Confirmamos tu pedido #${numeroPedido} — pagas al recibirlo`}
+        stripeGradient={gradients.warn}
+      >
+        <CategoryLabel>Pedido confirmado</CategoryLabel>
+        <Headline>Tu pedido está en camino, {nombre}</Headline>
+        <BodyText>
+          Recibimos tu pedido <strong style={{ color: brand.colors.navy }}>#{numeroPedido}</strong>{" "}
+          con pago contra entrega. No tienes que pagar nada por adelantado: le pagas al motorizado
+          cuando te entregue el paquete.
+        </BodyText>
+
+        <StepsList
+          title="Qué sigue"
+          steps={[
+            {
+              title: "Coordinamos la entrega",
+              description: "Te escribimos por WhatsApp para acordar el día y la hora.",
+            },
+            {
+              title: "Preparamos tu pedido",
+              description: "Lo alistamos y lo despachamos con nuestro motorizado.",
+            },
+            {
+              title: "Pagas al recibir",
+              description: "Ten listo el monto exacto en efectivo, o paga por Yape/Plin en la puerta.",
+            },
+          ]}
+        />
+
+        <CtaButton href={whatsappUrl}>Coordinar mi entrega por WhatsApp →</CtaButton>
+
+        <BodyText marginBottom={0}>
+          Si necesitas cambiar la dirección o la fecha, escríbenos y lo ajustamos.
+        </BodyText>
+      </EmailLayout>
+    );
+  }
+
   return (
     <EmailLayout
       previewText={`Estamos validando tu pago del pedido #${numeroPedido}`}

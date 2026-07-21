@@ -6,7 +6,7 @@ export async function CombosDestacados() {
   const combos = await getCombos();
 
   return (
-    <section id="combos" className="scroll-mt-24 bg-white pb-16 pt-9 md:pb-20">
+    <section id="combos" className="scroll-mt-24 bg-white pb-7 pt-9">
       <div className="mx-auto max-w-container px-mobile-margin md:px-gutter">
         <h2 className="text-center font-display text-3xl font-bold text-secondary md:text-4xl">
           ¡Mira nuestros combos! 😁

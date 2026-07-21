@@ -10,6 +10,14 @@ const config: Config = {
   			navy: '#253C61',
   			sky: '#99D3DA',
   			'vitality-orange': '#EA8C43',
+  			// Naranja de marca oscurecido para USAR COMO TEXTO sobre fondos
+  			// claros. El #EA8C43 original solo alcanza 2.5:1 sobre blanco, por
+  			// debajo del mínimo WCAG incluso para titulares; este llega a 5.4:1.
+  			// Para rellenos y superficies sigue usándose `vitality-orange`.
+  			//
+  			// El nombre NO puede empezar por `orange-`: colisiona con la paleta
+  			// `orange` que Tailwind trae de fábrica y la clase nunca se genera.
+  			'vitality-orange-ink': '#A8530F',
   			'soft-gray': '#F2F2F2',
   			// Paleta del rediseño del portal de clientes (stitch_pet_portal_experience_revamp) —
   			// prefijo `portal-` para no pisar los tokens de marca del resto del sitio.

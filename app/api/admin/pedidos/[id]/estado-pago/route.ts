@@ -9,7 +9,7 @@ import { siteConfig, whatsappLink } from "@/lib/site-config";
 // RESEND_API_KEY al navegador del admin. El UPDATE en sí lo sigue autorizando
 // la misma RLS de siempre ("Solo admin actualiza pedidos" -> is_admin()); acá
 // no se duplica esa verificación, se reutiliza la política.
-const ESTADOS_VALIDOS = ["pagado", "rechazado"] as const;
+const ESTADOS_VALIDOS = ["pagado", "rechazado", "cancelado"] as const;
 type EstadoPago = (typeof ESTADOS_VALIDOS)[number];
 
 function esEstadoValido(valor: unknown): valor is EstadoPago {
@@ -46,25 +46,50 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   const numeroPedido = pedido.shopify_order_number ?? "";
   const nombre = pedido.cliente_nombre ?? "cliente";
+  const whatsappUrlProblema = whatsappLink(
+    siteConfig.whatsappB2C,
+    `Hola, tuve un problema con el pago de mi pedido ${numeroPedido}`
+  );
 
-  const { error: sendError } =
-    estado === "pagado"
-      ? await sendTransactionalEmail(pedido.cliente_email, {
-          tipo: "pago_confirmado",
-          data: { nombre, numeroPedido, puntosGanados: 0 },
-        })
-      : await sendTransactionalEmail(pedido.cliente_email, {
-          tipo: "pago_error",
-          data: {
-            nombre,
-            numeroPedido,
-            motivo: "no pudimos validar tu comprobante de pago",
-            whatsappUrl: whatsappLink(
-              siteConfig.whatsappB2C,
-              `Hola, tuve un problema con el pago de mi pedido ${numeroPedido}`
-            ),
-          },
-        });
+  let sendError: string | null;
+
+  if (estado === "pagado") {
+    // El cliente escribe primero (en vez de que el negocio le escriba), así la
+    // conversación de WhatsApp Business entra como iniciada por el usuario.
+    const whatsappUrlConfirmado = whatsappLink(
+      siteConfig.whatsappB2C,
+      `Hola, soy ${nombre}. Mi pedido ${numeroPedido} ya fue confirmado, ¿cuándo me lo traen?`
+    );
+    ({ error: sendError } = await sendTransactionalEmail(pedido.cliente_email, {
+      tipo: "pago_confirmado",
+      data: {
+        nombre,
+        numeroPedido,
+        puntosGanados: 0,
+        whatsappUrl: whatsappUrlConfirmado,
+      },
+    }));
+  } else if (estado === "rechazado") {
+    ({ error: sendError } = await sendTransactionalEmail(pedido.cliente_email, {
+      tipo: "pago_error",
+      data: {
+        nombre,
+        numeroPedido,
+        motivo: "no pudimos validar tu comprobante de pago",
+        whatsappUrl: whatsappUrlProblema,
+      },
+    }));
+  } else {
+    ({ error: sendError } = await sendTransactionalEmail(pedido.cliente_email, {
+      tipo: "pago_cancelado",
+      data: {
+        nombre,
+        numeroPedido,
+        motivo: "no pudimos completar el proceso de compra",
+        whatsappUrl: whatsappUrlProblema,
+      },
+    }));
+  }
 
   if (sendError) {
     console.error("No se pudo enviar el correo de estado de pago:", sendError);

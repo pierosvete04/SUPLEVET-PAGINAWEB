@@ -66,7 +66,6 @@ export function AntesDespues({ resultados }: AntesDespuesProps) {
         <InfiniteCarousel
           ariaLabel="Resultados reales de clientes"
           className="mt-10"
-          autoScroll
           items={resultados.map((caso) => (
             <CasoCard key={caso.id} caso={caso} />
           ))}

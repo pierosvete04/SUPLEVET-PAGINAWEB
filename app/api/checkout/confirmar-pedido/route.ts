@@ -14,6 +14,7 @@ const METODO_PAGO_LABEL: Record<string, PagoEnVerificacionProps["metodoPago"]> =
   yape_plin: "Yape",
   transferencia: "transferencia",
   tarjeta: "tarjeta",
+  contra_entrega: "contra entrega",
 };
 
 export async function POST(request: Request) {
@@ -45,7 +46,9 @@ export async function POST(request: Request) {
       metodoPago,
       whatsappUrl: whatsappLink(
         siteConfig.whatsappB2C,
-        `Hola, quiero enviar mi voucher de pago del pedido ${numeroPedido}`
+        metodoPago === "contra entrega"
+          ? `Hola, quiero coordinar la entrega de mi pedido ${numeroPedido} (pago contra entrega)`
+          : `Hola, quiero enviar mi voucher de pago del pedido ${numeroPedido}`
       ),
     },
   });

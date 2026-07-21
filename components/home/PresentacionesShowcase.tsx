@@ -21,7 +21,7 @@ export async function PresentacionesShowcase() {
   if (items.length === 0) return null;
 
   return (
-    <section className="bg-white pb-section-y pt-16 md:pt-20">
+    <section className="bg-white pb-7 pt-7">
       <div className="mx-auto max-w-container px-mobile-margin md:px-gutter">
         <h2 className="text-center font-display text-3xl font-bold text-secondary md:text-4xl">
           Nuevas presentaciones

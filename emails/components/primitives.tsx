@@ -447,6 +447,76 @@ export function SecurityNote({ children }: { children: React.ReactNode }) {
   );
 }
 
+// Tarjeta de WhatsApp con botón, mismo tratamiento visual (borde punteado)
+// que el bloque "Confirma tu pedido por WhatsApp" de
+// app/checkout/exito/page.tsx — la idea es que el cliente sea quien escribe
+// primero, así la conversación entra como iniciada por el usuario (más barata
+// que una conversación iniciada por el negocio en WhatsApp Business API).
+// Sin QR: los clientes de correo (Gmail incluido) bloquean imágenes `data:`
+// embebidas por seguridad, así que saldría rota — solo queda el botón.
+export function WhatsAppCard({
+  title,
+  description,
+  whatsappUrl,
+  buttonLabel = "Escribir por WhatsApp",
+}: {
+  title: string;
+  description: string;
+  whatsappUrl: string;
+  buttonLabel?: string;
+}) {
+  return (
+    <Section
+      style={{
+        border: `2px dashed ${brand.colors.orange}`,
+        borderRadius: 14,
+        padding: "20px 22px",
+        marginBottom: 32,
+        backgroundColor: brand.colors.softGray,
+        textAlign: "center",
+      }}
+    >
+      <Text
+        style={{
+          margin: "0 0 4px",
+          fontSize: 13.5,
+          fontWeight: 700,
+          color: brand.colors.navy,
+          fontFamily: brand.fonts.body,
+        }}
+      >
+        {title}
+      </Text>
+      <Text
+        style={{
+          margin: "0 0 16px",
+          fontSize: 12.5,
+          color: brand.colors.textMuted,
+          fontFamily: brand.fonts.body,
+        }}
+      >
+        {description}
+      </Text>
+      <Button
+        href={whatsappUrl}
+        style={{
+          display: "inline-block",
+          backgroundColor: "#25D366",
+          color: "#ffffff",
+          fontFamily: brand.fonts.body,
+          fontSize: 14,
+          fontWeight: 700,
+          padding: "14px 28px",
+          borderRadius: 12,
+          textDecoration: "none",
+        }}
+      >
+        {buttonLabel}
+      </Button>
+    </Section>
+  );
+}
+
 // Enlace de respaldo en texto plano, por si el botón CTA no funciona en el
 // cliente de correo del usuario.
 export function FallbackLinkBox({ url }: { url: string }) {

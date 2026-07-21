@@ -15,6 +15,20 @@ export interface EnvioZona {
   activo: boolean;
 }
 
+// Override de costo_envio por distrito puntual (courier Dinsides) — algunos
+// departamentos como Lima Metropolitana y Callao no tienen un costo plano
+// real, sino que varía según el distrito exacto de entrega. Cuando no hay
+// fila en envio_distritos para el distrito elegido, se usa el costo_envio
+// plano de la zona (departamentos fuera de Lima/Callao, o distritos nuevos
+// que Dinsides todavía no ha tarifado).
+export interface EnvioDistrito {
+  id: string;
+  zona_id: string;
+  distrito: string;
+  costo_envio: number;
+  activo: boolean;
+}
+
 export async function getZonasEnvioActivas(
   supabase: SupabaseClient
 ): Promise<EnvioZona[]> {
@@ -26,6 +40,16 @@ export async function getZonasEnvioActivas(
   return (data as EnvioZona[]) ?? [];
 }
 
+export async function getDistritosEnvioActivos(
+  supabase: SupabaseClient
+): Promise<EnvioDistrito[]> {
+  const { data } = await supabase
+    .from("envio_distritos")
+    .select("*")
+    .eq("activo", true);
+  return (data as EnvioDistrito[]) ?? [];
+}
+
 export function encontrarZonaPorDepartamento(
   zonas: EnvioZona[],
   departamento: string
@@ -33,12 +57,37 @@ export function encontrarZonaPorDepartamento(
   return zonas.find((z) => z.departamentos.includes(departamento));
 }
 
-export function calcularCostoEnvio(zona: EnvioZona, subtotal: number): number {
-  return subtotal >= zona.monto_minimo_gratis ? 0 : zona.costo_envio;
+export function encontrarCostoDistrito(
+  distritos: EnvioDistrito[],
+  zona: EnvioZona | undefined,
+  distrito: string
+): number | undefined {
+  if (!zona || !distrito) return undefined;
+  return distritos.find((d) => d.zona_id === zona.id && d.distrito === distrito)?.costo_envio;
+}
+
+export function calcularCostoEnvio(
+  zona: EnvioZona,
+  subtotal: number,
+  costoDistrito?: number
+): number {
+  return subtotal >= zona.monto_minimo_gratis ? 0 : costoDistrito ?? zona.costo_envio;
 }
 
 export function montoFaltanteParaGratis(zona: EnvioZona, subtotal: number): number {
   return Math.max(0, zona.monto_minimo_gratis - subtotal);
+}
+
+// Tarifa plana de Agencia Shalom para "provincia" (todo departamento fuera de
+// Lima Metropolitana/Callao, incluida Lima Provincias) — pisa el costo_envio
+// de zona y cualquier override de envio_distritos, porque Shalom cobra un
+// flete nacional único sin importar la distancia real. El delivery motorizado
+// no se ofrece fuera de Lima/Callao (no llega), así que en estos
+// departamentos Shalom es el único método de envío disponible.
+export const COSTO_SHALOM_PROVINCIA = 12;
+
+export function esDepartamentoProvincia(departamento: string): boolean {
+  return !!departamento && departamento !== "Lima Metropolitana" && departamento !== "Callao";
 }
 
 // La columna `pedidos.zona_envio` tiene un CHECK legado que solo acepta

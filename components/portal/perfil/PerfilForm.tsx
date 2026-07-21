@@ -8,6 +8,7 @@ import { createClient } from "@/lib/supabase/client";
 import { acreditarPuntos } from "@/lib/data/portal/puntos";
 import type { ClientePerfil } from "@/lib/data/portal/cliente";
 import { NOMBRE_NIVEL } from "@/lib/data/portal/logros";
+import { TIPOS_DOCUMENTO, type TipoDocumento } from "@/lib/documento";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +29,8 @@ export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTiene
     direccion: perfilInicial?.direccion ?? "",
     distrito: perfilInicial?.distrito ?? "",
     ciudad: perfilInicial?.ciudad ?? "Lima",
+    tipo_documento: perfilInicial?.tipo_documento ?? "dni",
+    numero_documento: perfilInicial?.numero_documento ?? "",
   });
   const [fotoUrl, setFotoUrl] = useState(perfilInicial?.foto_url ?? null);
   const [subiendoFoto, setSubiendoFoto] = useState(false);
@@ -74,7 +77,14 @@ export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTiene
 
     await supabase
       .from("clientes_perfil")
-      .update({ ...form, perfil_completo: perfilCompleto })
+      .update({
+        ...form,
+        // El documento es opcional: sin número, el tipo tampoco se guarda
+        // (la constraint de la tabla solo acepta null o un tipo válido).
+        tipo_documento: form.numero_documento ? form.tipo_documento : null,
+        numero_documento: form.numero_documento || null,
+        perfil_completo: perfilCompleto,
+      })
       .eq("id", user.id);
 
     if (perfilCompleto && !perfilAntes?.perfil_completo) {
@@ -183,6 +193,28 @@ export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTiene
               <div className="grid gap-1.5">
                 <Label>Teléfono</Label>
                 <Input value={form.telefono} onChange={(e) => setForm((f) => ({ ...f, telefono: e.target.value }))} />
+              </div>
+              <div className="grid gap-1.5">
+                <Label>Tipo de documento</Label>
+                <select
+                  value={form.tipo_documento}
+                  onChange={(e) => setForm((f) => ({ ...f, tipo_documento: e.target.value as TipoDocumento }))}
+                  className="h-9 rounded-md border border-portal-surface-variant bg-transparent px-3 text-sm"
+                >
+                  {TIPOS_DOCUMENTO.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="grid gap-1.5 sm:col-span-2">
+                <Label>N° de documento (opcional)</Label>
+                <Input
+                  value={form.numero_documento}
+                  onChange={(e) => setForm((f) => ({ ...f, numero_documento: e.target.value }))}
+                  placeholder="Nos ayuda a validar tu identidad en la entrega"
+                />
               </div>
               <div className="grid gap-1.5">
                 <Label>Distrito</Label>

@@ -10,9 +10,9 @@ import { LoginPanel } from "@/components/auth/LoginPanel";
 import { ShippingStep, direccionVacia, type DireccionEnvio } from "@/components/checkout/ShippingStep";
 import { PaymentStep, type MetodoPago } from "@/components/checkout/PaymentStep";
 import { OrderSummary, type DescuentoAplicado } from "@/components/checkout/OrderSummary";
-import { zonaEnvioSlug, type EnvioZona } from "@/lib/shipping";
-
-const TODOS_LOS_METODOS: MetodoPago[] = ["tarjeta", "yape_plin", "transferencia"];
+import { esDepartamentoProvincia, zonaEnvioSlug, type EnvioZona } from "@/lib/shipping";
+import { TODOS_LOS_METODOS_PAGO as TODOS_LOS_METODOS } from "@/lib/data/productos-shared";
+import type { TipoDocumento } from "@/lib/documento";
 
 export default function CheckoutPage() {
   const {
@@ -51,7 +51,7 @@ export default function CheckoutPage() {
   async function precargarDesdePerfil(supabase: ReturnType<typeof createClient>, userId: string) {
     const { data: perfil } = await supabase
       .from("clientes_perfil")
-      .select("nombre, apellido, telefono, direccion")
+      .select("nombre, apellido, telefono, direccion, tipo_documento, numero_documento")
       .eq("id", userId)
       .maybeSingle();
     if (!perfil) return;
@@ -61,6 +61,8 @@ export default function CheckoutPage() {
       apellidos: d.apellidos || perfil.apellido || "",
       telefono: d.telefono || perfil.telefono || "",
       direccion: d.direccion || perfil.direccion || "",
+      tipoDocumento: d.numeroDocumento ? d.tipoDocumento : (perfil.tipo_documento as TipoDocumento) || d.tipoDocumento,
+      numeroDocumento: d.numeroDocumento || perfil.numero_documento || "",
     }));
   }
 
@@ -75,12 +77,20 @@ export default function CheckoutPage() {
   // hay un combo (solo Yape/transferencia) junto a un producto individual
   // (los 3 métodos), el pedido completo queda limitado a lo que admiten
   // todos los items a la vez (el más restrictivo manda).
+  // Contra entrega además solo aplica donde llega el motorizado propio
+  // (Lima Metropolitana / Callao) — en provincia el envío va por Agencia
+  // Shalom, que no cobra a nombre nuestro, así que el pedido debe venir pagado.
   const metodosPermitidos = useMemo(() => {
-    return items.reduce<MetodoPago[]>(
+    const porProducto = items.reduce<MetodoPago[]>(
       (acc, item) => acc.filter((m) => (item.metodosPagoPermitidos ?? TODOS_LOS_METODOS).includes(m)),
       TODOS_LOS_METODOS
     );
-  }, [items]);
+    const contraEntregaDisponible =
+      !!direccion.departamento &&
+      !esDepartamentoProvincia(direccion.departamento) &&
+      direccion.metodoEnvio === "motorizado";
+    return contraEntregaDisponible ? porProducto : porProducto.filter((m) => m !== "contra_entrega");
+  }, [items, direccion.departamento, direccion.metodoEnvio]);
 
   // Si el carrito cambia (se agrega un combo, se quita un producto, etc.) y
   // el método ya elegido deja de estar permitido, hay que pedirle que elija
@@ -107,6 +117,12 @@ export default function CheckoutPage() {
     !!direccion.metodoEnvio;
   const puedeConfirmar = direccionCompleta && !!zona && costoEnvio !== null && !!metodoPago;
 
+  // Mismo cálculo que OrderSummary — se replica acá solo para mostrarle al
+  // cliente cuánto tener listo si paga contra entrega.
+  const envioFinal = descuento ? descuento.costoEnvioFinal : costoEnvio;
+  const totalPedido =
+    envioFinal === null ? null : Math.max(subtotal - (descuento?.descuentoSubtotal ?? 0), 0) + envioFinal;
+
   // Registra el pedido de verdad en `pedidos` vía RPC (registrar_pedido_web) —
   // el INSERT directo está restringido a is_admin() por RLS (la tabla nació
   // para el sync de Shopify), así que un SECURITY DEFINER lo hace en nombre
@@ -129,6 +145,8 @@ export default function CheckoutPage() {
         direccion: direccion.direccion,
         distrito: direccion.distrito,
         ciudad: direccion.departamento,
+        tipo_documento: direccion.numeroDocumento ? direccion.tipoDocumento : null,
+        numero_documento: direccion.numeroDocumento || null,
         perfil_completo: true,
       })
       .eq("id", usuario.id)
@@ -150,6 +168,15 @@ export default function CheckoutPage() {
         departamento: direccion.departamento,
         codigoPostal: direccion.codigoPostal,
         metodoEnvio: direccion.metodoEnvio,
+        // Se guarda también en el pedido (no solo en el perfil) para que el
+        // rótulo refleje el documento con el que se hizo ESE envío, aunque el
+        // cliente lo cambie después en su perfil.
+        tipoDocumento: direccion.numeroDocumento ? direccion.tipoDocumento : null,
+        numeroDocumento: direccion.numeroDocumento || null,
+        // Coordenadas de Google Places: es lo que se le pasa al courier para
+        // que llegue al punto exacto y no a la manzana aproximada.
+        lat: direccion.lat,
+        lng: direccion.lng,
       },
       p_cliente_nombre: `${direccion.nombre} ${direccion.apellidos}`.trim(),
       p_cliente_telefono: direccion.telefono,
@@ -159,6 +186,40 @@ export default function CheckoutPage() {
     if (error || !data?.ok) {
       setErrorPedido(data?.error ?? "No se pudo registrar el pedido, intenta de nuevo.");
       setProcesando(false);
+      return;
+    }
+
+    // Tarjeta no se confirma acá — el pedido queda registrado como
+    // "pendiente_verificacion" y el cliente se va a Mercado Pago a pagar de
+    // verdad. El webhook (app/api/webhooks/mercadopago) es quien decide si
+    // el pago quedó aprobado o rechazado; /checkout/exito relee ese estado
+    // en vez de asumir éxito por haber llegado hasta acá.
+    if (metodoPago === "tarjeta") {
+      const respuestaMp = await fetch("/api/checkout/mercadopago", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ pedidoId: data.pedido_id }),
+      });
+      const cuerpoMp = await respuestaMp.json().catch(() => null);
+
+      if (!respuestaMp.ok || !cuerpoMp?.initPoint) {
+        setErrorPedido(
+          cuerpoMp?.error ??
+            `No se pudo iniciar el pago con tarjeta. Tu pedido ${data.numero} quedó registrado — escríbenos por WhatsApp para completarlo.`
+        );
+        setProcesando(false);
+        return;
+      }
+
+      trackEvent("purchase", {
+        transaction_id: data.numero,
+        value: data.total,
+        metodo_pago: metodoPago,
+        items: items.map((i) => ({ item_slug: i.slug, item_name: i.nombre, quantity: i.cantidad })),
+      });
+      items.forEach((i) => removeItem(i.slug));
+      setBandanaRegaloSeleccionada(null);
+      window.location.href = cuerpoMp.initPoint;
       return;
     }
 
@@ -236,7 +297,12 @@ export default function CheckoutPage() {
             }}
           />
 
-          <PaymentStep metodo={metodoPago} onChange={setMetodoPago} metodosPermitidos={metodosPermitidos} />
+          <PaymentStep
+            metodo={metodoPago}
+            onChange={setMetodoPago}
+            metodosPermitidos={metodosPermitidos}
+            totalACobrar={totalPedido}
+          />
 
           {errorPedido && <p className="font-body text-sm text-destructive">{errorPedido}</p>}
 

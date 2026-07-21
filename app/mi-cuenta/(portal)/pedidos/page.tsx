@@ -165,7 +165,7 @@ export default async function PortalPedidosPage() {
               )}
               <div className="pointer-events-none relative mt-3 flex flex-wrap gap-4">
                 {!!p.puntos_acreditados && p.puntos_acreditados > 0 && (
-                  <span className="flex items-center gap-1 font-body text-xs font-bold text-primary">
+                  <span className="flex items-center gap-1 font-body text-xs font-bold text-secondary">
                     <Star className="h-3.5 w-3.5" strokeWidth={1.75} />
                     {p.puntos_acreditados} SuplePoints acreditados
                   </span>
@@ -202,7 +202,7 @@ export default async function PortalPedidosPage() {
               </div>
             </div>
             {!!p.puntos_acreditados && p.puntos_acreditados > 0 && (
-              <span className="mt-2 flex items-center gap-1 font-body text-xs font-bold text-primary">
+              <span className="mt-2 flex items-center gap-1 font-body text-xs font-bold text-secondary">
                 <Star className="h-3.5 w-3.5" strokeWidth={1.75} />
                 {p.puntos_acreditados} SuplePoints acreditados
               </span>

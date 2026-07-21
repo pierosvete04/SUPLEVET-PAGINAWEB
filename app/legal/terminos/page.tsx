@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { LegalDoc } from "@/components/legal/LegalDoc";
+import { siteConfig } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: "Términos y Condiciones",
   description: "Condiciones de uso del sitio web y de compra de productos Suplevet.",
+  alternates: { canonical: `${siteConfig.siteUrl}/legal/terminos` },
 };
 
 export default function TerminosPage() {
@@ -91,7 +93,7 @@ export default function TerminosPage() {
       </ul>
       <p>
         Consulta el detalle completo en nuestra{" "}
-        <a href="/legal/devoluciones" className="font-bold text-primary">
+        <a href="/legal/devoluciones" className="font-bold text-secondary">
           Política de Devoluciones y Reembolsos
         </a>
         .

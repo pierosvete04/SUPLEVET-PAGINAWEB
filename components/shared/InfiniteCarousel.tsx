@@ -81,10 +81,18 @@ export function InfiniteCarousel({ items, ariaLabel, className, autoScroll = fal
     const scroller = scrollerRef.current;
     if (!scroller || !listo || !autoScroll) return;
 
+    // Acumulador propio: algunos navegadores redondean scrollLeft a enteros y
+    // un incremento sub-pixel por frame se perdería en cada asignación.
+    let acumulado = scroller.scrollLeft;
     let frame: number;
     function tick() {
+      const actual = scroller!.scrollLeft;
+      // Resincroniza si algo externo movió el scroll (salto circular, arrastre,
+      // flechas): así el acumulador no arrastra al carrusel de vuelta.
+      if (Math.abs(actual - acumulado) > 2) acumulado = actual;
       if (!pausado.current && !arrastrando.current) {
-        scroller!.scrollLeft += AUTOSCROLL_PX_POR_FRAME;
+        acumulado += AUTOSCROLL_PX_POR_FRAME;
+        scroller!.scrollLeft = acumulado;
       }
       frame = requestAnimationFrame(tick);
     }
@@ -119,6 +127,12 @@ export function InfiniteCarousel({ items, ariaLabel, className, autoScroll = fal
     scroller.scrollLeft = inicioArrastre.current.scrollLeft - delta;
   }
 
+  // Solo pausa ante intención horizontal: bajar la página con la rueda encima
+  // del carrusel no debe congelarlo.
+  function alRodar(e: React.WheelEvent) {
+    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) pausarAutoScroll();
+  }
+
   function alSoltarMouse() {
     arrastrando.current = false;
   }
@@ -138,14 +152,19 @@ export function InfiniteCarousel({ items, ariaLabel, className, autoScroll = fal
         ref={scrollerRef}
         role="region"
         aria-label={ariaLabel}
-        className="no-scrollbar flex cursor-grab snap-x snap-mandatory gap-4 overflow-x-auto active:cursor-grabbing"
+        className={cn(
+          "no-scrollbar flex cursor-grab gap-4 overflow-x-auto active:cursor-grabbing",
+          // El snap obligatorio pelea con el avance sub-pixel del auto-scroll:
+          // el navegador reencaja cada frame y el carrusel se queda quieto.
+          autoScroll ? "snap-none" : "snap-x snap-mandatory"
+        )}
         onMouseDown={alBajarMouse}
         onMouseMove={alMoverMouse}
         onMouseUp={alSoltarMouse}
         onMouseLeave={alSoltarMouse}
         onMouseEnter={pausarAutoScroll}
         onTouchStart={pausarAutoScroll}
-        onWheel={pausarAutoScroll}
+        onWheel={alRodar}
         onClickCapture={alHacerClickCapturado}
       >
         {extendidos.map(({ item, key }) => (

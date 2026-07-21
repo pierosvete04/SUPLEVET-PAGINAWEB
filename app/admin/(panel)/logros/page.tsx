@@ -4,8 +4,11 @@ import { useCallback, useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Badge } from "@/components/admin/Badge";
+import { SortableTableHead } from "@/components/admin/table/SortableTableHead";
+import { TableCard } from "@/components/admin/table/TableCard";
+import { TablePagination } from "@/components/admin/table/TablePagination";
+import { useTableRows } from "@/components/admin/table/useTableRows";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Table,
   TableBody,
@@ -16,6 +19,19 @@ import {
 } from "@/components/ui/table";
 import type { LogroConfig } from "@/lib/data/portal/logros";
 import { LogroConfigForm } from "@/components/admin/logros/LogroConfigForm";
+
+function valorOrden(l: LogroConfig, columna: string) {
+  switch (columna) {
+    case "orden":
+      return l.orden;
+    case "nombre":
+      return l.nombre;
+    case "estado":
+      return l.activo ? 1 : 0;
+    default:
+      return null;
+  }
+}
 
 export default function AdminLogrosPage() {
   const [logros, setLogros] = useState<LogroConfig[]>([]);
@@ -47,6 +63,11 @@ export default function AdminLogrosPage() {
     cerrar();
   }
 
+  const { pageRows, totalRows, page, totalPages, setPage, sortColumn, sortDirection, toggleSort } = useTableRows({
+    rows: logros,
+    getSortValue: valorOrden,
+  });
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
@@ -61,52 +82,53 @@ export default function AdminLogrosPage() {
         </Button>
       </div>
 
-      <Card>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
+      <TableCard badge={<Badge color="gris">{totalRows}</Badge>}>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <SortableTableHead columnId="orden" label="Orden" activeColumn={sortColumn} direction={sortDirection} onSort={toggleSort} />
+              <SortableTableHead columnId="nombre" label="Logro" activeColumn={sortColumn} direction={sortDirection} onSort={toggleSort} />
+              <TableHead>Ícono</TableHead>
+              <TableHead>Condición</TableHead>
+              <SortableTableHead columnId="estado" label="Estado" activeColumn={sortColumn} direction={sortDirection} onSort={toggleSort} />
+              <TableHead className="px-4" />
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {!cargando && logros.length === 0 && (
               <TableRow>
-                <TableHead>Orden</TableHead>
-                <TableHead>Logro</TableHead>
-                <TableHead>Ícono</TableHead>
-                <TableHead>Condición</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead />
+                <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  Sin logros configurados.
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {!cargando && logros.length === 0 && (
-                <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
-                    Sin logros configurados.
-                  </TableCell>
-                </TableRow>
-              )}
-              {logros.map((l) => (
-                <TableRow key={l.id}>
-                  <TableCell className="text-muted-foreground">{l.orden}</TableCell>
-                  <TableCell>
-                    <span className="font-medium">{l.nombre}</span>
-                    {l.descripcion && <p className="text-xs text-muted-foreground">{l.descripcion}</p>}
-                  </TableCell>
-                  <TableCell className="font-mono text-xs text-muted-foreground">{l.icon}</TableCell>
-                  <TableCell className="text-muted-foreground">
-                    {l.condicion_tipo ? `${l.condicion_tipo} ≥ ${l.condicion_valor}` : "—"}
-                  </TableCell>
-                  <TableCell>
-                    <Badge color={l.activo ? "verde" : "gris"}>{l.activo ? "Activo" : "Inactivo"}</Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
+            )}
+            {pageRows.map((l) => (
+              <TableRow key={l.id}>
+                <TableCell className="text-muted-foreground">{l.orden}</TableCell>
+                <TableCell>
+                  <span className="font-medium">{l.nombre}</span>
+                  {l.descripcion && <p className="text-xs text-muted-foreground">{l.descripcion}</p>}
+                </TableCell>
+                <TableCell className="font-mono text-xs text-muted-foreground">{l.icon}</TableCell>
+                <TableCell className="text-muted-foreground">
+                  {l.condicion_tipo ? `${l.condicion_tipo} ≥ ${l.condicion_valor}` : "—"}
+                </TableCell>
+                <TableCell>
+                  <Badge color={l.activo ? "verde" : "gris"}>{l.activo ? "Activo" : "Inactivo"}</Badge>
+                </TableCell>
+                <TableCell className="px-4">
+                  <div className="flex justify-end">
                     <Button variant="ghost" size="sm" onClick={() => setEditando(l)}>
                       Editar
                     </Button>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+                  </div>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+        <TablePagination page={page} totalPages={totalPages} totalRows={totalRows} onPageChange={setPage} />
+      </TableCard>
 
       {(creando || editando) && <LogroConfigForm logro={editando} onClose={cerrar} onSaved={recargarYCerrar} />}
     </div>

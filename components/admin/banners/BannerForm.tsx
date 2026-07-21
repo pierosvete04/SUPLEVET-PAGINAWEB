@@ -86,7 +86,13 @@ export function BannerForm({ banner, onClose, onSaved }: BannerFormProps) {
     <Modal titulo={banner ? "Editar banner" : "Nuevo banner"} onClose={onClose}>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
         <div className="grid gap-1.5">
-          <Label htmlFor="b-imagen">Imagen (escritorio — recomendado 1600×530px, 3:1)</Label>
+          <Label htmlFor="b-imagen">
+            Imagen (escritorio —{" "}
+            {form.pagina === "hero"
+              ? "recomendado 3563×1325px, horizontal"
+              : "recomendado 1600×530px, 3:1"}
+            )
+          </Label>
           <Input
             id="b-imagen"
             type="file"
@@ -95,8 +101,9 @@ export function BannerForm({ banner, onClose, onSaved }: BannerFormProps) {
             onChange={(e) => e.target.files?.[0] && handleImagen(e.target.files[0])}
           />
           <p className="text-xs text-muted-foreground">
-            Usa una imagen de borde a borde (sin márgenes blancos alrededor del diseño): el banner
-            se muestra tal cual, sin recortar ni rellenar espacio.
+            {form.pagina === "hero"
+              ? "El banner se muestra completo, sin recortar: el alto lo define la proporción de la imagen. Sube una imagen horizontal para escritorio — si subes una vertical, el banner se verá excesivamente alto."
+              : "Usa una imagen de borde a borde (sin márgenes blancos alrededor del diseño): el banner se muestra tal cual, sin recortar ni rellenar espacio."}
           </p>
           {form.imagen && (
             <div className="relative h-20 w-full max-w-sm overflow-hidden rounded-md border">
@@ -149,6 +156,7 @@ export function BannerForm({ banner, onClose, onSaved }: BannerFormProps) {
                 <SelectItem value="productos">Solo Productos</SelectItem>
                 <SelectItem value="ofertas">Solo Ofertas</SelectItem>
                 <SelectItem value="home">Nuevas presentaciones (Home)</SelectItem>
+                <SelectItem value="hero">Banner principal (Hero)</SelectItem>
               </SelectContent>
             </Select>
           </div>

@@ -3,7 +3,6 @@ import Image from "next/image";
 import {
   Award,
   Beaker,
-  Compass,
   Eye,
   Flag,
   Heart,
@@ -16,9 +15,9 @@ import {
 } from "lucide-react";
 import { ScrollReveal } from "@/components/shared/ScrollReveal";
 import { PageBreadcrumbs } from "@/components/shared/PageBreadcrumbs";
+import { HuellasFondo } from "@/components/shared/HuellasFondo";
 import { TestimoniosCarousel } from "@/components/nosotros/TestimoniosCarousel";
 import { ResenasCarousel } from "@/components/shared/ResenasCarousel";
-import { ImagenConOverlay } from "@/components/shared/ImagenConOverlay";
 import { BlogCoverflowSlider } from "@/components/blog/BlogCoverflowSlider";
 import { getTestimoniosActivos } from "@/lib/testimonios";
 import { getResenasAprobadas } from "@/lib/resenas";
@@ -26,15 +25,23 @@ import { getPublishedPosts } from "@/lib/data/blog";
 import { getValoresActivos } from "@/lib/valores-nosotros";
 import { getConfiguracionSitio } from "@/lib/data/configuracion";
 import { createClient } from "@/lib/supabase/server";
+import { siteConfig } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: "Quiénes somos",
   description:
     "Conoce la historia, misión y visión de Suplevet, marca peruana de nutrición clínica veterinaria desarrollada por Nutrova for Pets.",
+  alternates: { canonical: `${siteConfig.siteUrl}/nosotros` },
 };
 
 // Debe coincidir con ICONOS_DISPONIBLES en components/admin/nosotros/ValorForm.tsx
 const ICONOS: Record<string, LucideIcon> = { Beaker, Heart, Lightbulb, Shield, Star, Award, Leaf, Users };
+
+// Recortes orgánicos para las fotos — sustituyen al rectángulo y dan el aire
+// editorial de las láminas de marca. Dos variantes para que dos fotos en la
+// misma página no se lean como calcadas.
+const BLOB_A = "rounded-[58%_42%_47%_53%/48%_58%_42%_52%]";
+const BLOB_B = "rounded-[44%_56%_60%_40%/56%_44%_56%_44%]";
 
 export default async function NosotrosPage() {
   const supabase = await createClient();
@@ -48,118 +55,148 @@ export default async function NosotrosPage() {
 
   return (
     <div>
-      <section className="relative flex min-h-[50vh] items-center justify-center overflow-hidden bg-secondary text-center">
+      {/* Hero asimétrico: el texto deja de estar centrado sobre una foto
+          atenuada y comparte peso con la imagen, ya recortada en orgánico. */}
+      <section className="relative overflow-hidden bg-gradient-to-br from-secondary to-[#0f1b2e]">
         <PageBreadcrumbs items={[{ label: "Nosotros" }]} overlay />
-        {config?.nosotros_hero_imagen && (
-          <Image src={config.nosotros_hero_imagen} alt="" fill className="object-cover opacity-40" sizes="100vw" />
-        )}
-        <div className="absolute inset-0 bg-secondary/60" />
-        <ScrollReveal className="relative mx-auto max-w-2xl px-mobile-margin">
-          <p className="font-impact text-sky text-sm tracking-wide">SOBRE NOSOTROS</p>
-          <h1 className="mt-2 font-display text-3xl font-bold text-white md:text-5xl">
-            {config?.nosotros_hero_titulo}
-          </h1>
-        </ScrollReveal>
+        <HuellasFondo id="huellas-hero" className="text-white/[0.05]" />
+        <div className="pointer-events-none absolute -right-24 top-1/3 h-72 w-72 rounded-full bg-accent/10 blur-3xl" />
+
+        <div className="relative mx-auto grid max-w-container items-center gap-8 px-mobile-margin pb-10 pt-14 md:grid-cols-[1.05fr_0.95fr] md:gap-gutter md:px-gutter md:pb-16 md:pt-16">
+          <ScrollReveal>
+            <p className="font-impact text-xl leading-none tracking-wide text-sky md:text-3xl">
+              SOBRE NOSOTROS
+            </p>
+            <h1 className="mt-3 font-display text-2xl font-bold leading-tight text-white md:text-[2.6rem]">
+              {config?.nosotros_hero_titulo}
+            </h1>
+          </ScrollReveal>
+
+          {config?.nosotros_hero_imagen && (
+            <ScrollReveal delay={0.15}>
+              <div
+                className={`relative mx-auto aspect-square w-full max-w-[220px] overflow-hidden shadow-2xl sm:max-w-xs md:max-w-none ${BLOB_A}`}
+              >
+                <Image
+                  src={config.nosotros_hero_imagen}
+                  alt=""
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 60vw, 40vw"
+                  priority
+                />
+              </div>
+            </ScrollReveal>
+          )}
+        </div>
       </section>
 
-      {/* La frase vive DENTRO de la misma sección que el mapa Origen -> Misión
-          -> Visión (mismo fondo, sin corte entre ambas) — así se lee como la
-          apertura del recorrido, no como un bloque suelto sin relación con lo
-          de abajo. Línea punteada decorativa (solo desktop) conecta los tres
-          nodos del mapa. */}
+      {/* Cita + Origen: la frase abre el relato y el origen lo desarrolla, en la
+          misma sección para que se lean como una sola voz. */}
       <section className="relative overflow-hidden bg-white py-section-y">
-        <div className="mx-auto max-w-container px-mobile-margin md:px-gutter">
-          <ScrollReveal className="text-center">
-            <p className="mx-auto max-w-xl font-display text-xl font-bold text-secondary md:text-2xl">
+        <HuellasFondo id="huellas-origen" className="text-secondary/[0.04]" />
+
+        <div className="relative mx-auto max-w-container px-mobile-margin md:px-gutter">
+          <ScrollReveal className="mx-auto max-w-3xl text-center">
+            <p className="font-display text-2xl font-bold leading-snug text-secondary md:text-4xl">
               &ldquo;{config?.nosotros_quote}&rdquo;
             </p>
           </ScrollReveal>
 
-          <div className="relative mt-16 md:mt-20">
-            <svg
-              viewBox="0 0 1000 520"
-              preserveAspectRatio="none"
-              className="pointer-events-none absolute inset-0 hidden h-full w-full md:block"
-              aria-hidden="true"
-            >
-              <path
-                d="M 200 140 C 300 220, 140 280, 240 380 C 300 440, 560 440, 680 260"
-                fill="none"
-                stroke="hsl(var(--border))"
-                strokeWidth="2"
-                strokeDasharray="8 10"
-                strokeLinecap="round"
-              />
-            </svg>
+          <ScrollReveal className="mx-auto mt-16 max-w-3xl border-t border-border pt-12 text-center">
+            <p className="font-impact text-sm tracking-widest text-vitality-orange-ink">01 — ORIGEN</p>
+            <h2 className="mt-2 font-impact text-4xl leading-none tracking-wide text-secondary md:text-6xl">
+              Nuestro Origen
+            </h2>
+            <p className="mx-auto mt-5 max-w-2xl font-body leading-relaxed text-muted-foreground md:text-lg">
+              {config?.nosotros_origen_texto}
+            </p>
+          </ScrollReveal>
+        </div>
+      </section>
 
-            <ScrollReveal className="relative z-10 flex items-start gap-4 md:w-[58%]">
-              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-secondary/10 text-secondary">
-                <Compass className="h-6 w-6" strokeWidth={1.75} />
-              </span>
-              <div>
-                <p className="font-impact text-xs tracking-wide text-secondary/50">01 — ORIGEN</p>
-                <h3 className="mt-1 font-display text-xl font-bold text-secondary">
-                  Nuestro Origen
-                </h3>
-                <p className="mt-2 font-body text-sm text-muted-foreground">
-                  {config?.nosotros_origen_texto}
-                </p>
-              </div>
-            </ScrollReveal>
-
-            <div className="relative z-10 mt-10 grid grid-cols-1 gap-6 md:mt-4 md:grid-cols-2 md:gap-10">
-              <ScrollReveal
-                delay={0.1}
-                className="rounded-[var(--radius-card)] bg-primary p-6 text-white shadow-sm md:mt-28"
-              >
-                <Flag className="h-7 w-7" strokeWidth={1.75} />
-                <p className="mt-3 font-impact text-xs tracking-wide text-white/70">02 — MISIÓN</p>
-                <h3 className="font-display text-lg font-bold">Nuestra Misión</h3>
-                <p className="mt-2 font-body text-sm text-white/90">
-                  {config?.nosotros_mision_texto}
-                </p>
-              </ScrollReveal>
-
-              <ScrollReveal
-                delay={0.2}
-                className="flex flex-col justify-center rounded-[var(--radius-card)] bg-accent p-6 text-secondary shadow-sm"
-              >
-                <Eye className="h-7 w-7" strokeWidth={1.75} />
-                <p className="mt-3 font-impact text-xs tracking-wide text-secondary/60">
-                  03 — VISIÓN
-                </p>
-                <h3 className="font-display text-lg font-bold">Nuestra Visión</h3>
-                <p className="mt-2 font-body text-sm text-secondary/80">
-                  {config?.nosotros_vision_texto}
-                </p>
-              </ScrollReveal>
+      {/* Misión y Visión como dos paneles de peso equivalente, con el titular
+          condensado en grande — el lenguaje de las láminas de marca. */}
+      <section className="bg-soft-gray py-section-y">
+        <div className="mx-auto grid max-w-container gap-gutter px-mobile-margin md:grid-cols-2 md:px-gutter">
+          {/* Paneles complementarios en vez de gemelos: navy con titular
+              naranja, y celeste con titular navy. El naranja de marca solo
+              aparece como texto sobre el navy —sobre blanco no llega ni al
+              mínimo de titular— y como superficie no lleva texto encima. */}
+          <ScrollReveal className="relative overflow-hidden rounded-[var(--radius-card)] bg-secondary p-8 text-white md:p-10">
+            <HuellasFondo id="huellas-mision" className="text-white/10" />
+            <div className="relative">
+              <Flag className="h-8 w-8 text-primary" strokeWidth={1.75} aria-hidden />
+              <p className="mt-4 font-impact text-sm tracking-widest text-white/70">02 — MISIÓN</p>
+              <h2 className="font-impact text-4xl leading-none tracking-wide text-primary md:text-5xl">
+                Nuestra Misión
+              </h2>
+              <p className="mt-4 font-body leading-relaxed text-white/90">
+                {config?.nosotros_mision_texto}
+              </p>
             </div>
-          </div>
+          </ScrollReveal>
+
+          <ScrollReveal
+            delay={0.1}
+            className="relative overflow-hidden rounded-[var(--radius-card)] bg-accent p-8 text-secondary md:p-10"
+          >
+            <HuellasFondo id="huellas-vision" className="text-secondary/10" />
+            <div className="relative">
+              <Eye className="h-8 w-8" strokeWidth={1.75} aria-hidden />
+              <p className="mt-4 font-impact text-sm tracking-widest text-secondary/90">
+                03 — VISIÓN
+              </p>
+              <h2 className="font-impact text-4xl leading-none tracking-wide md:text-5xl">
+                Nuestra Visión
+              </h2>
+              <p className="mt-4 font-body leading-relaxed text-secondary/90">
+                {config?.nosotros_vision_texto}
+              </p>
+            </div>
+          </ScrollReveal>
         </div>
       </section>
 
       {valores.length > 0 && (
-        <section className="bg-soft-gray py-section-y">
-          <div className="mx-auto max-w-container px-mobile-margin md:px-gutter">
-            <ScrollReveal>
-              <h2 className="text-center font-display text-2xl font-bold text-secondary md:text-3xl">
+        <section className="relative overflow-hidden bg-white py-section-y">
+          <HuellasFondo id="huellas-valores" className="text-secondary/[0.04]" />
+          <div className="relative mx-auto max-w-container px-mobile-margin md:px-gutter">
+            <ScrollReveal className="text-center">
+              <p className="font-impact text-sm tracking-widest text-vitality-orange-ink">
+                LO QUE NOS SOSTIENE
+              </p>
+              <h2 className="mt-2 font-impact text-4xl leading-none tracking-wide text-secondary md:text-6xl">
                 Nuestros Valores
               </h2>
             </ScrollReveal>
-            <div className="mt-10 grid grid-cols-1 gap-gutter md:grid-cols-3">
+
+            <div className="mt-12 grid grid-cols-1 gap-gutter md:grid-cols-3">
               {valores.map(({ id, icono, titulo, texto }, i) => {
                 const Icon = ICONOS[icono] ?? Heart;
                 return (
                   <ScrollReveal
                     key={id}
                     delay={i * 0.1}
-                    className="rounded-[var(--radius-card)] bg-white p-6 text-center shadow-sm"
+                    className="group relative overflow-hidden rounded-[var(--radius-card)] border border-border bg-white p-7 transition-shadow duration-300 hover:shadow-lg"
                   >
-                    <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-accent/30 text-secondary">
-                      <Icon className="h-7 w-7" strokeWidth={1.5} />
-                    </div>
-                    <h3 className="mt-4 font-display text-lg font-bold text-secondary">{titulo}</h3>
-                    <p className="mt-2 font-body text-sm text-muted-foreground">{texto}</p>
+                    {/* Número como marca de agua: da jerarquía y ritmo sin
+                        añadir otro texto que competir por atención. */}
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute -top-4 right-1 font-impact text-8xl leading-none text-secondary/[0.07]"
+                    >
+                      {String(i + 1).padStart(2, "0")}
+                    </span>
+                    <span className="relative flex h-14 w-14 items-center justify-center rounded-[var(--radius-card)] bg-accent/30 text-secondary">
+                      <Icon className="h-7 w-7" strokeWidth={1.5} aria-hidden />
+                    </span>
+                    <h3 className="relative mt-5 font-impact text-2xl leading-tight tracking-wide text-secondary">
+                      {titulo}
+                    </h3>
+                    <p className="relative mt-2 font-body text-sm leading-relaxed text-muted-foreground">
+                      {texto}
+                    </p>
                   </ScrollReveal>
                 );
               })}
@@ -168,22 +205,38 @@ export default async function NosotrosPage() {
         </section>
       )}
 
+      {/* Antes era una foto con el texto encima, que obligaba a oscurecerla para
+          que se leyera. Ahora la foto se recorta en orgánico y el texto vive a
+          su lado: la imagen se ve entera y el titular no depende de un velo. */}
       {config?.nosotros_overlay_imagen && (
-        <section className="bg-white py-section-y">
-          <div className="mx-auto max-w-container px-mobile-margin md:px-gutter">
+        <section className="relative overflow-hidden bg-soft-gray py-section-y">
+          <HuellasFondo id="huellas-compromiso" className="text-secondary/[0.04]" />
+          <div className="relative mx-auto grid max-w-container items-center gap-10 px-mobile-margin md:grid-cols-2 md:gap-gutter md:px-gutter">
             <ScrollReveal>
-              <ImagenConOverlay imagen={config.nosotros_overlay_imagen} alt="Perro feliz junto a Suplevet">
-                <h2 className="font-display text-2xl font-bold text-white md:text-4xl">
-                  {config.nosotros_overlay_titulo}
-                </h2>
-                <p className="mt-2 font-body text-white/85 md:text-lg">{config.nosotros_overlay_texto}</p>
-              </ImagenConOverlay>
+              <div className={`relative aspect-square overflow-hidden shadow-xl ${BLOB_B}`}>
+                <Image
+                  src={config.nosotros_overlay_imagen}
+                  alt="Perro feliz junto a Suplevet"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 90vw, 45vw"
+                />
+              </div>
+            </ScrollReveal>
+
+            <ScrollReveal delay={0.1}>
+              <h2 className="font-impact text-4xl leading-none tracking-wide text-secondary md:text-6xl">
+                {config.nosotros_overlay_titulo}
+              </h2>
+              <p className="mt-4 font-body leading-relaxed text-muted-foreground md:text-lg">
+                {config.nosotros_overlay_texto}
+              </p>
             </ScrollReveal>
           </div>
         </section>
       )}
 
-      <section className="bg-soft-gray py-section-y">
+      <section className="bg-white py-section-y">
         <div className="mx-auto max-w-container px-mobile-margin md:px-gutter">
           <ScrollReveal>
             <h2 className="text-center font-display text-2xl font-bold text-secondary md:text-3xl">
@@ -195,7 +248,7 @@ export default async function NosotrosPage() {
       </section>
 
       {resenas.length > 0 && (
-        <section className="bg-white py-section-y">
+        <section className="bg-soft-gray py-section-y">
           <div className="mx-auto max-w-container px-mobile-margin md:px-gutter">
             <ScrollReveal>
               <h2 className="text-center font-display text-2xl font-bold text-secondary md:text-3xl">
@@ -208,7 +261,7 @@ export default async function NosotrosPage() {
       )}
 
       {posts.length > 0 && (
-        <section className="bg-soft-gray py-section-y">
+        <section className="bg-white py-section-y">
           <div className="mx-auto max-w-container px-mobile-margin md:px-gutter">
             <ScrollReveal>
               <h2 className="text-center font-display text-2xl font-bold text-secondary md:text-3xl">

@@ -36,9 +36,12 @@ function ResenaProductoCard({ r }: { r: ResenaProducto }) {
   );
 }
 
+// pb reducido: le sigue directamente el FAQ, que comparte fondo — con el
+// padding completo de ambos lados el hueco entre secciones se leía como un
+// vacío. Mismo tratamiento que Blog → FAQ en Home.
 export function ProductReviewsSection({ resenas }: ProductReviewsSectionProps) {
   return (
-    <section id="resenas" className="bg-soft-gray py-section-y">
+    <section id="resenas" className="bg-soft-gray pb-7 pt-section-y">
       <div className="mx-auto max-w-container px-mobile-margin md:px-gutter">
         <h2 className="text-center font-display text-2xl font-bold text-secondary md:text-3xl">
           Reseñas de clientes
@@ -56,6 +59,7 @@ export function ProductReviewsSection({ resenas }: ProductReviewsSectionProps) {
           <InfiniteCarousel
             ariaLabel="Reseñas de este producto"
             className="mt-8"
+            autoScroll
             items={resenas.map((r) => (
               <ResenaProductoCard key={r.id} r={r} />
             ))}

@@ -4,7 +4,11 @@ import { useState } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import type { MetodoPago } from "@/lib/data/productos-shared";
+import {
+  METODO_PAGO_LABEL,
+  TODOS_LOS_METODOS_PAGO,
+  type MetodoPago,
+} from "@/lib/data/productos-shared";
 import { Modal } from "@/components/admin/Modal";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -45,11 +49,10 @@ interface ProductoFormProps {
   onSaved: () => void;
 }
 
-const TODOS_LOS_METODOS: { id: MetodoPago; label: string }[] = [
-  { id: "tarjeta", label: "Tarjeta (Mercado Pago)" },
-  { id: "yape_plin", label: "Yape / Plin" },
-  { id: "transferencia", label: "Transferencia bancaria" },
-];
+const TODOS_LOS_METODOS: { id: MetodoPago; label: string }[] = TODOS_LOS_METODOS_PAGO.map((id) => ({
+  id,
+  label: METODO_PAGO_LABEL[id],
+}));
 
 const VACIO: Omit<ProductoWeb, "id"> = {
   slug: "",
@@ -67,7 +70,7 @@ const VACIO: Omit<ProductoWeb, "id"> = {
   orden: 0,
   videos: [],
   shopify_product_id: "",
-  metodos_pago_permitidos: ["tarjeta", "yape_plin", "transferencia"],
+  metodos_pago_permitidos: [...TODOS_LOS_METODOS_PAGO],
 };
 
 export function ProductoForm({ producto, onClose, onSaved }: ProductoFormProps) {

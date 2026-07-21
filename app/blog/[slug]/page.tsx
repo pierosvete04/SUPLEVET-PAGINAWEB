@@ -9,6 +9,7 @@ import { getProductoBySlug } from "@/lib/data/productos";
 import { getConfiguracionSitio } from "@/lib/data/configuracion";
 import { whatsappLink, siteConfig } from "@/lib/site-config";
 import { createClient } from "@/lib/supabase/server";
+import { sanitizeHtml } from "@/lib/sanitize-html";
 
 interface BlogPostPageProps {
   params: Promise<{ slug: string }>;
@@ -90,7 +91,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       <div className="lg:col-span-8">
         <Link
           href="/blog"
-          className="mb-6 flex w-fit items-center gap-1 font-body text-sm font-bold text-primary"
+          className="mb-6 flex w-fit items-center gap-1 font-body text-sm font-bold text-secondary"
         >
           <ArrowLeft className="h-4 w-4" /> Volver al blog
         </Link>
@@ -118,7 +119,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
         <div
           className="flex flex-col gap-4 font-body text-secondary [&_h2]:mt-4 [&_h2]:font-display [&_h2]:text-xl [&_h2]:font-bold"
-          dangerouslySetInnerHTML={{ __html: post.contenido_html }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.contenido_html) }}
         />
 
         <div className="mt-12 flex flex-col items-center justify-between gap-5 rounded-md bg-secondary p-6 md:flex-row md:p-8">
@@ -143,7 +144,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
             href={whatsappLink(whatsappB2C, `Hola, tengo una consulta sobre "${post.titulo}"`)}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-body text-sm font-bold text-primary underline"
+            className="font-body text-sm font-bold text-secondary underline"
           >
             ¿Tienes dudas? Escríbenos por WhatsApp
           </a>
@@ -169,7 +170,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                     )}
                   </div>
                   <div>
-                    <h4 className="mb-1 font-display text-sm font-bold leading-snug text-secondary group-hover:text-primary">
+                    <h4 className="mb-1 font-display text-sm font-bold leading-snug text-secondary group-hover:text-secondary">
                       {p.titulo}
                     </h4>
                     <p className="font-body text-xs text-muted-foreground">

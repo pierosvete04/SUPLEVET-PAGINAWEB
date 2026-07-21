@@ -81,7 +81,7 @@ function VetClienteContent() {
         <span className="mt-2 inline-block rounded-full bg-accent/20 px-3 py-1 font-body text-xs font-bold text-secondary">
           {NOMBRE_NIVEL[c.nivel] ?? c.nivel}
         </span>
-        <div className="mt-3 flex items-center justify-center gap-1.5 font-body text-sm font-bold text-primary">
+        <div className="mt-3 flex items-center justify-center gap-1.5 font-body text-sm font-bold text-secondary">
           <Star className="h-4 w-4" strokeWidth={1.75} />
           {c.puntos.toLocaleString()} SuplePoints
         </div>

@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Tag, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { CartItem } from "@/lib/cart/CartContext";
 import { formatPrecio } from "@/lib/data/productos-shared";
-import { getBandanaRegaloPorSlug } from "@/lib/data/bandanas-regalo";
+import { getVariantePorSlug, type RegaloVariante } from "@/lib/regalo-variantes";
 
 export interface DescuentoAplicado {
   codigo: string;
@@ -34,10 +34,14 @@ export function OrderSummary({
   onDescuentoChange,
   bandanaRegaloSlug,
 }: OrderSummaryProps) {
-  const bandanaRegalo = getBandanaRegaloPorSlug(bandanaRegaloSlug ?? null);
+  const [bandanaRegalo, setBandanaRegalo] = useState<RegaloVariante | null>(null);
   const [codigoInput, setCodigoInput] = useState("");
   const [validando, setValidando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    getVariantePorSlug(createClient(), bandanaRegaloSlug ?? null).then(setBandanaRegalo);
+  }, [bandanaRegaloSlug]);
 
   const envioMostrado = descuento ? descuento.costoEnvioFinal : envio ?? null;
   const descuentoMonto = descuento?.descuentoSubtotal ?? 0;
@@ -99,13 +103,15 @@ export function OrderSummary({
         {bandanaRegalo && (
           <div className="flex items-center gap-3">
             <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-[17px] bg-soft-gray">
-              <Image
-                src={bandanaRegalo.imagen}
-                alt={`Bandana ${bandanaRegalo.nombre}`}
-                fill
-                className="object-cover"
-                sizes="48px"
-              />
+              {bandanaRegalo.imagen && (
+                <Image
+                  src={bandanaRegalo.imagen}
+                  alt={`Bandana ${bandanaRegalo.nombre}`}
+                  fill
+                  className="object-cover"
+                  sizes="48px"
+                />
+              )}
             </div>
             <div className="flex-1 font-body text-xs text-secondary">
               <p className="font-bold">Bandana {bandanaRegalo.nombre}</p>
@@ -183,7 +189,7 @@ export function OrderSummary({
         </div>
         <div className="mt-2 flex justify-between border-t border-border pt-2 font-bold">
           <span>Total</span>
-          <span className="text-primary">{formatPrecio(total)}</span>
+          <span className="text-secondary">{formatPrecio(total)}</span>
         </div>
       </div>
     </div>

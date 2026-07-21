@@ -177,7 +177,7 @@ export function ComunidadFeed({ user }: ComunidadFeedProps) {
               onClick={() => alternarLike(p)}
               className="mt-3 flex items-center gap-1.5 font-body text-xs font-bold text-muted-foreground"
             >
-              <Heart className={`h-4 w-4 ${p.meGusta ? "fill-primary text-primary" : ""}`} strokeWidth={1.75} />
+              <Heart className={`h-4 w-4 ${p.meGusta ? "fill-secondary text-secondary" : ""}`} strokeWidth={1.75} />
               {p.likes > 0 ? p.likes : "Me gusta"}
             </button>
           </div>

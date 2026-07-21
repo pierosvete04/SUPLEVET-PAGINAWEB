@@ -5,7 +5,7 @@ export interface Regalo {
   nombre: string;
   descripcion: string | null;
   imagen: string | null;
-  condicion_tipo: "monto_minimo" | "producto_especifico";
+  condicion_tipo: "monto_minimo" | "producto_especifico" | "evento";
   condicion_monto_minimo: number | null;
   condicion_producto_slug: string | null;
   fecha_inicio: string | null;
@@ -20,9 +20,9 @@ function estaVigente(regalo: Regalo, hoy: string): boolean {
 }
 
 // Regalos activos y vigentes que aplican a este producto — por monto mínimo
-// (aplica a cualquier producto) o por ser justo el producto configurado. Se
-// activan/crean desde /admin/regalos (PLAN.md sección 5.4.1) — sin regalos
-// activos, este banner simplemente no se muestra en la ficha de producto.
+// o "evento" (aplican a cualquier producto) o por ser justo el producto
+// configurado. Se activan/crean desde /admin/regalos — sin regalos activos,
+// este banner simplemente no se muestra en la ficha de producto.
 export async function getRegalosAplicables(
   supabase: SupabaseClient,
   productoSlug: string
@@ -32,18 +32,22 @@ export async function getRegalosAplicables(
   return ((data as Regalo[]) ?? []).filter(
     (r) =>
       estaVigente(r, hoy) &&
-      (r.condicion_tipo === "monto_minimo" || r.condicion_producto_slug === productoSlug)
+      (r.condicion_tipo === "monto_minimo" ||
+        r.condicion_tipo === "evento" ||
+        r.condicion_producto_slug === productoSlug)
   );
 }
 
-// Usado en el carrito (CartSheet) — no depende de un producto en particular,
-// solo del subtotal, así que solo mira regalos por monto mínimo.
-export async function getRegalosPorMontoMinimo(supabase: SupabaseClient): Promise<Regalo[]> {
+// Usado en el carrito (CartSheet) — no depende de un producto en particular.
+// Incluye regalos por monto mínimo (gateados por el subtotal en el selector)
+// y regalos de "evento" (ya desbloqueados mientras estén activos/vigentes,
+// sin importar el subtotal).
+export async function getRegalosDisponiblesEnCarrito(supabase: SupabaseClient): Promise<Regalo[]> {
   const { data } = await supabase
     .from("regalos")
     .select("*")
     .eq("activo", true)
-    .eq("condicion_tipo", "monto_minimo");
+    .in("condicion_tipo", ["monto_minimo", "evento"]);
   const hoy = new Date().toISOString().slice(0, 10);
   return ((data as Regalo[]) ?? []).filter((r) => estaVigente(r, hoy));
 }

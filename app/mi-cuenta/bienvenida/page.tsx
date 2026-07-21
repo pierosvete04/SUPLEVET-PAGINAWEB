@@ -47,7 +47,7 @@ export default function BienvenidaPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-secondary px-mobile-margin py-section-y">
       <div className="w-full max-w-sm rounded-[var(--radius-card,1rem)] bg-white p-8 text-center shadow-lg">
-        <Gift className="mx-auto h-10 w-10 text-primary" strokeWidth={1.5} />
+        <Gift className="mx-auto h-10 w-10 text-secondary" strokeWidth={1.5} />
         <MaskedTextReveal as="h1" className="mt-3 font-display text-lg font-bold text-secondary">
           ¿Tienes un código de referido?
         </MaskedTextReveal>

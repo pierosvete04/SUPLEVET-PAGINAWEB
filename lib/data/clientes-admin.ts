@@ -20,6 +20,17 @@ export const BADGE_NIVEL: Record<string, "gris" | "celeste" | "naranja" | "azul"
   diamond: "azul",
 };
 
+export const BADGE_NIVEL_LABEL: Record<string, string> = {
+  basico: "Básico",
+  silver: "Plata",
+  gold: "Oro",
+  diamond: "Diamante",
+};
+
+export function nivelLabel(nivel: string | null): string {
+  return BADGE_NIVEL_LABEL[nivel ?? "basico"] ?? "Básico";
+}
+
 export function formatFecha(iso: string | null): string {
   if (!iso) return "—";
   return new Date(iso).toLocaleDateString("es-PE", { day: "numeric", month: "short", year: "numeric" });

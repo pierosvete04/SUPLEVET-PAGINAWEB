@@ -7,8 +7,10 @@ const COLORES = {
   celeste: "bg-sky-100 text-sky-700",
 } as const;
 
+export type BadgeColor = keyof typeof COLORES;
+
 interface BadgeProps {
-  color: keyof typeof COLORES;
+  color: BadgeColor;
   children: React.ReactNode;
 }
 

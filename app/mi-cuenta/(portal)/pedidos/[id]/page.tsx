@@ -7,7 +7,7 @@ import { formatFecha } from "@/lib/portal/formato";
 import { formatPrecio } from "@/lib/data/productos-shared";
 import { ESTADO_PEDIDO, estadoParaMostrar } from "@/lib/data/portal/pedidos";
 import { getProductos } from "@/lib/data/productos";
-import { getBandanaRegaloPorSlug } from "@/lib/data/bandanas-regalo";
+import { getVariantePorSlug } from "@/lib/regalo-variantes";
 
 interface DireccionEnvio {
   departamento?: string;
@@ -46,6 +46,7 @@ const FORMA_PAGO_LABEL: Record<string, string> = {
   tarjeta: "Tarjeta de crédito/débito",
   yape_plin: "Yape / Plin",
   transferencia: "Transferencia bancaria",
+  contra_entrega: "Pago contra entrega",
   shopify: "Checkout de Shopify",
 };
 
@@ -78,6 +79,7 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
   if (!pedido) notFound();
 
   const p = pedido as unknown as PedidoDetalle;
+  const bandanaRegalo = await getVariantePorSlug(supabase, p.regalo_bandana);
 
   const imagenPorShopifyId = new Map(
     catalogo.filter((prod) => prod.shopifyProductId).map((prod) => [prod.shopifyProductId as string, prod.imagen])
@@ -94,7 +96,6 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
   const estado = ESTADO_PEDIDO[estadoParaMostrar(p)] ?? ESTADO_PEDIDO.pagado;
   const productos = Array.isArray(p.productos) ? p.productos : [];
   const direccion = p.direccion_envio;
-  const bandanaRegalo = getBandanaRegaloPorSlug(p.regalo_bandana);
   const direccionTexto = direccion
     ? [direccion.direccion, direccion.distrito, direccion.provincia, direccion.departamento]
         .filter(Boolean)
@@ -105,7 +106,7 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
     <div className="flex flex-col gap-4">
       <Link
         href="/mi-cuenta/pedidos"
-        className="flex w-fit items-center gap-1 font-body text-sm font-bold text-secondary hover:text-primary"
+        className="flex w-fit items-center gap-1 font-body text-sm font-bold text-secondary hover:text-secondary"
       >
         <ArrowLeft className="h-4 w-4" /> Volver a mis pedidos
       </Link>
@@ -165,16 +166,18 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
         {bandanaRegalo && (
           <div className="mt-3 flex items-center gap-3 rounded-lg bg-soft-gray p-3">
             <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-white">
-              <Image
-                src={bandanaRegalo.imagen}
-                alt={`Bandana ${bandanaRegalo.nombre}`}
-                fill
-                className="object-cover"
-                sizes="56px"
-              />
+              {bandanaRegalo.imagen && (
+                <Image
+                  src={bandanaRegalo.imagen}
+                  alt={`Bandana ${bandanaRegalo.nombre}`}
+                  fill
+                  className="object-cover"
+                  sizes="56px"
+                />
+              )}
             </div>
             <p className="flex items-center gap-1.5 font-body text-sm text-secondary">
-              <Gift className="h-4 w-4 shrink-0 text-primary" strokeWidth={1.75} />
+              <Gift className="h-4 w-4 shrink-0 text-secondary" strokeWidth={1.75} />
               Regalo: <strong>Bandana {bandanaRegalo.nombre}</strong>
             </p>
           </div>
@@ -204,7 +207,7 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
       {(!!p.puntos_acreditados || (p.fecha_agotamiento_estimada && p.estado === "entregado")) && (
         <div className="flex flex-wrap gap-4 rounded-sm bg-white p-5 shadow-sm">
           {!!p.puntos_acreditados && p.puntos_acreditados > 0 && (
-            <span className="flex items-center gap-1 font-body text-xs font-bold text-primary">
+            <span className="flex items-center gap-1 font-body text-xs font-bold text-secondary">
               <Star className="h-3.5 w-3.5" strokeWidth={1.75} />
               {p.puntos_acreditados} SuplePoints acreditados
             </span>

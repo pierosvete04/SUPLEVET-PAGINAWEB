@@ -5,11 +5,13 @@ import { PageBreadcrumbs } from "@/components/shared/PageBreadcrumbs";
 import { getProductos } from "@/lib/data/productos";
 import { getBannersActivos } from "@/lib/banners";
 import { createClient } from "@/lib/supabase/server";
+import { siteConfig } from "@/lib/site-config";
 
 export const metadata: Metadata = {
   title: "Productos Suplevet — Suplemento nutricional para mascotas",
   description:
     "Conoce todas las presentaciones de Suplevet: 150g, 250g y combos. Nutrición funcional para perros y gatos en todas las etapas de vida.",
+  alternates: { canonical: `${siteConfig.siteUrl}/productos` },
 };
 
 export default async function ProductosPage() {

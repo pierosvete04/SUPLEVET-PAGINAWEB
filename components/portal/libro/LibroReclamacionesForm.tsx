@@ -159,7 +159,7 @@ ${pedido}`;
               type="button"
               onClick={() => setTipoSolicitud(t)}
               className={`flex-1 rounded-[17px] border-2 py-2 font-body text-sm font-bold capitalize ${
-                tipoSolicitud === t ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
+                tipoSolicitud === t ? "border-primary bg-primary/10 text-secondary" : "border-border text-muted-foreground"
               }`}
             >
               {t}
@@ -220,7 +220,7 @@ ${pedido}`;
               type="button"
               onClick={() => setTipoBien(b)}
               className={`flex-1 rounded-[17px] border-2 py-2 font-body text-sm font-bold capitalize ${
-                tipoBien === b ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"
+                tipoBien === b ? "border-primary bg-primary/10 text-secondary" : "border-border text-muted-foreground"
               }`}
             >
               {b}

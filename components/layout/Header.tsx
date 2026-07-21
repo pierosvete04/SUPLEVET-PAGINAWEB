@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -11,7 +11,6 @@ import { useCart } from "@/lib/cart/CartContext";
 import { CartSheet } from "@/components/cart/CartSheet";
 import { WhatsAppIcon } from "@/components/shared/WhatsAppIcon";
 import { trackEvent } from "@/lib/analytics";
-import { gsap } from "@/lib/gsap";
 
 const WHATSAPP_GREEN = "#25D366";
 
@@ -162,38 +161,6 @@ export function Header() {
     menuOpenRef.current = menuOpen;
   }, [menuOpen]);
 
-  // Entrada del sitio: el header completo aparece deslizándose al montar.
-  // Solo una vez por sesión (flag en sessionStorage, marcado en onComplete
-  // para no chocar con el doble montaje de React StrictMode en dev).
-  useLayoutEffect(() => {
-    const el = headerRef.current;
-    if (!el) return;
-
-    if (
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches ||
-      sessionStorage.getItem("intro-header-visto")
-    ) {
-      gsap.set(el, { opacity: 1, yPercent: 0 });
-      return;
-    }
-
-    const ctx = gsap.context(() => {
-      gsap.fromTo(
-        el,
-        { yPercent: -100, opacity: 0 },
-        {
-          yPercent: 0,
-          opacity: 1,
-          duration: 0.6,
-          ease: "power2.out",
-          onComplete: () => sessionStorage.setItem("intro-header-visto", "1"),
-        }
-      );
-    });
-    return () => ctx.revert();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   // Comportamiento de scroll: el header completo NO es fijo (se va con la
   // página al bajar). La barra condensada se revela solo al subir, y se
   // esconde al bajar o cuando el header completo todavía está a la vista.
@@ -264,11 +231,13 @@ export function Header() {
 
   return (
     <>
-      {/* Header completo — flujo normal, NO fijo: se va con la página al bajar. */}
+      {/* Header completo — flujo normal, NO fijo: se va con la página al bajar.
+          animate-header-intro es CSS puro (globals.css): el header se ve
+          desde el primer HTML del servidor y la animación de entrada corre
+          sola, sin esperar a que React hidrate ni a que cargue GSAP. */}
       <header
         ref={headerRef}
-        style={{ opacity: 0 }}
-        className="relative z-40 bg-gradient-to-br from-secondary to-[#0f1b2e] text-secondary-foreground"
+        className="relative z-40 animate-header-intro bg-gradient-to-br from-secondary to-[#0f1b2e] text-secondary-foreground"
       >
         <div className="mx-auto flex max-w-container items-center justify-between gap-4 px-mobile-margin py-4 md:px-gutter md:py-6">
           <div className="flex items-center gap-3">
