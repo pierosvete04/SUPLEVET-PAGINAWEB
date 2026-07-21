@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { clearVetSesion, getVetSesion, type VetSesion } from "@/lib/vet-auth";
 import { formatFecha } from "@/lib/portal/formato";
 import { formatPrecio } from "@/lib/data/productos-shared";
+import { BrandedLoader } from "@/components/ui/branded-loader";
 
 interface VentaVet {
   id: string;
@@ -66,7 +67,7 @@ export default function VetHistorialPage() {
       </div>
 
       {cargando ? (
-        <p className="font-body text-sm text-muted-foreground">Cargando…</p>
+        <BrandedLoader />
       ) : ventas.length === 0 ? (
         <p className="rounded-[var(--radius-card,1rem)] bg-white p-8 text-center font-body text-sm text-muted-foreground shadow-sm">
           Aún no registras ventas.

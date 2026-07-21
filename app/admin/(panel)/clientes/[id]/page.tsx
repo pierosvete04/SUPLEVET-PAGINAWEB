@@ -13,6 +13,7 @@ import {
   formatFechaPedido,
   type PedidoAdmin,
 } from "@/lib/data/pedidos-admin";
+import { BrandedLoader } from "@/components/ui/branded-loader";
 
 type PedidoResumen = Pick<
   PedidoAdmin,
@@ -82,7 +83,7 @@ export default function AdminClienteDetallePage({ params }: { params: Promise<{ 
     });
   }, [id]);
 
-  if (cargando) return <p className="text-sm text-muted-foreground">Cargando…</p>;
+  if (cargando) return <BrandedLoader />;
   if (!cliente) return <p className="text-sm text-muted-foreground">Cliente no encontrado.</p>;
 
   return (

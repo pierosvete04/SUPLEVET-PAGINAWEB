@@ -7,6 +7,7 @@ import { Heart, PawPrint, Send } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { formatFecha } from "@/lib/portal/formato";
 import type { Post, PerfilComunidad } from "@/lib/data/portal/comunidad";
+import { BrandedLoader } from "@/components/ui/branded-loader";
 
 interface PostConAutor extends Post {
   autor: PerfilComunidad | null;
@@ -141,7 +142,7 @@ export function ComunidadFeed({ user }: ComunidadFeedProps) {
       </form>
 
       {cargando ? (
-        <p className="text-center font-body text-sm text-muted-foreground">Cargando…</p>
+        <BrandedLoader />
       ) : posts.length === 0 ? (
         <div className="rounded-[var(--radius-card)] bg-white p-8 text-center shadow-sm">
           <PawPrint className="mx-auto h-10 w-10 text-muted-foreground" strokeWidth={1.5} />

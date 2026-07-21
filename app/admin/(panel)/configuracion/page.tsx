@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { BrandedLoader } from "@/components/ui/branded-loader";
 
 interface ConfiguracionSitio {
   announcement_bar_activo: boolean;
@@ -121,7 +122,7 @@ export default function AdminConfiguracionPage() {
     setGuardado(true);
   }
 
-  if (!config) return <p className="text-sm text-muted-foreground">Cargando…</p>;
+  if (!config) return <BrandedLoader />;
 
   return (
     <div className="flex max-w-3xl flex-col gap-6">

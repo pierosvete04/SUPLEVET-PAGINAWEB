@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { BrandedLoader } from "@/components/ui/branded-loader";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
@@ -158,7 +159,7 @@ export default function AdminNosotrosPage() {
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           {!textos ? (
-            <p className="text-sm text-muted-foreground">Cargando…</p>
+            <BrandedLoader compact />
           ) : (
             <>
               <Campo

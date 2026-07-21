@@ -4,6 +4,7 @@ import { useEffect, useState, use as usePromise } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { PostEditor } from "@/components/admin/blog/PostEditor";
 import type { BlogPost } from "@/lib/data/blog-shared";
+import { BrandedLoader } from "@/components/ui/branded-loader";
 
 export default function AdminBlogEditarPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = usePromise(params);
@@ -18,7 +19,7 @@ export default function AdminBlogEditarPage({ params }: { params: Promise<{ id: 
       .then(({ data }) => setPost((data as BlogPost) ?? null));
   }, [id]);
 
-  if (post === undefined) return <p className="font-body text-sm text-muted-foreground">Cargando…</p>;
+  if (post === undefined) return <BrandedLoader />;
   if (post === null) return <p className="font-body text-sm text-muted-foreground">Post no encontrado.</p>;
 
   return <PostEditor post={post} />;

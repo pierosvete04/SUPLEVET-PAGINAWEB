@@ -10,6 +10,7 @@ import { NOMBRE_NIVEL, SIGUIENTE_NIVEL, UMBRAL_NIVEL } from "@/lib/data/portal/l
 import { gsap } from "@/lib/gsap";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { BrandedLoader } from "@/components/ui/branded-loader";
 
 interface CanjeConNombre {
   id: string;
@@ -197,7 +198,7 @@ export function PuntosDashboard({ user }: PuntosDashboardProps) {
   }
 
   if (cargando || !puntos) {
-    return <p className="font-body text-sm text-portal-muted">Cargando…</p>;
+    return <BrandedLoader />;
   }
 
   const nivel = puntos.nivel;

@@ -9,6 +9,7 @@ import { useCart } from "@/lib/cart/CartContext";
 import { formatPrecio, type MetodoPago } from "@/lib/data/productos-shared";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { RegaloBandanaSelector } from "@/components/cart/RegaloBandanaSelector";
+import { BrandedLoader } from "@/components/ui/branded-loader";
 
 interface ProductoTienda {
   slug: string;
@@ -68,7 +69,7 @@ export function TiendaSheet({ open, onOpenChange }: TiendaSheetProps) {
 
         <div className="flex-1 overflow-y-auto">
           {cargando ? (
-            <p className="p-4 text-center text-sm text-portal-muted">Cargando productos…</p>
+            <BrandedLoader compact label="Cargando productos…" className="justify-center" />
           ) : (
             <div className="flex flex-col gap-3">
               {productos.map((p) => {

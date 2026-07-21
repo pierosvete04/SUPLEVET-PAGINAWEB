@@ -104,6 +104,19 @@
   }
 }
 
+/* BrandedLoader (components/ui/branded-loader.tsx) — deja la barra estática
+   en vez de deslizándose y el logo sin parpadeo cuando el usuario pidió
+   menos movimiento. */
+@media (prefers-reduced-motion: reduce) {
+  .animate-loader-bar {
+    animation: none;
+    transform: translateX(0);
+  }
+  .animate-loader-pulse {
+    animation: none;
+  }
+}
+
 /* Carruseles horizontales con scroll táctil (AntesDespues, ComoSePrepara) sin
    la barra de scroll del navegador — el desplazamiento sigue funcionando con
    mouse/touch, solo se oculta el indicador visual. */

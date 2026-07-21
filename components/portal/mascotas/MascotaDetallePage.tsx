@@ -11,6 +11,7 @@ import { parseDetalleEventoSalud } from "@/lib/data/portal/mascotas";
 import { Button } from "@/components/ui/button";
 import { MascotaFormDialog } from "@/components/portal/mascotas/MascotaFormDialog";
 import { SaludEventoFormDialog } from "@/components/portal/mascotas/SaludEventoFormDialog";
+import { BrandedLoader } from "@/components/ui/branded-loader";
 
 interface TransaccionMini {
   id: string;
@@ -326,7 +327,7 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
               <span className="material-symbols-rounded text-[18px] text-portal-navy">history</span> Actividad Reciente
             </h3>
             {cargando ? (
-              <p className="text-sm text-portal-muted">Cargando…</p>
+              <BrandedLoader compact />
             ) : actividad.length === 0 ? (
               <p className="text-xs text-portal-muted">Aún no hay actividad para mostrar</p>
             ) : (

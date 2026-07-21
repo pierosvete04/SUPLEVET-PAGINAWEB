@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/select";
 import { whatsappLink } from "@/lib/site-config";
 import { mensajeWhatsappPedido } from "@/lib/whatsapp-pedido";
+import { BrandedLoader } from "@/components/ui/branded-loader";
 import {
   BADGE_ESTADO_PAGO,
   BADGE_ESTADO_PREPARACION,
@@ -126,7 +127,7 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
     setActualizando(false);
   }
 
-  if (cargando) return <p className="text-sm text-muted-foreground">Cargando…</p>;
+  if (cargando) return <BrandedLoader />;
   if (!pedido) return <p className="text-sm text-muted-foreground">Pedido no encontrado.</p>;
 
   const dir = pedido.direccion_envio as DireccionEnvioPedidoAdmin | null;

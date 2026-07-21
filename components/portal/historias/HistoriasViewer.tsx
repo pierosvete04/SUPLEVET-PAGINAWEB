@@ -10,6 +10,7 @@ import type { PerfilComunidad } from "@/lib/data/portal/comunidad";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { BrandedLoader } from "@/components/ui/branded-loader";
 
 interface HistoriaConAutor extends Historia {
   autor: PerfilComunidad | null;
@@ -82,7 +83,7 @@ export function HistoriasViewer({ user }: HistoriasViewerProps) {
   }
 
   if (cargando) {
-    return <p className="font-body text-sm text-muted-foreground">Cargando…</p>;
+    return <BrandedLoader />;
   }
 
   return (

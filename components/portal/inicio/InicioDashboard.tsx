@@ -12,6 +12,7 @@ import type { SuplepuntosCliente } from "@/lib/data/portal/puntos";
 import type { DetalleEventoSalud } from "@/lib/data/portal/mascotas";
 import { NOMBRE_NIVEL, SIGUIENTE_NIVEL, UMBRAL_NIVEL, type LogroConfig } from "@/lib/data/portal/logros";
 import { TiendaSheet } from "@/components/portal/inicio/TiendaSheet";
+import { BrandedLoader } from "@/components/ui/branded-loader";
 
 interface Mascota {
   id: string;
@@ -142,7 +143,7 @@ export function InicioDashboard({ user, perfil }: InicioDashboardProps) {
     : 100;
 
   if (cargando) {
-    return <p className="font-body text-sm text-portal-muted">Cargando…</p>;
+    return <BrandedLoader />;
   }
 
   return (

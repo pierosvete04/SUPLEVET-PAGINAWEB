@@ -119,12 +119,23 @@ const config: Config = {
   			marquee: {
   				'0%': { transform: 'translateX(var(--marquee-distance, -50%))' },
   				'100%': { transform: 'translateX(0)' }
+  			},
+  			// Barra indeterminada del BrandedLoader (components/ui/branded-loader.tsx)
+  			'loader-bar': {
+  				'0%': { transform: 'translateX(-100%)' },
+  				'100%': { transform: 'translateX(400%)' }
+  			},
+  			'loader-pulse': {
+  				'0%, 100%': { opacity: '1' },
+  				'50%': { opacity: '0.55' }
   			}
   		},
   		animation: {
   			// Duración configurable vía la variable CSS --marquee-duration
   			// (default 25s si no se define) — ver components/home/TrustBar.tsx
-  			marquee: 'marquee var(--marquee-duration, 25s) linear infinite'
+  			marquee: 'marquee var(--marquee-duration, 25s) linear infinite',
+  			'loader-bar': 'loader-bar 1.1s ease-in-out infinite',
+  			'loader-pulse': 'loader-pulse 1.6s ease-in-out infinite'
   		}
   	}
   },

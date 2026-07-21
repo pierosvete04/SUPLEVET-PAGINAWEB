@@ -11,6 +11,7 @@ import { Badge } from "@/components/admin/Badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { VarianteForm } from "@/components/admin/regalos/VarianteForm";
+import { BrandedLoader } from "@/components/ui/branded-loader";
 
 interface RegaloVariantesManagerProps {
   regaloId: string;
@@ -44,7 +45,7 @@ export function RegaloVariantesManager({ regaloId }: RegaloVariantesManagerProps
     cargar();
   }
 
-  if (cargando) return <p className="text-sm text-muted-foreground">Cargando…</p>;
+  if (cargando) return <BrandedLoader />;
   if (!regalo) return <p className="text-sm text-muted-foreground">Regalo no encontrado.</p>;
 
   return (

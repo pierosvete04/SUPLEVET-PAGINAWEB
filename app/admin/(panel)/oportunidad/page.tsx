@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { BrandedLoader } from "@/components/ui/branded-loader";
 import {
   Table,
   TableBody,
@@ -144,18 +145,12 @@ export default function AdminOportunidadPage() {
   const cargar = useCallback(async () => {
     setCargando(true);
     const supabase = createClient();
-    const [{ data: config }, { data: ventajasData }, { data: leadsData }] = await Promise.all([
-      supabase
-        .from("configuracion_sitio")
-        .select(
-          "oportunidad_hero_titulo, oportunidad_hero_texto, oportunidad_hero_imagen, oportunidad_intro_titulo, oportunidad_intro_texto_1, oportunidad_intro_texto_2, oportunidad_intro_imagen, oportunidad_ventajas_titulo, oportunidad_ventajas_texto, oportunidad_producto_titulo, oportunidad_producto_texto, oportunidad_producto_bullets, oportunidad_producto_imagen, oportunidad_pasos_titulo, oportunidad_paso1_titulo, oportunidad_paso1_texto, oportunidad_paso2_titulo, oportunidad_paso2_texto, oportunidad_paso3_titulo, oportunidad_paso3_texto, oportunidad_postular_titulo, oportunidad_postular_texto_1, oportunidad_postular_texto_2"
-        )
-        .eq("id", 1)
-        .single(),
+    const [{ data: configRows }, { data: ventajasData }, { data: leadsData }] = await Promise.all([
+      supabase.rpc("get_oportunidad_config"),
       supabase.from("oportunidad_ventajas").select("*").order("orden", { ascending: true }),
       supabase.from("distribuidores_leads").select("*").order("created_at", { ascending: false }),
     ]);
-    setTextos(config as TextosOportunidad);
+    setTextos((configRows?.[0] as TextosOportunidad) ?? null);
     setVentajas((ventajasData as OportunidadVentaja[]) ?? []);
     setLeads((leadsData as DistribuidorLead[]) ?? []);
     setCargando(false);
@@ -188,7 +183,31 @@ export default function AdminOportunidadPage() {
   async function guardarTextos() {
     if (!textos) return;
     setGuardando(true);
-    await createClient().from("configuracion_sitio").update(textos).eq("id", 1);
+    await createClient().rpc("update_oportunidad_config", {
+      p_hero_titulo: textos.oportunidad_hero_titulo,
+      p_hero_texto: textos.oportunidad_hero_texto,
+      p_hero_imagen: textos.oportunidad_hero_imagen,
+      p_intro_titulo: textos.oportunidad_intro_titulo,
+      p_intro_texto_1: textos.oportunidad_intro_texto_1,
+      p_intro_texto_2: textos.oportunidad_intro_texto_2,
+      p_intro_imagen: textos.oportunidad_intro_imagen,
+      p_ventajas_titulo: textos.oportunidad_ventajas_titulo,
+      p_ventajas_texto: textos.oportunidad_ventajas_texto,
+      p_producto_titulo: textos.oportunidad_producto_titulo,
+      p_producto_texto: textos.oportunidad_producto_texto,
+      p_producto_bullets: textos.oportunidad_producto_bullets,
+      p_producto_imagen: textos.oportunidad_producto_imagen,
+      p_pasos_titulo: textos.oportunidad_pasos_titulo,
+      p_paso1_titulo: textos.oportunidad_paso1_titulo,
+      p_paso1_texto: textos.oportunidad_paso1_texto,
+      p_paso2_titulo: textos.oportunidad_paso2_titulo,
+      p_paso2_texto: textos.oportunidad_paso2_texto,
+      p_paso3_titulo: textos.oportunidad_paso3_titulo,
+      p_paso3_texto: textos.oportunidad_paso3_texto,
+      p_postular_titulo: textos.oportunidad_postular_titulo,
+      p_postular_texto_1: textos.oportunidad_postular_texto_1,
+      p_postular_texto_2: textos.oportunidad_postular_texto_2,
+    });
     setGuardando(false);
     setGuardado(true);
   }
@@ -213,7 +232,7 @@ export default function AdminOportunidadPage() {
       <h2 className="text-lg font-semibold">Oportunidad de negocio</h2>
 
       {!textos ? (
-        <p className="text-sm text-muted-foreground">Cargando…</p>
+        <BrandedLoader />
       ) : (
         <>
           <Card>

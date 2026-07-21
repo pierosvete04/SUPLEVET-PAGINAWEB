@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { BrandedLoader } from "@/components/ui/branded-loader";
 import {
   Table,
   TableBody,
@@ -93,7 +94,7 @@ export default function AdminDashboardPage() {
       </div>
 
       {!stats || cargando ? (
-        <p className="text-sm text-muted-foreground">Cargando…</p>
+        <BrandedLoader />
       ) : (
         <>
           <SectionCards stats={stats} />

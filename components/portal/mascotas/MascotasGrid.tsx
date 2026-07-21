@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { calcularEdad } from "@/lib/portal/formato";
 import type { DetalleEventoSalud, Mascota } from "@/lib/data/portal/mascotas";
 import { MascotaFormDialog } from "@/components/portal/mascotas/MascotaFormDialog";
+import { BrandedLoader } from "@/components/ui/branded-loader";
 
 interface MascotasGridProps {
   clienteId: string;
@@ -63,7 +64,7 @@ export function MascotasGrid({ clienteId }: MascotasGridProps) {
   }, [clienteId]);
 
   if (cargando) {
-    return <p className="font-body text-sm text-portal-muted">Cargando…</p>;
+    return <BrandedLoader />;
   }
 
   return (

@@ -10,6 +10,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { ModuloForm } from "@/components/admin/cursos/ModuloForm";
 import { LeccionForm } from "@/components/admin/cursos/LeccionForm";
 import { RecursoForm } from "@/components/admin/cursos/RecursoForm";
+import { BrandedLoader } from "@/components/ui/branded-loader";
 
 interface CursoContenidoManagerProps {
   cursoId: string;
@@ -52,7 +53,7 @@ export function CursoContenidoManager({ cursoId }: CursoContenidoManagerProps) {
     cargar();
   }
 
-  if (cargando) return <p className="text-sm text-muted-foreground">Cargando…</p>;
+  if (cargando) return <BrandedLoader />;
   if (!curso) return <p className="text-sm text-muted-foreground">Curso no encontrado.</p>;
 
   return (
