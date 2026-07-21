@@ -6,7 +6,7 @@ import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Badge } from "@/components/admin/Badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -107,11 +107,13 @@ function CampoImagen({
   );
 }
 
+type Seccion = "hero" | "intro" | "ventajasHeader" | "producto" | "pasos" | "postular";
+
 export default function AdminOportunidadPage() {
   const [textos, setTextos] = useState<TextosOportunidad | null>(null);
   const [subiendo, setSubiendo] = useState(false);
-  const [guardando, setGuardando] = useState(false);
-  const [guardado, setGuardado] = useState(false);
+  const [seccionGuardando, setSeccionGuardando] = useState<Seccion | null>(null);
+  const [seccionGuardada, setSeccionGuardada] = useState<Seccion | null>(null);
 
   const [ventajas, setVentajas] = useState<OportunidadVentaja[]>([]);
   const [editando, setEditando] = useState<OportunidadVentaja | null>(null);
@@ -137,7 +139,7 @@ export default function AdminOportunidadPage() {
 
   function actualizar<K extends keyof TextosOportunidad>(campo: K, valor: TextosOportunidad[K]) {
     setTextos((t) => (t ? { ...t, [campo]: valor } : t));
-    setGuardado(false);
+    setSeccionGuardada(null);
   }
 
   async function subirImagen(
@@ -155,9 +157,9 @@ export default function AdminOportunidadPage() {
     setSubiendo(false);
   }
 
-  async function guardarTextos() {
+  async function guardarSeccion(seccion: Seccion) {
     if (!textos) return;
-    setGuardando(true);
+    setSeccionGuardando(seccion);
     await createClient().rpc("update_oportunidad_config", {
       p_hero_titulo: textos.oportunidad_hero_titulo,
       p_hero_texto: textos.oportunidad_hero_texto,
@@ -183,8 +185,26 @@ export default function AdminOportunidadPage() {
       p_postular_texto_1: textos.oportunidad_postular_texto_1,
       p_postular_texto_2: textos.oportunidad_postular_texto_2,
     });
-    setGuardando(false);
-    setGuardado(true);
+    setSeccionGuardando(null);
+    setSeccionGuardada(seccion);
+  }
+
+  function BotonGuardarSeccion({ seccion }: { seccion: Seccion }) {
+    return (
+      <div className="flex items-center gap-3">
+        <Button
+          size="sm"
+          onClick={() => guardarSeccion(seccion)}
+          disabled={seccionGuardando !== null || subiendo}
+        >
+          {seccionGuardando === seccion ? "Guardando…" : "Guardar"}
+        </Button>
+        {seccionGuardada === seccion && <span className="text-sm text-green-600">Guardado ✓</span>}
+        {subiendo && seccionGuardando === null && (
+          <span className="text-sm text-muted-foreground">Espera a que termine de subir la imagen…</span>
+        )}
+      </div>
+    );
   }
 
   function cerrarVentaja() {
@@ -232,6 +252,9 @@ export default function AdminOportunidadPage() {
                 onUpload={(file) => subirImagen("oportunidad_hero_imagen", file)}
               />
             </CardContent>
+            <CardFooter>
+              <BotonGuardarSeccion seccion="hero" />
+            </CardFooter>
           </Card>
 
           <Card>
@@ -267,6 +290,9 @@ export default function AdminOportunidadPage() {
                 onUpload={(file) => subirImagen("oportunidad_intro_imagen", file)}
               />
             </CardContent>
+            <CardFooter>
+              <BotonGuardarSeccion seccion="intro" />
+            </CardFooter>
           </Card>
 
           <Card>
@@ -288,6 +314,9 @@ export default function AdminOportunidadPage() {
                 textarea
               />
             </CardContent>
+            <CardFooter>
+              <BotonGuardarSeccion seccion="ventajasHeader" />
+            </CardFooter>
           </Card>
 
           <Card>
@@ -324,6 +353,9 @@ export default function AdminOportunidadPage() {
                 onUpload={(file) => subirImagen("oportunidad_producto_imagen", file)}
               />
             </CardContent>
+            <CardFooter>
+              <BotonGuardarSeccion seccion="producto" />
+            </CardFooter>
           </Card>
 
           <Card>
@@ -356,6 +388,9 @@ export default function AdminOportunidadPage() {
                 </div>
               ))}
             </CardContent>
+            <CardFooter>
+              <BotonGuardarSeccion seccion="pasos" />
+            </CardFooter>
           </Card>
 
           <Card>
@@ -384,14 +419,10 @@ export default function AdminOportunidadPage() {
                 textarea
               />
             </CardContent>
+            <CardFooter>
+              <BotonGuardarSeccion seccion="postular" />
+            </CardFooter>
           </Card>
-
-          <div className="flex items-center gap-3">
-            <Button onClick={guardarTextos} disabled={guardando || subiendo} className="w-fit">
-              {guardando ? "Guardando…" : "Guardar cambios"}
-            </Button>
-            {guardado && <span className="text-sm text-green-600">Guardado ✓</span>}
-          </div>
         </>
       )}
 
