@@ -58,24 +58,11 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     notFound();
   }
 
-  let relacionados, producto, config;
-  try {
-    [relacionados, producto, config] = await Promise.all([
-      getRelatedPosts(post.slug, post.producto_slug),
-      post.producto_slug ? getProductoBySlug(post.producto_slug) : Promise.resolve(null),
-      getConfiguracionSitio(await createClient()),
-    ]);
-  } catch (error: unknown) {
-    const message = error instanceof Error ? `${error.name}: ${error.message}\n${error.stack}` : String(error);
-    return <pre style={{ whiteSpace: "pre-wrap", padding: 24 }}>DIAG-1 (queries): {message}</pre>;
-  }
-
-  try {
-    sanitizeHtml(post.contenido_html);
-  } catch (error: unknown) {
-    const message = error instanceof Error ? `${error.name}: ${error.message}\n${error.stack}` : String(error);
-    return <pre style={{ whiteSpace: "pre-wrap", padding: 24 }}>DIAG-2 (sanitize): {message}</pre>;
-  }
+  const [relacionados, producto, config] = await Promise.all([
+    getRelatedPosts(post.slug, post.producto_slug),
+    post.producto_slug ? getProductoBySlug(post.producto_slug) : Promise.resolve(null),
+    getConfiguracionSitio(await createClient()),
+  ]);
   const whatsappB2C = config?.whatsapp_b2c || siteConfig.whatsappB2C;
 
   // JSON-LD (schema.org BlogPosting) — le da a Google el contexto explícito
