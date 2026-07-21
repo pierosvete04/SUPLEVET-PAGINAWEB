@@ -16,6 +16,12 @@ const securityHeaders = [
 ];
 
 const nextConfig: NextConfig = {
+  // isomorphic-dompurify (lib/sanitize-html.ts, usado solo en app/blog/[slug])
+  // depende de jsdom, que el tracer de Vercel no empaqueta bien para funciones
+  // serverless (funciona en build/dev local porque ahí sí existe node_modules
+  // completo) — esto le dice a Next que lo resuelva vía require() en runtime
+  // en vez de intentar bundlearlo, que es la causa del 500 solo en esa ruta.
+  serverExternalPackages: ["isomorphic-dompurify"],
   images: {
     remotePatterns: [
       {
