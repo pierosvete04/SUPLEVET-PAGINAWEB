@@ -86,7 +86,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   return (
     <>
       <PageBreadcrumbs items={[{ label: "Blog", href: "/blog" }, { label: post.titulo }]} />
-      <article className="mx-auto grid max-w-container grid-cols-1 gap-12 px-mobile-margin py-section-y md:px-gutter lg:grid-cols-12">
+      <article className="mx-auto grid max-w-container grid-cols-1 gap-12 px-mobile-margin pb-section-y pt-4 md:px-gutter md:pt-6 lg:grid-cols-12">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <div className="lg:col-span-8">
         <Link
