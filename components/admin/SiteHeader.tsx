@@ -14,6 +14,9 @@ const TITULOS: Record<string, string> = {
   "/admin/regalos": "Regalos",
   "/admin/blog": "Blog",
   "/admin/configuracion": "Configuración",
+  // Ruta específica antes que la general: ambas empiezan con "/admin/oportunidad".
+  "/admin/oportunidad/postulaciones": "Postulaciones",
+  "/admin/oportunidad": "Oportunidad de negocio",
 };
 
 function tituloDePathname(pathname: string): string {

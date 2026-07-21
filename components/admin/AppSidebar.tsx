@@ -27,6 +27,8 @@ import {
   Heart,
   Layers,
   Handshake,
+  FileText,
+  Inbox,
 } from "lucide-react";
 import { NavMain, type NavEntry } from "@/components/admin/nav/NavMain";
 import { NavSecondary } from "@/components/admin/nav/NavSecondary";
@@ -83,7 +85,14 @@ const navMain: NavEntry[] = [
       { title: "Cursos", url: "/admin/cursos", icon: GraduationCap },
       { title: "FAQs", url: "/admin/faqs", icon: HelpCircle },
       { title: "Nosotros", url: "/admin/nosotros", icon: Heart },
-      { title: "Oportunidad de negocio", url: "/admin/oportunidad", icon: Handshake },
+    ],
+  },
+  {
+    title: "Oportunidad de negocio",
+    icon: Handshake,
+    items: [
+      { title: "Contenido web", url: "/admin/oportunidad", icon: FileText },
+      { title: "Postulaciones", url: "/admin/oportunidad/postulaciones", icon: Inbox },
     ],
   },
   { title: "Configuración", url: "/admin/configuracion", icon: Settings },

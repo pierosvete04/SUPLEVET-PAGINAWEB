@@ -8,10 +8,10 @@ interface CookieToSet {
 }
 
 // Bloquea a las cuentas de rol restringido (ej. "oportunidad_negocio", pensadas
-// para personal externo) fuera de su única sección permitida, aunque escriban
-// otra URL de /admin/* a mano. El resto de admins (rol admin/superadmin) no se
-// ve afectado por este middleware.
-const RUTAS_POR_ROL: Record<string, string> = {
+// para personal externo) fuera de su sección permitida (y sus subrutas, ej.
+// /admin/oportunidad/postulaciones), aunque escriban otra URL de /admin/* a
+// mano. El resto de admins (rol admin/superadmin) no se ve afectado.
+const PREFIJO_POR_ROL: Record<string, string> = {
   oportunidad_negocio: "/admin/oportunidad",
 };
 
@@ -53,9 +53,9 @@ export async function middleware(request: NextRequest) {
     .eq("id", user.id)
     .maybeSingle();
 
-  const rutaPermitida = admin?.activo ? RUTAS_POR_ROL[admin.rol ?? ""] : undefined;
-  if (rutaPermitida && pathname !== rutaPermitida) {
-    return NextResponse.redirect(new URL(rutaPermitida, request.url));
+  const prefijoPermitido = admin?.activo ? PREFIJO_POR_ROL[admin.rol ?? ""] : undefined;
+  if (prefijoPermitido && pathname !== prefijoPermitido && !pathname.startsWith(`${prefijoPermitido}/`)) {
+    return NextResponse.redirect(new URL(prefijoPermitido, request.url));
   }
 
   return response;
