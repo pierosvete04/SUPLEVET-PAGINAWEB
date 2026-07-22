@@ -2,6 +2,32 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getMercadoPagoPreferenceClient } from "@/lib/mercadopago";
 import { siteConfig } from "@/lib/site-config";
+import { getVariantePorSlug } from "@/lib/regalo-variantes";
+
+interface ItemPedido {
+  nombre: string;
+  cantidad: number;
+}
+
+// Título del ítem que Mercado Pago muestra en "Detalles del pago" — se arma
+// con los productos reales del pedido (y el regalo, si tiene) en vez de un
+// genérico "Pedido {numero}", para que el cliente reconozca su compra en el
+// checkout. MP trunca/ignora títulos muy largos, así que se limita a 250
+// caracteres.
+function construirTituloPago(
+  numero: string,
+  productos: ItemPedido[],
+  nombreRegalo: string | null
+): string {
+  const listaProductos = productos
+    .map((p) => (p.cantidad > 1 ? `${p.nombre} x${p.cantidad}` : p.nombre))
+    .join(", ");
+  const partes = [listaProductos || `Pedido ${numero}`];
+  if (nombreRegalo) partes.push(`Regalo: Bandana ${nombreRegalo}`);
+
+  const titulo = `${partes.join(" + ")} — Suplevet`;
+  return titulo.length > 250 ? `${titulo.slice(0, 249)}…` : titulo;
+}
 
 // Llamado por app/checkout/page.tsx justo después de registrar_pedido_web()
 // cuando el método elegido es "tarjeta". Crea la preferencia de Checkout Pro
@@ -22,7 +48,9 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: pedido, error } = await supabase
     .from("pedidos")
-    .select("id, shopify_order_number, total, cliente_email, cliente_nombre, forma_pago, estado_pago")
+    .select(
+      "id, shopify_order_number, total, cliente_email, cliente_nombre, forma_pago, estado_pago, productos, regalo_bandana"
+    )
     .eq("id", pedidoId)
     .maybeSingle();
 
@@ -41,7 +69,15 @@ export async function POST(request: Request) {
   // desde el que se inició la compra. El webhook, en cambio, siempre apunta
   // al dominio de producción (es el único servidor públicamente alcanzable).
   const origin = new URL(request.url).origin;
+  // auto_return exige que back_urls.success sea una URL pública HTTPS
+  // alcanzable — con un origin de localhost, MP rechaza la preferencia
+  // entera (400 "auto_return invalid"), así que en local se omite y el
+  // cliente vuelve a la tienda manualmente en vez de con redirect automático.
+  const puedeAutoRetornar = origin.startsWith("https://");
   const numero = pedido.shopify_order_number ?? pedido.id;
+  const productos = Array.isArray(pedido.productos) ? (pedido.productos as ItemPedido[]) : [];
+  const regalo = await getVariantePorSlug(supabase, pedido.regalo_bandana);
+  const tituloPago = construirTituloPago(numero, productos, regalo?.nombre ?? null);
 
   try {
     const preference = await getMercadoPagoPreferenceClient().create({
@@ -49,7 +85,7 @@ export async function POST(request: Request) {
         items: [
           {
             id: pedido.id,
-            title: `Pedido ${numero} — Suplevet`,
+            title: tituloPago,
             quantity: 1,
             unit_price: Number(pedido.total),
             currency_id: "PEN",
@@ -66,7 +102,7 @@ export async function POST(request: Request) {
           pending: `${origin}/checkout/exito?pedido=${pedido.id}`,
           failure: `${origin}/checkout/exito?pedido=${pedido.id}`,
         },
-        auto_return: "approved",
+        ...(puedeAutoRetornar ? { auto_return: "approved" as const } : {}),
         notification_url: `${siteConfig.siteUrl}/api/webhooks/mercadopago`,
         binary_mode: true,
         payment_methods: {
