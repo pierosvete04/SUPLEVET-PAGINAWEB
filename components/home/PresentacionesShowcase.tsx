@@ -40,7 +40,7 @@ export async function PresentacionesShowcase() {
               al ser hijo directo del contenedor con px-mobile-margin, la
               primera tarjeta ya arranca alineada con el margen de página,
               igual que el título de arriba. Desde md pasa a grid de 2 columnas. */}
-          <div className="no-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 md:grid md:grid-cols-2 md:gap-4 md:overflow-visible md:pb-0">
+          <div className="no-scrollbar flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 md:grid md:gap-4 md:overflow-visible md:pb-0 lg:grid-cols-2">
             {items.map((p, i) => (
               <ScrollReveal
                 key={p.slug}
