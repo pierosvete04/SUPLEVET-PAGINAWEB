@@ -310,7 +310,7 @@ export default function CheckoutPage() {
             type="button"
             disabled={!puedeConfirmar || procesando}
             onClick={handleConfirmarPedido}
-            className="w-full rounded-[17px] bg-primary px-6 py-3.5 font-body font-bold text-primary-foreground disabled:opacity-50 sm:w-fit"
+            className="w-full rounded-[17px] bg-primary px-6 py-3.5 font-body font-bold text-white disabled:opacity-50 sm:w-fit"
           >
             {procesando ? "Procesando…" : "Pagar ahora"}
           </button>

@@ -12,7 +12,6 @@ import {
   encontrarCostoDistrito,
   calcularCostoEnvio,
   esDepartamentoProvincia,
-  COSTO_SHALOM_PROVINCIA,
   type EnvioZona,
   type EnvioDistrito,
 } from "@/lib/shipping";
@@ -30,6 +29,7 @@ import {
   DireccionAutocomplete,
   type DireccionElegida,
 } from "@/components/checkout/DireccionAutocomplete";
+import { MapaUbicacion } from "@/components/checkout/MapaUbicacion";
 
 export type MetodoEnvio = "motorizado" | "shalom";
 
@@ -112,17 +112,18 @@ export function ShippingStep({ subtotal, value, onChange, onZonaChange }: Shippi
   const zona = value.departamento ? encontrarZonaPorDepartamento(zonas, value.departamento) : undefined;
   const esProvincia = esDepartamentoProvincia(value.departamento);
   const costoDistrito = encontrarCostoDistrito(costosDistrito, zona, value.distrito);
-  const costoEnvio = !zona
-    ? null
-    : esProvincia
-      ? calcularCostoEnvio(zona, subtotal, COSTO_SHALOM_PROVINCIA)
-      : calcularCostoEnvio(zona, subtotal, costoDistrito);
+  // Costo siempre sale de envio_zonas / envio_distritos (100% administrable
+  // desde /admin/envios) — antes las zonas de provincia pisaban el costo_envio
+  // configurado con un flat rate hardcodeado (COSTO_SHALOM_PROVINCIA), lo que
+  // hacía que editar la tarifa de esas zonas en el admin no tuviera efecto.
+  const costoEnvio = !zona ? null : calcularCostoEnvio(zona, subtotal, costoDistrito);
 
   // Fuera de Lima Metropolitana/Callao el delivery motorizado no llega — solo
-  // se ofrece Agencia Shalom, a la tarifa plana nacional de provincia.
+  // se ofrece Agencia Shalom. Dentro de Lima Metropolitana/Callao es al revés:
+  // solo llega el motorizado propio, Shalom no opera ahí.
   const metodosDisponibles = esProvincia
     ? metodosEnvio.filter((m) => m.value === "shalom")
-    : metodosEnvio;
+    : metodosEnvio.filter((m) => m.value === "motorizado");
 
   useEffect(() => {
     onZonaChange(zona, costoEnvio);
@@ -316,6 +317,14 @@ export function ShippingStep({ subtotal, value, onChange, onZonaChange }: Shippi
           onElegir={elegirDireccionDeMaps}
         />
 
+        {value.lat !== null && value.lng !== null && (
+          <MapaUbicacion
+            lat={value.lat}
+            lng={value.lng}
+            onMover={(coords) => onChange({ ...value, lat: coords.lat, lng: coords.lng })}
+          />
+        )}
+
         <input
           type="text"
           placeholder="Casa, apartamento, etc. (opcional)"
@@ -384,7 +393,7 @@ export function ShippingStep({ subtotal, value, onChange, onZonaChange }: Shippi
         <input
           required
           type="tel"
-          placeholder="Teléfono"
+          placeholder="Celular"
           value={value.telefono}
           onChange={(e) => set("telefono", e.target.value)}
           className={inputClass}

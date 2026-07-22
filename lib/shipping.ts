@@ -78,14 +78,6 @@ export function montoFaltanteParaGratis(zona: EnvioZona, subtotal: number): numb
   return Math.max(0, zona.monto_minimo_gratis - subtotal);
 }
 
-// Tarifa plana de Agencia Shalom para "provincia" (todo departamento fuera de
-// Lima Metropolitana/Callao, incluida Lima Provincias) — pisa el costo_envio
-// de zona y cualquier override de envio_distritos, porque Shalom cobra un
-// flete nacional único sin importar la distancia real. El delivery motorizado
-// no se ofrece fuera de Lima/Callao (no llega), así que en estos
-// departamentos Shalom es el único método de envío disponible.
-export const COSTO_SHALOM_PROVINCIA = 12;
-
 export function esDepartamentoProvincia(departamento: string): boolean {
   return !!departamento && departamento !== "Lima Metropolitana" && departamento !== "Callao";
 }
