@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { MetodoPago } from "@/lib/data/productos-shared";
+import { createClient } from "@/lib/supabase/client";
 
 export interface CartItem {
   slug: string;
@@ -90,6 +91,39 @@ export function CartProvider({ children }: { children: ReactNode }) {
     [items]
   );
   const totalItems = useMemo(() => items.reduce((acc, i) => acc + i.cantidad, 0), [items]);
+
+  // El backend (registrar_pedido_web) ya revalida el regalo antes de
+  // grabarlo, así que esto no es lo que evita que se "cuele" gratis — es
+  // solo para que la UI no siga mostrando "Gratis"/incluido en el resumen
+  // cuando el cliente bajó el subtotal (quitó productos) después de haber
+  // elegido el regalo. Sin esto, la selección quedaba pegada en localStorage
+  // sin importar si el carrito seguía calificando.
+  useEffect(() => {
+    if (!hidratado || !bandanaRegaloSeleccionada) return;
+    let cancelado = false;
+    createClient()
+      .from("regalo_variantes")
+      .select("regalos(activo, condicion_tipo, condicion_monto_minimo)")
+      .eq("slug", bandanaRegaloSeleccionada)
+      .eq("activo", true)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (cancelado) return;
+        const regalo = data?.regalos as unknown as {
+          activo: boolean;
+          condicion_tipo: string;
+          condicion_monto_minimo: number | null;
+        } | null;
+        const califica =
+          !!regalo?.activo &&
+          (regalo.condicion_tipo === "evento" || subtotal >= (regalo.condicion_monto_minimo ?? 0));
+        if (!califica) setBandanaRegaloSeleccionada(null);
+      });
+    return () => {
+      cancelado = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hidratado, subtotal, bandanaRegaloSeleccionada]);
 
   return (
     <CartContext.Provider
