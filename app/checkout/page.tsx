@@ -51,7 +51,9 @@ export default function CheckoutPage() {
   async function precargarDesdePerfil(supabase: ReturnType<typeof createClient>, userId: string) {
     const { data: perfil } = await supabase
       .from("clientes_perfil")
-      .select("nombre, apellido, telefono, direccion, tipo_documento, numero_documento")
+      .select(
+        "nombre, apellido, telefono, direccion, distrito, ciudad, provincia, codigo_postal, lat, lng, tipo_documento, numero_documento"
+      )
       .eq("id", userId)
       .maybeSingle();
     if (!perfil) return;
@@ -61,6 +63,17 @@ export default function CheckoutPage() {
       apellidos: d.apellidos || perfil.apellido || "",
       telefono: d.telefono || perfil.telefono || "",
       direccion: d.direccion || perfil.direccion || "",
+      // "ciudad" en clientes_perfil guarda en realidad el departamento (nombre
+      // heredado de cuando Lima era una sola zona) — provincia y distrito son
+      // columnas propias. Sin department no hay zona de envío que calcular, así
+      // que los 4 campos van juntos: de nada sirve precargar el distrito si el
+      // departamento se queda vacío.
+      departamento: d.departamento || perfil.ciudad || "",
+      provincia: d.provincia || perfil.provincia || "",
+      distrito: d.distrito || perfil.distrito || "",
+      codigoPostal: d.codigoPostal || perfil.codigo_postal || "",
+      lat: d.lat ?? perfil.lat ?? null,
+      lng: d.lng ?? perfil.lng ?? null,
       tipoDocumento: d.numeroDocumento ? d.tipoDocumento : (perfil.tipo_documento as TipoDocumento) || d.tipoDocumento,
       numeroDocumento: d.numeroDocumento || perfil.numero_documento || "",
     }));
@@ -145,6 +158,10 @@ export default function CheckoutPage() {
         direccion: direccion.direccion,
         distrito: direccion.distrito,
         ciudad: direccion.departamento,
+        provincia: direccion.provincia,
+        codigo_postal: direccion.codigoPostal || null,
+        lat: direccion.lat,
+        lng: direccion.lng,
         tipo_documento: direccion.numeroDocumento ? direccion.tipoDocumento : null,
         numero_documento: direccion.numeroDocumento || null,
         perfil_completo: true,
