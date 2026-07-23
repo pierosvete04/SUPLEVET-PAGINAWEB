@@ -74,6 +74,13 @@ export async function POST(request: Request) {
   // entera (400 "auto_return invalid"), así que en local se omite y el
   // cliente vuelve a la tienda manualmente en vez de con redirect automático.
   const puedeAutoRetornar = origin.startsWith("https://");
+  // En modo prueba NO se envía el email real del cliente como payer: si ese
+  // correo pertenece a una cuenta real de Mercado Pago, la preferencia queda
+  // ligada a una "parte real" y el pago de prueba falla con "Una de las
+  // partes con la que intentas hacer el pago es de prueba" (verificado
+  // experimentalmente el 2026-07-22). Quitar MERCADOPAGO_MODO_PRUEBA del
+  // entorno (o ponerla en false) al pasar a credenciales productivas.
+  const esModoPrueba = process.env.MERCADOPAGO_MODO_PRUEBA === "true";
   const numero = pedido.shopify_order_number ?? pedido.id;
   const productos = Array.isArray(pedido.productos) ? (pedido.productos as ItemPedido[]) : [];
   const regalo = await getVariantePorSlug(supabase, pedido.regalo_bandana);
@@ -91,10 +98,17 @@ export async function POST(request: Request) {
             currency_id: "PEN",
           },
         ],
-        payer: {
-          name: pedido.cliente_nombre ?? undefined,
-          email: pedido.cliente_email ?? undefined,
-        },
+        payer: esModoPrueba
+          ? {
+              // Correo ficticio estilo test user — no puede coincidir con
+              // ninguna cuenta real de MP para que el pago de prueba pase.
+              name: "Comprador Prueba",
+              email: "comprador_prueba@testuser.com",
+            }
+          : {
+              name: pedido.cliente_nombre ?? undefined,
+              email: pedido.cliente_email ?? undefined,
+            },
         external_reference: pedido.id,
         statement_descriptor: "SUPLEVET",
         back_urls: {
