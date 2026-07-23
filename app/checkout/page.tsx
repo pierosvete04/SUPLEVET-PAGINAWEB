@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useCart } from "@/lib/cart/CartContext";
 import { trackEvent } from "@/lib/analytics";
 import { LoginPanel } from "@/components/auth/LoginPanel";
+import { BrandedLoader } from "@/components/ui/branded-loader";
 import { ShippingStep, direccionVacia, type DireccionEnvio } from "@/components/checkout/ShippingStep";
 import { PaymentStep, type MetodoPago } from "@/components/checkout/PaymentStep";
 import { OrderSummary, type DescuentoAplicado } from "@/components/checkout/OrderSummary";
@@ -34,6 +35,11 @@ export default function CheckoutPage() {
   const [procesando, setProcesando] = useState(false);
   const [errorPedido, setErrorPedido] = useState<string | null>(null);
   const [descuento, setDescuento] = useState<DescuentoAplicado | null>(null);
+  // Contra entrega depende de la logística del día: Dinsides solo recoge a
+  // domicilio con 2+ paquetes, así que solo se ofrece si ya hay otro pedido
+  // motorizado pendiente de despachar (este pedido sería el segundo). false
+  // hasta que el servidor confirme lo contrario (fail-closed).
+  const [contraEntregaLogistica, setContraEntregaLogistica] = useState(false);
 
   useEffect(() => {
     const supabase = createClient();
@@ -43,6 +49,24 @@ export default function CheckoutPage() {
       if (data.user) precargarDesdePerfil(supabase, data.user.id);
     });
   }, []);
+
+  // La disponibilidad se consulta una vez por visita al checkout (requiere
+  // sesión — la ruta responde 401 sin ella, y sin sesión igual no se compra).
+  useEffect(() => {
+    if (!usuario) return;
+    let cancelado = false;
+    fetch("/api/checkout/contra-entrega-disponible")
+      .then((r) => r.json())
+      .then((d) => {
+        if (!cancelado) setContraEntregaLogistica(d?.disponible === true);
+      })
+      .catch(() => {
+        if (!cancelado) setContraEntregaLogistica(false);
+      });
+    return () => {
+      cancelado = true;
+    };
+  }, [usuario]);
 
   // Precarga nombre/apellidos/teléfono/dirección desde el perfil del portal
   // (clientes_perfil) — el cliente ya está registrado (obligatorio para
@@ -93,17 +117,34 @@ export default function CheckoutPage() {
   // Contra entrega además solo aplica donde llega el motorizado propio
   // (Lima Metropolitana / Callao) — en provincia el envío va por Agencia
   // Shalom, que no cobra a nombre nuestro, así que el pedido debe venir pagado.
-  const metodosPermitidos = useMemo(() => {
+  // Y aun en Lima depende de la logística del día (contraEntregaLogistica):
+  // sin otro pedido pendiente para Dinsides, este envío saldría por InDriver,
+  // que no cobra contra entrega.
+  const { metodosPermitidos, notaMetodos } = useMemo(() => {
     const porProducto = items.reduce<MetodoPago[]>(
       (acc, item) => acc.filter((m) => (item.metodosPagoPermitidos ?? TODOS_LOS_METODOS).includes(m)),
       TODOS_LOS_METODOS
     );
-    const contraEntregaDisponible =
+    const esMotorizadoLima =
       !!direccion.departamento &&
       !esDepartamentoProvincia(direccion.departamento) &&
       direccion.metodoEnvio === "motorizado";
-    return contraEntregaDisponible ? porProducto : porProducto.filter((m) => m !== "contra_entrega");
-  }, [items, direccion.departamento, direccion.metodoEnvio]);
+    const contraEntregaDisponible = esMotorizadoLima && contraEntregaLogistica;
+
+    const permitidos = contraEntregaDisponible
+      ? porProducto
+      : porProducto.filter((m) => m !== "contra_entrega");
+
+    let nota: string | null = null;
+    if (porProducto.length < TODOS_LOS_METODOS.length) {
+      nota = "Uno o más productos de tu carrito solo admiten los métodos de pago listados abajo.";
+    } else if (esMotorizadoLima && !contraEntregaLogistica && porProducto.includes("contra_entrega")) {
+      nota =
+        "El pago contra entrega no está disponible por hoy — puedes pagar con tarjeta, Yape/Plin o transferencia.";
+    }
+
+    return { metodosPermitidos: permitidos, notaMetodos: nota };
+  }, [items, direccion.departamento, direccion.metodoEnvio, contraEntregaLogistica]);
 
   // Si el carrito cambia (se agrega un combo, se quita un producto, etc.) y
   // el método ya elegido deja de estar permitido, hay que pedirle que elija
@@ -282,6 +323,18 @@ export default function CheckoutPage() {
     router.push("/checkout/exito");
   }
 
+  // Mientras se confirma el pedido (y en tarjeta, mientras se crea la
+  // preferencia y se redirige a Mercado Pago) el carrito ya se vació — sin
+  // esto la página quedaba en blanco hasta que cargaba la pasarela.
+  if (procesando) {
+    return (
+      <BrandedLoader
+        fullScreen
+        label={metodoPago === "tarjeta" ? "Conectando con Mercado Pago…" : "Confirmando tu pedido…"}
+      />
+    );
+  }
+
   if (cargandoSesion || carritoCargando || items.length === 0) return null;
 
   if (!usuario) {
@@ -319,6 +372,7 @@ export default function CheckoutPage() {
             onChange={setMetodoPago}
             metodosPermitidos={metodosPermitidos}
             totalACobrar={totalPedido}
+            notaMetodos={notaMetodos}
           />
 
           {errorPedido && <p className="font-body text-sm text-destructive">{errorPedido}</p>}

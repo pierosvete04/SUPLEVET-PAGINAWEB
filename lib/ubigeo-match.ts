@@ -15,6 +15,12 @@ function normalizar(texto: string): string {
     .trim();
 }
 
+// Google antepone "Provincia de …" / "Provincia Constitucional del Callao" al
+// nombre de la provincia; nuestras claves de ubigeo usan el nombre a secas.
+function normalizarProvincia(texto: string): string {
+  return normalizar(texto).replace(/^provincia\s+(constitucional\s+)?(de\s+|del\s+)?/, "");
+}
+
 /**
  * Traduce el distrito que devuelve Google Places a la combinación
  * departamento/provincia/distrito de nuestros dropdowns.
@@ -25,11 +31,16 @@ function normalizar(texto: string): string {
  * de envío usan nombres propios del negocio como "Lima Metropolitana"). El
  * nombre del distrito, en cambio, sí es confiable.
  *
- * Si el nombre es ambiguo (varios departamentos tienen un distrito con ese
- * nombre) devuelve null a propósito: es preferible que la persona elija a que
- * le autocompletemos mal la zona de envío, porque de eso depende el precio.
+ * Si el nombre solo aparece en un lugar, listo. Si es ambiguo (varios
+ * departamentos tienen un distrito con ese nombre) se intenta desempatar con
+ * la provincia que reporta Google. Si aun así queda ambiguo devuelve null a
+ * propósito: es preferible que la persona elija a que le autocompletemos mal
+ * la zona de envío, porque de eso depende el precio.
  */
-export function ubicarDistrito(nombreDistrito: string | null): UbicacionUbigeo | null {
+export function ubicarDistrito(
+  nombreDistrito: string | null,
+  provinciaGoogle?: string | null
+): UbicacionUbigeo | null {
   if (!nombreDistrito) return null;
   const buscado = normalizar(nombreDistrito);
   if (!buscado) return null;
@@ -44,5 +55,13 @@ export function ubicarDistrito(nombreDistrito: string | null): UbicacionUbigeo |
     if (distrito) coincidencias.push({ departamento, provincia, distrito });
   }
 
-  return coincidencias.length === 1 ? coincidencias[0] : null;
+  if (coincidencias.length === 1) return coincidencias[0];
+
+  if (coincidencias.length > 1 && provinciaGoogle) {
+    const provinciaBuscada = normalizarProvincia(provinciaGoogle);
+    const filtradas = coincidencias.filter((c) => normalizar(c.provincia) === provinciaBuscada);
+    if (filtradas.length === 1) return filtradas[0];
+  }
+
+  return null;
 }

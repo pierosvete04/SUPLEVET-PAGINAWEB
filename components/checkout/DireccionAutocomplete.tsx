@@ -9,6 +9,7 @@ export interface DireccionElegida extends Coordenadas {
   distrito: string | null;
   provincia: string | null;
   departamento: string | null;
+  codigoPostal: string | null;
 }
 
 interface Sugerencia {
@@ -114,6 +115,7 @@ export function DireccionAutocomplete({
           distrito: d.distrito,
           provincia: d.provincia,
           departamento: d.departamento,
+          codigoPostal: d.codigoPostal ?? null,
         });
       } else {
         // Si el detalle falla, al menos queda escrito lo que eligió.

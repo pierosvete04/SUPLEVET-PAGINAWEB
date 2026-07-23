@@ -19,6 +19,8 @@ export interface DetalleDireccion {
   distrito: string | null;
   provincia: string | null;
   departamento: string | null;
+  /** Código postal peruano (5 dígitos); Google no lo devuelve para todas las direcciones. */
+  codigoPostal: string | null;
 }
 
 interface ComponenteDireccion {
@@ -111,5 +113,6 @@ export async function detalleDireccion(
       componentePorTipo(componentes, "administrative_area_level_3"),
     provincia: componentePorTipo(componentes, "administrative_area_level_2"),
     departamento: componentePorTipo(componentes, "administrative_area_level_1"),
+    codigoPostal: componentePorTipo(componentes, "postal_code"),
   };
 }

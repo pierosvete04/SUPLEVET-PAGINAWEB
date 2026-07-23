@@ -189,17 +189,22 @@ export function ShippingStep({ subtotal, value, onChange, onZonaChange }: Shippi
     set("numeroDocumento", docLargo ? limpio.slice(0, docLargo) : limpio.slice(0, 20));
   }
 
-  // Al elegir una sugerencia de Google se guardan las coordenadas y, si el
-  // distrito es inequívoco, se preseleccionan los 3 dropdowns. Si el nombre es
-  // ambiguo se dejan como estaban: la zona define el precio del envío, así que
-  // un autocompletado errado le cobraría de más (o de menos) al cliente.
+  // Al elegir una sugerencia de Google se guardan las coordenadas, el código
+  // postal (si Google lo conoce) y, si el distrito se resuelve sin ambigüedad
+  // (usando la provincia de Google para desempatar nombres repetidos), se
+  // preseleccionan los 3 dropdowns. Si aun así es ambiguo se dejan como
+  // estaban: la zona define el precio del envío, así que un autocompletado
+  // errado le cobraría de más (o de menos) al cliente.
   function elegirDireccionDeMaps(elegida: DireccionElegida) {
-    const ubigeo = ubicarDistrito(elegida.distrito);
+    const ubigeo = ubicarDistrito(elegida.distrito, elegida.provincia);
     onChange({
       ...value,
       direccion: elegida.direccion,
       lat: elegida.lat,
       lng: elegida.lng,
+      // Se pisa siempre (incluso con "") — un código postal de la dirección
+      // anterior es peor que el campo vacío, porque viaja al rótulo del courier.
+      codigoPostal: elegida.codigoPostal ?? "",
       ...(ubigeo
         ? {
             departamento: ubigeo.departamento,

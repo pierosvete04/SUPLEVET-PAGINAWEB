@@ -17,6 +17,10 @@ interface PaymentStepProps {
   /** Total del pedido (con envío y descuento). Solo se usa para decirle al
    * cliente cuánto tener listo si elige pago contra entrega. */
   totalACobrar?: number | null;
+  /** Explicación de por qué faltan métodos (carrito restringido, contra
+   * entrega sin cupo logístico, etc.) — la calcula el checkout, que es quien
+   * sabe el motivo real de cada exclusión. */
+  notaMetodos?: string | null;
 }
 
 const metodos: { id: MetodoPago; label: string; icon: typeof CreditCard }[] = [
@@ -79,7 +83,13 @@ function CopyField({ label, value }: { label: string; value: string }) {
   );
 }
 
-export function PaymentStep({ metodo, onChange, metodosPermitidos, totalACobrar }: PaymentStepProps) {
+export function PaymentStep({
+  metodo,
+  onChange,
+  metodosPermitidos,
+  totalACobrar,
+  notaMetodos,
+}: PaymentStepProps) {
   const metodosVisibles = metodos.filter(({ id }) => metodosPermitidos.includes(id));
 
   return (
@@ -88,10 +98,8 @@ export function PaymentStep({ metodo, onChange, metodosPermitidos, totalACobrar 
       <p className="mt-1 font-body text-xs text-muted-foreground">
         Todas las transacciones son seguras y están encriptadas.
       </p>
-      {metodosVisibles.length < metodos.length && (
-        <p className="mt-2 font-body text-xs text-muted-foreground">
-          Uno o más productos de tu carrito solo admiten los métodos de pago listados abajo.
-        </p>
+      {notaMetodos && (
+        <p className="mt-2 font-body text-xs text-muted-foreground">{notaMetodos}</p>
       )}
 
       <div className="mt-4 flex flex-col gap-3">
