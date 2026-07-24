@@ -36,14 +36,14 @@ export const brand = {
   portalUrl: "https://portal.suplevet.pe",
   supportEmail: "soporte@suplevet.com",
   // Mismas URLs que usa el footer del sitio (components/layout/Footer.tsx,
-  // fallback de lib/site-config.ts) — un solo lugar si cambian. Los íconos son
-  // los badges circulares blancos (glyph recortado) de public/icons/social-email/,
-  // pensados para verse sobre el fondo navy del footer del correo.
+  // fallback de lib/site-config.ts) — un solo lugar si cambian. El footer del
+  // correo los muestra como enlaces de texto (no imágenes) para que se vean
+  // aunque el cliente de correo bloquee la carga de imágenes.
   social: {
-    facebook: { url: "https://www.facebook.com/suplevetperu/", icon: "https://suplevet.pe/icons/social-email/facebook.png" },
-    whatsapp: { url: "https://wa.me/51920723721", icon: "https://suplevet.pe/icons/social-email/whatsapp.png" },
-    instagram: { url: "https://www.instagram.com/suplevet.pe/", icon: "https://suplevet.pe/icons/social-email/instagram.png" },
-    tiktok: { url: "https://www.tiktok.com/@suplevet", icon: "https://suplevet.pe/icons/social-email/tiktok.png" },
+    facebook: { url: "https://www.facebook.com/suplevetperu/", label: "Facebook" },
+    whatsapp: { url: "https://wa.me/51920723721", label: "WhatsApp" },
+    instagram: { url: "https://www.instagram.com/suplevet.pe/", label: "Instagram" },
+    tiktok: { url: "https://www.tiktok.com/@suplevet", label: "TikTok" },
   },
 } as const;
 

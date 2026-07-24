@@ -98,25 +98,24 @@ function Footer() {
 
   return (
     <Section style={{ padding: "32px 8px 8px", textAlign: "center" }}>
-      <table role="presentation" cellPadding={0} cellSpacing={0} style={{ margin: "0 auto 20px" }}>
-        <tbody>
-          <tr>
-            {socials.map((social, i) => (
-              <td key={social.url} style={{ paddingLeft: i === 0 ? 0 : 12 }}>
-                <Link href={social.url}>
-                  <Img
-                    src={social.icon}
-                    width="28"
-                    height="28"
-                    alt=""
-                    style={{ borderRadius: "50%", display: "block" }}
-                  />
-                </Link>
-              </td>
-            ))}
-          </tr>
-        </tbody>
-      </table>
+      <Text
+        style={{
+          margin: "0 0 20px",
+          fontSize: 12.5,
+          fontWeight: 700,
+          letterSpacing: ".02em",
+          fontFamily: brand.fonts.body,
+        }}
+      >
+        {socials.map((social, i) => (
+          <React.Fragment key={social.url}>
+            {i > 0 ? <span style={{ color: "rgba(255,255,255,.25)" }}>&nbsp;·&nbsp;</span> : null}
+            <Link href={social.url} style={{ color: brand.colors.orange, textDecoration: "none" }}>
+              {social.label}
+            </Link>
+          </React.Fragment>
+        ))}
+      </Text>
 
       <Text
         style={{
