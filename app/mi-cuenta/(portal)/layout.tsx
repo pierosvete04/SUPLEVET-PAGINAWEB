@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { asegurarFilasCliente } from "@/lib/data/portal/cliente";
+import { asegurarFilasCliente, esCuentaInterna } from "@/lib/data/portal/cliente";
 import { PortalSidebar } from "@/components/portal/PortalSidebar";
 import { PortalMobileNav } from "@/components/portal/PortalMobileNav";
 import "./portal-theme.css";
@@ -12,6 +12,11 @@ export default async function PortalLayout({ children }: { children: React.React
   } = await supabase.auth.getUser();
 
   if (!user) redirect("/mi-cuenta/login");
+
+  // Las cuentas internas (admins/vendedores, ej. rol "oportunidad_negocio")
+  // comparten el mismo auth.users que los clientes — sin este chequeo pueden
+  // entrar al portal de clientes aunque no tengan ese acceso asignado.
+  if (await esCuentaInterna(supabase, user.id)) redirect("/admin");
 
   // Garantiza clientes_perfil/suplepuntos_clientes incluso si la sesión no
   // vino del login del portal (ej. OTP del checkout) — ver lib/data/portal/cliente.ts.

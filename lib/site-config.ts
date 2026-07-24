@@ -8,7 +8,7 @@ export const siteConfig = {
   whatsappB2C: "51920723721", // consumidores — número conectado a Meta Cloud API (sección 19)
   whatsappB2B: "51943116820", // veterinarias/mayoristas — solo click-to-chat manual
   whatsappDistribuidores: "51920289902", // Distribuidores estratégicos (Oportunidad de negocio) — click-to-chat manual
-  portalClientesUrl: "https://portal.suplevet.pe", // "Mi cuenta" — portal existente, no se reconstruye
+  portalClientesUrl: "https://suplevet.pe/mi-cuenta", // "Mi cuenta" — vive en este mismo dominio, ya no en portal.suplevet.pe
   redesSociales: {
     facebook: "https://www.facebook.com/suplevetperu/",
     instagram: "https://www.instagram.com/suplevet.pe/",

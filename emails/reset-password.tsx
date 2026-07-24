@@ -18,7 +18,7 @@ export interface ResetPasswordProps {
 }
 
 export default function ResetPassword({
-  confirmationUrl = "https://portal.suplevet.pe/reset-password?token=eyJhbGciOiJIUzI1NiJ9",
+  confirmationUrl = "https://suplevet.pe/mi-cuenta/reset-password?token=eyJhbGciOiJIUzI1NiJ9",
   validezHoras = 1,
 }: ResetPasswordProps) {
   return (

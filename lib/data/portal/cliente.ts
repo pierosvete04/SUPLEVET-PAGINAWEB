@@ -22,7 +22,7 @@ function generarCodigoReferido(userId: string): string {
 // ecommerce (mismo proyecto Supabase que el CRM interno de ventas). Sin este
 // chequeo, cualquier vendedor/admin que entre a /mi-cuenta queda inscrito
 // como cliente en clientes_perfil y contamina el panel admin de "Clientes".
-async function esCuentaInterna(supabase: SupabaseClient, userId: string): Promise<boolean> {
+export async function esCuentaInterna(supabase: SupabaseClient, userId: string): Promise<boolean> {
   const [{ data: vendedor }, { data: admin }] = await Promise.all([
     supabase.from("vendedores").select("id").eq("id", userId).maybeSingle(),
     supabase.from("admins").select("id").eq("id", userId).maybeSingle(),

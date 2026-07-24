@@ -19,5 +19,5 @@ export function logConsoleBanner(): void {
     styles.warningTitle,
     styles.warningBody
   );
-  console.log("%c¿Te gusta mirar bajo el capó? Escríbenos: ventas@suplevet.pe", styles.footer);
+  console.log("%c¿Te gusta mirar el código? Escríbenos: ventas@suplevet.pe", styles.footer);
 }

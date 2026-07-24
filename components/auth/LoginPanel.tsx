@@ -131,11 +131,15 @@ export function LoginPanel({ className, next = "/mi-cuenta", onAuthenticated }: 
       <div className="flex flex-col justify-center p-8 md:p-10">
         {paso === "email" ? (
           <form onSubmit={handleEnviarCodigo} className="flex flex-col gap-5">
-            <div className="flex flex-col items-center gap-1 text-center">
-              <h1 className="font-display text-2xl font-bold text-secondary">Ingresa a tu cuenta</h1>
+            <div className="flex flex-col items-center gap-2 text-center">
+              <span className="inline-flex items-center rounded-full bg-accent px-3 py-1 font-body text-xs font-semibold text-secondary">
+                No necesitas registrarte antes
+              </span>
+              <h1 className="font-display text-2xl font-bold text-secondary">Ingresa con tu correo</h1>
               <p className="text-balance font-body text-sm text-muted-foreground">
-                Escribe tu correo: si ya tienes cuenta, inicias sesión; si es tu primera vez, la
-                creamos al instante. Todo con un código, sin contraseña.
+                Escribe tu correo y te enviamos un código de 6 dígitos. ¿Primera vez? Tu cuenta se
+                crea sola en ese momento. ¿Ya compraste antes? Entras directo. Sin formularios, sin
+                contraseña.
               </p>
             </div>
 
@@ -159,7 +163,8 @@ export function LoginPanel({ className, next = "/mi-cuenta", onAuthenticated }: 
             </button>
 
             <p className="text-center font-body text-xs text-muted-foreground">
-              Recibirás un código de 6 dígitos. No necesitas contraseña.
+              Te llegará un código a tu correo en segundos. No necesitas crear una cuenta ni
+              recordar contraseñas.
             </p>
           </form>
         ) : (

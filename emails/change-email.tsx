@@ -18,7 +18,7 @@ export interface ChangeEmailProps {
 }
 
 export default function ChangeEmail({
-  confirmationUrl = "https://portal.suplevet.pe/confirmar-correo?token=eyJhbGciOiJIUzI1NiJ9",
+  confirmationUrl = "https://suplevet.pe/mi-cuenta/confirmar-correo?token=eyJhbGciOiJIUzI1NiJ9",
   validezHoras = 1,
 }: ChangeEmailProps) {
   return (

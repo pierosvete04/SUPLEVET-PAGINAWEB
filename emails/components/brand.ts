@@ -31,9 +31,9 @@ export const brand = {
   },
   googleFontsHref:
     "https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&family=Bebas+Neue&display=swap",
-  logoUrl: "https://portal.suplevet.pe/Logos%20suplevet-40.png",
+  logoUrl: "https://suplevet.pe/logos/logo-white-mixed-horizontal.png",
   siteUrl: "https://suplevet.pe",
-  portalUrl: "https://portal.suplevet.pe",
+  portalUrl: "https://suplevet.pe/mi-cuenta",
   supportEmail: "soporte@suplevet.com",
   // Mismas URLs que usa el footer del sitio (components/layout/Footer.tsx,
   // fallback de lib/site-config.ts) — un solo lugar si cambian. El footer del
