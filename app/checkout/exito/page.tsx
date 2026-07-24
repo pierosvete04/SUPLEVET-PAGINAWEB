@@ -11,7 +11,7 @@ import { useConfiguracionSitio } from "@/hooks/use-configuracion-sitio";
 import { WhatsAppIcon } from "@/components/shared/WhatsAppIcon";
 import { LinkQrCode } from "@/components/shared/LinkQrCode";
 import { createClient } from "@/lib/supabase/client";
-import { getVariantePorSlug, type RegaloVariante } from "@/lib/regalo-variantes";
+import { getVariantesPorSlugs, type RegaloVariante } from "@/lib/regalo-variantes";
 
 type EstadoPago = "pagado" | "pendiente_verificacion" | "rechazado" | "cancelado";
 
@@ -24,7 +24,7 @@ interface PedidoSimulado {
   direccionTexto?: string;
   metodoEnvio?: string;
   productos?: { nombre: string; cantidad: number }[];
-  regaloBandana?: string | null;
+  regaloBandanas?: string[] | null;
   // Solo se llena para el pedido leído en vivo de la BD (flujo de tarjeta) —
   // el pago con Mercado Pago se confirma vía webhook, no al volver del
   // checkout, así que acá se necesita el estado real, no uno asumido.
@@ -52,9 +52,10 @@ function tituloPedido(pedido: PedidoSimulado): string {
   return mensajePorMetodo[pedido.metodo];
 }
 
-function construirMensajeWhatsapp(pedido: PedidoSimulado, bandana: RegaloVariante | null): string {
+function construirMensajeWhatsapp(pedido: PedidoSimulado, bandanas: RegaloVariante[]): string {
   const lineasProductos =
     pedido.productos?.map((p) => `- ${p.nombre} x${p.cantidad}`).join("\n") ?? "";
+  const lineasBandanas = bandanas.map((b) => `- Bandana ${b.nombre} — Talla ${b.talla}`).join("\n");
 
   let lineaFinal = "Les envío el comprobante de pago a continuación.";
   if (pedido.metodo === "contra_entrega") {
@@ -70,7 +71,7 @@ function construirMensajeWhatsapp(pedido: PedidoSimulado, bandana: RegaloVariant
     `Hola, soy ${pedido.nombre || "[nombre]"}.`,
     `Acabo de hacer el pedido N° ${pedido.numero} por ${formatPrecio(pedido.total)}.`,
     lineasProductos && `Productos:\n${lineasProductos}`,
-    bandana && `Bandana de regalo: ${bandana.nombre}`,
+    lineasBandanas && `Bandanas de regalo:\n${lineasBandanas}`,
     pedido.direccionTexto && `Dirección de envío: ${pedido.direccionTexto}`,
     pedido.metodoEnvio && `Método de envío: ${pedido.metodoEnvio}`,
     lineaFinal,
@@ -103,7 +104,7 @@ function CheckoutExitoContent() {
   const searchParams = useSearchParams();
   const pedidoIdMp = searchParams.get("pedido");
   const [pedido, setPedido] = useState<PedidoSimulado | null>(null);
-  const [bandanaElegida, setBandanaElegida] = useState<RegaloVariante | null>(null);
+  const [bandanasElegidas, setBandanasElegidas] = useState<RegaloVariante[]>([]);
 
   useEffect(() => {
     // Flujo de tarjeta: se vuelve de Mercado Pago con ?pedido=<id> — el
@@ -115,7 +116,7 @@ function CheckoutExitoContent() {
       supabase
         .from("pedidos")
         .select(
-          "shopify_order_number, total, estado_pago, productos, direccion_envio, zona_envio, regalo_bandana, cliente_nombre, cliente_telefono"
+          "shopify_order_number, total, estado_pago, productos, direccion_envio, zona_envio, regalo_bandana, regalo_bandanas, cliente_nombre, cliente_telefono"
         )
         .eq("id", pedidoIdMp)
         .maybeSingle()
@@ -135,7 +136,11 @@ function CheckoutExitoContent() {
                   cantidad: p.cantidad,
                 }))
               : undefined,
-            regaloBandana: data.regalo_bandana,
+            regaloBandanas: Array.isArray(data.regalo_bandanas)
+              ? (data.regalo_bandanas as { slug: string }[]).map((b) => b.slug)
+              : data.regalo_bandana
+                ? [data.regalo_bandana]
+                : null,
             estadoPago: data.estado_pago as EstadoPago,
           });
         });
@@ -147,11 +152,17 @@ function CheckoutExitoContent() {
   }, [pedidoIdMp]);
 
   useEffect(() => {
-    getVariantePorSlug(createClient(), pedido?.regaloBandana ?? null).then(setBandanaElegida);
-  }, [pedido?.regaloBandana]);
+    const slugs = pedido?.regaloBandanas ?? [];
+    if (slugs.length === 0) {
+      setBandanasElegidas([]);
+      return;
+    }
+    getVariantesPorSlugs(createClient(), slugs).then(setBandanasElegidas);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pedido?.regaloBandanas?.join(",")]);
 
   const linkWhatsapp = pedido
-    ? whatsappLink(config.whatsappB2C, construirMensajeWhatsapp(pedido, bandanaElegida))
+    ? whatsappLink(config.whatsappB2C, construirMensajeWhatsapp(pedido, bandanasElegidas))
     : null;
 
   const pagoTarjetaResuelto = pedido?.metodo === "tarjeta" ? pedido.estadoPago : undefined;
@@ -180,13 +191,16 @@ function CheckoutExitoContent() {
             <span>Total</span>
             <span className="font-bold text-secondary">{formatPrecio(pedido.total)}</span>
           </div>
-          {bandanaElegida && (
-            <div className="mt-3 flex items-center gap-3 rounded-md bg-soft-gray p-2.5">
+          {bandanasElegidas.map((bandana, i) => (
+            <div
+              key={`${bandana.slug}-${i}`}
+              className="mt-3 flex items-center gap-3 rounded-md bg-soft-gray p-2.5"
+            >
               <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-md bg-white">
-                {bandanaElegida.imagen && (
+                {bandana.imagen && (
                   <Image
-                    src={bandanaElegida.imagen}
-                    alt={`Bandana ${bandanaElegida.nombre}`}
+                    src={bandana.imagen}
+                    alt={`Bandana ${bandana.nombre}`}
                     fill
                     className="object-cover"
                     sizes="48px"
@@ -195,10 +209,10 @@ function CheckoutExitoContent() {
               </div>
               <p className="flex items-center gap-1.5 font-body text-xs">
                 <Gift className="h-4 w-4 shrink-0 text-secondary" strokeWidth={1.75} />
-                Tu regalo: <strong>Bandana {bandanaElegida.nombre}</strong>
+                Tu regalo: <strong>Bandana {bandana.nombre} — Talla {bandana.talla}</strong>
               </p>
             </div>
-          )}
+          ))}
           {pedido.metodo === "contra_entrega" && (
             <p className="mt-3 text-xs text-muted-foreground">
               Coordinaremos la entrega por WhatsApp. Ten listos {formatPrecio(pedido.total)} para

@@ -64,7 +64,7 @@ export function MascotasGrid({ clienteId }: MascotasGridProps) {
   }, [clienteId]);
 
   if (cargando) {
-    return <BrandedLoader />;
+    return <BrandedLoader fullScreen />;
   }
 
   return (

@@ -143,7 +143,7 @@ export function InicioDashboard({ user, perfil }: InicioDashboardProps) {
     : 100;
 
   if (cargando) {
-    return <BrandedLoader />;
+    return <BrandedLoader fullScreen />;
   }
 
   return (

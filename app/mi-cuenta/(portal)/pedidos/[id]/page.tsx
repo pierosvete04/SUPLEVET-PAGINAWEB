@@ -7,14 +7,25 @@ import { formatFecha } from "@/lib/portal/formato";
 import { formatPrecio } from "@/lib/data/productos-shared";
 import { ESTADO_PEDIDO, estadoParaMostrar } from "@/lib/data/portal/pedidos";
 import { getProductos } from "@/lib/data/productos";
-import { getVariantePorSlug } from "@/lib/regalo-variantes";
+import { getVariantesPorSlugs } from "@/lib/regalo-variantes";
+import { etiquetaCorta } from "@/lib/documento";
 
 interface DireccionEnvio {
   departamento?: string;
   provincia?: string;
   distrito?: string;
   direccion?: string;
+  direccionSecundaria?: string;
+  codigoPostal?: string;
+  metodoEnvio?: string;
+  tipoDocumento?: string | null;
+  numeroDocumento?: string | null;
 }
+
+const METODO_ENVIO_LABEL: Record<string, string> = {
+  motorizado: "Delivery motorizado",
+  shalom: "Agencia Shalom",
+};
 
 interface ProductoPedidoDetalle {
   nombre?: string;
@@ -39,6 +50,7 @@ interface PedidoDetalle {
   direccion_envio: DireccionEnvio | null;
   zona_envio: string | null;
   regalo_bandana: string | null;
+  regalo_bandanas: { slug: string; talla: string | null }[] | null;
   created_at: string;
 }
 
@@ -68,7 +80,7 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
     supabase
       .from("pedidos")
       .select(
-        "id, shopify_order_number, shopify_order_id, estado, estado_pago, forma_pago, total, productos, puntos_acreditados, fecha_agotamiento_estimada, fecha_pago, direccion_envio, zona_envio, regalo_bandana, created_at"
+        "id, shopify_order_number, shopify_order_id, estado, estado_pago, forma_pago, total, productos, puntos_acreditados, fecha_agotamiento_estimada, fecha_pago, direccion_envio, zona_envio, regalo_bandana, regalo_bandanas, created_at"
       )
       .eq("id", id)
       .eq("cliente_id", user.id)
@@ -79,7 +91,12 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
   if (!pedido) notFound();
 
   const p = pedido as unknown as PedidoDetalle;
-  const bandanaRegalo = await getVariantePorSlug(supabase, p.regalo_bandana);
+  const slugsBandanas = p.regalo_bandanas?.length
+    ? p.regalo_bandanas.map((b) => b.slug)
+    : p.regalo_bandana
+      ? [p.regalo_bandana]
+      : [];
+  const bandanasRegalo = await getVariantesPorSlugs(supabase, slugsBandanas);
 
   const imagenPorShopifyId = new Map(
     catalogo.filter((prod) => prod.shopifyProductId).map((prod) => [prod.shopifyProductId as string, prod.imagen])
@@ -97,9 +114,22 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
   const productos = Array.isArray(p.productos) ? p.productos : [];
   const direccion = p.direccion_envio;
   const direccionTexto = direccion
-    ? [direccion.direccion, direccion.distrito, direccion.provincia, direccion.departamento]
+    ? [
+        direccion.direccion,
+        direccion.direccionSecundaria,
+        direccion.distrito,
+        direccion.provincia,
+        direccion.departamento,
+        direccion.codigoPostal ? `CP ${direccion.codigoPostal}` : null,
+      ]
         .filter(Boolean)
         .join(", ")
+    : null;
+  const metodoEnvioTexto = direccion?.metodoEnvio
+    ? (METODO_ENVIO_LABEL[direccion.metodoEnvio] ?? direccion.metodoEnvio)
+    : null;
+  const documentoTexto = direccion?.numeroDocumento
+    ? `${etiquetaCorta(direccion.tipoDocumento)} ${direccion.numeroDocumento}`
     : null;
 
   return (
@@ -163,13 +193,13 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
           })}
         </div>
 
-        {bandanaRegalo && (
-          <div className="mt-3 flex items-center gap-3 rounded-lg bg-soft-gray p-3">
+        {bandanasRegalo.map((bandana, i) => (
+          <div key={`${bandana.slug}-${i}`} className="mt-3 flex items-center gap-3 rounded-lg bg-soft-gray p-3">
             <div className="relative h-14 w-14 shrink-0 overflow-hidden rounded-lg bg-white">
-              {bandanaRegalo.imagen && (
+              {bandana.imagen && (
                 <Image
-                  src={bandanaRegalo.imagen}
-                  alt={`Bandana ${bandanaRegalo.nombre}`}
+                  src={bandana.imagen}
+                  alt={`Bandana ${bandana.nombre}`}
                   fill
                   className="object-cover"
                   sizes="56px"
@@ -178,10 +208,10 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
             </div>
             <p className="flex items-center gap-1.5 font-body text-sm text-secondary">
               <Gift className="h-4 w-4 shrink-0 text-secondary" strokeWidth={1.75} />
-              Regalo: <strong>Bandana {bandanaRegalo.nombre}</strong>
+              Regalo: <strong>Bandana {bandana.nombre} — Talla {bandana.talla}</strong>
             </p>
           </div>
-        )}
+        ))}
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -201,6 +231,20 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
           <p className="font-body text-sm text-muted-foreground">
             {direccionTexto || (p.zona_envio ? `Zona: ${p.zona_envio}` : "Sin dirección registrada")}
           </p>
+          {(metodoEnvioTexto || documentoTexto) && (
+            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 border-t border-border/50 pt-2">
+              {metodoEnvioTexto && (
+                <p className="font-body text-xs text-muted-foreground">
+                  <span className="font-bold text-secondary">Envío:</span> {metodoEnvioTexto}
+                </p>
+              )}
+              {documentoTexto && (
+                <p className="font-body text-xs text-muted-foreground">
+                  <span className="font-bold text-secondary">Documento:</span> {documentoTexto}
+                </p>
+              )}
+            </div>
+          )}
         </div>
       </div>
 

@@ -8,6 +8,7 @@ import {
 } from "@/lib/hero";
 import { TrustBar } from "@/components/home/TrustBar";
 import { CombosDestacados } from "@/components/home/CombosDestacados";
+import { BandanaShowcase } from "@/components/home/BandanaShowcase";
 import { PresentacionesShowcase } from "@/components/home/PresentacionesShowcase";
 import { ComoSePrepara } from "@/components/shared/ComoSePrepara";
 // import { AntesDespues } from "@/components/home/AntesDespues"; // desactivado temporalmente
@@ -95,6 +96,7 @@ export default async function Home() {
       />
       <TrustBar textos={trustbarTextos.length > 0 ? trustbarTextos : TRUSTBAR_FALLBACK} />
       <CombosDestacados />
+      <BandanaShowcase />
       <PresentacionesShowcase />
       <div className="bg-gradient-to-b from-soft-gray to-accent">
         <ComoSePrepara fondoPropio={false} paddingSuperiorReducido paddingInferiorReducido />

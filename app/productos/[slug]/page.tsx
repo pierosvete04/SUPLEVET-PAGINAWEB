@@ -69,7 +69,7 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
 
   const supabase = await createClient();
   const [regalos, resenas, ingredientes, comparativa, faqs] = await Promise.all([
-    getRegalosAplicables(supabase, producto.slug),
+    getRegalosAplicables(supabase, producto.slug, producto.categoria),
     getResenasDeProducto(supabase, producto.shopifyProductId ?? producto.slug),
     getIngredientesActivos(supabase),
     getComparativaActiva(supabase),

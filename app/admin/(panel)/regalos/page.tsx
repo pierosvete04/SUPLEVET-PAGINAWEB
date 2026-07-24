@@ -113,7 +113,9 @@ export default function AdminRegalosPage() {
                     ? `Compra ≥ S/.${(r.condicion_monto_minimo ?? 0).toFixed(2)}`
                     : r.condicion_tipo === "evento"
                       ? "Evento especial"
-                      : `Producto: ${r.condicion_producto_slug ?? "—"}`}
+                      : r.condicion_tipo === "categoria"
+                        ? `Cualquier ${r.condicion_categoria ?? "combo"}`
+                        : `Producto: ${r.condicion_producto_slug ?? "—"}`}
                 </TableCell>
                 <TableCell className="text-muted-foreground">
                   {r.fecha_inicio || r.fecha_fin

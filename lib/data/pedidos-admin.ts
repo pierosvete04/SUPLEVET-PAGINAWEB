@@ -34,6 +34,7 @@ export interface PedidoAdmin {
   zona_envio: string | null;
   direccion_envio: DireccionEnvioPedido | null;
   regalo_bandana: string | null;
+  regalo_bandanas: { slug: string; talla: string | null }[] | null;
   /** Código del paquete que da el courier; lo escribe el equipo al despachar
    * y es lo único del rótulo que no sale del pedido. */
   codigo_rotulo: string | null;

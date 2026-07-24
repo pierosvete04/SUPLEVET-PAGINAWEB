@@ -32,6 +32,7 @@ export function ProductBuyBox({ producto, regalos, resenas }: ProductBuyBoxProps
         nombre: producto.nombre,
         precio: producto.precio,
         imagen: producto.imagen,
+        categoria: producto.categoria,
         metodosPagoPermitidos: producto.metodosPagoPermitidos,
       },
       cantidad
@@ -53,6 +54,7 @@ export function ProductBuyBox({ producto, regalos, resenas }: ProductBuyBoxProps
         nombre: producto.nombre,
         precio: producto.precio,
         imagen: producto.imagen,
+        categoria: producto.categoria,
         metodosPagoPermitidos: producto.metodosPagoPermitidos,
       },
       cantidad
@@ -191,9 +193,7 @@ export function ProductBuyBox({ producto, regalos, resenas }: ProductBuyBoxProps
                   {regalo.descripcion && (
                     <p className="mt-0.5 font-body text-xs text-muted-foreground">{regalo.descripcion}</p>
                   )}
-                  {regalo.condicion_tipo === "monto_minimo" && (
-                    <RegaloBandanaCarousel regaloId={regalo.id} />
-                  )}
+                  <RegaloBandanaCarousel regaloId={regalo.id} />
                 </div>
               </div>
             </div>

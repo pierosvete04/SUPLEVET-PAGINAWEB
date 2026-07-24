@@ -130,7 +130,7 @@ export function TestimoniosCarousel({ testimonios }: TestimoniosCarouselProps) {
               >
                 <Play className="h-6 w-6 translate-x-0.5 drop-shadow" strokeWidth={1.5} fill="white" />
               </span>
-              <div className="absolute inset-x-0 bottom-0 flex flex-col items-start gap-1 p-4 text-left">
+              <div className="absolute inset-x-0 bottom-0 flex flex-col items-start gap-1.5 p-4 pb-6 text-left">
                 <span className="font-body text-sm font-bold drop-shadow">{t.titulo}</span>
                 <span className="flex gap-0.5">
                   {Array.from({ length: 5 }).map((_, star) => (

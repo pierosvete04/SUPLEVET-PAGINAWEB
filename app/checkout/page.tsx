@@ -11,6 +11,8 @@ import { BrandedLoader } from "@/components/ui/branded-loader";
 import { ShippingStep, direccionVacia, type DireccionEnvio } from "@/components/checkout/ShippingStep";
 import { PaymentStep, type MetodoPago } from "@/components/checkout/PaymentStep";
 import { OrderSummary, type DescuentoAplicado } from "@/components/checkout/OrderSummary";
+import { RegaloBandanaSelector } from "@/components/cart/RegaloBandanaSelector";
+import type { BandanaSeleccion } from "@/lib/cart/CartContext";
 import { esDepartamentoProvincia, zonaEnvioSlug, type EnvioZona } from "@/lib/shipping";
 import { TODOS_LOS_METODOS_PAGO as TODOS_LOS_METODOS } from "@/lib/data/productos-shared";
 import type { TipoDocumento } from "@/lib/documento";
@@ -21,8 +23,8 @@ export default function CheckoutPage() {
     subtotal,
     removeItem,
     cargando: carritoCargando,
-    bandanaRegaloSeleccionada,
-    setBandanaRegaloSeleccionada,
+    bandanasSeleccionadas,
+    limpiarBandanas,
   } = useCart();
   const router = useRouter();
 
@@ -35,6 +37,7 @@ export default function CheckoutPage() {
   const [procesando, setProcesando] = useState(false);
   const [errorPedido, setErrorPedido] = useState<string | null>(null);
   const [descuento, setDescuento] = useState<DescuentoAplicado | null>(null);
+  const [slotsBandanaRequeridos, setSlotsBandanaRequeridos] = useState(0);
   // Contra entrega depende de la logística del día: Dinsides solo recoge a
   // domicilio con 2+ paquetes, así que solo se ofrece si ya hay otro pedido
   // motorizado pendiente de despachar (este pedido sería el segundo). false
@@ -169,7 +172,10 @@ export default function CheckoutPage() {
     !!direccion.distrito &&
     !!direccion.telefono &&
     !!direccion.metodoEnvio;
-  const puedeConfirmar = direccionCompleta && !!zona && costoEnvio !== null && !!metodoPago;
+  const bandanasCompletas =
+    bandanasSeleccionadas.filter(Boolean).length >= slotsBandanaRequeridos;
+  const puedeConfirmar =
+    direccionCompleta && !!zona && costoEnvio !== null && !!metodoPago && bandanasCompletas;
 
   // Mismo cálculo que OrderSummary — se replica acá solo para mostrarle al
   // cliente cuánto tener listo si paga contra entrega.
@@ -210,9 +216,19 @@ export default function CheckoutPage() {
       .eq("id", usuario.id)
       .then(() => {});
 
+    const bandanasParaRpc: BandanaSeleccion[] = bandanasSeleccionadas.filter(
+      (b): b is BandanaSeleccion => b !== null
+    );
+
     const { data, error } = await supabase.rpc("registrar_pedido_web", {
       p_cliente_id: usuario.id,
-      p_productos: items.map((i) => ({ nombre: i.nombre, precio: i.precio, cantidad: i.cantidad, sku: i.slug })),
+      p_productos: items.map((i) => ({
+        nombre: i.nombre,
+        precio: i.precio,
+        cantidad: i.cantidad,
+        sku: i.slug,
+        categoria: i.categoria ?? "producto",
+      })),
       p_subtotal: subtotal,
       p_costo_envio: costoEnvio ?? 0,
       p_forma_pago: metodoPago,
@@ -238,7 +254,7 @@ export default function CheckoutPage() {
       },
       p_cliente_nombre: `${direccion.nombre} ${direccion.apellidos}`.trim(),
       p_cliente_telefono: direccion.telefono,
-      p_regalo_bandana: bandanaRegaloSeleccionada,
+      p_regalo_bandanas: bandanasParaRpc,
     });
 
     if (error || !data?.ok) {
@@ -276,7 +292,7 @@ export default function CheckoutPage() {
         items: items.map((i) => ({ item_slug: i.slug, item_name: i.nombre, quantity: i.cantidad })),
       });
       items.forEach((i) => removeItem(i.slug));
-      setBandanaRegaloSeleccionada(null);
+      limpiarBandanas();
       window.location.href = cuerpoMp.initPoint;
       return;
     }
@@ -315,11 +331,11 @@ export default function CheckoutPage() {
           .join(", "),
         metodoEnvio: direccion.metodoEnvio === "shalom" ? "Agencia Shalom" : "Delivery motorizado",
         productos: items.map((i) => ({ nombre: i.nombre, cantidad: i.cantidad })),
-        regaloBandana: bandanaRegaloSeleccionada,
+        regaloBandanas: bandanasParaRpc.map((b) => b.slug),
       })
     );
     items.forEach((i) => removeItem(i.slug));
-    setBandanaRegaloSeleccionada(null);
+    limpiarBandanas();
     router.push("/checkout/exito");
   }
 
@@ -367,6 +383,8 @@ export default function CheckoutPage() {
             }}
           />
 
+          <RegaloBandanaSelector variant="checkout" onSlotsRequeridos={setSlotsBandanaRequeridos} />
+
           <PaymentStep
             metodo={metodoPago}
             onChange={setMetodoPago}
@@ -395,7 +413,7 @@ export default function CheckoutPage() {
             clienteId={usuario.id}
             descuento={descuento}
             onDescuentoChange={setDescuento}
-            bandanaRegaloSlug={bandanaRegaloSeleccionada}
+            bandanasRegaloSeleccionadas={bandanasSeleccionadas}
           />
         </div>
       </div>

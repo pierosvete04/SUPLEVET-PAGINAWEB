@@ -3,17 +3,31 @@
 import { useState } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
-import type { RegaloVariante } from "@/lib/regalo-variantes";
+import type { RegaloVariante, TallaBandana } from "@/lib/regalo-variantes";
 import { Modal } from "@/components/admin/Modal";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+
+const TALLAS: TallaBandana[] = ["S", "M", "L"];
 
 interface VarianteFormProps {
   regaloId: string;
   variante: RegaloVariante | null;
   siguienteOrden: number;
+  /** Diseño (nombre) preseleccionado al crear una talla que falta para un
+   * diseño existente — evita reescribir a mano el nombre/imagen exactos. */
+  nombreSugerido?: string;
+  imagenSugerida?: string | null;
+  tallaSugerida?: TallaBandana;
   onClose: () => void;
   onSaved: () => void;
 }
@@ -27,9 +41,24 @@ function slugify(texto: string): string {
     .replace(/(^-|-$)/g, "");
 }
 
-export function VarianteForm({ regaloId, variante, siguienteOrden, onClose, onSaved }: VarianteFormProps) {
-  const [nombre, setNombre] = useState(variante?.nombre ?? "");
-  const [imagen, setImagen] = useState<string | null>(variante?.imagen ?? null);
+function sufijoTalla(talla: TallaBandana): string {
+  return talla.toLowerCase();
+}
+
+export function VarianteForm({
+  regaloId,
+  variante,
+  siguienteOrden,
+  nombreSugerido,
+  imagenSugerida,
+  tallaSugerida,
+  onClose,
+  onSaved,
+}: VarianteFormProps) {
+  const [nombre, setNombre] = useState(variante?.nombre ?? nombreSugerido ?? "");
+  const [imagen, setImagen] = useState<string | null>(variante?.imagen ?? imagenSugerida ?? null);
+  const [talla, setTalla] = useState<TallaBandana>(variante?.talla ?? tallaSugerida ?? "S");
+  const [stock, setStock] = useState<string>(variante?.stock != null ? String(variante.stock) : "");
   const [activo, setActivo] = useState(variante?.activo ?? true);
   const [subiendo, setSubiendo] = useState(false);
   const [guardando, setGuardando] = useState(false);
@@ -63,9 +92,11 @@ export function VarianteForm({ regaloId, variante, siguienteOrden, onClose, onSa
       regalo_id: regaloId,
       nombre: nombre.trim(),
       imagen,
+      talla,
+      stock: stock.trim() === "" ? null : Number(stock),
       activo,
       orden: variante?.orden ?? siguienteOrden,
-      ...(variante ? {} : { slug: slugify(nombre) }),
+      ...(variante ? {} : { slug: `${slugify(nombre)}-${sufijoTalla(talla)}` }),
     };
 
     const { error: saveError } = variante
@@ -108,6 +139,35 @@ export function VarianteForm({ regaloId, variante, siguienteOrden, onClose, onSa
               <Image src={imagen} alt="" fill className="object-cover" sizes="64px" />
             </div>
           )}
+        </div>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-1.5">
+            <Label>Talla</Label>
+            <Select value={talla} onValueChange={(v) => setTalla(v as TallaBandana)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {TALLAS.map((t) => (
+                  <SelectItem key={t} value={t}>
+                    {t}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="grid gap-1.5">
+            <Label htmlFor="v-stock">Stock (vacío = ilimitado)</Label>
+            <Input
+              id="v-stock"
+              type="number"
+              min={0}
+              value={stock}
+              onChange={(e) => setStock(e.target.value)}
+              placeholder="Ilimitado"
+            />
+          </div>
         </div>
 
         <label className="flex items-center gap-2 text-sm">

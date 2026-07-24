@@ -4,9 +4,9 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Tag, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import type { CartItem } from "@/lib/cart/CartContext";
+import type { BandanaSeleccion, CartItem } from "@/lib/cart/CartContext";
 import { formatPrecio } from "@/lib/data/productos-shared";
-import { getVariantePorSlug, type RegaloVariante } from "@/lib/regalo-variantes";
+import { getVariantesPorSlugs, type RegaloVariante } from "@/lib/regalo-variantes";
 
 export interface DescuentoAplicado {
   codigo: string;
@@ -22,7 +22,7 @@ interface OrderSummaryProps {
   clienteId: string;
   descuento: DescuentoAplicado | null;
   onDescuentoChange: (descuento: DescuentoAplicado | null) => void;
-  bandanaRegaloSlug?: string | null;
+  bandanasRegaloSeleccionadas?: (BandanaSeleccion | null)[];
 }
 
 export function OrderSummary({
@@ -32,16 +32,25 @@ export function OrderSummary({
   clienteId,
   descuento,
   onDescuentoChange,
-  bandanaRegaloSlug,
+  bandanasRegaloSeleccionadas = [],
 }: OrderSummaryProps) {
-  const [bandanaRegalo, setBandanaRegalo] = useState<RegaloVariante | null>(null);
+  const [bandanasRegalo, setBandanasRegalo] = useState<RegaloVariante[]>([]);
   const [codigoInput, setCodigoInput] = useState("");
   const [validando, setValidando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const slugsElegidos = bandanasRegaloSeleccionadas
+    .filter((b): b is BandanaSeleccion => b !== null)
+    .map((b) => b.slug);
+
   useEffect(() => {
-    getVariantePorSlug(createClient(), bandanaRegaloSlug ?? null).then(setBandanaRegalo);
-  }, [bandanaRegaloSlug]);
+    if (slugsElegidos.length === 0) {
+      setBandanasRegalo([]);
+      return;
+    }
+    getVariantesPorSlugs(createClient(), slugsElegidos).then(setBandanasRegalo);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [slugsElegidos.join(",")]);
 
   const envioMostrado = descuento ? descuento.costoEnvioFinal : envio ?? null;
   const descuentoMonto = descuento?.descuentoSubtotal ?? 0;
@@ -100,13 +109,13 @@ export function OrderSummary({
             </span>
           </div>
         ))}
-        {bandanaRegalo && (
-          <div className="flex items-center gap-3">
+        {bandanasRegalo.map((bandana, i) => (
+          <div key={`${bandana.slug}-${i}`} className="flex items-center gap-3">
             <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-[17px] bg-soft-gray">
-              {bandanaRegalo.imagen && (
+              {bandana.imagen && (
                 <Image
-                  src={bandanaRegalo.imagen}
-                  alt={`Bandana ${bandanaRegalo.nombre}`}
+                  src={bandana.imagen}
+                  alt={`Bandana ${bandana.nombre}`}
                   fill
                   className="object-cover"
                   sizes="48px"
@@ -114,12 +123,14 @@ export function OrderSummary({
               )}
             </div>
             <div className="flex-1 font-body text-xs text-secondary">
-              <p className="font-bold">Bandana {bandanaRegalo.nombre}</p>
+              <p className="font-bold">
+                Bandana {bandana.nombre} — Talla {bandana.talla}
+              </p>
               <p className="text-muted-foreground">Regalo · Cantidad: 1</p>
             </div>
             <span className="font-body text-sm font-bold text-green-600">Gratis</span>
           </div>
-        )}
+        ))}
       </div>
 
       <div className="mt-4 border-t border-border pt-4">

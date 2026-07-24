@@ -95,6 +95,7 @@ export function TiendaSheet({ open, onOpenChange }: TiendaSheetProps) {
                             nombre: p.nombre,
                             precio: p.precio,
                             imagen: p.imagen,
+                            categoria: p.categoria,
                             metodosPagoPermitidos: p.metodos_pago_permitidos,
                           })
                         }

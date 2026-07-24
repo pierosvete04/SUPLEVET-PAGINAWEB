@@ -19,7 +19,14 @@ export function RegaloBandanaCarousel({ regaloId }: RegaloBandanaCarouselProps) 
   const [indice, setIndice] = useState(0);
 
   useEffect(() => {
-    getVariantesActivas(createClient(), regaloId).then(setVariantes);
+    // getVariantesActivas ahora devuelve una fila por diseño+talla (8 filas
+    // para 4 diseños) -- este carrusel solo muestra el diseño (la talla se
+    // elige en el carrito/checkout), así que se deduplica por nombre para no
+    // repetir la misma imagen dos veces seguidas.
+    getVariantesActivas(createClient(), regaloId).then((data) => {
+      const vistos = new Set<string>();
+      setVariantes(data.filter((v) => (vistos.has(v.nombre) ? false : (vistos.add(v.nombre), true))));
+    });
   }, [regaloId]);
 
   useEffect(() => {

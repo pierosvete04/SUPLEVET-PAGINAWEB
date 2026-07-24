@@ -24,6 +24,7 @@ export function ProductCard({ producto, ctaLabel = "Añadir al carrito" }: Produ
       nombre: producto.nombre,
       precio: producto.precio,
       imagen: producto.imagen,
+      categoria: producto.categoria,
       metodosPagoPermitidos: producto.metodosPagoPermitidos,
     });
     setAgregado(true);

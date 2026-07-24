@@ -27,9 +27,10 @@ export interface Regalo {
   nombre: string;
   descripcion: string | null;
   imagen: string | null;
-  condicion_tipo: "monto_minimo" | "producto_especifico" | "evento";
+  condicion_tipo: "monto_minimo" | "producto_especifico" | "evento" | "categoria";
   condicion_monto_minimo: number | null;
   condicion_producto_slug: string | null;
+  condicion_categoria: string | null;
   fecha_inicio: string | null;
   fecha_fin: string | null;
   activo: boolean;
@@ -48,6 +49,7 @@ const VACIO: Omit<Regalo, "id"> = {
   condicion_tipo: "monto_minimo",
   condicion_monto_minimo: 0,
   condicion_producto_slug: null,
+  condicion_categoria: null,
   fecha_inicio: null,
   fecha_fin: null,
   activo: true,
@@ -144,7 +146,11 @@ export function RegaloForm({ regalo, onClose, onSaved }: RegaloFormProps) {
           <Select
             value={form.condicion_tipo}
             onValueChange={(v) =>
-              setForm((f) => ({ ...f, condicion_tipo: v as Regalo["condicion_tipo"] }))
+              setForm((f) => ({
+                ...f,
+                condicion_tipo: v as Regalo["condicion_tipo"],
+                condicion_categoria: v === "categoria" ? "combo" : null,
+              }))
             }
           >
             <SelectTrigger>
@@ -153,10 +159,18 @@ export function RegaloForm({ regalo, onClose, onSaved }: RegaloFormProps) {
             <SelectContent>
               <SelectItem value="monto_minimo">Monto mínimo de compra</SelectItem>
               <SelectItem value="producto_especifico">Compra de un producto específico</SelectItem>
+              <SelectItem value="categoria">Compra de cualquier combo</SelectItem>
               <SelectItem value="evento">Evento especial</SelectItem>
             </SelectContent>
           </Select>
         </div>
+
+        {form.condicion_tipo === "categoria" && (
+          <p className="text-sm text-muted-foreground">
+            Se activa con la compra de cualquier producto de categoría &ldquo;combo&rdquo; — el
+            cliente puede elegir una bandana de regalo por cada combo que lleve.
+          </p>
+        )}
 
         {form.condicion_tipo === "monto_minimo" && (
           <div className="grid gap-1.5">

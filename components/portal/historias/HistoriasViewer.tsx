@@ -83,7 +83,7 @@ export function HistoriasViewer({ user }: HistoriasViewerProps) {
   }
 
   if (cargando) {
-    return <BrandedLoader />;
+    return <BrandedLoader fullScreen />;
   }
 
   return (

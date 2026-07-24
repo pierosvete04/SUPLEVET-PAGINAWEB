@@ -5,9 +5,11 @@ export interface Regalo {
   nombre: string;
   descripcion: string | null;
   imagen: string | null;
-  condicion_tipo: "monto_minimo" | "producto_especifico" | "evento";
+  condicion_tipo: "monto_minimo" | "producto_especifico" | "evento" | "categoria";
   condicion_monto_minimo: number | null;
   condicion_producto_slug: string | null;
+  /** Solo usado con condicion_tipo === "categoria" (ej. "combo") — ver CategoriaProducto en productos-shared.ts. */
+  condicion_categoria: string | null;
   fecha_inicio: string | null;
   fecha_fin: string | null;
   activo: boolean;
@@ -20,12 +22,15 @@ function estaVigente(regalo: Regalo, hoy: string): boolean {
 }
 
 // Regalos activos y vigentes que aplican a este producto — por monto mínimo
-// o "evento" (aplican a cualquier producto) o por ser justo el producto
-// configurado. Se activan/crean desde /admin/regalos — sin regalos activos,
-// este banner simplemente no se muestra en la ficha de producto.
+// o "evento" (aplican a cualquier producto), por ser justo el producto
+// configurado, o por categoría (ej. "cualquier combo") si productoCategoria
+// coincide con condicion_categoria. Se activan/crean desde /admin/regalos —
+// sin regalos activos, este banner simplemente no se muestra en la ficha de
+// producto.
 export async function getRegalosAplicables(
   supabase: SupabaseClient,
-  productoSlug: string
+  productoSlug: string,
+  productoCategoria?: string
 ): Promise<Regalo[]> {
   const { data } = await supabase.from("regalos").select("*").eq("activo", true);
   const hoy = new Date().toISOString().slice(0, 10);
@@ -34,20 +39,21 @@ export async function getRegalosAplicables(
       estaVigente(r, hoy) &&
       (r.condicion_tipo === "monto_minimo" ||
         r.condicion_tipo === "evento" ||
-        r.condicion_producto_slug === productoSlug)
+        r.condicion_producto_slug === productoSlug ||
+        (r.condicion_tipo === "categoria" && r.condicion_categoria === productoCategoria))
   );
 }
 
 // Usado en el carrito (CartSheet) — no depende de un producto en particular.
-// Incluye regalos por monto mínimo (gateados por el subtotal en el selector)
-// y regalos de "evento" (ya desbloqueados mientras estén activos/vigentes,
-// sin importar el subtotal).
+// Incluye regalos por monto mínimo (gateados por el subtotal en el selector),
+// "evento" (ya desbloqueados mientras estén activos/vigentes, sin importar el
+// subtotal), y "categoria" (gateados por combosQty en el selector).
 export async function getRegalosDisponiblesEnCarrito(supabase: SupabaseClient): Promise<Regalo[]> {
   const { data } = await supabase
     .from("regalos")
     .select("*")
     .eq("activo", true)
-    .in("condicion_tipo", ["monto_minimo", "evento"]);
+    .in("condicion_tipo", ["monto_minimo", "evento", "categoria"]);
   const hoy = new Date().toISOString().slice(0, 10);
   return ((data as Regalo[]) ?? []).filter((r) => estaVigente(r, hoy));
 }

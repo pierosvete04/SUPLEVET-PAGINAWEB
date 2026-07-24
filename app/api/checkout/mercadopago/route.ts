@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { getMercadoPagoPreferenceClient } from "@/lib/mercadopago";
 import { siteConfig } from "@/lib/site-config";
-import { getVariantePorSlug } from "@/lib/regalo-variantes";
+import { getVariantesPorSlugs } from "@/lib/regalo-variantes";
 
 interface ItemPedido {
   nombre: string;
@@ -10,20 +10,20 @@ interface ItemPedido {
 }
 
 // Título del ítem que Mercado Pago muestra en "Detalles del pago" — se arma
-// con los productos reales del pedido (y el regalo, si tiene) en vez de un
-// genérico "Pedido {numero}", para que el cliente reconozca su compra en el
-// checkout. MP trunca/ignora títulos muy largos, así que se limita a 250
-// caracteres.
+// con los productos reales del pedido (y el/los regalo(s), si tiene) en vez
+// de un genérico "Pedido {numero}", para que el cliente reconozca su compra
+// en el checkout. MP trunca/ignora títulos muy largos, así que se limita a
+// 250 caracteres.
 function construirTituloPago(
   numero: string,
   productos: ItemPedido[],
-  nombreRegalo: string | null
+  nombresRegalo: string[]
 ): string {
   const listaProductos = productos
     .map((p) => (p.cantidad > 1 ? `${p.nombre} x${p.cantidad}` : p.nombre))
     .join(", ");
   const partes = [listaProductos || `Pedido ${numero}`];
-  if (nombreRegalo) partes.push(`Regalo: Bandana ${nombreRegalo}`);
+  if (nombresRegalo.length > 0) partes.push(`Regalo: Bandana ${nombresRegalo.join(", ")}`);
 
   const titulo = `${partes.join(" + ")} — Suplevet`;
   return titulo.length > 250 ? `${titulo.slice(0, 249)}…` : titulo;
@@ -49,7 +49,7 @@ export async function POST(request: Request) {
   const { data: pedido, error } = await supabase
     .from("pedidos")
     .select(
-      "id, shopify_order_number, total, cliente_email, cliente_nombre, forma_pago, estado_pago, productos, regalo_bandana"
+      "id, shopify_order_number, total, cliente_email, cliente_nombre, forma_pago, estado_pago, productos, regalo_bandana, regalo_bandanas"
     )
     .eq("id", pedidoId)
     .maybeSingle();
@@ -83,8 +83,13 @@ export async function POST(request: Request) {
   const esModoPrueba = process.env.MERCADOPAGO_MODO_PRUEBA === "true";
   const numero = pedido.shopify_order_number ?? pedido.id;
   const productos = Array.isArray(pedido.productos) ? (pedido.productos as ItemPedido[]) : [];
-  const regalo = await getVariantePorSlug(supabase, pedido.regalo_bandana);
-  const tituloPago = construirTituloPago(numero, productos, regalo?.nombre ?? null);
+  const slugsBandanas = Array.isArray(pedido.regalo_bandanas)
+    ? (pedido.regalo_bandanas as { slug: string }[]).map((b) => b.slug)
+    : pedido.regalo_bandana
+      ? [pedido.regalo_bandana]
+      : [];
+  const regalos = await getVariantesPorSlugs(supabase, slugsBandanas);
+  const tituloPago = construirTituloPago(numero, productos, regalos.map((r) => r.nombre));
 
   try {
     const preference = await getMercadoPagoPreferenceClient().create({

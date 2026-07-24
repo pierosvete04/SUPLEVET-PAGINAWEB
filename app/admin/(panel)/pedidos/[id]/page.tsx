@@ -26,7 +26,7 @@ import {
   type ItemPedido,
   type PedidoAdmin,
 } from "@/lib/data/pedidos-admin";
-import { getVariantePorSlug, type RegaloVariante } from "@/lib/regalo-variantes";
+import { getVariantesPorSlugs, type RegaloVariante } from "@/lib/regalo-variantes";
 import { COURIER_POR_DEFECTO, COURIERS } from "@/lib/couriers";
 import {
   DireccionEnvioCard,
@@ -36,7 +36,7 @@ import {
 export default function AdminPedidoDetallePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = usePromise(params);
   const [pedido, setPedido] = useState<PedidoAdmin | null>(null);
-  const [bandanaRegalo, setBandanaRegalo] = useState<RegaloVariante | null>(null);
+  const [bandanasRegalo, setBandanasRegalo] = useState<RegaloVariante[]>([]);
   const [imagenesPorSlug, setImagenesPorSlug] = useState<Record<string, string>>({});
   const [cargando, setCargando] = useState(true);
   const [actualizando, setActualizando] = useState(false);
@@ -46,7 +46,13 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
     const supabase = createClient();
     const { data } = await supabase.from("pedidos").select("*").eq("id", id).single();
     setPedido(data as PedidoAdmin);
-    setBandanaRegalo(await getVariantePorSlug(supabase, (data as PedidoAdmin | null)?.regalo_bandana ?? null));
+    const p = data as PedidoAdmin | null;
+    const slugsBandanas = p?.regalo_bandanas?.length
+      ? p.regalo_bandanas.map((b) => b.slug)
+      : p?.regalo_bandana
+        ? [p.regalo_bandana]
+        : [];
+    setBandanasRegalo(await getVariantesPorSlugs(supabase, slugsBandanas));
     await cargarImagenes(supabase, (data as PedidoAdmin | null)?.productos ?? []);
     setCargando(false);
   }
@@ -194,13 +200,13 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
                 <span>Total</span>
                 <span className="text-secondary">S/.{Number(pedido.total).toFixed(2)}</span>
               </div>
-              {bandanaRegalo && (
-                <div className="mt-2 flex items-center gap-3 rounded-md bg-soft-gray p-2.5">
+              {bandanasRegalo.map((bandana, i) => (
+                <div key={`${bandana.slug}-${i}`} className="mt-2 flex items-center gap-3 rounded-md bg-soft-gray p-2.5">
                   <div className="relative h-10 w-10 shrink-0 overflow-hidden rounded-md bg-white">
-                    {bandanaRegalo.imagen && (
+                    {bandana.imagen && (
                       <Image
-                        src={bandanaRegalo.imagen}
-                        alt={`Bandana ${bandanaRegalo.nombre}`}
+                        src={bandana.imagen}
+                        alt={`Bandana ${bandana.nombre}`}
                         fill
                         className="object-cover"
                         sizes="40px"
@@ -209,10 +215,10 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
                   </div>
                   <p className="flex items-center gap-1.5 text-sm">
                     <Gift className="h-4 w-4 shrink-0 text-secondary" strokeWidth={1.75} />
-                    Regalo: <strong>Bandana {bandanaRegalo.nombre}</strong>
+                    Regalo: <strong>Bandana {bandana.nombre} — Talla {bandana.talla}</strong>
                   </p>
                 </div>
-              )}
+              ))}
             </CardContent>
           </Card>
 
