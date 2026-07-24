@@ -19,6 +19,7 @@ const policyLinks = [
   { label: "Política de Envío", href: "/legal/envios" },
   { label: "Política de Devoluciones", href: "/legal/devoluciones" },
   { label: "Términos del Servicio", href: "/legal/terminos" },
+  { label: "Reglamento del Portal y SuplePoints", href: "/legal/reglamento-portal" },
   { label: "Preferencias de Cookies", href: "/legal/cookies" },
 ];
 

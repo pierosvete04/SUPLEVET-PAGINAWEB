@@ -14,6 +14,7 @@ const PAGINAS_ESTATICAS = [
   "/legal/envios",
   "/legal/devoluciones",
   "/legal/terminos",
+  "/legal/reglamento-portal",
   "/legal/cookies",
   "/legal/libro-de-reclamaciones",
 ];

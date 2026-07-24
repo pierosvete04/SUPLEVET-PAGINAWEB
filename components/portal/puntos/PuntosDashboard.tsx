@@ -295,7 +295,12 @@ export function PuntosDashboard({ user }: PuntosDashboardProps) {
           <p className="z-10 mt-3 max-w-sm text-center text-[11px] leading-snug text-white/40">
             Tu <strong className="text-white/60">saldo canjeable</strong> baja al usar recompensas. Tu{" "}
             <strong className="text-white/60">histórico</strong> es todo lo que ganaste en total y define tu nivel — el
-            nivel no baja al canjear. Ambos se reinician cada 1 de enero.
+            nivel no baja al canjear. Ambos se reinician cada 1 de enero. Los puntos son personales y no se
+            pueden transferir a otra cuenta.{" "}
+            <a href="/legal/reglamento-portal" className="underline decoration-white/30 underline-offset-2 hover:text-white/70">
+              Ver reglamento completo
+            </a>
+            .
           </p>
         </div>
 

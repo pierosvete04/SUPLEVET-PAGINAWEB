@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 
 export default function TerminosPage() {
   return (
-    <LegalDoc titulo="Términos y Condiciones del Servicio" actualizado="5 de julio de 2026">
+    <LegalDoc titulo="Términos y Condiciones del Servicio" actualizado="24 de julio de 2026">
       <p>
         Bienvenido a Suplevet. Al acceder y utilizar nuestra tienda en línea y nuestros servicios,
         aceptas los siguientes Términos y Condiciones de Servicio. Te recomendamos leerlos
@@ -99,40 +99,56 @@ export default function TerminosPage() {
         .
       </p>
 
-      <h2>6. Garantía de productos</h2>
+      <h2>6. Programa SuplePoints y Portal de Clientes</h2>
+      <p>
+        Al crear una cuenta en Suplevet accedes al Portal de Clientes y al programa de fidelización
+        SuplePoints. Los SuplePoints son puntos sin valor monetario, personales e intransferibles:
+        no pueden transferirse, cederse ni combinarse entre distintas cuentas de cliente. Cada
+        cuenta se reinicia el 1 de enero de cada año.
+      </p>
+      <p>
+        Consulta el reglamento completo, incluyendo niveles, formas de ganar puntos y condiciones
+        de canje, en nuestro{" "}
+        <a href="/legal/reglamento-portal" className="font-bold text-secondary">
+          Reglamento del Portal de Clientes y SuplePoints
+        </a>
+        .
+      </p>
+
+      <h2>7. Garantía de productos</h2>
       <p>
         Suplevet garantiza que todos sus productos son 100% originales y cumplen con estándares de
         calidad. No ofrecemos garantía en caso de uso inadecuado, almacenamiento incorrecto o
         expiración del producto.
       </p>
 
-      <h2>7. Responsabilidad y uso del producto</h2>
+      <h2>8. Responsabilidad y uso del producto</h2>
       <p>
         Suplevet no sustituye el diagnóstico veterinario. Todos los productos deben ser
         administrados según las indicaciones del empaque o recomendación de un veterinario. No nos
         hacemos responsables por efectos adversos derivados del mal uso del producto.
       </p>
 
-      <h2>8. Protección de datos personales</h2>
+      <h2>9. Protección de datos personales</h2>
       <p>
         Suplevet protege la privacidad de sus clientes conforme a la Ley de Protección de Datos
         Personales. No compartimos información con terceros sin consentimiento del cliente. La
         información de pago está protegida con protocolos de seguridad SSL.
       </p>
 
-      <h2>9. Propiedad intelectual</h2>
+      <h2>10. Propiedad intelectual</h2>
       <p>
         Todos los contenidos, imágenes, textos y diseños de Suplevet están protegidos por derechos
         de autor. Está prohibida la reproducción total o parcial del contenido sin autorización.
       </p>
 
-      <h2>10. Modificaciones y cambios en los términos</h2>
+      <h2>11. Modificaciones y cambios en los términos</h2>
       <p>
         Nos reservamos el derecho de modificar estos términos en cualquier momento. Los cambios
         entrarán en vigor desde su publicación en la web.
       </p>
 
-      <h2>11. Contacto y atención al cliente</h2>
+      <h2>12. Contacto y atención al cliente</h2>
       <p>Si tienes alguna duda sobre nuestros términos y condiciones, puedes contactarnos en:</p>
       <ul>
         <li>Correo: ventas@suplevet.pe</li>
