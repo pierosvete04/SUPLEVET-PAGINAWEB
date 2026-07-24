@@ -59,15 +59,14 @@ export default async function NosotrosPage() {
           atenuada y comparte peso con la imagen, ya recortada en orgánico. */}
       <section className="relative overflow-hidden bg-gradient-to-br from-secondary to-[#0f1b2e]">
         <PageBreadcrumbs items={[{ label: "Nosotros" }]} overlay />
-        <HuellasFondo id="huellas-hero" className="text-white/[0.05]" />
         <div className="pointer-events-none absolute -right-24 top-1/3 h-72 w-72 rounded-full bg-accent/10 blur-3xl" />
 
-        <div className="relative mx-auto grid max-w-container items-center gap-8 px-mobile-margin pb-10 pt-14 md:grid-cols-[1.05fr_0.95fr] md:gap-gutter md:px-gutter md:pb-16 md:pt-16">
+        <div className="relative mx-auto grid max-w-container items-center gap-8 px-mobile-margin pb-12 pt-16 text-center md:grid-cols-[1.05fr_0.95fr] md:gap-gutter md:px-gutter md:pb-16 md:pt-16 md:text-left">
           <ScrollReveal>
-            <p className="font-impact text-xl leading-none tracking-wide text-sky md:text-3xl">
+            <p className="font-impact text-2xl leading-none tracking-wide text-sky md:text-3xl">
               SOBRE NOSOTROS
             </p>
-            <h1 className="mt-3 font-display text-2xl font-bold leading-tight text-white md:text-[2.6rem]">
+            <h1 className="mt-4 font-display text-4xl font-bold leading-tight text-white sm:text-5xl md:text-[2.9rem] lg:text-6xl">
               {config?.nosotros_hero_titulo}
             </h1>
           </ScrollReveal>
@@ -75,7 +74,7 @@ export default async function NosotrosPage() {
           {config?.nosotros_hero_imagen && (
             <ScrollReveal delay={0.15}>
               <div
-                className={`relative mx-auto aspect-square w-full max-w-[220px] overflow-hidden shadow-2xl sm:max-w-xs md:max-w-none ${BLOB_A}`}
+                className={`relative mx-auto aspect-square w-full max-w-[260px] overflow-hidden shadow-2xl sm:max-w-xs md:max-w-none ${BLOB_A}`}
               >
                 <Image
                   src={config.nosotros_hero_imagen}
@@ -94,8 +93,6 @@ export default async function NosotrosPage() {
       {/* Cita + Origen: la frase abre el relato y el origen lo desarrolla, en la
           misma sección para que se lean como una sola voz. */}
       <section className="relative overflow-hidden bg-white py-section-y">
-        <HuellasFondo id="huellas-origen" className="text-secondary/[0.04]" />
-
         <div className="relative mx-auto max-w-container px-mobile-margin md:px-gutter">
           <ScrollReveal className="mx-auto max-w-3xl text-center">
             <p className="font-display text-2xl font-bold leading-snug text-secondary md:text-4xl">
@@ -160,7 +157,6 @@ export default async function NosotrosPage() {
 
       {valores.length > 0 && (
         <section className="relative overflow-hidden bg-white py-section-y">
-          <HuellasFondo id="huellas-valores" className="text-secondary/[0.04]" />
           <div className="relative mx-auto max-w-container px-mobile-margin md:px-gutter">
             <ScrollReveal className="text-center">
               <p className="font-impact text-sm tracking-widest text-vitality-orange-ink">
@@ -210,7 +206,6 @@ export default async function NosotrosPage() {
           su lado: la imagen se ve entera y el titular no depende de un velo. */}
       {config?.nosotros_overlay_imagen && (
         <section className="relative overflow-hidden bg-soft-gray py-section-y">
-          <HuellasFondo id="huellas-compromiso" className="text-secondary/[0.04]" />
           <div className="relative mx-auto grid max-w-container items-center gap-10 px-mobile-margin md:grid-cols-2 md:gap-gutter md:px-gutter">
             <ScrollReveal>
               <div className={`relative aspect-square overflow-hidden shadow-xl ${BLOB_B}`}>
