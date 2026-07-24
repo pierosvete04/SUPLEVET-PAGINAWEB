@@ -4,7 +4,8 @@ import { useEffect, useState, type ReactNode } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { acreditarPuntos } from "@/lib/data/portal/puntos";
-import type { Mascota } from "@/lib/data/portal/mascotas";
+import { COLORES_MASCOTA, type Familiar, type Mascota } from "@/lib/data/portal/mascotas";
+import { useRazasSugeridas } from "@/lib/portal/useRazasSugeridas";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,12 +45,21 @@ const VACIO = {
   fecha_nacimiento: "",
   peso_kg: "",
   genero: "" as "" | Mascota["genero"],
-  historia: "",
   descripcion: "",
+  familiares: [] as Familiar[],
   instagram_url: "",
   facebook_url: "",
   tiktok_url: "",
+  color_primario: "",
+  color_secundario: "",
+  color_texto: "",
+  color_etiqueta: "",
 };
+
+const PRESETS_NEUTROS = [
+  { label: "Blanco", valor: "#ffffff" },
+  { label: "Navy oscuro", valor: "#1e3a5f" },
+];
 
 function CampoLabel({ htmlFor, icono, children }: { htmlFor?: string; icono: string; children: ReactNode }) {
   return (
@@ -60,6 +70,41 @@ function CampoLabel({ htmlFor, icono, children }: { htmlFor?: string; icono: str
       <span className="material-symbols-rounded text-[14px] text-portal-orange">{icono}</span>
       {children}
     </label>
+  );
+}
+
+function SelectorColor({
+  valor,
+  onChange,
+  presets,
+}: {
+  valor: string;
+  onChange: (valor: string) => void;
+  presets: { label: string; valor: string }[];
+}) {
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      {presets.map(({ label, valor: v }) => (
+        <button
+          key={v}
+          type="button"
+          aria-label={label}
+          aria-pressed={valor === v}
+          onClick={() => onChange(v)}
+          className={`h-7 w-7 shrink-0 rounded-full border-2 transition-transform active:scale-90 ${
+            valor === v ? "scale-110 border-portal-navy shadow-md" : "border-white shadow-sm hover:scale-105"
+          }`}
+          style={{ backgroundColor: v }}
+        />
+      ))}
+      <input
+        type="color"
+        aria-label="Color personalizado"
+        value={valor}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-7 w-7 shrink-0 cursor-pointer rounded-full border-2 border-portal-surface-variant bg-transparent p-0"
+      />
+    </div>
   );
 }
 
@@ -76,6 +121,7 @@ export function MascotaFormDialog({
   const [fotoPreview, setFotoPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
+  const razasSugeridas = useRazasSugeridas(open ? form.especie : "otro");
 
   useEffect(() => {
     if (!open) return;
@@ -89,11 +135,15 @@ export function MascotaFormDialog({
             fecha_nacimiento: mascota.fecha_nacimiento ?? "",
             peso_kg: String(mascota.peso_kg ?? ""),
             genero: mascota.genero ?? "",
-            historia: mascota.historia ?? "",
             descripcion: mascota.descripcion ?? "",
+            familiares: mascota.familiares ?? [],
             instagram_url: mascota.instagram_url ?? "",
             facebook_url: mascota.facebook_url ?? "",
             tiktok_url: mascota.tiktok_url ?? "",
+            color_primario: mascota.color_primario ?? "",
+            color_secundario: mascota.color_secundario ?? "",
+            color_texto: mascota.color_texto ?? "",
+            color_etiqueta: mascota.color_etiqueta ?? "",
           }
         : VACIO
     );
@@ -138,11 +188,17 @@ export function MascotaFormDialog({
       fecha_nacimiento: form.fecha_nacimiento || null,
       peso_kg: peso,
       genero: form.genero || null,
-      historia: form.historia.trim() || null,
       descripcion: form.descripcion.trim() || null,
+      familiares: form.familiares
+        .map((f) => ({ relacion: f.relacion.trim(), nombre: f.nombre.trim() }))
+        .filter((f) => f.relacion && f.nombre),
       instagram_url: normalizarUrl(form.instagram_url),
       facebook_url: normalizarUrl(form.facebook_url),
       tiktok_url: normalizarUrl(form.tiktok_url),
+      color_primario: form.color_primario || null,
+      color_secundario: form.color_secundario || null,
+      color_texto: form.color_texto || null,
+      color_etiqueta: form.color_etiqueta || null,
     };
 
     if (mascota) {
@@ -278,11 +334,20 @@ export function MascotaFormDialog({
               </CampoLabel>
               <Input
                 id="mascota-raza"
+                list="mascota-razas-sugeridas"
+                autoComplete="off"
                 value={form.raza}
                 onChange={(e) => setForm((f) => ({ ...f, raza: e.target.value }))}
                 placeholder="Golden Retriever"
                 className={inputBase}
               />
+              {razasSugeridas.length > 0 && (
+                <datalist id="mascota-razas-sugeridas">
+                  {razasSugeridas.map((r) => (
+                    <option key={r} value={r} />
+                  ))}
+                </datalist>
+              )}
             </div>
             <div className="grid gap-1.5">
               <CampoLabel htmlFor="mascota-peso" icono="monitor_weight">
@@ -381,6 +446,54 @@ export function MascotaFormDialog({
           </div>
 
           <div className="grid gap-1.5">
+            <CampoLabel icono="diversity_3">Familiares (opcional)</CampoLabel>
+            <p className="text-xs text-portal-muted">Papá, mamá, hermanos… tú eliges la relación.</p>
+            <div className="flex flex-col gap-2">
+              {form.familiares.map((familiar, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <Input
+                    value={familiar.relacion}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        familiares: f.familiares.map((fam, j) => (j === i ? { ...fam, relacion: e.target.value } : fam)),
+                      }))
+                    }
+                    placeholder="Papá, tío…"
+                    className={`${inputBase} w-28 shrink-0`}
+                  />
+                  <Input
+                    value={familiar.nombre}
+                    onChange={(e) =>
+                      setForm((f) => ({
+                        ...f,
+                        familiares: f.familiares.map((fam, j) => (j === i ? { ...fam, nombre: e.target.value } : fam)),
+                      }))
+                    }
+                    placeholder="Nombre"
+                    className={`${inputBase} flex-1`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, familiares: f.familiares.filter((_, j) => j !== i) }))}
+                    aria-label="Quitar familiar"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-portal-muted hover:bg-red-50 hover:text-portal-error"
+                  >
+                    <span className="material-symbols-rounded text-[18px]">close</span>
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => setForm((f) => ({ ...f, familiares: [...f.familiares, { relacion: "", nombre: "" }] }))}
+                className="flex items-center justify-center gap-1 rounded-2xl border border-dashed border-portal-surface-variant py-2 text-xs font-semibold text-portal-muted transition-colors hover:border-portal-teal-mid hover:text-portal-teal-mid"
+              >
+                <span className="material-symbols-rounded text-[16px]">add</span> Agregar familiar
+              </button>
+            </div>
+          </div>
+
+          <div className="grid gap-1.5">
             <CampoLabel htmlFor="mascota-descripcion" icono="auto_stories">
               Personalidad (opcional)
             </CampoLabel>
@@ -394,18 +507,124 @@ export function MascotaFormDialog({
             />
           </div>
 
-          <div className="grid gap-1.5">
-            <CampoLabel htmlFor="mascota-historia" icono="healing">
-              Condiciones médicas (opcional)
-            </CampoLabel>
-            <Textarea
-              id="mascota-historia"
-              rows={3}
-              placeholder="Ej: alergia al pollo, displasia de cadera, cirugía en 2024…"
-              value={form.historia}
-              onChange={(e) => setForm((f) => ({ ...f, historia: e.target.value }))}
-              className="rounded-2xl border-portal-surface-variant bg-portal-surface-low/40 px-4 py-3 text-sm text-portal-navy placeholder:text-portal-muted focus-visible:ring-2 focus-visible:ring-portal-teal-light"
-            />
+          <div className="grid gap-3 rounded-2xl border border-portal-surface-variant bg-portal-surface-low/30 p-4">
+            <div className="flex items-center justify-between">
+              <CampoLabel icono="palette">Personalización de color</CampoLabel>
+              {(form.color_primario || form.color_texto || form.color_etiqueta) && (
+                <button
+                  type="button"
+                  onClick={() =>
+                    setForm((f) => ({ ...f, color_primario: "", color_secundario: "", color_texto: "", color_etiqueta: "" }))
+                  }
+                  className="text-xs font-semibold text-portal-muted underline-offset-2 hover:text-portal-error hover:underline"
+                >
+                  Restablecer todo
+                </button>
+              )}
+            </div>
+
+            {/* Vista previa en vivo — combina los 3 colores tal como se ven en el perfil */}
+            <div
+              className="flex h-16 w-full items-center gap-2 rounded-2xl border border-portal-surface-variant px-4 shadow-inner transition-colors"
+              style={{
+                background: form.color_primario
+                  ? form.color_secundario
+                    ? `linear-gradient(135deg, ${form.color_primario}, ${form.color_secundario})`
+                    : form.color_primario
+                  : "linear-gradient(135deg, var(--portal-navy), var(--portal-navy-dark))",
+                color: form.color_texto || "#ffffff",
+              }}
+            >
+              <span className="font-display text-base font-semibold">{form.nombre || "Vista previa"}</span>
+              <span
+                className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
+                style={{
+                  color: form.color_etiqueta || form.color_texto || "#ffffff",
+                  backgroundColor: `color-mix(in srgb, ${form.color_etiqueta || form.color_texto || "#ffffff"} 20%, transparent)`,
+                }}
+              >
+                Activo
+              </span>
+            </div>
+
+            {/* 1. Portada */}
+            <div className="grid gap-1.5 border-t border-portal-surface-variant pt-3">
+              <span className="text-xs font-bold text-portal-navy">1. Color de portada</span>
+              <p className="text-xs text-portal-muted">El fondo de la tarjeta de tu mascota.</p>
+              <div className="flex flex-wrap items-center gap-2">
+                {COLORES_MASCOTA.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    aria-label={`Elegir color ${color}`}
+                    aria-pressed={form.color_primario === color}
+                    onClick={() => setForm((f) => ({ ...f, color_primario: color }))}
+                    className={`h-7 w-7 shrink-0 rounded-full border-2 transition-transform active:scale-90 ${
+                      form.color_primario === color ? "scale-110 border-portal-navy shadow-md" : "border-white shadow-sm hover:scale-105"
+                    }`}
+                    style={{ backgroundColor: color }}
+                  />
+                ))}
+                <input
+                  type="color"
+                  aria-label="Color de portada personalizado"
+                  value={form.color_primario || "#1e3a5f"}
+                  onChange={(e) => setForm((f) => ({ ...f, color_primario: e.target.value }))}
+                  className="h-7 w-7 shrink-0 cursor-pointer rounded-full border-2 border-portal-surface-variant bg-transparent p-0"
+                />
+                {form.color_primario && (
+                  <button
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, color_primario: "", color_secundario: "" }))}
+                    className="text-xs font-semibold text-portal-muted underline-offset-2 hover:text-portal-error hover:underline"
+                  >
+                    Quitar
+                  </button>
+                )}
+              </div>
+              {form.color_primario && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-portal-muted">Degradado con:</span>
+                  {COLORES_MASCOTA.filter((c) => c !== form.color_primario).map((color) => (
+                    <button
+                      key={color}
+                      type="button"
+                      aria-label={`Degradado hacia ${color}`}
+                      aria-pressed={form.color_secundario === color}
+                      onClick={() =>
+                        setForm((f) => ({ ...f, color_secundario: f.color_secundario === color ? "" : color }))
+                      }
+                      className={`h-6 w-6 shrink-0 rounded-full border-2 transition-transform active:scale-90 ${
+                        form.color_secundario === color ? "scale-110 border-portal-navy shadow-md" : "border-white shadow-sm hover:scale-105"
+                      }`}
+                      style={{ backgroundColor: color }}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* 2. Letra */}
+            <div className="grid gap-1.5 border-t border-portal-surface-variant pt-3">
+              <span className="text-xs font-bold text-portal-navy">2. Color de letra</span>
+              <p className="text-xs text-portal-muted">El nombre y la descripción de tu mascota.</p>
+              <SelectorColor
+                valor={form.color_texto || "#ffffff"}
+                onChange={(valor) => setForm((f) => ({ ...f, color_texto: valor }))}
+                presets={PRESETS_NEUTROS}
+              />
+            </div>
+
+            {/* 3. Etiquetas */}
+            <div className="grid gap-1.5 border-t border-portal-surface-variant pt-3">
+              <span className="text-xs font-bold text-portal-navy">3. Color de etiquetas</span>
+              <p className="text-xs text-portal-muted">La insignia “Activo”, el peso y el cumpleaños.</p>
+              <SelectorColor
+                valor={form.color_etiqueta || form.color_texto || "#ffffff"}
+                onChange={(valor) => setForm((f) => ({ ...f, color_etiqueta: valor }))}
+                presets={[...PRESETS_NEUTROS, ...COLORES_MASCOTA.map((c) => ({ label: c, valor: c }))]}
+              />
+            </div>
           </div>
 
           <div className="grid gap-1.5">

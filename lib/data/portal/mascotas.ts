@@ -1,3 +1,23 @@
+export type TipoCondicionMedica = "alergia" | "enfermedad_cronica" | "cirugia" | "otro";
+
+export interface CondicionMedica {
+  tipo: TipoCondicionMedica;
+  descripcion: string;
+  fecha: string | null;
+}
+
+export const TIPOS_CONDICION_MEDICA: Record<TipoCondicionMedica, string> = {
+  alergia: "Alergia",
+  enfermedad_cronica: "Enfermedad crónica",
+  cirugia: "Cirugía",
+  otro: "Otro",
+};
+
+export interface Familiar {
+  relacion: string;
+  nombre: string;
+}
+
 export interface Mascota {
   id: string;
   cliente_id: string;
@@ -8,12 +28,17 @@ export interface Mascota {
   fecha_nacimiento: string | null;
   peso_kg: number;
   genero: "macho" | "hembra" | null;
-  historia: string | null;
+  condiciones_medicas: CondicionMedica[];
   descripcion: string | null;
   foto_url: string | null;
   instagram_url: string | null;
   facebook_url: string | null;
   tiktok_url: string | null;
+  color_primario: string | null;
+  color_secundario: string | null;
+  color_texto: string | null;
+  color_etiqueta: string | null;
+  familiares: Familiar[];
   activa: boolean;
   created_at: string;
 }

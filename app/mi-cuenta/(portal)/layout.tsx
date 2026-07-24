@@ -42,7 +42,7 @@ export default async function PortalLayout({ children }: { children: React.React
       <div className="portal-shell flex min-h-screen font-body">
         <PortalSidebar usuario={usuario} />
         <main className="portal-main-content relative min-w-0 flex-1 overflow-x-hidden p-6 md:p-10">
-          <div className="max-w-6xl space-y-10">{children}</div>
+          <div className="w-full space-y-10">{children}</div>
         </main>
         <PortalMobileNav />
       </div>

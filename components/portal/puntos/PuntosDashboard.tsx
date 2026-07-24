@@ -2,9 +2,24 @@
 
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
-import { Check, Copy } from "lucide-react";
+import {
+  Cake,
+  Check,
+  ChevronRight,
+  ClipboardList,
+  Copy,
+  Lock,
+  PartyPopper,
+  PawPrint,
+  Star,
+  Trophy,
+  UserCheck,
+  Users,
+  ShoppingCart,
+  type LucideIcon,
+} from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { acreditarPuntos, type SuplepuntosCliente, type SuplepuntosConfig } from "@/lib/data/portal/puntos";
+import { acreditarPuntos, type SuplepuntosCliente, type SuplepuntosConfig, type TipoSuplepuntosConfig } from "@/lib/data/portal/puntos";
 import { formatFecha } from "@/lib/portal/formato";
 import { NOMBRE_NIVEL, SIGUIENTE_NIVEL, UMBRAL_NIVEL } from "@/lib/data/portal/logros";
 import { gsap } from "@/lib/gsap";
@@ -36,17 +51,12 @@ interface Transaccion {
   created_at: string;
 }
 
-const ICONOS_CANJE: Record<string, string> = {
-  canje_descuento_5: "💰",
-  canje_descuento_10: "💸",
-  canje_descuento_20: "🤑",
-  canje_descuento_30: "💎",
-  canje_envio_lima: "🚚",
-  canje_envio_costa_sierra: "🚛",
-  canje_envio_selva: "✈️",
-  canje_muestra: "🎁",
-  canje_bolsa_150: "🛍️",
-  canje_bolsa_250: "🛒",
+const ACENTO_TIPO_CANJE: Record<TipoSuplepuntosConfig, { borde: string; texto: string }> = {
+  accion: { borde: "border-l-portal-orange", texto: "text-portal-orange" },
+  canje_descuento: { borde: "border-l-amber-500", texto: "text-amber-600" },
+  canje_envio: { borde: "border-l-sky-500", texto: "text-sky-600" },
+  canje_producto: { borde: "border-l-fuchsia-500", texto: "text-fuchsia-600" },
+  multiplicador: { borde: "border-l-indigo-500", texto: "text-indigo-600" },
 };
 
 const ICONOS_HISTORIAL: Record<string, string> = {
@@ -64,7 +74,7 @@ const NIVELES_CAMINO = [
   { clave: "diamond", nombre: "Diamond", desc: "Beneficios VIP", icono: "diamond" },
 ] as const;
 
-const CIRCUNFERENCIA_ANILLO = 2 * Math.PI * 80;
+const CIRCUNFERENCIA_ANILLO = 2 * Math.PI * 98;
 
 interface PuntosDashboardProps {
   user: User;
@@ -79,17 +89,17 @@ const COLORES_GANAR = [
   "from-blue-300 to-blue-500",
 ];
 
-const EMOJIS_ACCION: Record<string, string> = {
-  primera_compra: "🛒",
-  mascota_1: "🐾",
-  mascota_2_3: "🐾",
-  referido: "👥",
-  resena: "⭐",
-  cumpleanos_mascota: "🎂",
-  perfil_completo: "👤",
-  encuesta: "📝",
-  aniversario_cliente: "🎉",
-  milestone_6_compras: "🏆",
+const ICONOS_ACCION: Record<string, LucideIcon> = {
+  primera_compra: ShoppingCart,
+  mascota_1: PawPrint,
+  mascota_2_3: PawPrint,
+  referido: Users,
+  resena: Star,
+  cumpleanos_mascota: Cake,
+  perfil_completo: UserCheck,
+  encuesta: ClipboardList,
+  aniversario_cliente: PartyPopper,
+  milestone_6_compras: Trophy,
 };
 
 export function PuntosDashboard({ user }: PuntosDashboardProps) {
@@ -198,7 +208,7 @@ export function PuntosDashboard({ user }: PuntosDashboardProps) {
   }
 
   if (cargando || !puntos) {
-    return <BrandedLoader />;
+    return <BrandedLoader fullScreen />;
   }
 
   const nivel = puntos.nivel;
@@ -222,21 +232,21 @@ export function PuntosDashboard({ user }: PuntosDashboardProps) {
         <div className="relative flex min-h-[320px] flex-col items-center justify-center overflow-hidden rounded-2xl portal-glass-dark p-8 shadow-xl lg:col-span-3">
           <div className="absolute -left-20 -top-20 h-64 w-64 rounded-full bg-portal-teal-mid opacity-30 mix-blend-screen blur-3xl" />
           <div className="absolute -bottom-20 -right-20 h-64 w-64 rounded-full bg-portal-teal-mid opacity-30 mix-blend-screen blur-3xl" />
-          <div className="relative z-10 mb-6 h-48 w-48">
-            <svg className="absolute inset-0 drop-shadow-lg" height="192" viewBox="0 0 192 192" width="192">
-              <circle cx="96" cy="96" fill="none" r="80" stroke="rgba(255,255,255,0.1)" strokeWidth="12" />
+          <div className="relative z-10 mb-6 h-56 w-56">
+            <svg className="absolute inset-0 drop-shadow-lg" height="224" viewBox="0 0 224 224" width="224">
+              <circle cx="112" cy="112" fill="none" r="98" stroke="rgba(255,255,255,0.1)" strokeWidth="14" />
               <circle
                 className="transition-all duration-1000 ease-out"
-                cx="96"
-                cy="96"
+                cx="112"
+                cy="112"
                 fill="none"
-                r="80"
+                r="98"
                 stroke="url(#gPts)"
                 strokeDasharray={CIRCUNFERENCIA_ANILLO}
                 strokeDashoffset={dashOffset}
                 strokeLinecap="round"
-                strokeWidth="12"
-                transform="rotate(-90 96 96)"
+                strokeWidth="14"
+                transform="rotate(-90 112 112)"
               />
               <defs>
                 <linearGradient id="gPts" x1="0" x2="1" y1="0" y2="1">
@@ -245,12 +255,12 @@ export function PuntosDashboard({ user }: PuntosDashboardProps) {
                 </linearGradient>
               </defs>
             </svg>
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
-              <div className="mb-1 text-xs font-bold uppercase tracking-widest text-white/70">Balance</div>
+            <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center text-white">
+              <div className="mb-1 text-[10px] font-bold uppercase tracking-wide text-white/70">Saldo canjeable</div>
               <div id="pts-display" className="font-display text-5xl tracking-wide drop-shadow-md">
                 0
               </div>
-              <div className="mt-1 text-xs text-white/60">SuplePoints</div>
+              <div className="mt-1 text-[11px] text-white/60">pts</div>
             </div>
           </div>
           <div className="z-10 w-full max-w-sm rounded-xl portal-glass p-4">
@@ -260,6 +270,10 @@ export function PuntosDashboard({ user }: PuntosDashboardProps) {
                 {NOMBRE_NIVEL[nivel]}
               </span>
               <span className="text-xs text-white/60">{siguienteNivel ? NOMBRE_NIVEL[siguienteNivel] : "Máximo"}</span>
+            </div>
+            <div className="mb-1 flex items-center gap-1 text-[10px] uppercase tracking-wider text-white/40">
+              <span className="material-symbols-rounded text-[13px]">military_tech</span>
+              Puntos histórico — no bajan al canjear
             </div>
             <div className="mb-2 h-2 overflow-hidden rounded-full bg-white/10">
               <div
@@ -278,13 +292,18 @@ export function PuntosDashboard({ user }: PuntosDashboardProps) {
               </span>
             </div>
           </div>
+          <p className="z-10 mt-3 max-w-sm text-center text-[11px] leading-snug text-white/40">
+            Tu <strong className="text-white/60">saldo canjeable</strong> baja al usar recompensas. Tu{" "}
+            <strong className="text-white/60">histórico</strong> es todo lo que ganaste en total y define tu nivel — el
+            nivel no baja al canjear. Ambos se reinician cada 1 de enero.
+          </p>
         </div>
 
         <div className="flex flex-col justify-center rounded-2xl portal-glass-card p-6 lg:col-span-2">
           <div className="mb-6 flex items-center gap-2 font-display text-xl tracking-wide text-portal-navy">
             <span className="material-symbols-rounded text-portal-orange">route</span> Tu Camino
           </div>
-          <div className="relative space-y-4 before:absolute before:inset-y-4 before:left-6 before:w-0.5 before:bg-portal-surface-variant">
+          <div className="relative space-y-6 before:absolute before:inset-y-5 before:left-7 before:w-0.5 before:bg-portal-surface-variant">
             {NIVELES_CAMINO.map((n, i) => {
               const esActual = i === indiceNivelActual;
               const bloqueado = i > indiceNivelActual;
@@ -294,16 +313,16 @@ export function PuntosDashboard({ user }: PuntosDashboardProps) {
                   className={`group relative z-10 flex items-start gap-4 ${bloqueado ? "opacity-50 grayscale transition-all duration-300 hover:grayscale-0" : ""}`}
                 >
                   <div
-                    className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full border-2 shadow-sm transition-transform group-hover:scale-110 ${
+                    className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-full border-2 shadow-sm transition-transform group-hover:scale-110 ${
                       i === 0
                         ? "border-portal-surface-variant bg-portal-surface-low"
                         : `portal-level-${n.clave}`
                     } ${esActual ? "shadow-md ring-4 ring-yellow-400/20" : ""}`}
                   >
-                    <span className="material-symbols-rounded text-xl text-portal-navy/70">{n.icono}</span>
+                    <span className="material-symbols-rounded text-2xl text-portal-navy/70">{n.icono}</span>
                   </div>
-                  <div className="pt-1">
-                    <div className="flex items-center gap-2 font-bold text-portal-navy">
+                  <div className="pt-1.5">
+                    <div className="flex items-center gap-2 text-base font-bold text-portal-navy">
                       {n.nombre}
                       {esActual && (
                         <span className="rounded-full bg-yellow-400/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-yellow-800">
@@ -311,7 +330,7 @@ export function PuntosDashboard({ user }: PuntosDashboardProps) {
                         </span>
                       )}
                     </div>
-                    <div className="text-xs text-portal-muted">
+                    <div className="text-sm text-portal-muted">
                       {UMBRAL_NIVEL[n.clave]} pts · {n.desc}
                     </div>
                   </div>
@@ -333,23 +352,27 @@ export function PuntosDashboard({ user }: PuntosDashboardProps) {
           </p>
         ) : (
           <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6">
-            {formasGanar.map((f, i) => (
-              <div
-                key={f.id}
-                title={f.descripcion ?? undefined}
-                className="flex cursor-default flex-col items-center rounded-xl portal-glass-card border-b-4 border-b-transparent p-4 text-center transition-all duration-200 hover:-translate-y-1 hover:border-b-portal-orange hover:shadow-lg"
-              >
+            {formasGanar.map((f, i) => {
+              const Icono = ICONOS_ACCION[f.clave] ?? Star;
+              return (
                 <div
-                  className={`mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br text-2xl text-white shadow-md ${COLORES_GANAR[i % COLORES_GANAR.length]}`}
+                  key={f.id}
+                  title={f.descripcion ?? undefined}
+                  className="group flex cursor-default flex-col items-center rounded-2xl bg-white p-4 text-center shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_28px_-16px_rgba(15,23,42,0.25)] ring-1 ring-portal-surface-variant/60 transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_1px_2px_rgba(15,23,42,0.06),0_20px_36px_-14px_rgba(91,186,195,0.35)] hover:ring-portal-teal-mid/40"
                 >
-                  {EMOJIS_ACCION[f.clave] ?? "⭐"}
+                  <div
+                    className={`relative mb-3 flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br text-white shadow-md ${COLORES_GANAR[i % COLORES_GANAR.length]}`}
+                  >
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.4),transparent_60%)]" />
+                    <Icono className="relative h-5 w-5 transition-transform duration-300 group-hover:scale-110" strokeWidth={2} />
+                  </div>
+                  <div className="mb-1 text-sm font-bold leading-tight text-portal-navy">{f.nombre}</div>
+                  <div className="text-xs text-portal-muted">
+                    {f.puntos_otorgados != null ? `+${f.puntos_otorgados} pts` : "Variable"}
+                  </div>
                 </div>
-                <div className="mb-1 text-sm font-bold leading-tight text-portal-navy">{f.nombre}</div>
-                <div className="text-xs text-portal-muted">
-                  {f.puntos_otorgados != null ? `+${f.puntos_otorgados} pts` : "Variable"}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -369,50 +392,54 @@ export function PuntosDashboard({ user }: PuntosDashboardProps) {
             Sin canjes disponibles por ahora
           </p>
         ) : (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            {canjes.map((c) => {
+          <div className="overflow-hidden rounded-2xl bg-white shadow-[0_1px_2px_rgba(15,23,42,0.04),0_12px_28px_-16px_rgba(15,23,42,0.25)] ring-1 ring-portal-surface-variant/60">
+            {canjes.map((c, i) => {
               const puede = puntos.saldo_actual >= (c.puntos_requeridos ?? 0);
+              const acento = ACENTO_TIPO_CANJE[c.tipo];
+              const progreso = c.puntos_requeridos
+                ? Math.min(100, (puntos.saldo_actual / c.puntos_requeridos) * 100)
+                : 100;
               return (
                 <button
                   key={c.id}
                   type="button"
                   disabled={!puede}
                   onClick={() => setCanjeSeleccionado(c)}
-                  className={`group flex flex-col overflow-hidden rounded-xl portal-glass-card text-left transition-all duration-300 ${puede ? "cursor-pointer hover:shadow-lg" : "opacity-60"}`}
+                  className={`group relative flex w-full items-center gap-4 border-l-4 bg-white py-4 pl-4 pr-5 text-left transition-colors ${
+                    acento.borde
+                  } ${i > 0 ? "border-t border-t-portal-surface-variant/50" : ""} ${
+                    puede ? "cursor-pointer hover:bg-portal-surface-low/40" : "opacity-70"
+                  }`}
                 >
-                  <div className="relative flex h-32 items-center justify-center overflow-hidden bg-portal-surface-variant">
-                    <span
-                      className={`text-4xl drop-shadow-sm transition-transform duration-300 ${puede ? "group-hover:scale-110" : "grayscale"}`}
-                    >
-                      {ICONOS_CANJE[c.clave] ?? "🎁"}
-                    </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <h4 className="truncate text-sm font-bold text-portal-navy">{c.nombre}</h4>
+                      {!puede && <Lock className="h-3 w-3 shrink-0 text-portal-muted" strokeWidth={2.5} />}
+                    </div>
+                    {c.descripcion && <p className="truncate text-xs text-portal-muted">{c.descripcion}</p>}
                     {!puede && (
-                      <div className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-white">
-                        <span className="material-symbols-rounded text-xs text-portal-muted">lock</span>
+                      <div className="mt-1.5 h-1 max-w-[160px] overflow-hidden rounded-full bg-portal-surface-variant">
+                        <div
+                          className={`h-full rounded-full ${acento.borde.replace("border-l-", "bg-")} transition-all duration-700`}
+                          style={{ width: `${progreso}%` }}
+                        />
                       </div>
                     )}
                   </div>
-                  <div className="flex flex-1 flex-col p-4">
-                    <h4 className="mb-1 text-sm font-bold leading-tight text-portal-navy transition-colors group-hover:text-portal-orange">
-                      {c.nombre}
-                    </h4>
-                    {c.descripcion && (
-                      <p className="mb-3 flex-1 text-xs text-portal-muted line-clamp-2">{c.descripcion}</p>
-                    )}
-                    <div className="mt-auto flex items-center justify-between">
-                      <span className={`font-display text-xl tracking-wide ${puede ? "text-portal-orange" : "text-portal-muted"}`}>
-                        {c.puntos_requeridos} PTS
-                      </span>
-                      {puede ? (
-                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-portal-orange/10 text-portal-orange">
-                          <span className="material-symbols-rounded text-sm">shopping_cart</span>
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-medium text-portal-muted">
-                          Te faltan {(c.puntos_requeridos ?? 0) - puntos.saldo_actual}
-                        </span>
-                      )}
+                  <div className="flex shrink-0 items-center gap-3">
+                    <div className="text-right">
+                      <div className={`font-display text-lg leading-none tracking-wide ${puede ? acento.texto : "text-portal-navy/60"}`}>
+                        {c.puntos_requeridos}
+                      </div>
+                      <div className="text-[10px] font-semibold uppercase tracking-wider text-portal-muted">pts</div>
                     </div>
+                    {puede ? (
+                      <ChevronRight className="h-4 w-4 shrink-0 text-portal-muted transition-transform group-hover:translate-x-0.5 group-hover:text-portal-orange" />
+                    ) : (
+                      <span className="shrink-0 whitespace-nowrap text-[10px] font-semibold text-portal-muted">
+                        Faltan {(c.puntos_requeridos ?? 0) - puntos.saldo_actual}
+                      </span>
+                    )}
                   </div>
                 </button>
               );
@@ -514,8 +541,8 @@ export function PuntosDashboard({ user }: PuntosDashboardProps) {
           </DialogHeader>
           {canjeSeleccionado && (
             <div className="flex flex-col gap-3 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-portal-orange/10 text-4xl">
-                {ICONOS_CANJE[canjeSeleccionado.clave] ?? "🎁"}
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-portal-orange/10 text-portal-orange">
+                <span className="material-symbols-rounded text-3xl">redeem</span>
               </div>
               <p className="font-display text-lg font-bold text-portal-navy">{canjeSeleccionado.nombre}</p>
               <p className="font-body text-sm text-portal-muted">

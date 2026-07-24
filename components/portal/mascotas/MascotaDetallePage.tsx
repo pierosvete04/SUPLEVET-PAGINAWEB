@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -11,7 +11,10 @@ import { parseDetalleEventoSalud } from "@/lib/data/portal/mascotas";
 import { Button } from "@/components/ui/button";
 import { MascotaFormDialog } from "@/components/portal/mascotas/MascotaFormDialog";
 import { SaludEventoFormDialog } from "@/components/portal/mascotas/SaludEventoFormDialog";
+import { CondicionesMedicasCard } from "@/components/portal/mascotas/CondicionesMedicasCard";
+import { CondicionMedicaFormDialog } from "@/components/portal/mascotas/CondicionMedicaFormDialog";
 import { BrandedLoader } from "@/components/ui/branded-loader";
+import { FichaDocumentoImprimible } from "@/components/ficha/FichaDocumentoImprimible";
 
 interface TransaccionMini {
   id: string;
@@ -38,6 +41,8 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
   const [formSaludAbierto, setFormSaludAbierto] = useState(false);
   const [formMascotaAbierto, setFormMascotaAbierto] = useState(false);
   const [enlaceCopiado, setEnlaceCopiado] = useState(false);
+  const [condicionIndexEditar, setCondicionIndexEditar] = useState<number | null>(null);
+  const [formCondicionAbierto, setFormCondicionAbierto] = useState(false);
 
   const redesSociales = [
     { url: mascota.instagram_url, icono: "/icons/social/instagram.png", label: "Instagram" },
@@ -110,59 +115,62 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
         Mis Mascotas
       </Link>
 
-      {/* Encabezado exclusivo de impresión/PDF — la ficha debe identificar a
-          Suplevet y la fecha de generación cuando se lleva impresa al veterinario. */}
-      <div className="mb-6 hidden items-center justify-between border-b border-portal-surface-variant pb-4 print:flex">
-        <div className="flex items-center gap-2">
-          <Image src="/logos/icon-only/icon-outline-celeste.png" alt="Suplevet" width={32} height={32} />
-          <span className="font-display text-lg font-semibold text-portal-navy">Suplevet</span>
-        </div>
-        <div className="text-right text-xs text-portal-muted">
-          <p className="font-semibold text-portal-navy">Ficha de {mascota.nombre}</p>
-          <p>
-            Generada el{" "}
-            {new Date().toLocaleDateString("es-PE", { day: "2-digit", month: "long", year: "numeric" })}
-          </p>
-        </div>
-      </div>
+      {/* Documento de impresión/PDF — solo visible al imprimir, con su propio
+          diseño de ficha clínica (historial completo agrupado por tipo). */}
+      <FichaDocumentoImprimible mascota={mascota} eventos={eventos} />
 
       {/* Hero */}
-      <div className="relative overflow-hidden rounded-[17px] bg-portal-navy p-6 text-white">
-        <div className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-white/5" />
-        <div className="pointer-events-none absolute bottom-4 right-16 h-16 w-16 rounded-full bg-white/5" />
+      <div
+        className={`relative overflow-hidden rounded-[17px] p-6 text-[var(--mc-text)] shadow-[0_20px_40px_rgba(30,58,95,0.2)] print:hidden ${
+          mascota.color_primario ? "" : "bg-gradient-to-br from-portal-navy to-portal-navy-dark"
+        }`}
+        style={
+          {
+            ...(mascota.color_primario
+              ? {
+                  background: mascota.color_secundario
+                    ? `linear-gradient(135deg, ${mascota.color_primario}, ${mascota.color_secundario})`
+                    : mascota.color_primario,
+                }
+              : {}),
+            "--mc-text": mascota.color_texto || "#ffffff",
+            "--mc-tag": mascota.color_etiqueta || mascota.color_texto || "#ffffff",
+          } as CSSProperties
+        }
+      >
+        <div className="pointer-events-none absolute -right-10 -top-10 h-44 w-44 rounded-full bg-portal-teal-mid/20 blur-2xl" />
+        <div className="pointer-events-none absolute bottom-2 right-24 h-16 w-16 rounded-full bg-[color-mix(in_srgb,var(--mc-text)_5%,transparent)]" />
+        <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-portal-orange via-portal-teal-light to-portal-teal-mid" />
         <div className="relative z-10 flex flex-wrap items-center gap-4">
-          <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white/30 bg-portal-orange">
-            {mascota.foto_url ? (
-              <Image src={mascota.foto_url} alt={mascota.nombre} width={80} height={80} className="h-full w-full object-cover" />
-            ) : (
-              <Image src="/logos/icon-only/icon-outline-white.png" alt="" width={38} height={38} />
-            )}
+          <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-portal-orange to-portal-orange-dark p-[3px] shadow-lg">
+            <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border-2 border-portal-navy-dark bg-portal-orange">
+              {mascota.foto_url ? (
+                <Image src={mascota.foto_url} alt={mascota.nombre} width={80} height={80} className="h-full w-full object-cover" />
+              ) : (
+                <Image src="/logos/icon-only/icon-outline-white.png" alt="" width={38} height={38} />
+              )}
+            </div>
           </div>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <h2 className="font-display text-2xl font-semibold">{mascota.nombre}</h2>
-              <span
-                className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
-                  mascota.activa
-                    ? "bg-portal-teal-light/30 text-portal-teal-light"
-                    : "bg-white/10 text-white/60"
-                }`}
-              >
+              <span className="flex items-center gap-1.5 rounded-full bg-[color-mix(in_srgb,var(--mc-tag)_18%,transparent)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--mc-tag)]">
+                <span className={`h-1.5 w-1.5 rounded-full ${mascota.activa ? "bg-portal-teal-light" : "bg-[color-mix(in_srgb,var(--mc-tag)_60%,transparent)]"}`} />
                 {mascota.activa ? "Activo" : "Inactivo"}
               </span>
             </div>
-            <p className="text-sm text-white/80">
+            <p className="text-sm opacity-80">
               {[mascota.raza, mascota.fecha_nacimiento ? calcularEdad(mascota.fecha_nacimiento) : null, mascota.genero === "macho" ? "Macho" : mascota.genero === "hembra" ? "Hembra" : null]
                 .filter(Boolean)
                 .join(" • ")}
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
-              <span className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 text-xs">
+              <span className="flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--mc-tag)_18%,transparent)] px-3 py-1 text-xs text-[var(--mc-tag)]">
                 <span className="material-symbols-rounded text-[14px]">monitor_weight</span>
                 {mascota.peso_kg} kg
               </span>
               {mascota.fecha_nacimiento && (
-                <span className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 text-xs">
+                <span className="flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--mc-tag)_18%,transparent)] px-3 py-1 text-xs text-[var(--mc-tag)]">
                   <span className="material-symbols-rounded text-[14px]">cake</span>
                   {formatFechaCumple(mascota.fecha_nacimiento)}
                 </span>
@@ -177,7 +185,7 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
                 target="_blank"
                 rel="noopener noreferrer"
                 aria-label={`${red.label} de ${mascota.nombre}`}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 transition-colors hover:bg-white/20"
+                className="flex h-9 w-9 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--mc-text)_12%,transparent)] transition-colors hover:bg-[color-mix(in_srgb,var(--mc-text)_22%,transparent)]"
               >
                 <Image src={red.icono} alt="" width={16} height={16} />
               </a>
@@ -194,14 +202,14 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
         </div>
 
         {mascota.descripcion && (
-          <p className="relative z-10 mt-4 max-w-2xl text-sm leading-relaxed text-white/85">{mascota.descripcion}</p>
+          <p className="relative z-10 mt-4 max-w-2xl text-sm leading-relaxed opacity-85">{mascota.descripcion}</p>
         )}
       </div>
 
-      <div className="mt-4 grid grid-cols-1 gap-4 print:mt-3 print:gap-3 lg:grid-cols-3">
-        <div className="space-y-4 print:space-y-3 lg:col-span-2">
+      <div className="mt-4 grid grid-cols-1 gap-4 print:hidden lg:grid-cols-3">
+        <div className="space-y-4 lg:col-span-2">
           {vacunaVencidaDias !== null && (
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-[17px] border border-portal-error/20 bg-red-50 p-4 print:hidden">
+            <div className="flex flex-wrap items-center justify-between gap-3 rounded-[17px] border border-portal-error/20 bg-red-50 p-4">
               <div className="flex items-start gap-3">
                 <span className="material-symbols-rounded mt-0.5 text-portal-error">error</span>
                 <div>
@@ -219,7 +227,7 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
           )}
 
           {/* Estado de salud */}
-          <div className="rounded-[17px] border border-portal-surface-variant bg-white p-5 print:break-inside-avoid print:p-3">
+          <div className="rounded-[17px] border border-portal-surface-variant bg-white p-5">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="flex items-center gap-2 font-display text-lg font-semibold text-portal-navy">
                 <span className="material-symbols-rounded text-portal-teal-mid">medical_services</span> Estado de Salud
@@ -227,7 +235,7 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
               <button
                 type="button"
                 onClick={() => abrirNuevoRegistro("vacuna")}
-                className="flex items-center gap-1 text-sm font-semibold text-portal-teal-mid hover:text-portal-teal print:hidden"
+                className="flex items-center gap-1 text-sm font-semibold text-portal-teal-mid hover:text-portal-teal"
               >
                 <span className="material-symbols-rounded text-[18px]">add_circle</span> Agregar registro
               </button>
@@ -235,7 +243,10 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <EventoResumenCard
                 titulo="Vacuna"
+                icono="vaccines"
+                acento="teal"
                 evento={vacunas[0]}
+                total={vacunas.length}
                 vacio="Aún no hay vacunas"
                 onAgregar={() => abrirNuevoRegistro("vacuna")}
                 onEditar={(e) => {
@@ -245,7 +256,10 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
               />
               <EventoResumenCard
                 titulo="Desparasitación"
+                icono="bug_report"
+                acento="orange"
                 evento={desparasitaciones[0]}
+                total={desparasitaciones.length}
                 vacio="Aún no hay desparasitaciones"
                 onAgregar={() => abrirNuevoRegistro("desparasitacion")}
                 onEditar={(e) => {
@@ -255,7 +269,10 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
               />
               <EventoResumenCard
                 titulo="Consulta vet."
+                icono="stethoscope"
+                acento="navy"
                 evento={consultas[0]}
+                total={consultas.length}
                 vacio="Aún no hay consultas"
                 onAgregar={() => abrirNuevoRegistro("consulta")}
                 onEditar={(e) => {
@@ -265,7 +282,10 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
               />
               <EventoResumenCard
                 titulo="Medicamento"
+                icono="pill"
+                acento="orange"
                 evento={medicamentos[0]}
+                total={medicamentos.length}
                 vacio="Sin medicamentos activos ahora"
                 onAgregar={() => abrirNuevoRegistro("medicamento")}
                 onEditar={(e) => {
@@ -277,7 +297,7 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
           </div>
 
           {/* Información general */}
-          <div className="rounded-[17px] border border-portal-surface-variant bg-white p-5 print:break-inside-avoid print:p-3">
+          <div className="rounded-[17px] border border-portal-surface-variant bg-white p-5">
             <h3 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold text-portal-navy">
               <span className="material-symbols-rounded text-portal-navy">description</span> Información General
             </h3>
@@ -304,16 +324,21 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
                 valor={mascota.genero === "macho" ? "Macho" : mascota.genero === "hembra" ? "Hembra" : "—"}
                 icono="wc"
               />
+              {mascota.familiares.map((familiar, i) => (
+                <InfoTile key={i} etiqueta={familiar.relacion} valor={familiar.nombre} icono="diversity_3" />
+              ))}
             </div>
-            {mascota.historia && (
-              <div className="mt-4 rounded-[17px] bg-red-50 p-4">
-                <div className="mb-1 flex items-center gap-2 text-sm font-bold text-portal-navy">
-                  <span className="material-symbols-rounded text-[16px] text-portal-error">healing</span>
-                  Condiciones Médicas
-                </div>
-                <p className="text-sm text-portal-muted">{mascota.historia}</p>
-              </div>
-            )}
+            <CondicionesMedicasCard
+              condiciones={mascota.condiciones_medicas}
+              onAgregar={() => {
+                setCondicionIndexEditar(null);
+                setFormCondicionAbierto(true);
+              }}
+              onEditar={(i) => {
+                setCondicionIndexEditar(i);
+                setFormCondicionAbierto(true);
+              }}
+            />
           </div>
         </div>
 
@@ -333,32 +358,46 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
             ) : (
               <div className="space-y-3">
                 {actividad.map((a, i) => (
-                  <div key={i}>
-                    <p className="text-sm font-semibold text-portal-navy">{a.titulo}</p>
-                    <p className="text-xs text-portal-muted">
-                      {a.sub} · {formatFecha(a.fecha)}
-                    </p>
+                  <div key={i} className="flex items-start gap-2.5">
+                    <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-portal-teal-mid" />
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-semibold text-portal-navy">{a.titulo}</p>
+                      <p className="text-xs text-portal-muted">
+                        {a.sub} · {formatFecha(a.fecha)}
+                      </p>
+                    </div>
                   </div>
                 ))}
               </div>
             )}
           </div>
 
-          <div className="rounded-[17px] bg-portal-teal-light/20 p-5 print:hidden">
-            <h3 className="mb-1 font-display text-base font-semibold text-portal-navy">
-              Lleva la ficha de {mascota.nombre} a su próxima consulta
-            </h3>
-            <p className="mb-4 text-xs text-portal-muted">
-              Descárgala en PDF o comparte el enlace con tu veterinario. Cualquier persona con el
-              enlace podrá ver esta ficha, sin necesidad de iniciar sesión.
-            </p>
-            <div className="flex gap-2">
-              <Button size="sm" className="flex-1 bg-portal-navy-dark text-white hover:bg-portal-navy" onClick={() => window.print()}>
-                Descargar PDF
-              </Button>
-              <Button size="sm" variant="secondary" className="flex-1" onClick={copiarEnlace}>
-                {enlaceCopiado ? "¡Copiado!" : "Copiar enlace"}
-              </Button>
+          <div className="relative overflow-hidden rounded-[17px] bg-gradient-to-br from-portal-teal-light/30 to-portal-teal-light/10 p-5 print:hidden">
+            <span className="material-symbols-rounded absolute -bottom-3 -right-3 text-[90px] text-portal-teal-mid/10">description</span>
+            <div className="relative">
+              <span className="mb-2 inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-portal-teal">
+                <span className="material-symbols-rounded text-[13px]">history_edu</span> Historial clínico completo
+              </span>
+              <h3 className="mb-1 font-display text-base font-semibold text-portal-navy">
+                Lleva la ficha de {mascota.nombre} a su próxima consulta
+              </h3>
+              <p className="mb-4 text-xs text-portal-muted">
+                El PDF incluye todo el historial de vacunas, desparasitaciones, consultas y medicamentos, listo para
+                compartir con tu veterinario. Cualquier persona con el enlace podrá verla, sin iniciar sesión.
+              </p>
+              <div className="flex gap-2">
+                <Button size="sm" className="flex-1 bg-portal-navy-dark text-white hover:bg-portal-navy" onClick={() => window.print()}>
+                  Descargar PDF
+                </Button>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="flex-1 bg-white text-portal-navy hover:bg-white/80"
+                  onClick={copiarEnlace}
+                >
+                  {enlaceCopiado ? "¡Copiado!" : "Copiar enlace"}
+                </Button>
+              </div>
             </div>
           </div>
         </div>
@@ -391,6 +430,18 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
           router.refresh();
         }}
       />
+
+      <CondicionMedicaFormDialog
+        mascotaId={mascota.id}
+        condicionesActuales={mascota.condiciones_medicas}
+        indexEditar={condicionIndexEditar}
+        open={formCondicionAbierto}
+        onClose={() => setFormCondicionAbierto(false)}
+        onSaved={() => {
+          setFormCondicionAbierto(false);
+          router.refresh();
+        }}
+      />
     </div>
   );
 }
@@ -404,25 +455,39 @@ const TIPOS_SALUD_LABEL: Record<TipoEventoSalud, string> = {
   otro: "Otro cuidado",
 };
 
+const ACENTO_ESTILOS: Record<string, { icono: string; texto: string; fondo: string }> = {
+  teal: { icono: "text-portal-teal-mid", texto: "text-portal-teal", fondo: "bg-portal-teal-light/40" },
+  orange: { icono: "text-portal-orange-dark", texto: "text-portal-orange-dark", fondo: "bg-portal-orange/15" },
+  navy: { icono: "text-portal-navy", texto: "text-portal-navy", fondo: "bg-portal-navy/10" },
+};
+
 function EventoResumenCard({
   titulo,
+  icono,
+  acento,
   evento,
+  total = 0,
   vacio,
   onAgregar,
   onEditar,
 }: {
   titulo: string;
+  icono: string;
+  acento: "teal" | "orange" | "navy";
   evento?: MascotaEvento;
+  total?: number;
   vacio: string;
   onAgregar: () => void;
   onEditar: (e: MascotaEvento) => void;
 }) {
+  const estilo = ACENTO_ESTILOS[acento];
+
   if (!evento) {
     return (
       <button
         type="button"
         onClick={onAgregar}
-        className="flex min-h-[110px] flex-col items-center justify-center gap-1 rounded-[17px] border border-dashed border-portal-surface-variant bg-portal-surface-low/40 p-4 text-center hover:bg-portal-surface-low"
+        className="flex min-h-[122px] flex-col items-center justify-center gap-1 rounded-[17px] border border-dashed border-portal-surface-variant bg-portal-surface-low/40 p-4 text-center transition-colors hover:border-portal-teal-light hover:bg-portal-surface-low"
       >
         <span className="material-symbols-rounded text-2xl text-portal-muted">add_circle</span>
         <span className="text-xs text-portal-muted">{vacio}</span>
@@ -437,28 +502,48 @@ function EventoResumenCard({
     <button
       type="button"
       onClick={() => onEditar(evento)}
-      className="flex flex-col rounded-[17px] bg-portal-surface-low p-4 text-left"
+      className="group flex flex-col rounded-[17px] bg-portal-surface-low p-4 text-left transition-all hover:-translate-y-0.5 hover:shadow-md"
     >
-      <span
-        className={`mb-2 self-start rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
-          vencido ? "bg-red-100 text-portal-error" : "bg-portal-teal-light/40 text-portal-teal"
-        }`}
-      >
-        {vencido ? "Vencido" : titulo}
-      </span>
+      <div className="mb-2 flex items-center justify-between">
+        <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${estilo.fondo} ${estilo.texto}`}>
+          <span className={`material-symbols-rounded text-[13px] ${estilo.icono}`}>{icono}</span>
+          {titulo}
+        </span>
+        {total > 1 && (
+          <span className="rounded-full bg-white px-2 py-0.5 text-[10px] font-semibold text-portal-muted">
+            {total} registros
+          </span>
+        )}
+      </div>
       <p className="text-sm font-bold text-portal-navy">{evento.titulo}</p>
-      <p className="text-xs text-portal-muted">
-        {vencido ? "Vencido" : "Aplicada"}: {formatFecha(evento.fecha)}
-      </p>
+      {detalle.producto && <p className="text-xs text-portal-muted">{detalle.producto}</p>}
+      <p className="mt-1 text-xs text-portal-muted">Aplicada: {formatFecha(evento.fecha)}</p>
+      {detalle.veterinario && (
+        <p className="text-xs text-portal-muted">
+          <span className="material-symbols-rounded align-middle text-[13px]">badge</span> {detalle.veterinario}
+        </p>
+      )}
+      {detalle.proxima_fecha && (
+        <span
+          className={`mt-2 inline-flex w-fit items-center gap-1 self-start rounded-full px-2 py-0.5 text-[10px] font-bold ${
+            vencido ? "bg-red-100 text-portal-error" : "bg-portal-teal-light/40 text-portal-teal"
+          }`}
+        >
+          <span className="material-symbols-rounded text-[12px]">{vencido ? "error" : "event_available"}</span>
+          {vencido ? "Vencido" : "Próximo"}: {formatFecha(detalle.proxima_fecha)}
+        </span>
+      )}
     </button>
   );
 }
 
 function InfoTile({ etiqueta, valor, icono }: { etiqueta: string; valor: string; icono: string }) {
   return (
-    <div className="rounded-[17px] bg-portal-surface-low p-3">
-      <span className="material-symbols-rounded text-[18px] text-portal-orange">{icono}</span>
-      <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-portal-muted">{etiqueta}</p>
+    <div className="rounded-[17px] bg-portal-surface-low p-3 transition-colors hover:bg-portal-teal-light/20">
+      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-portal-orange/15">
+        <span className="material-symbols-rounded text-[18px] text-portal-orange-dark">{icono}</span>
+      </span>
+      <p className="mt-2 text-[10px] font-bold uppercase tracking-wide text-portal-muted">{etiqueta}</p>
       <p className="truncate text-sm font-bold text-portal-navy">{valor}</p>
     </div>
   );

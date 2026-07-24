@@ -1,9 +1,12 @@
 import Image from "next/image";
+import type { CSSProperties } from "react";
 import { notFound } from "next/navigation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { calcularEdad, formatFecha, formatFechaCumple } from "@/lib/portal/formato";
-import { parseDetalleEventoSalud, type TipoEventoSalud } from "@/lib/data/portal/mascotas";
+import { parseDetalleEventoSalud, type CondicionMedica, type Familiar, type TipoEventoSalud } from "@/lib/data/portal/mascotas";
 import { FichaPrintButton } from "@/components/ficha/FichaPrintButton";
+import { FichaDocumentoImprimible } from "@/components/ficha/FichaDocumentoImprimible";
+import { CondicionesMedicasCard } from "@/components/portal/mascotas/CondicionesMedicasCard";
 import "@/app/mi-cuenta/(portal)/portal-theme.css";
 
 // Página pública, sin sesión — cualquiera con el enlace puede verla. Por eso
@@ -36,7 +39,7 @@ export default async function FichaPublicaPage({ params }: { params: Promise<{ i
   const { data: mascota } = await supabase
     .from("mascotas")
     .select(
-      "id, nombre, especie, especie_otro, raza, fecha_nacimiento, peso_kg, genero, historia, descripcion, foto_url, activa"
+      "id, nombre, especie, especie_otro, raza, fecha_nacimiento, peso_kg, genero, condiciones_medicas, descripcion, foto_url, color_primario, color_secundario, color_texto, color_etiqueta, familiares, instagram_url, facebook_url, tiktok_url, activa"
     )
     .eq("id", id)
     .maybeSingle();
@@ -55,7 +58,9 @@ export default async function FichaPublicaPage({ params }: { params: Promise<{ i
   return (
     <div className="portal-shell min-h-screen p-4 md:p-10">
       <div className="mx-auto max-w-2xl">
-        <div className="mb-6 flex items-center justify-between border-b border-portal-surface-variant pb-4">
+        <FichaDocumentoImprimible mascota={mascota} eventos={eventos} />
+
+        <div className="mb-6 flex items-center justify-between border-b border-portal-surface-variant pb-4 print:hidden">
           <div className="flex items-center gap-2">
             <Image src="/logos/icon-only/icon-outline-celeste.png" alt="Suplevet" width={32} height={32} />
             <span className="font-display text-lg font-semibold text-portal-navy">Suplevet</span>
@@ -70,10 +75,25 @@ export default async function FichaPublicaPage({ params }: { params: Promise<{ i
         </div>
 
         {/* Hero */}
-        <div className="relative overflow-hidden rounded-[17px] bg-portal-navy p-6 text-white">
-          <div className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-white/5" />
+        <div
+          className={`relative overflow-hidden rounded-[17px] p-6 text-[var(--mc-text)] print:hidden ${mascota.color_primario ? "" : "bg-portal-navy"}`}
+          style={
+            {
+              ...(mascota.color_primario
+                ? {
+                    background: mascota.color_secundario
+                      ? `linear-gradient(135deg, ${mascota.color_primario}, ${mascota.color_secundario})`
+                      : mascota.color_primario,
+                  }
+                : {}),
+              "--mc-text": mascota.color_texto || "#ffffff",
+              "--mc-tag": mascota.color_etiqueta || mascota.color_texto || "#ffffff",
+            } as CSSProperties
+          }
+        >
+          <div className="pointer-events-none absolute -right-8 -top-8 h-40 w-40 rounded-full bg-[color-mix(in_srgb,var(--mc-text)_5%,transparent)]" />
           <div className="relative z-10 flex flex-wrap items-center gap-4">
-            <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-white/30 bg-portal-orange">
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full border-2 border-[color-mix(in_srgb,var(--mc-text)_30%,transparent)] bg-portal-orange">
               {mascota.foto_url ? (
                 <Image src={mascota.foto_url} alt={mascota.nombre} width={80} height={80} className="h-full w-full object-cover" />
               ) : (
@@ -82,7 +102,7 @@ export default async function FichaPublicaPage({ params }: { params: Promise<{ i
             </div>
             <div className="min-w-0 flex-1">
               <h2 className="font-display text-2xl font-semibold">{mascota.nombre}</h2>
-              <p className="text-sm text-white/80">
+              <p className="text-sm opacity-80">
                 {[
                   mascota.raza,
                   mascota.fecha_nacimiento ? calcularEdad(mascota.fecha_nacimiento) : null,
@@ -92,12 +112,12 @@ export default async function FichaPublicaPage({ params }: { params: Promise<{ i
                   .join(" • ")}
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
-                <span className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 text-xs">
+                <span className="flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--mc-tag)_18%,transparent)] px-3 py-1 text-xs text-[var(--mc-tag)]">
                   <span className="material-symbols-rounded text-[14px]">monitor_weight</span>
                   {mascota.peso_kg} kg
                 </span>
                 {mascota.fecha_nacimiento && (
-                  <span className="flex items-center gap-1 rounded-full bg-white/10 px-3 py-1 text-xs">
+                  <span className="flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--mc-tag)_18%,transparent)] px-3 py-1 text-xs text-[var(--mc-tag)]">
                     <span className="material-symbols-rounded text-[14px]">cake</span>
                     {formatFechaCumple(mascota.fecha_nacimiento)}
                   </span>
@@ -107,12 +127,12 @@ export default async function FichaPublicaPage({ params }: { params: Promise<{ i
           </div>
 
           {mascota.descripcion && (
-            <p className="relative z-10 mt-4 max-w-2xl text-sm leading-relaxed text-white/85">{mascota.descripcion}</p>
+            <p className="relative z-10 mt-4 max-w-2xl text-sm leading-relaxed opacity-85">{mascota.descripcion}</p>
           )}
         </div>
 
         {/* Estado de salud */}
-        <div className="mt-4 rounded-[17px] border border-portal-surface-variant bg-white p-5 print:break-inside-avoid print:p-3">
+        <div className="mt-4 rounded-[17px] border border-portal-surface-variant bg-white p-5 print:hidden">
           <h3 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold text-portal-navy">
             <span className="material-symbols-rounded text-portal-teal-mid">medical_services</span> Estado de Salud
           </h3>
@@ -125,7 +145,7 @@ export default async function FichaPublicaPage({ params }: { params: Promise<{ i
         </div>
 
         {/* Información general */}
-        <div className="mt-4 rounded-[17px] border border-portal-surface-variant bg-white p-5 print:break-inside-avoid print:p-3">
+        <div className="mt-4 rounded-[17px] border border-portal-surface-variant bg-white p-5 print:hidden">
           <h3 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold text-portal-navy">
             <span className="material-symbols-rounded text-portal-navy">description</span> Información General
           </h3>
@@ -146,16 +166,11 @@ export default async function FichaPublicaPage({ params }: { params: Promise<{ i
               valor={mascota.genero === "macho" ? "Macho" : mascota.genero === "hembra" ? "Hembra" : "—"}
               icono="wc"
             />
+            {(mascota.familiares as Familiar[] | null)?.map((familiar, i) => (
+              <InfoTile key={i} etiqueta={familiar.relacion} valor={familiar.nombre} icono="diversity_3" />
+            ))}
           </div>
-          {mascota.historia && (
-            <div className="mt-4 rounded-[17px] bg-red-50 p-4">
-              <div className="mb-1 flex items-center gap-2 text-sm font-bold text-portal-navy">
-                <span className="material-symbols-rounded text-[16px] text-portal-error">healing</span>
-                Condiciones Médicas
-              </div>
-              <p className="text-sm text-portal-muted">{mascota.historia}</p>
-            </div>
-          )}
+          <CondicionesMedicasCard condiciones={(mascota.condiciones_medicas as CondicionMedica[]) ?? []} />
         </div>
 
         <p className="mt-6 text-center text-xs text-portal-muted print:hidden">
