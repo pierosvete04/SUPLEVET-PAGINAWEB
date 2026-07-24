@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { uploadFileToR2 } from "@/lib/uploadToR2";
 import { Badge } from "@/components/admin/Badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -147,13 +148,8 @@ export default function AdminOportunidadPage() {
     file: File
   ) {
     setSubiendo(true);
-    const supabase = createClient();
-    const path = `oportunidad/${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage.from("productos-web-fotos").upload(path, file);
-    if (!error) {
-      const { data } = supabase.storage.from("productos-web-fotos").getPublicUrl(path);
-      actualizar(campo, data.publicUrl);
-    }
+    const url = await uploadFileToR2("productos-web-fotos", file, "oportunidad");
+    if (url) actualizar(campo, url);
     setSubiendo(false);
   }
 

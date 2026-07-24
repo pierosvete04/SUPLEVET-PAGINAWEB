@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { uploadFileToR2 } from "@/lib/uploadToR2";
 import { RichTextEditor } from "@/components/admin/blog/RichTextEditor";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -78,13 +79,8 @@ export function PostEditor({ post }: PostEditorProps) {
 
   async function subirImagenDestacada(file: File) {
     setSubiendo(true);
-    const supabase = createClient();
-    const path = `${slug || "sin-slug"}/${Date.now()}-${file.name}`;
-    const { error: uploadError } = await supabase.storage.from("blog-fotos").upload(path, file);
-    if (!uploadError) {
-      const { data } = supabase.storage.from("blog-fotos").getPublicUrl(path);
-      setImagenDestacada(data.publicUrl);
-    }
+    const url = await uploadFileToR2("blog-fotos", file, slug || "sin-slug");
+    if (url) setImagenDestacada(url);
     setSubiendo(false);
   }
 

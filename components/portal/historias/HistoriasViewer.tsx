@@ -5,6 +5,7 @@ import Image from "next/image";
 import type { User } from "@supabase/supabase-js";
 import { Plus, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { uploadPortalFileToR2 } from "@/lib/uploadToR2";
 import type { Historia } from "@/lib/data/portal/historias";
 import type { PerfilComunidad } from "@/lib/data/portal/comunidad";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -65,13 +66,11 @@ export function HistoriasViewer({ user }: HistoriasViewerProps) {
     if (!fotoFile) return;
     setPublicando(true);
     const supabase = createClient();
-    const path = `${user.id}/historias/${Date.now()}-${fotoFile.name}`;
-    const { error } = await supabase.storage.from("comunidad-fotos").upload(path, fotoFile);
-    if (!error) {
-      const { data } = supabase.storage.from("comunidad-fotos").getPublicUrl(path);
+    const url = await uploadPortalFileToR2("comunidad-fotos", fotoFile, `${user.id}/historias`);
+    if (url) {
       await supabase.from("stories").insert({
         cliente_id: user.id,
-        foto_url: data.publicUrl,
+        foto_url: url,
         texto: texto.trim() || null,
       });
     }

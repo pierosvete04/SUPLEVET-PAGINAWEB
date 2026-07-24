@@ -23,6 +23,13 @@ const nextConfig: NextConfig = {
         hostname: "bcahhdszzwearqaafhpa.supabase.co",
         pathname: "/storage/v1/object/public/**",
       },
+      // Bucket de Cloudflare R2 (reemplaza Supabase Storage para banners,
+      // fotos/videos de productos, blog y cursos — ver lib/r2.ts). El de
+      // arriba se mantiene mientras dura la migración de archivos existentes.
+      {
+        protocol: "https",
+        hostname: "*.r2.dev",
+      },
     ],
     unoptimized: false,
   },

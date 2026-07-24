@@ -3,6 +3,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
+import { uploadPortalFileToR2 } from "@/lib/uploadToR2";
 import { acreditarPuntos } from "@/lib/data/portal/puntos";
 import { COLORES_MASCOTA, type Familiar, type Mascota } from "@/lib/data/portal/mascotas";
 import { useRazasSugeridas } from "@/lib/portal/useRazasSugeridas";
@@ -247,13 +248,9 @@ export function MascotaFormDialog({
   }
 
   async function subirFoto(supabase: ReturnType<typeof createClient>, mascotaId: string, file: File) {
-    const path = `${clienteId}/${mascotaId}/profile.jpg`;
-    const { error: uploadError } = await supabase.storage
-      .from("mascotas-fotos")
-      .upload(path, file, { upsert: true });
-    if (!uploadError) {
-      const { data } = supabase.storage.from("mascotas-fotos").getPublicUrl(path);
-      await supabase.from("mascotas").update({ foto_url: data.publicUrl }).eq("id", mascotaId);
+    const url = await uploadPortalFileToR2("mascotas-fotos", file, `${clienteId}/${mascotaId}`);
+    if (url) {
+      await supabase.from("mascotas").update({ foto_url: url }).eq("id", mascotaId);
     }
   }
 

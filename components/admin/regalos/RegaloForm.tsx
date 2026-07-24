@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
+import { uploadFileToR2 } from "@/lib/uploadToR2";
 import { Modal } from "@/components/admin/Modal";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -72,15 +73,8 @@ export function RegaloForm({ regalo, onClose, onSaved }: RegaloFormProps) {
 
   async function subirImagen(file: File) {
     setSubiendo(true);
-    const supabase = createClient();
-    const path = `regalos/${Date.now()}-${file.name}`;
-    const { error: uploadError } = await supabase.storage
-      .from("productos-web-fotos")
-      .upload(path, file);
-    if (!uploadError) {
-      const { data } = supabase.storage.from("productos-web-fotos").getPublicUrl(path);
-      setForm((f) => ({ ...f, imagen: data.publicUrl }));
-    }
+    const url = await uploadFileToR2("productos-web-fotos", file, "regalos");
+    if (url) setForm((f) => ({ ...f, imagen: url }));
     setSubiendo(false);
   }
 

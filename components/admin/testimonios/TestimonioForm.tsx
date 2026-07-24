@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { uploadFileToR2 } from "@/lib/uploadToR2";
 import { Modal } from "@/components/admin/Modal";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -31,29 +32,15 @@ export function TestimonioForm({ testimonio, onClose, onSaved }: TestimonioFormP
 
   async function subirVideo(file: File) {
     setSubiendo(true);
-    const supabase = createClient();
-    const path = `testimonios/${Date.now()}-${file.name}`;
-    const { error: uploadError } = await supabase.storage
-      .from("testimonios-videos")
-      .upload(path, file);
-    if (!uploadError) {
-      const { data } = supabase.storage.from("testimonios-videos").getPublicUrl(path);
-      setForm((f) => ({ ...f, video_url: data.publicUrl }));
-    }
+    const url = await uploadFileToR2("testimonios-videos", file, "testimonios");
+    if (url) setForm((f) => ({ ...f, video_url: url }));
     setSubiendo(false);
   }
 
   async function subirThumbnail(file: File) {
     setSubiendo(true);
-    const supabase = createClient();
-    const path = `testimonios/${Date.now()}-${file.name}`;
-    const { error: uploadError } = await supabase.storage
-      .from("testimonios-videos")
-      .upload(path, file);
-    if (!uploadError) {
-      const { data } = supabase.storage.from("testimonios-videos").getPublicUrl(path);
-      setForm((f) => ({ ...f, thumbnail_url: data.publicUrl }));
-    }
+    const url = await uploadFileToR2("testimonios-videos", file, "testimonios");
+    if (url) setForm((f) => ({ ...f, thumbnail_url: url }));
     setSubiendo(false);
   }
 

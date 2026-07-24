@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
+import { uploadFileToR2 } from "@/lib/uploadToR2";
 import type { RegaloVariante, TallaBandana } from "@/lib/regalo-variantes";
 import { Modal } from "@/components/admin/Modal";
 import { Button } from "@/components/ui/button";
@@ -66,15 +67,8 @@ export function VarianteForm({
 
   async function subirImagen(file: File) {
     setSubiendo(true);
-    const supabase = createClient();
-    const path = `regalos/variantes/${Date.now()}-${file.name}`;
-    const { error: uploadError } = await supabase.storage
-      .from("productos-web-fotos")
-      .upload(path, file);
-    if (!uploadError) {
-      const { data } = supabase.storage.from("productos-web-fotos").getPublicUrl(path);
-      setImagen(data.publicUrl);
-    }
+    const url = await uploadFileToR2("productos-web-fotos", file, "regalos/variantes");
+    if (url) setImagen(url);
     setSubiendo(false);
   }
 

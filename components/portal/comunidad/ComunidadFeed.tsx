@@ -5,6 +5,7 @@ import Image from "next/image";
 import type { User } from "@supabase/supabase-js";
 import { Heart, PawPrint, Send } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { uploadPortalFileToR2 } from "@/lib/uploadToR2";
 import { formatFecha } from "@/lib/portal/formato";
 import type { Post, PerfilComunidad } from "@/lib/data/portal/comunidad";
 import { BrandedLoader } from "@/components/ui/branded-loader";
@@ -83,12 +84,8 @@ export function ComunidadFeed({ user }: ComunidadFeedProps) {
     const supabase = createClient();
     let fotoUrls: string[] = [];
     if (fotoFile) {
-      const path = `${user.id}/posts/${Date.now()}-${fotoFile.name}`;
-      const { error } = await supabase.storage.from("comunidad-fotos").upload(path, fotoFile);
-      if (!error) {
-        const { data } = supabase.storage.from("comunidad-fotos").getPublicUrl(path);
-        fotoUrls = [data.publicUrl];
-      }
+      const url = await uploadPortalFileToR2("comunidad-fotos", fotoFile, `${user.id}/posts`);
+      if (url) fotoUrls = [url];
     }
     await supabase.from("posts").insert({ cliente_id: user.id, texto: texto.trim(), foto_urls: fotoUrls });
     setTexto("");

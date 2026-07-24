@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
+import { uploadFileToR2 } from "@/lib/uploadToR2";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -92,25 +93,15 @@ export default function AdminConfiguracionPage() {
 
   async function subirQr(file: File) {
     setSubiendo(true);
-    const supabase = createClient();
-    const path = `configuracion/${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage.from("productos-web-fotos").upload(path, file);
-    if (!error) {
-      const { data } = supabase.storage.from("productos-web-fotos").getPublicUrl(path);
-      actualizar("yape_plin_qr_url", data.publicUrl);
-    }
+    const url = await uploadFileToR2("productos-web-fotos", file, "configuracion");
+    if (url) actualizar("yape_plin_qr_url", url);
     setSubiendo(false);
   }
 
   async function subirBanner(campo: "hero_banner_desktop" | "hero_banner_mobile", file: File) {
     setSubiendo(true);
-    const supabase = createClient();
-    const path = `hero/${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage.from("productos-web-fotos").upload(path, file);
-    if (!error) {
-      const { data } = supabase.storage.from("productos-web-fotos").getPublicUrl(path);
-      actualizar(campo, data.publicUrl);
-    }
+    const url = await uploadFileToR2("productos-web-fotos", file, "hero");
+    if (url) actualizar(campo, url);
     setSubiendo(false);
   }
 

@@ -5,6 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
+import { uploadPortalFileToR2 } from "@/lib/uploadToR2";
 import { acreditarPuntos } from "@/lib/data/portal/puntos";
 import type { ClientePerfil } from "@/lib/data/portal/cliente";
 import { NOMBRE_NIVEL } from "@/lib/data/portal/logros";
@@ -52,13 +53,11 @@ export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTiene
 
   async function subirFoto(file: File) {
     setSubiendoFoto(true);
-    const supabase = createClient();
-    const path = `${user.id}/perfil/avatar-${Date.now()}.jpg`;
-    const { error } = await supabase.storage.from("comunidad-fotos").upload(path, file, { upsert: true });
-    if (!error) {
-      const { data } = supabase.storage.from("comunidad-fotos").getPublicUrl(path);
-      setFotoUrl(data.publicUrl);
-      await supabase.from("clientes_perfil").update({ foto_url: data.publicUrl }).eq("id", user.id);
+    const url = await uploadPortalFileToR2("comunidad-fotos", file, `${user.id}/perfil`);
+    if (url) {
+      const supabase = createClient();
+      setFotoUrl(url);
+      await supabase.from("clientes_perfil").update({ foto_url: url }).eq("id", user.id);
     }
     setSubiendoFoto(false);
   }

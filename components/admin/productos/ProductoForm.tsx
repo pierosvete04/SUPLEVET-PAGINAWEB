@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { uploadFileToR2 } from "@/lib/uploadToR2";
 import {
   METODO_PAGO_LABEL,
   TODOS_LOS_METODOS_PAGO,
@@ -81,17 +82,10 @@ export function ProductoForm({ producto, onClose, onSaved }: ProductoFormProps) 
 
   async function subirImagenes(files: FileList) {
     setSubiendo(true);
-    const supabase = createClient();
     const urls: string[] = [];
     for (const file of Array.from(files)) {
-      const path = `${form.slug || "sin-slug"}/${Date.now()}-${file.name}`;
-      const { error: uploadError } = await supabase.storage
-        .from("productos-web-fotos")
-        .upload(path, file);
-      if (!uploadError) {
-        const { data } = supabase.storage.from("productos-web-fotos").getPublicUrl(path);
-        urls.push(data.publicUrl);
-      }
+      const url = await uploadFileToR2("productos-web-fotos", file, form.slug || "sin-slug");
+      if (url) urls.push(url);
     }
     setForm((f) => ({
       ...f,
@@ -111,17 +105,10 @@ export function ProductoForm({ producto, onClose, onSaved }: ProductoFormProps) 
 
   async function subirVideos(files: FileList) {
     setSubiendo(true);
-    const supabase = createClient();
     const urls: string[] = [];
     for (const file of Array.from(files)) {
-      const path = `${form.slug || "sin-slug"}/${Date.now()}-${file.name}`;
-      const { error: uploadError } = await supabase.storage
-        .from("productos-web-videos")
-        .upload(path, file);
-      if (!uploadError) {
-        const { data } = supabase.storage.from("productos-web-videos").getPublicUrl(path);
-        urls.push(data.publicUrl);
-      }
+      const url = await uploadFileToR2("productos-web-videos", file, form.slug || "sin-slug");
+      if (url) urls.push(url);
     }
     setForm((f) => ({ ...f, videos: [...f.videos, ...urls] }));
     setSubiendo(false);

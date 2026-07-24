@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import { uploadFileToR2 } from "@/lib/uploadToR2";
 import { Modal } from "@/components/admin/Modal";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -48,13 +49,8 @@ export function CursoForm({ curso, onClose, onSaved }: CursoFormProps) {
 
   async function subirMiniatura(file: File) {
     setSubiendo(true);
-    const supabase = createClient();
-    const path = `cursos/${Date.now()}-${file.name}`;
-    const { error: uploadError } = await supabase.storage.from("cursos-contenido").upload(path, file);
-    if (!uploadError) {
-      const { data } = supabase.storage.from("cursos-contenido").getPublicUrl(path);
-      setForm((f) => ({ ...f, thumbnail_url: data.publicUrl }));
-    }
+    const url = await uploadFileToR2("cursos-contenido", file, "cursos");
+    if (url) setForm((f) => ({ ...f, thumbnail_url: url }));
     setSubiendo(false);
   }
 

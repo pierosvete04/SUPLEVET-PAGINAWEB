@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
+import { uploadFileToR2 } from "@/lib/uploadToR2";
 import { Modal } from "@/components/admin/Modal";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -26,11 +27,7 @@ const VACIO: Omit<ResultadoReal, "id"> = {
 };
 
 async function subirA(bucketPath: string, file: File): Promise<string | null> {
-  const supabase = createClient();
-  const path = `${bucketPath}/${Date.now()}-${file.name}`;
-  const { error } = await supabase.storage.from("productos-web-fotos").upload(path, file);
-  if (error) return null;
-  return supabase.storage.from("productos-web-fotos").getPublicUrl(path).data.publicUrl;
+  return uploadFileToR2("productos-web-fotos", file, bucketPath);
 }
 
 export function ResultadoRealForm({ resultado, onClose, onSaved }: ResultadoRealFormProps) {

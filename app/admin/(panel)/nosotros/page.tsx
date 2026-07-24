@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { uploadFileToR2 } from "@/lib/uploadToR2";
 import { Badge } from "@/components/admin/Badge";
 import { SortableTableHead } from "@/components/admin/table/SortableTableHead";
 import { TableCard } from "@/components/admin/table/TableCard";
@@ -116,13 +117,8 @@ export default function AdminNosotrosPage() {
 
   async function subirImagen(campo: "nosotros_hero_imagen" | "nosotros_overlay_imagen", file: File) {
     setSubiendo(true);
-    const supabase = createClient();
-    const path = `nosotros/${Date.now()}-${file.name}`;
-    const { error } = await supabase.storage.from("productos-web-fotos").upload(path, file);
-    if (!error) {
-      const { data } = supabase.storage.from("productos-web-fotos").getPublicUrl(path);
-      actualizar(campo, data.publicUrl);
-    }
+    const url = await uploadFileToR2("productos-web-fotos", file, "nosotros");
+    if (url) actualizar(campo, url);
     setSubiendo(false);
   }
 
