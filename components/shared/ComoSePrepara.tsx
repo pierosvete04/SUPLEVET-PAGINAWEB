@@ -2,17 +2,15 @@ import { HillCurve } from "@/components/ui/HillCurve";
 import { ScrollReveal } from "@/components/shared/ScrollReveal";
 
 // Referencia visual: bloque "Swap Your Top For A New Look" de PopSockets
-// (PLAN.md sección 5.2). El GIF es un placeholder de ejemplo (mismo para los
-// 4 pasos) mientras se producen los 4 GIFs reales mostrando cada paso
-// (pendiente operativo, sección 15) — el formato ya queda listo: solo hay que
-// reemplazar `gifPendiente` por el GIF real de cada paso cuando exista.
-const gifPendiente = "/gifs/como-se-prepara-placeholder.gif";
+// (PLAN.md sección 5.2). Videos reales por paso (1:1, comprimidos, sin audio)
+// alojados en Cloudflare R2 bajo el prefijo como-se-prepara-videos/.
+const R2_BASE = "https://pub-ad8cb8681bd8458ba537a43f6735a89d.r2.dev/como-se-prepara-videos";
 
 const pasos = [
-  { numero: 1, texto: "Abre el sobre" },
-  { numero: 2, texto: "Mide la porción según el peso de tu mascota" },
-  { numero: 3, texto: "Mezcla con su alimento o disuelve en agua tibia" },
-  { numero: 4, texto: "¡Listo, a disfrutar!" },
+  { numero: 1, texto: "Retira el sello protector", video: `${R2_BASE}/paso-1.mp4` },
+  { numero: 2, texto: "Ábrelo, adentro encontrarás un scoop/cuchara de 10 g", video: `${R2_BASE}/paso-2.mp4` },
+  { numero: 3, texto: "Dale un scoop/cuchara por cada 10 kilos que pese tu mascota y viértelo en la cantidad de agua que prefieras", video: `${R2_BASE}/paso-3.mp4` },
+  { numero: 4, texto: "Mézclalo con su comida o dáselo solo, ¡a disfrutar!", video: `${R2_BASE}/paso-4.mp4` },
 ];
 
 interface ComoSePreparaProps {
@@ -58,20 +56,25 @@ export function ComoSePrepara({
               para ver las 4) — igual que "Resultados reales" más abajo. Desde
               md para arriba pasa a grid de 4 columnas fijo. */}
           <div className="no-scrollbar mt-10 flex snap-x snap-mandatory gap-4 overflow-x-auto pb-2 md:grid md:grid-cols-4 md:gap-gutter md:overflow-visible md:pb-0">
-            {pasos.map(({ numero, texto }, i) => (
+            {pasos.map(({ numero, texto, video }, i) => (
               <ScrollReveal
                 key={numero}
                 delay={i * 0.1}
                 className="w-[78%] shrink-0 snap-start flex flex-col overflow-hidden rounded-[var(--radius-card)] border border-border bg-white text-center sm:w-64 md:w-auto md:shrink"
               >
-                {/* El GIF ocupa todo el ancho de la tarjeta (antes era un ícono
-                    chico de 96px) para que se aprecie bien el paso. */}
+                {/* El video ocupa todo el ancho de la tarjeta y se reproduce en
+                    bucle silencioso, sin controles, para que se sienta como un
+                    GIF pero con mucho menor peso. */}
                 <div className="aspect-square w-full overflow-hidden">
-                  {/* eslint-disable-next-line @next/next/no-img-element -- GIF animado, next/image no reproduce animación */}
-                  <img
-                    src={gifPendiente}
-                    alt={`Paso ${numero}: ${texto}`}
+                  <video
+                    src={video}
+                    aria-label={`Paso ${numero}: ${texto}`}
                     className="h-full w-full object-cover"
+                    autoPlay
+                    loop
+                    muted
+                    playsInline
+                    preload="auto"
                   />
                 </div>
                 <div className="flex flex-col gap-2 p-5">
