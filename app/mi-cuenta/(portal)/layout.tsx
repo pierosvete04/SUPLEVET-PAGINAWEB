@@ -23,9 +23,18 @@ export default async function PortalLayout({ children }: { children: React.React
   await asegurarFilasCliente(supabase, user.id);
 
   const [{ data: perfil }, { data: puntos }] = await Promise.all([
-    supabase.from("clientes_perfil").select("nombre, apellido, foto_url").eq("id", user.id).maybeSingle(),
+    supabase
+      .from("clientes_perfil")
+      .select("nombre, apellido, foto_url, perfil_completo")
+      .eq("id", user.id)
+      .maybeSingle(),
     supabase.from("suplepuntos_clientes").select("saldo_actual, nivel").eq("cliente_id", user.id).maybeSingle(),
   ]);
+
+  // Cliente nuevo (login solo con correo, sin nombre ni contacto): antes de
+  // ver cualquier página del portal completa lo esencial para un pedido — ver
+  // app/mi-cuenta/completar-perfil/page.tsx.
+  if (!perfil?.perfil_completo) redirect("/mi-cuenta/completar-perfil");
 
   const nombre = [perfil?.nombre, perfil?.apellido].filter(Boolean).join(" ");
   const usuario = {

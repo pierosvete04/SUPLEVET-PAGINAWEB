@@ -30,25 +30,26 @@ export function CursosGrid({ cursos }: CursosGridProps) {
     async function cargarProgreso() {
       if (cursos.length === 0) return;
       const supabase = createClient();
-      const { data: modulos } = await supabase
-        .from("curso_modulos")
-        .select("id, curso_id, curso_lecciones(id)")
-        .in(
-          "curso_id",
-          cursos.map((c) => c.id)
-        );
-      if (!modulos || modulos.length === 0) return;
+      // auth.getUser() no depende del resultado de curso_modulos — antes se
+      // esperaba en serie después de esa consulta, sumando un round-trip
+      // evitable a cada carga de la página de cursos.
+      const [{ data: modulos }, { data: { user } }] = await Promise.all([
+        supabase
+          .from("curso_modulos")
+          .select("id, curso_id, curso_lecciones(id)")
+          .in(
+            "curso_id",
+            cursos.map((c) => c.id)
+          ),
+        supabase.auth.getUser(),
+      ]);
+      if (!modulos || modulos.length === 0 || !user) return;
 
       const leccionIdsPorCurso = new Map<string, string[]>();
       for (const m of modulos) {
         const ids = (m.curso_lecciones ?? []).map((l: { id: string }) => l.id);
         leccionIdsPorCurso.set(m.curso_id, [...(leccionIdsPorCurso.get(m.curso_id) ?? []), ...ids]);
       }
-
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (!user) return;
 
       const todasLasLecciones = [...leccionIdsPorCurso.values()].flat();
       const { data: completadas } = await supabase
@@ -143,7 +144,13 @@ export function CursosGrid({ cursos }: CursosGridProps) {
               >
                 <div className="relative aspect-video w-full shrink-0 overflow-hidden rounded-xl bg-portal-surface-low sm:w-64">
                   {cursoDestacadoEnProgreso.thumbnail_url && (
-                    <Image src={cursoDestacadoEnProgreso.thumbnail_url} alt="" fill className="object-cover" />
+                    <Image
+                      src={cursoDestacadoEnProgreso.thumbnail_url}
+                      alt=""
+                      fill
+                      className="object-cover"
+                      sizes="(min-width: 640px) 256px, 100vw"
+                    />
                   )}
                 </div>
                 <div className="flex flex-1 flex-col justify-center">
@@ -182,7 +189,13 @@ export function CursosGrid({ cursos }: CursosGridProps) {
               >
                 <div className="relative aspect-video bg-portal-surface-low">
                   {c.thumbnail_url ? (
-                    <Image src={c.thumbnail_url} alt="" fill className="object-cover" />
+                    <Image
+                      src={c.thumbnail_url}
+                      alt=""
+                      fill
+                      className="object-cover"
+                      sizes="(min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                    />
                   ) : (
                     <span className="flex h-full w-full items-center justify-center text-portal-muted">
                       <span className="material-symbols-rounded text-4xl">

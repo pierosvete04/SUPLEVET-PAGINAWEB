@@ -25,9 +25,8 @@ import { NOMBRE_NIVEL, SIGUIENTE_NIVEL, UMBRAL_NIVEL } from "@/lib/data/portal/l
 import { gsap } from "@/lib/gsap";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { BrandedLoader } from "@/components/ui/branded-loader";
 
-interface CanjeConNombre {
+export interface CanjeConNombre {
   id: string;
   codigo_canje: string | null;
   estado: string;
@@ -43,7 +42,7 @@ const ESTADO_LABEL: Record<string, { texto: string; clase: string }> = {
   cancelado: { texto: "Cancelado", clase: "bg-portal-orange/15 text-portal-orange" },
 };
 
-interface Transaccion {
+export interface Transaccion {
   id: string;
   accion: string;
   descripcion: string | null;
@@ -78,6 +77,11 @@ const CIRCUNFERENCIA_ANILLO = 2 * Math.PI * 98;
 
 interface PuntosDashboardProps {
   user: User;
+  puntosInicial: SuplepuntosCliente | null;
+  canjesIniciales: SuplepuntosConfig[];
+  formasGanarIniciales: SuplepuntosConfig[];
+  historialInicial: Transaccion[];
+  misCodigosIniciales: CanjeConNombre[];
 }
 
 const COLORES_GANAR = [
@@ -102,18 +106,29 @@ const ICONOS_ACCION: Record<string, LucideIcon> = {
   milestone_6_compras: Trophy,
 };
 
-export function PuntosDashboard({ user }: PuntosDashboardProps) {
-  const [puntos, setPuntos] = useState<SuplepuntosCliente | null>(null);
-  const [canjes, setCanjes] = useState<SuplepuntosConfig[]>([]);
-  const [formasGanar, setFormasGanar] = useState<SuplepuntosConfig[]>([]);
-  const [historial, setHistorial] = useState<Transaccion[]>([]);
+// Recibe todo el contenido inicial ya resuelto por el servidor (ver
+// app/mi-cuenta/(portal)/puntos/page.tsx) — antes esta página mostraba un
+// loader de pantalla completa en cada visita mientras esperaba estas mismas 5
+// consultas desde el cliente. `cargar()` se queda como función de refresco
+// tras confirmar un canje (una mutación real), no como carga inicial.
+export function PuntosDashboard({
+  user,
+  puntosInicial,
+  canjesIniciales,
+  formasGanarIniciales,
+  historialInicial,
+  misCodigosIniciales,
+}: PuntosDashboardProps) {
+  const [puntos, setPuntos] = useState<SuplepuntosCliente | null>(puntosInicial);
+  const [canjes, setCanjes] = useState<SuplepuntosConfig[]>(canjesIniciales);
+  const [formasGanar, setFormasGanar] = useState<SuplepuntosConfig[]>(formasGanarIniciales);
+  const [historial, setHistorial] = useState<Transaccion[]>(historialInicial);
   const [canjeSeleccionado, setCanjeSeleccionado] = useState<SuplepuntosConfig | null>(null);
   const [canjeConfirmado, setCanjeConfirmado] = useState<CanjeConNombre | null>(null);
-  const [misCodigos, setMisCodigos] = useState<CanjeConNombre[]>([]);
+  const [misCodigos, setMisCodigos] = useState<CanjeConNombre[]>(misCodigosIniciales);
   const [codigoCopiado, setCodigoCopiado] = useState(false);
   const [codigoListaCopiado, setCodigoListaCopiado] = useState<string | null>(null);
   const [procesando, setProcesando] = useState(false);
-  const [cargando, setCargando] = useState(true);
 
   async function cargar() {
     const supabase = createClient();
@@ -149,13 +164,7 @@ export function PuntosDashboard({ user }: PuntosDashboardProps) {
     setFormasGanar(ganar ?? []);
     setHistorial(hist ?? []);
     setMisCodigos((codigos as unknown as CanjeConNombre[]) ?? []);
-    setCargando(false);
   }
-
-  useEffect(() => {
-    cargar();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user.id]);
 
   useEffect(() => {
     if (!puntos) return;
@@ -207,9 +216,7 @@ export function PuntosDashboard({ user }: PuntosDashboardProps) {
     setTimeout(() => setCodigoListaCopiado((actual) => (actual === id ? null : actual)), 1500);
   }
 
-  if (cargando || !puntos) {
-    return <BrandedLoader fullScreen />;
-  }
+  if (!puntos) return null;
 
   const nivel = puntos.nivel;
   const siguienteNivel = SIGUIENTE_NIVEL[nivel];
@@ -574,8 +581,8 @@ export function PuntosDashboard({ user }: PuntosDashboardProps) {
           </DialogHeader>
           {canjeConfirmado && (
             <div className="flex flex-col gap-4 text-center">
-              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-portal-teal-mid/10 text-4xl">
-                🎉
+              <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-portal-teal-mid/10 text-portal-teal-mid">
+                <PartyPopper className="h-8 w-8" strokeWidth={1.5} />
               </div>
               <p className="font-body text-sm text-portal-muted">
                 {canjeConfirmado.suplepuntos_config?.nombre} — usa este código en tu próxima compra en

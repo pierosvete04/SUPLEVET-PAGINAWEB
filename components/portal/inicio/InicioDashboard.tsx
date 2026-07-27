@@ -4,15 +4,14 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import type { User } from "@supabase/supabase-js";
+import { Cat, Dog, Gem } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { gsap } from "@/lib/gsap";
 import { formatFecha } from "@/lib/portal/formato";
 import type { ClientePerfil } from "@/lib/data/portal/cliente";
 import type { SuplepuntosCliente } from "@/lib/data/portal/puntos";
-import type { DetalleEventoSalud } from "@/lib/data/portal/mascotas";
 import { NOMBRE_NIVEL, SIGUIENTE_NIVEL, UMBRAL_NIVEL, type LogroConfig } from "@/lib/data/portal/logros";
 import { TiendaSheet } from "@/components/portal/inicio/TiendaSheet";
-import { BrandedLoader } from "@/components/ui/branded-loader";
 
 interface Mascota {
   id: string;
@@ -41,80 +40,53 @@ const ICONO_ACCION: Record<string, string> = {
 interface InicioDashboardProps {
   user: User;
   perfil: ClientePerfil | null;
+  puntosInicial: SuplepuntosCliente | null;
+  mascotasIniciales: Mascota[];
+  vacunaPendienteInicial: Record<string, boolean>;
+  transaccionesIniciales: Transaccion[];
+  logrosIniciales: LogroConfig[];
+  logrosGanadosIniciales: string[];
 }
 
-export function InicioDashboard({ user, perfil }: InicioDashboardProps) {
-  const [puntos, setPuntos] = useState<SuplepuntosCliente | null>(null);
-  const [mascotas, setMascotas] = useState<Mascota[]>([]);
-  const [vacunaPendiente, setVacunaPendiente] = useState<Record<string, boolean>>({});
-  const [transacciones, setTransacciones] = useState<Transaccion[]>([]);
-  const [logros, setLogros] = useState<LogroConfig[]>([]);
-  const [logrosGanados, setLogrosGanados] = useState<Set<string>>(new Set());
-  const [cargando, setCargando] = useState(true);
+// Recibe todo el contenido de la primera carga ya resuelto por el servidor
+// (ver app/mi-cuenta/(portal)/page.tsx) — el único trabajo que queda en el
+// cliente es la verificación de logros nuevos, porque esa sí escribe datos
+// (inserta en cliente_logros) y no tiene sentido resolverla en cada render
+// del servidor.
+export function InicioDashboard({
+  user,
+  perfil,
+  puntosInicial,
+  mascotasIniciales,
+  vacunaPendienteInicial,
+  transaccionesIniciales,
+  logrosIniciales,
+  logrosGanadosIniciales,
+}: InicioDashboardProps) {
+  const puntos = puntosInicial;
+  const mascotas = mascotasIniciales;
+  const vacunaPendiente = vacunaPendienteInicial;
+  const transacciones = transaccionesIniciales;
+  const logros = logrosIniciales;
+  const [logrosGanados, setLogrosGanados] = useState<Set<string>>(new Set(logrosGanadosIniciales));
   const [tiendaAbierta, setTiendaAbierta] = useState(false);
 
   useEffect(() => {
+    if (!puntosInicial) return;
     const supabase = createClient();
-
-    async function cargar() {
-      const [{ data: pts }, { data: masc }, { data: tx }, { data: logrosCfg }, { data: ganados }] =
-        await Promise.all([
-          supabase.from("suplepuntos_clientes").select("*").eq("cliente_id", user.id).maybeSingle(),
-          supabase
-            .from("mascotas")
-            .select("id, nombre, especie, raza, foto_url")
-            .eq("cliente_id", user.id)
-            .order("created_at", { ascending: true })
-            .limit(3),
-          supabase
-            .from("suplepuntos_transacciones")
-            .select("id, accion, descripcion, puntos, created_at")
-            .eq("cliente_id", user.id)
-            .order("created_at", { ascending: false })
-            .limit(5),
-          supabase.from("logros_config").select("*").eq("activo", true).order("orden", { ascending: true }),
-          supabase.from("cliente_logros").select("logro_clave").eq("cliente_id", user.id),
-        ]);
-
-      setPuntos(pts);
-      setMascotas(masc ?? []);
-      setTransacciones(tx ?? []);
-      setLogros(logrosCfg ?? []);
-      const ganadosSet = new Set((ganados ?? []).map((g) => g.logro_clave));
-      setLogrosGanados(ganadosSet);
-      setCargando(false);
-
-      if (masc && masc.length > 0) {
-        const { data: eventos } = await supabase
-          .from("mascota_eventos")
-          .select("mascota_id, detalle")
-          .in(
-            "mascota_id",
-            masc.map((m) => m.id)
-          )
-          .eq("tipo", "vacuna")
-          .order("fecha", { ascending: false });
-        const pendientePorMascota: Record<string, boolean> = {};
-        for (const ev of eventos ?? []) {
-          if (pendientePorMascota[ev.mascota_id] !== undefined) continue;
-          let detalle: DetalleEventoSalud = {};
-          try {
-            detalle = ev.detalle ? JSON.parse(ev.detalle) : {};
-          } catch {
-            detalle = {};
-          }
-          pendientePorMascota[ev.mascota_id] = !!(
-            detalle.proxima_fecha && new Date(detalle.proxima_fecha) < new Date()
-          );
-        }
-        setVacunaPendiente(pendientePorMascota);
-      }
-
-      if (pts) await verificarLogrosNuevos(supabase, user, pts, perfil, logrosCfg ?? [], ganadosSet, setLogrosGanados);
-    }
-
-    cargar();
-  }, [user, perfil]);
+    verificarLogrosNuevos(
+      supabase,
+      user,
+      puntosInicial,
+      perfil,
+      logrosIniciales,
+      new Set(logrosGanadosIniciales),
+      setLogrosGanados
+    );
+    // Solo debe correr una vez al montar con los datos de la carga inicial —
+    // no en cada cambio de referencia de user/perfil.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user.id]);
 
   useEffect(() => {
     if (!puntos) return;
@@ -142,15 +114,11 @@ export function InicioDashboard({ user, perfil }: InicioDashboardProps) {
     ? Math.min(100, ((historicos - UMBRAL_NIVEL[nivel]) / (UMBRAL_NIVEL[siguienteNivel] - UMBRAL_NIVEL[nivel])) * 100)
     : 100;
 
-  if (cargando) {
-    return <BrandedLoader fullScreen />;
-  }
-
   return (
     <div id="section-inicio">
       {/* Greeting */}
       <div>
-        <div className="mb-1 text-xs font-bold uppercase tracking-[0.1em] text-portal-muted">{saludo} 👋</div>
+        <div className="mb-1 text-xs font-bold uppercase tracking-[0.1em] text-portal-muted">{saludo}</div>
         <h1 className="font-display text-4xl font-semibold leading-tight text-portal-navy md:text-5xl">
           Hola, <em className="not-italic text-portal-orange">{nombre || "—"}</em>
         </h1>
@@ -184,10 +152,14 @@ export function InicioDashboard({ user, perfil }: InicioDashboardProps) {
                 <div className="portal-progress-fill" style={{ width: `${progreso}%` }} />
               </div>
               <div className="flex items-center justify-between">
-                <div className="text-xs text-white/60">
-                  {siguienteNivel
-                    ? `Faltan ${(UMBRAL_NIVEL[siguienteNivel] - historicos).toLocaleString()} pts para subir de nivel`
-                    : "¡Nivel máximo! 💎"}
+                <div className="flex items-center gap-1 text-xs text-white/60">
+                  {siguienteNivel ? (
+                    `Faltan ${(UMBRAL_NIVEL[siguienteNivel] - historicos).toLocaleString()} pts para subir de nivel`
+                  ) : (
+                    <>
+                      <Gem className="h-3.5 w-3.5" strokeWidth={2} /> ¡Nivel máximo!
+                    </>
+                  )}
                 </div>
                 <div className="flex items-center gap-1 text-xs font-bold text-portal-orange transition-transform group-hover:translate-x-1">
                   Ver recompensas <span className="material-symbols-rounded text-[14px]">arrow_forward</span>
@@ -247,8 +219,10 @@ export function InicioDashboard({ user, perfil }: InicioDashboardProps) {
                   <div className="portal-pet-avatar-lg mb-4">
                     {m.foto_url ? (
                       <Image src={m.foto_url} alt={m.nombre} fill className="rounded-full object-cover" sizes="80px" />
+                    ) : m.especie === "gato" ? (
+                      <Cat className="h-8 w-8" strokeWidth={1.5} />
                     ) : (
-                      <span>{m.especie === "gato" ? "🐱" : "🐶"}</span>
+                      <Dog className="h-8 w-8" strokeWidth={1.5} />
                     )}
                     {pendiente && (
                       <div className="portal-health-indicator" title="Vacuna pendiente">

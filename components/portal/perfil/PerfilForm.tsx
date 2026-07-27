@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Check, CheckCircle2 } from "lucide-react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { uploadPortalFileToR2 } from "@/lib/uploadToR2";
@@ -23,6 +25,7 @@ interface PerfilFormProps {
 }
 
 export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTieneReferido }: PerfilFormProps) {
+  const router = useRouter();
   const [form, setForm] = useState({
     nombre: perfilInicial?.nombre ?? "",
     apellido: perfilInicial?.apellido ?? "",
@@ -58,6 +61,7 @@ export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTiene
       const supabase = createClient();
       setFotoUrl(url);
       await supabase.from("clientes_perfil").update({ foto_url: url }).eq("id", user.id);
+      router.refresh();
     }
     setSubiendoFoto(false);
   }
@@ -100,6 +104,10 @@ export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTiene
 
     setGuardando(false);
     setGuardado(true);
+    // El saludo "Hola, {nombre}" del inicio y el sidebar vienen de componentes
+    // de servidor (layout.tsx, page.tsx) que Next mantiene cacheados en el
+    // cliente — sin este refresh, el nombre viejo se ve hasta recargar a mano.
+    router.refresh();
   }
 
   function copiarCodigo() {
@@ -129,7 +137,7 @@ export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTiene
       return;
     }
     setReferidoAplicado(true);
-    setReferidoMsg("¡Código aplicado! Ganarás 100 pts en tu primera compra 🎁");
+    setReferidoMsg("¡Código aplicado! Ganarás 100 pts en tu primera compra.");
   }
 
   return (
@@ -228,7 +236,11 @@ export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTiene
               <Button type="submit" disabled={guardando} className="bg-portal-orange hover:bg-portal-orange-dark">
                 {guardando ? "Guardando…" : "Guardar cambios"}
               </Button>
-              {guardado && <span className="text-sm text-green-600">Guardado ✓</span>}
+              {guardado && (
+                <span className="flex items-center gap-1 text-sm text-green-600">
+                  <Check className="h-4 w-4" strokeWidth={2.5} /> Guardado
+                </span>
+              )}
             </div>
           </form>
         </div>
@@ -279,8 +291,9 @@ export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTiene
               {referidoMsg && <p className="mt-2 text-xs text-portal-muted">{referidoMsg}</p>}
             </div>
           ) : (
-            <div className="rounded-2xl border border-portal-surface-variant bg-white p-5 text-sm text-portal-muted">
-              ✅ Ya tienes un código de referido aplicado.
+            <div className="flex items-center gap-2 rounded-2xl border border-portal-surface-variant bg-white p-5 text-sm text-portal-muted">
+              <CheckCircle2 className="h-4 w-4 shrink-0 text-portal-teal-mid" strokeWidth={1.75} />
+              Ya tienes un código de referido aplicado.
             </div>
           )}
 

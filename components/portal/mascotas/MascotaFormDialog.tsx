@@ -1,12 +1,14 @@
 "use client";
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useState, type ComponentType, type ReactNode, type SVGProps } from "react";
 import Image from "next/image";
+import { Dog, Cat, PawPrint } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { uploadPortalFileToR2 } from "@/lib/uploadToR2";
 import { acreditarPuntos } from "@/lib/data/portal/puntos";
 import { COLORES_MASCOTA, type Familiar, type Mascota } from "@/lib/data/portal/mascotas";
 import { useRazasSugeridas } from "@/lib/portal/useRazasSugeridas";
+import { MaleIcon, FemaleIcon } from "@/components/portal/icons/GenderIcons";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,19 +19,21 @@ interface MascotaFormDialogProps {
   mascota: Mascota | null;
   open: boolean;
   onClose: () => void;
-  onSaved: () => void;
+  onSaved: (mascota: Mascota) => void;
   onEliminada: () => void;
 }
 
-const ESPECIES: { valor: Mascota["especie"]; label: string; icono: string }[] = [
-  { valor: "perro", label: "Perro", icono: "🐶" },
-  { valor: "gato", label: "Gato", icono: "🐱" },
-  { valor: "otro", label: "Otro", icono: "🐾" },
+type IconoComponente = ComponentType<SVGProps<SVGSVGElement>>;
+
+const ESPECIES: { valor: Mascota["especie"]; label: string; Icono: IconoComponente }[] = [
+  { valor: "perro", label: "Perro", Icono: Dog },
+  { valor: "gato", label: "Gato", Icono: Cat },
+  { valor: "otro", label: "Otro", Icono: PawPrint },
 ];
 
-const GENEROS: { valor: NonNullable<Mascota["genero"]>; label: string; icono: string }[] = [
-  { valor: "macho", label: "Macho", icono: "♂" },
-  { valor: "hembra", label: "Hembra", icono: "♀" },
+const GENEROS: { valor: NonNullable<Mascota["genero"]>; label: string; Icono: IconoComponente }[] = [
+  { valor: "macho", label: "Macho", Icono: MaleIcon },
+  { valor: "hembra", label: "Hembra", Icono: FemaleIcon },
 ];
 
 const REDES: { campo: "instagram_url" | "facebook_url" | "tiktok_url"; label: string; icono: string; placeholder: string }[] = [
@@ -158,7 +162,7 @@ export function MascotaFormDialog({
     setFotoPreview(file ? URL.createObjectURL(file) : mascota?.foto_url ?? null);
   }
 
-  const emojiEspecie = form.especie === "gato" ? "🐱" : form.especie === "otro" ? "🐾" : "🐶";
+  const IconoEspecie = form.especie === "gato" ? Cat : form.especie === "otro" ? PawPrint : Dog;
 
   function normalizarUrl(valor: string): string | null {
     const limpio = valor.trim();
@@ -203,13 +207,20 @@ export function MascotaFormDialog({
     };
 
     if (mascota) {
-      const { error: updateError } = await supabase.from("mascotas").update(payload).eq("id", mascota.id);
-      if (updateError) {
-        setError(updateError.message);
+      const { data: actualizada, error: updateError } = await supabase
+        .from("mascotas")
+        .update(payload)
+        .eq("id", mascota.id)
+        .select()
+        .single();
+      if (updateError || !actualizada) {
+        setError(updateError?.message ?? "No se pudo guardar");
         setGuardando(false);
         return;
       }
-      if (fotoFile) await subirFoto(supabase, mascota.id, fotoFile);
+      const fotoUrl = fotoFile ? await subirFoto(supabase, mascota.id, fotoFile) : actualizada.foto_url;
+      setGuardando(false);
+      onSaved({ ...actualizada, foto_url: fotoUrl } as Mascota);
     } else {
       const { data: existentes } = await supabase
         .from("mascotas")
@@ -220,14 +231,14 @@ export function MascotaFormDialog({
       const { data: nueva, error: insertError } = await supabase
         .from("mascotas")
         .insert({ ...payload, cliente_id: clienteId })
-        .select("id")
+        .select()
         .single();
       if (insertError || !nueva) {
         setError(insertError?.message ?? "No se pudo guardar");
         setGuardando(false);
         return;
       }
-      if (fotoFile) await subirFoto(supabase, nueva.id, fotoFile);
+      const fotoUrl = fotoFile ? await subirFoto(supabase, nueva.id, fotoFile) : nueva.foto_url;
 
       const bono = orden === 1 ? 40 : orden <= 3 ? 20 : 0;
       if (bono > 0) {
@@ -241,17 +252,26 @@ export function MascotaFormDialog({
           nueva.id
         );
       }
-    }
 
-    setGuardando(false);
-    onSaved();
+      setGuardando(false);
+      onSaved({ ...nueva, foto_url: fotoUrl } as Mascota);
+    }
   }
 
-  async function subirFoto(supabase: ReturnType<typeof createClient>, mascotaId: string, file: File) {
+  // Devuelve la URL ya subida en vez de que el caller vuelva a leer la fila de
+  // la base de datos: MascotasGrid actualiza su estado local con este valor
+  // directamente, así la foto aparece de inmediato en vez de depender de un
+  // refetch que a veces corría antes de que esta subida terminara.
+  async function subirFoto(
+    supabase: ReturnType<typeof createClient>,
+    mascotaId: string,
+    file: File
+  ): Promise<string | null> {
     const url = await uploadPortalFileToR2("mascotas-fotos", file, `${clienteId}/${mascotaId}`);
     if (url) {
       await supabase.from("mascotas").update({ foto_url: url }).eq("id", mascotaId);
     }
+    return url;
   }
 
   async function handleEliminar() {
@@ -301,7 +321,7 @@ export function MascotaFormDialog({
               {fotoPreview ? (
                 <Image src={fotoPreview} alt="" fill unoptimized className="object-cover" sizes="96px" />
               ) : (
-                <span className="text-4xl">{emojiEspecie}</span>
+                <IconoEspecie className="h-10 w-10 text-portal-muted" strokeWidth={1.5} />
               )}
               <label className="absolute bottom-0 right-0 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-portal-orange text-white shadow-md hover:bg-portal-orange-dark">
                 <span className="material-symbols-rounded text-[16px]">photo_camera</span>
@@ -323,6 +343,42 @@ export function MascotaFormDialog({
               />
             </div>
           </div>
+
+          <div className="grid gap-1.5">
+            <CampoLabel icono="category">Especie</CampoLabel>
+            <div className="grid grid-cols-3 gap-2" role="group" aria-label="Especie">
+              {ESPECIES.map(({ valor, label, Icono }) => (
+                <button
+                  key={valor}
+                  type="button"
+                  aria-pressed={form.especie === valor}
+                  onClick={() => setForm((f) => ({ ...f, especie: valor }))}
+                  className={`flex min-h-[64px] flex-col items-center justify-center gap-1 rounded-2xl border text-xs font-bold transition-all active:scale-95 ${
+                    form.especie === valor
+                      ? "border-portal-navy bg-portal-navy text-white shadow-md"
+                      : "border-portal-surface-variant bg-portal-surface-low/40 text-portal-navy hover:bg-portal-surface-low"
+                  }`}
+                >
+                  <Icono className="h-6 w-6" strokeWidth={1.5} aria-hidden="true" />
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {form.especie === "otro" && (
+            <div className="grid gap-1.5">
+              <CampoLabel htmlFor="mascota-especie-otro" icono="edit">
+                ¿Qué especie?
+              </CampoLabel>
+              <Input
+                id="mascota-especie-otro"
+                value={form.especie_otro}
+                onChange={(e) => setForm((f) => ({ ...f, especie_otro: e.target.value }))}
+                className={inputBase}
+              />
+            </div>
+          )}
 
           <div className="grid grid-cols-2 gap-3">
             <div className="grid gap-1.5">
@@ -381,47 +437,9 @@ export function MascotaFormDialog({
           </div>
 
           <div className="grid gap-1.5">
-            <CampoLabel icono="category">Especie</CampoLabel>
-            <div className="grid grid-cols-3 gap-2" role="group" aria-label="Especie">
-              {ESPECIES.map(({ valor, label, icono }) => (
-                <button
-                  key={valor}
-                  type="button"
-                  aria-pressed={form.especie === valor}
-                  onClick={() => setForm((f) => ({ ...f, especie: valor }))}
-                  className={`flex min-h-[64px] flex-col items-center justify-center gap-1 rounded-2xl border text-xs font-bold transition-all active:scale-95 ${
-                    form.especie === valor
-                      ? "border-portal-navy bg-portal-navy text-white shadow-md"
-                      : "border-portal-surface-variant bg-portal-surface-low/40 text-portal-navy hover:bg-portal-surface-low"
-                  }`}
-                >
-                  <span className="text-2xl" aria-hidden="true">
-                    {icono}
-                  </span>
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {form.especie === "otro" && (
-            <div className="grid gap-1.5">
-              <CampoLabel htmlFor="mascota-especie-otro" icono="edit">
-                ¿Qué especie?
-              </CampoLabel>
-              <Input
-                id="mascota-especie-otro"
-                value={form.especie_otro}
-                onChange={(e) => setForm((f) => ({ ...f, especie_otro: e.target.value }))}
-                className={inputBase}
-              />
-            </div>
-          )}
-
-          <div className="grid gap-1.5">
             <CampoLabel icono="wc">Género</CampoLabel>
             <div className="grid grid-cols-2 gap-2" role="group" aria-label="Género">
-              {GENEROS.map(({ valor, label, icono }) => (
+              {GENEROS.map(({ valor, label, Icono }) => (
                 <button
                   key={valor}
                   type="button"
@@ -433,9 +451,7 @@ export function MascotaFormDialog({
                       : "border-portal-surface-variant bg-portal-surface-low/40 text-portal-navy hover:bg-portal-surface-low"
                   }`}
                 >
-                  <span className="text-2xl" aria-hidden="true">
-                    {icono}
-                  </span>
+                  <Icono className="h-6 w-6" strokeWidth={1.5} aria-hidden="true" />
                   {label}
                 </button>
               ))}

@@ -88,10 +88,18 @@ export function PortalMobileNav() {
                 );
               })}
             </div>
+            <Link
+              href="/"
+              onClick={() => setMenuAbierto(false)}
+              className="mt-2 flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm text-white/60"
+            >
+              <span className="material-symbols-rounded text-[20px]">arrow_back</span>
+              Regresar a la página web
+            </Link>
             <button
               type="button"
               onClick={handleLogout}
-              className="mt-2 flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm text-white/60"
+              className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm text-white/60"
             >
               <span className="material-symbols-rounded text-[20px]">logout</span>
               Cerrar sesión

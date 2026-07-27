@@ -31,7 +31,10 @@ export const brand = {
   },
   googleFontsHref:
     "https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,600;0,700&family=Bebas+Neue&display=swap",
-  logoUrl: "https://suplevet.pe/logos/logo-white-mixed-horizontal.png",
+  // Alojado en R2 (no en suplevet.pe/logos/...): ese dominio hoy sirve la
+  // tienda Shopify vieja, no esta app, así que la ruta daba 404 en los
+  // correos. R2 funciona sin depender de cuándo se lance el dominio nuevo.
+  logoUrl: "https://pub-ad8cb8681bd8458ba537a43f6735a89d.r2.dev/branding/logo-white-mixed-horizontal.png",
   siteUrl: "https://suplevet.pe",
   portalUrl: "https://suplevet.pe/mi-cuenta",
   supportEmail: "soporte@suplevet.com",

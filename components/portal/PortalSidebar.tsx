@@ -128,6 +128,13 @@ export function PortalSidebar({ usuario }: { usuario: PortalSidebarUsuario }) {
       </nav>
 
       <div className="border-t border-white/10 p-4">
+        <Link
+          href="/"
+          className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-white/50 transition-colors hover:bg-white/5 hover:text-white/80"
+        >
+          <span className="material-symbols-rounded text-[18px]">arrow_back</span>
+          Regresar a la página web
+        </Link>
         <button
           type="button"
           onClick={handleLogout}

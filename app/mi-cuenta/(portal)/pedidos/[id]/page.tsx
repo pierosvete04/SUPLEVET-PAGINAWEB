@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { ArrowLeft, Clock, CreditCard, Gift, MapPin, Star } from "lucide-react";
+import { ArrowLeft, Clock, CreditCard, Gift, MapPin, Package, Star } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { formatFecha } from "@/lib/portal/formato";
 import { formatPrecio } from "@/lib/data/productos-shared";
@@ -178,7 +178,9 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
                   {imagen ? (
                     <Image src={imagen} alt={nombreProducto} fill className="object-cover" sizes="56px" />
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center text-xl">📦</div>
+                    <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                      <Package className="h-5 w-5" strokeWidth={1.5} />
+                    </div>
                   )}
                 </div>
                 <div className="min-w-0 flex-1">

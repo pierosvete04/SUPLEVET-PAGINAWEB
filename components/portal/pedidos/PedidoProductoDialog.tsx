@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { CheckCircle2, Clock, Star, XCircle } from "lucide-react";
+import { CheckCircle2, Clock, Package, Star, XCircle } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { acreditarPuntos } from "@/lib/data/portal/puntos";
 import { trackEvent } from "@/lib/analytics";
@@ -187,7 +187,9 @@ export function PedidoProductoDialog({
                 {productoImagen ? (
                   <Image src={productoImagen} alt={productoNombre} fill className="object-cover" sizes="64px" />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-2xl">📦</div>
+                  <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                    <Package className="h-6 w-6" strokeWidth={1.5} />
+                  </div>
                 )}
               </div>
               <div className="min-w-0 flex-1">

@@ -78,6 +78,22 @@ export function parseDetalleEventoSalud(raw: string | null): DetalleEventoSalud 
   }
 }
 
+// Reutilizado por app/mi-cuenta/(portal)/mascotas/page.tsx (server) e Inicio
+// (InicioDashboard) para no duplicar esta lógica — antes vivía solo en el
+// useEffect client-side de MascotasGrid, lo que forzaba un segundo round-trip
+// después de la carga inicial en vez de venir ya resuelta desde el servidor.
+export function mapaVacunaPendiente(
+  eventosVacuna: { mascota_id: string; detalle: string | null }[]
+): Record<string, boolean> {
+  const pendientePorMascota: Record<string, boolean> = {};
+  for (const ev of eventosVacuna) {
+    if (pendientePorMascota[ev.mascota_id] !== undefined) continue;
+    const detalle = parseDetalleEventoSalud(ev.detalle);
+    pendientePorMascota[ev.mascota_id] = !!(detalle.proxima_fecha && new Date(detalle.proxima_fecha) < new Date());
+  }
+  return pendientePorMascota;
+}
+
 export const TIPOS_SALUD: Record<TipoEventoSalud, { label: string; emoji: string }> = {
   vacuna: { label: "Vacuna", emoji: "💉" },
   desparasitacion: { label: "Desparasitación", emoji: "🪱" },

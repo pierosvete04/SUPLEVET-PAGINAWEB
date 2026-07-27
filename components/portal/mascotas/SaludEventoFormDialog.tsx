@@ -1,9 +1,22 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ComponentType, type SVGProps } from "react";
+import { Bath, Bug, Heart, Pill, Stethoscope, Syringe } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { DetalleEventoSalud, MascotaEvento, TipoEventoSalud } from "@/lib/data/portal/mascotas";
 import { TIPOS_SALUD } from "@/lib/data/portal/mascotas";
+
+// TIPOS_SALUD trae un emoji (usado en la ficha PDF imprimible, ver
+// FichaDocumentoImprimible.tsx) — acá en el selector del portal se usa un
+// ícono SVG en su lugar para mantener el mismo estilo que el resto del panel.
+const ICONO_TIPO_SALUD: Record<TipoEventoSalud, ComponentType<SVGProps<SVGSVGElement>>> = {
+  vacuna: Syringe,
+  desparasitacion: Bug,
+  consulta: Stethoscope,
+  medicamento: Pill,
+  bano: Bath,
+  otro: Heart,
+};
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -126,11 +139,16 @@ export function SaludEventoFormDialog({
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                {Object.entries(TIPOS_SALUD).map(([valor, t]) => (
-                  <SelectItem key={valor} value={valor}>
-                    {t.emoji} {t.label}
-                  </SelectItem>
-                ))}
+                {Object.entries(TIPOS_SALUD).map(([valor, t]) => {
+                  const Icono = ICONO_TIPO_SALUD[valor as TipoEventoSalud];
+                  return (
+                    <SelectItem key={valor} value={valor}>
+                      <span className="flex items-center gap-2">
+                        <Icono className="h-4 w-4" strokeWidth={1.75} /> {t.label}
+                      </span>
+                    </SelectItem>
+                  );
+                })}
               </SelectContent>
             </Select>
           </div>
