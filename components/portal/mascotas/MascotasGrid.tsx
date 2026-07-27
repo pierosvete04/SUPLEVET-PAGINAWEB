@@ -24,9 +24,24 @@ export function MascotasGrid({ clienteId, mascotasIniciales, vacunaPendienteInic
   const vacunaPendiente = vacunaPendienteInicial;
   const [formAbierto, setFormAbierto] = useState(false);
   const [mascotaEditar, setMascotaEditar] = useState<Mascota | null>(null);
+  const [avisoFoto, setAvisoFoto] = useState<string | null>(null);
 
   return (
     <div>
+      {avisoFoto && (
+        <div className="mb-6 flex items-start justify-between gap-3 rounded-2xl border border-portal-orange/30 bg-portal-orange/10 p-4 text-sm text-portal-navy">
+          <p>{avisoFoto}</p>
+          <button
+            type="button"
+            onClick={() => setAvisoFoto(null)}
+            aria-label="Cerrar aviso"
+            className="shrink-0 text-portal-muted hover:text-portal-navy"
+          >
+            <span className="material-symbols-rounded text-[18px]">close</span>
+          </button>
+        </div>
+      )}
+
       <div className="mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
         <div>
           <h1 className="font-display text-4xl font-semibold leading-tight text-portal-navy md:text-5xl">
@@ -135,7 +150,7 @@ export function MascotasGrid({ clienteId, mascotasIniciales, vacunaPendienteInic
         mascota={mascotaEditar}
         open={formAbierto}
         onClose={() => setFormAbierto(false)}
-        onSaved={(mascotaGuardada) => {
+        onSaved={(mascotaGuardada, fotoFallo) => {
           setFormAbierto(false);
           // Actualiza el estado local con la fila ya guardada en vez de
           // volver a consultar Supabase: evita el "tengo que refrescar para
@@ -147,6 +162,11 @@ export function MascotasGrid({ clienteId, mascotasIniciales, vacunaPendienteInic
               ? actuales.map((m) => (m.id === mascotaGuardada.id ? mascotaGuardada : m))
               : [...actuales, mascotaGuardada];
           });
+          setAvisoFoto(
+            fotoFallo
+              ? `Guardamos a ${mascotaGuardada.nombre}, pero no pudimos subir la foto. Vuelve a intentarlo editándola.`
+              : null
+          );
         }}
         onEliminada={() => {
           setFormAbierto(false);

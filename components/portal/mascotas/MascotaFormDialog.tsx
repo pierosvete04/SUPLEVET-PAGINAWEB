@@ -19,7 +19,8 @@ interface MascotaFormDialogProps {
   mascota: Mascota | null;
   open: boolean;
   onClose: () => void;
-  onSaved: (mascota: Mascota) => void;
+  /** `fotoFallo` es true si el usuario eligió una foto pero la subida a R2 falló (ej. CORS) — la mascota igual se guarda. */
+  onSaved: (mascota: Mascota, fotoFallo?: boolean) => void;
   onEliminada: () => void;
 }
 
@@ -220,7 +221,7 @@ export function MascotaFormDialog({
       }
       const fotoUrl = fotoFile ? await subirFoto(supabase, mascota.id, fotoFile) : actualizada.foto_url;
       setGuardando(false);
-      onSaved({ ...actualizada, foto_url: fotoUrl } as Mascota);
+      onSaved({ ...actualizada, foto_url: fotoUrl } as Mascota, !!fotoFile && !fotoUrl);
     } else {
       const { data: existentes } = await supabase
         .from("mascotas")
@@ -254,7 +255,7 @@ export function MascotaFormDialog({
       }
 
       setGuardando(false);
-      onSaved({ ...nueva, foto_url: fotoUrl } as Mascota);
+      onSaved({ ...nueva, foto_url: fotoUrl } as Mascota, !!fotoFile && !fotoUrl);
     }
   }
 

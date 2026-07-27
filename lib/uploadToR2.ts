@@ -12,31 +12,41 @@ export type CarpetaR2 =
   | "cursos-contenido"
   | "testimonios-videos";
 
+// El PUT directo a R2 puede fallar por red o por CORS (el bucket solo
+// autoriza ciertos orígenes — ver scripts/set-r2-cors.mjs). Un CORS block
+// hace que el propio `fetch` rechace la promesa (no llega a haber respuesta
+// que revisar con `.ok`), así que sin este try/catch esa excepción quedaba
+// sin capturar y el caller (ej. MascotaFormDialog) se quedaba colgado en
+// "Guardando…" para siempre en vez de avisar que la foto no se subió.
 async function subirConUrlFirmada(
   endpoint: string,
   body: Record<string, string | undefined>,
   file: File
 ): Promise<string | null> {
-  const urlRes = await fetch(endpoint, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  if (!urlRes.ok) return null;
+  try {
+    const urlRes = await fetch(endpoint, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    if (!urlRes.ok) return null;
 
-  const { uploadUrl, publicUrl } = (await urlRes.json()) as {
-    uploadUrl: string;
-    publicUrl: string;
-  };
+    const { uploadUrl, publicUrl } = (await urlRes.json()) as {
+      uploadUrl: string;
+      publicUrl: string;
+    };
 
-  const putRes = await fetch(uploadUrl, {
-    method: "PUT",
-    headers: { "Content-Type": file.type },
-    body: file,
-  });
-  if (!putRes.ok) return null;
+    const putRes = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+    if (!putRes.ok) return null;
 
-  return publicUrl;
+    return publicUrl;
+  } catch {
+    return null;
+  }
 }
 
 export async function uploadFileToR2(

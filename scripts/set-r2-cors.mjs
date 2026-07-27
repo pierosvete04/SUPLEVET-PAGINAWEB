@@ -32,7 +32,15 @@ await client.send(
     CORSConfiguration: {
       CORSRules: [
         {
-          AllowedOrigins: ["https://suplevet.pe", "http://localhost:3000"],
+          // suplevet.pe: dominio final (hoy sirve la tienda Shopify vieja,
+          // pero se deja listo para cuando apunte acá). *.vercel.app cubre
+          // tanto el deploy de producción (suplevet-paginaweb.vercel.app)
+          // como cualquier preview deploy (URLs que cambian por rama/PR) —
+          // sin esto, la subida de fotos (PUT firmado directo a R2 desde el
+          // navegador) falla con CORS y dispara una excepción no capturada
+          // que deja el modal de guardado colgado en "Guardando…" para
+          // siempre, aunque la fila ya se haya insertado en la base.
+          AllowedOrigins: ["https://suplevet.pe", "https://*.vercel.app", "http://localhost:3000"],
           AllowedMethods: ["PUT", "GET", "HEAD"],
           AllowedHeaders: ["*"],
           MaxAgeSeconds: 3000,
