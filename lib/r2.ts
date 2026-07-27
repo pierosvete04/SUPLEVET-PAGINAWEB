@@ -25,7 +25,18 @@ export const r2Client = new S3Client({
   },
 });
 
+// La variable de entorno R2_PUBLIC_URL en Vercel quedó guardada como
+// "//pub-....r2.dev" (sin "https:") mientras que .env.local sí lo tenía —
+// esa URL sin esquema explícito rompe al componente next/image (devuelve 400
+// al pedir /_next/image?url=//pub-...) aunque el navegador la resuelva bien
+// en un <img> normal. Se normaliza acá para no depender de que cada entorno
+// tenga el valor guardado exactamente igual.
+function normalizarBaseUrl(url: string): string {
+  if (/^https?:\/\//i.test(url)) return url;
+  return `https://${url.replace(/^\/+/, "")}`;
+}
+
 export function r2PublicUrl(key: string): string {
-  const publicUrl = requiredEnv("R2_PUBLIC_URL");
+  const publicUrl = normalizarBaseUrl(requiredEnv("R2_PUBLIC_URL"));
   return `${publicUrl}/${key}`;
 }
