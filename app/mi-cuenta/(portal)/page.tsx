@@ -22,7 +22,7 @@ export default async function PortalInicioPage() {
       supabase.from("suplepuntos_clientes").select("*").eq("cliente_id", user.id).maybeSingle(),
       supabase
         .from("mascotas")
-        .select("id, nombre, especie, raza, foto_url")
+        .select("id, nombre, especie, especie_otro, raza, foto_url, fecha_nacimiento, peso_kg")
         .eq("cliente_id", user.id)
         .order("created_at", { ascending: true })
         .limit(3),

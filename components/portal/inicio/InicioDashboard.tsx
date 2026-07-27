@@ -7,7 +7,7 @@ import type { User } from "@supabase/supabase-js";
 import { Cat, Dog, Gem } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { gsap } from "@/lib/gsap";
-import { formatFecha } from "@/lib/portal/formato";
+import { calcularEdad, formatFecha } from "@/lib/portal/formato";
 import type { ClientePerfil } from "@/lib/data/portal/cliente";
 import type { SuplepuntosCliente } from "@/lib/data/portal/puntos";
 import { NOMBRE_NIVEL, SIGUIENTE_NIVEL, UMBRAL_NIVEL, type LogroConfig } from "@/lib/data/portal/logros";
@@ -17,9 +17,14 @@ interface Mascota {
   id: string;
   nombre: string;
   especie: string;
+  especie_otro: string | null;
   raza: string | null;
   foto_url: string | null;
+  fecha_nacimiento: string | null;
+  peso_kg: number | null;
 }
+
+const ESPECIE_LABEL: Record<string, string> = { perro: "Perro", gato: "Gato" };
 
 interface Transaccion {
   id: string;
@@ -207,52 +212,65 @@ export function InicioDashboard({
             Registra tu primera mascota →
           </Link>
         ) : (
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {mascotas.map((m) => {
+              const edad = m.fecha_nacimiento ? calcularEdad(m.fecha_nacimiento) : null;
+              const especieLabel = ESPECIE_LABEL[m.especie] ?? m.especie_otro ?? "Mascota";
               const pendiente = vacunaPendiente[m.id];
               return (
                 <Link
                   key={m.id}
                   href="/mi-cuenta/mascotas"
-                  className="portal-pet-card flex cursor-pointer flex-col items-center text-center"
+                  className="portal-pet-card group flex cursor-pointer overflow-hidden !p-0 text-left"
                 >
-                  <div className="portal-pet-avatar-lg mb-4">
+                  <div className="relative w-[42%] shrink-0 bg-portal-surface-low">
                     {m.foto_url ? (
-                      <Image src={m.foto_url} alt={m.nombre} fill className="rounded-full object-cover" sizes="80px" />
-                    ) : m.especie === "gato" ? (
-                      <Cat className="h-8 w-8" strokeWidth={1.5} />
+                      <Image src={m.foto_url} alt={m.nombre} fill className="object-cover" sizes="220px" />
                     ) : (
-                      <Dog className="h-8 w-8" strokeWidth={1.5} />
+                      <div className="flex h-full w-full items-center justify-center text-portal-muted">
+                        {m.especie === "gato" ? (
+                          <Cat className="h-10 w-10" strokeWidth={1.5} />
+                        ) : (
+                          <Dog className="h-10 w-10" strokeWidth={1.5} />
+                        )}
+                      </div>
                     )}
                     {pendiente && (
-                      <div className="portal-health-indicator" title="Vacuna pendiente">
+                      <div
+                        className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-portal-error shadow-sm"
+                        title="Vacuna pendiente"
+                      >
                         <span className="material-symbols-rounded text-[12px] text-white">vaccines</span>
                       </div>
                     )}
                   </div>
-                  <h4 className="mb-1 font-display text-lg font-semibold text-portal-navy">{m.nombre}</h4>
-                  <p className="mb-3 text-xs text-portal-muted">
-                    {[m.raza, m.especie].filter(Boolean).join(" • ")}
-                  </p>
-                  {pendiente ? (
-                    <div className="flex w-full items-center justify-center gap-1 rounded-lg bg-portal-surface-low py-1.5 text-xs font-semibold text-portal-navy">
-                      <span className="material-symbols-rounded text-[14px] text-portal-error">warning</span>
-                      Vacuna pendiente
+                  <div className="flex flex-1 flex-col justify-center gap-1 px-6 py-5">
+                    <h4 className="font-display text-2xl font-semibold leading-tight text-portal-navy">{m.nombre}</h4>
+                    <p className="text-sm text-portal-muted">{especieLabel}</p>
+                    {edad && <p className="text-sm text-portal-muted">Edad: {edad}</p>}
+                    {m.peso_kg != null && <p className="text-sm text-portal-muted">Peso: {m.peso_kg} kg</p>}
+                    <div className="mt-3">
+                      {pendiente ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-portal-surface-low px-4 py-1.5 text-xs font-semibold text-portal-navy">
+                          <span className="material-symbols-rounded text-[16px] text-portal-error">warning</span>
+                          Vacuna pendiente
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-portal-teal-light/25 px-4 py-1.5 text-xs font-semibold text-portal-teal-mid">
+                          <span className="material-symbols-rounded text-[16px]">check_circle</span>
+                          Al día
+                        </span>
+                      )}
                     </div>
-                  ) : (
-                    <div className="flex w-full items-center justify-center gap-1 rounded-lg bg-portal-teal-light/20 py-1.5 text-xs font-semibold text-portal-teal-mid">
-                      <span className="material-symbols-rounded text-[14px]">check_circle</span>
-                      Al día
-                    </div>
-                  )}
+                  </div>
                 </Link>
               );
             })}
             <Link
               href="/mi-cuenta/mascotas"
-              className="portal-pet-card flex min-h-[200px] cursor-pointer flex-col items-center justify-center border-2 border-dashed border-portal-surface-variant bg-transparent hover:bg-portal-surface-low"
+              className="portal-pet-card flex min-h-[182px] cursor-pointer flex-col items-center justify-center gap-3 border-2 border-dashed border-portal-surface-variant bg-transparent hover:bg-portal-surface-low"
             >
-              <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-portal-surface-variant">
+              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-portal-surface-variant">
                 <span className="material-symbols-rounded text-2xl text-portal-muted">add</span>
               </div>
               <span className="text-sm font-semibold text-portal-navy">Añadir mascota</span>
