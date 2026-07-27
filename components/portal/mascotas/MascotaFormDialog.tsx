@@ -8,6 +8,7 @@ import { uploadPortalFileToR2 } from "@/lib/uploadToR2";
 import { acreditarPuntos } from "@/lib/data/portal/puntos";
 import { COLORES_MASCOTA, type Familiar, type Mascota } from "@/lib/data/portal/mascotas";
 import { useRazasSugeridas } from "@/lib/portal/useRazasSugeridas";
+import { BreedCombobox } from "@/components/portal/mascotas/BreedCombobox";
 import { MaleIcon, FemaleIcon } from "@/components/portal/icons/GenderIcons";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -67,6 +68,20 @@ const PRESETS_NEUTROS = [
   { label: "Navy oscuro", valor: "#1e3a5f" },
 ];
 
+const RELACIONES_FAMILIAR = [
+  "Papá",
+  "Mamá",
+  "Hermano",
+  "Hermana",
+  "Abuelo",
+  "Abuela",
+  "Tío",
+  "Tía",
+  "Primo",
+  "Prima",
+  "Otro",
+];
+
 function CampoLabel({ htmlFor, icono, children }: { htmlFor?: string; icono: string; children: ReactNode }) {
   return (
     <label
@@ -103,14 +118,41 @@ function SelectorColor({
           style={{ backgroundColor: v }}
         />
       ))}
+      <BotonColorPersonalizado valor={valor} onChange={onChange} label="Color personalizado" />
+    </div>
+  );
+}
+
+// El <input type="color"> nativo siempre pinta su swatch como un cuadrado
+// (::-webkit-color-swatch no respeta border-radius del input contenedor), así
+// que en vez de mostrar ese cuadrado dentro de un botón circular, lo dejamos
+// invisible (opacity-0) sobre un botón "+" — el input sigue siendo el que
+// abre el selector de color nativo al hacer clic.
+function BotonColorPersonalizado({
+  valor,
+  onChange,
+  label,
+}: {
+  valor: string;
+  onChange: (valor: string) => void;
+  label: string;
+}) {
+  return (
+    <label
+      title={label}
+      className="relative flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-dashed border-portal-surface-variant text-portal-muted transition-colors hover:border-portal-teal-mid hover:text-portal-teal-mid"
+    >
+      <span className="material-symbols-rounded text-[16px]" aria-hidden="true">
+        add
+      </span>
       <input
         type="color"
-        aria-label="Color personalizado"
+        aria-label={label}
         value={valor}
         onChange={(e) => onChange(e.target.value)}
-        className="h-7 w-7 shrink-0 cursor-pointer rounded-full border-2 border-portal-surface-variant bg-transparent p-0"
+        className="absolute inset-0 h-full w-full cursor-pointer rounded-full opacity-0"
       />
-    </div>
+    </label>
   );
 }
 
@@ -318,12 +360,17 @@ export function MascotaFormDialog({
           {/* Avatar + nombre — primero lo visual, para que el formulario se
               sienta como un perfil y no como una planilla de datos. */}
           <div className="flex flex-col items-center gap-3 pt-1">
-            <div className="relative flex h-24 w-24 shrink-0 items-center justify-center overflow-hidden rounded-full border-4 border-portal-surface-low bg-portal-surface-low shadow-sm">
-              {fotoPreview ? (
-                <Image src={fotoPreview} alt="" fill unoptimized className="object-cover" sizes="96px" />
-              ) : (
-                <IconoEspecie className="h-10 w-10 text-portal-muted" strokeWidth={1.5} />
-              )}
+            {/* El botón de cámara vive fuera del círculo con overflow-hidden:
+                si estuviera dentro, el recorte circular le cortaba la esquina
+                (bottom-right cae fuera del círculo inscrito en el cuadrado). */}
+            <div className="relative h-24 w-24 shrink-0">
+              <div className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-portal-surface-low bg-portal-surface-low shadow-sm">
+                {fotoPreview ? (
+                  <Image src={fotoPreview} alt="" fill unoptimized className="object-cover" sizes="96px" />
+                ) : (
+                  <IconoEspecie className="h-10 w-10 text-portal-muted" strokeWidth={1.5} />
+                )}
+              </div>
               <label className="absolute bottom-0 right-0 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-portal-orange text-white shadow-md hover:bg-portal-orange-dark">
                 <span className="material-symbols-rounded text-[16px]">photo_camera</span>
                 <input
@@ -386,22 +433,14 @@ export function MascotaFormDialog({
               <CampoLabel htmlFor="mascota-raza" icono="pets">
                 Raza
               </CampoLabel>
-              <Input
+              <BreedCombobox
                 id="mascota-raza"
-                list="mascota-razas-sugeridas"
-                autoComplete="off"
                 value={form.raza}
-                onChange={(e) => setForm((f) => ({ ...f, raza: e.target.value }))}
+                onChange={(valor) => setForm((f) => ({ ...f, raza: valor }))}
+                opciones={razasSugeridas}
                 placeholder="Golden Retriever"
                 className={inputBase}
               />
-              {razasSugeridas.length > 0 && (
-                <datalist id="mascota-razas-sugeridas">
-                  {razasSugeridas.map((r) => (
-                    <option key={r} value={r} />
-                  ))}
-                </datalist>
-              )}
             </div>
             <div className="grid gap-1.5">
               <CampoLabel htmlFor="mascota-peso" icono="monitor_weight">
@@ -463,40 +502,67 @@ export function MascotaFormDialog({
             <CampoLabel icono="diversity_3">Familiares (opcional)</CampoLabel>
             <p className="text-xs text-portal-muted">Papá, mamá, hermanos… tú eliges la relación.</p>
             <div className="flex flex-col gap-2">
-              {form.familiares.map((familiar, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <Input
-                    value={familiar.relacion}
-                    onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        familiares: f.familiares.map((fam, j) => (j === i ? { ...fam, relacion: e.target.value } : fam)),
-                      }))
-                    }
-                    placeholder="Papá, tío…"
-                    className={`${inputBase} w-28 shrink-0`}
-                  />
-                  <Input
-                    value={familiar.nombre}
-                    onChange={(e) =>
-                      setForm((f) => ({
-                        ...f,
-                        familiares: f.familiares.map((fam, j) => (j === i ? { ...fam, nombre: e.target.value } : fam)),
-                      }))
-                    }
-                    placeholder="Nombre"
-                    className={`${inputBase} flex-1`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setForm((f) => ({ ...f, familiares: f.familiares.filter((_, j) => j !== i) }))}
-                    aria-label="Quitar familiar"
-                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-portal-muted hover:bg-red-50 hover:text-portal-error"
-                  >
-                    <span className="material-symbols-rounded text-[18px]">close</span>
-                  </button>
-                </div>
-              ))}
+              {form.familiares.map((familiar, i) => {
+                const esRelacionLibre = familiar.relacion !== "" && !RELACIONES_FAMILIAR.includes(familiar.relacion);
+                const valorSelect = familiar.relacion === "" ? "" : esRelacionLibre ? "Otro" : familiar.relacion;
+                return (
+                  <div key={i} className="flex flex-col gap-2">
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={valorSelect}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            familiares: f.familiares.map((fam, j) => (j === i ? { ...fam, relacion: e.target.value } : fam)),
+                          }))
+                        }
+                        className={`${inputBase} w-28 shrink-0`}
+                      >
+                        <option value="" disabled>
+                          Relación
+                        </option>
+                        {RELACIONES_FAMILIAR.map((r) => (
+                          <option key={r} value={r}>
+                            {r}
+                          </option>
+                        ))}
+                      </select>
+                      <Input
+                        value={familiar.nombre}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            familiares: f.familiares.map((fam, j) => (j === i ? { ...fam, nombre: e.target.value } : fam)),
+                          }))
+                        }
+                        placeholder="Nombre"
+                        className={`${inputBase} flex-1`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setForm((f) => ({ ...f, familiares: f.familiares.filter((_, j) => j !== i) }))}
+                        aria-label="Quitar familiar"
+                        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-portal-muted hover:bg-red-50 hover:text-portal-error"
+                      >
+                        <span className="material-symbols-rounded text-[18px]">close</span>
+                      </button>
+                    </div>
+                    {valorSelect === "Otro" && (
+                      <Input
+                        value={esRelacionLibre ? familiar.relacion : ""}
+                        onChange={(e) =>
+                          setForm((f) => ({
+                            ...f,
+                            familiares: f.familiares.map((fam, j) => (j === i ? { ...fam, relacion: e.target.value } : fam)),
+                          }))
+                        }
+                        placeholder="Especifica la relación (ej: padrino, cuidador…)"
+                        className={inputBase}
+                      />
+                    )}
+                  </div>
+                );
+              })}
               <button
                 type="button"
                 onClick={() => setForm((f) => ({ ...f, familiares: [...f.familiares, { relacion: "", nombre: "" }] }))}
@@ -579,12 +645,10 @@ export function MascotaFormDialog({
                     style={{ backgroundColor: color }}
                   />
                 ))}
-                <input
-                  type="color"
-                  aria-label="Color de portada personalizado"
-                  value={form.color_primario || "#1e3a5f"}
-                  onChange={(e) => setForm((f) => ({ ...f, color_primario: e.target.value }))}
-                  className="h-7 w-7 shrink-0 cursor-pointer rounded-full border-2 border-portal-surface-variant bg-transparent p-0"
+                <BotonColorPersonalizado
+                  valor={form.color_primario || "#1e3a5f"}
+                  onChange={(valor) => setForm((f) => ({ ...f, color_primario: valor }))}
+                  label="Color de portada personalizado"
                 />
                 {form.color_primario && (
                   <button

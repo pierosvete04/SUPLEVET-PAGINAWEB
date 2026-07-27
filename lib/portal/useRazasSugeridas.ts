@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { TRADUCCION_RAZA_GATO, TRADUCCION_RAZA_PERRO } from "./razasTraducciones";
 
 type Especie = "perro" | "gato" | "otro";
 
@@ -22,13 +23,15 @@ async function cargarRazasPerro(): Promise<string[]> {
       for (const sub of subrazas) nombres.push(`${capitalizar(sub)} ${capitalizar(raza)}`);
     }
   }
-  return nombres.sort((a, b) => a.localeCompare(b, "es"));
+  const traducidas = nombres.map((n) => TRADUCCION_RAZA_PERRO[n] ?? n);
+  return Array.from(new Set(traducidas)).sort((a, b) => a.localeCompare(b, "es"));
 }
 
 async function cargarRazasGato(): Promise<string[]> {
   const res = await fetch("https://api.thecatapi.com/v1/breeds");
   const data = (await res.json()) as { name: string }[];
-  return data.map((b) => b.name).sort((a, b) => a.localeCompare(b, "es"));
+  const traducidas = data.map((b) => TRADUCCION_RAZA_GATO[b.name] ?? b.name);
+  return Array.from(new Set(traducidas)).sort((a, b) => a.localeCompare(b, "es"));
 }
 
 // Sugerencias de raza para el <datalist> del formulario de mascota — usa APIs
