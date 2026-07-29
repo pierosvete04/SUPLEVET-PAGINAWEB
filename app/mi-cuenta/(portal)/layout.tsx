@@ -3,6 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { asegurarFilasCliente, esCuentaInterna } from "@/lib/data/portal/cliente";
 import { PortalSidebar } from "@/components/portal/PortalSidebar";
 import { PortalMobileNav } from "@/components/portal/PortalMobileNav";
+import { PortalToaster } from "@/components/portal/notificaciones/PortalToaster";
+import { NotificationCenter } from "@/components/portal/notificaciones/NotificationCenter";
+import { contarNoLeidas } from "@/lib/data/portal/notificaciones";
 import "./portal-theme.css";
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
@@ -22,13 +25,14 @@ export default async function PortalLayout({ children }: { children: React.React
   // vino del login del portal (ej. OTP del checkout) — ver lib/data/portal/cliente.ts.
   await asegurarFilasCliente(supabase, user.id);
 
-  const [{ data: perfil }, { data: puntos }] = await Promise.all([
+  const [{ data: perfil }, { data: puntos }, noLeidas] = await Promise.all([
     supabase
       .from("clientes_perfil")
       .select("nombre, apellido, foto_url, perfil_completo")
       .eq("id", user.id)
       .maybeSingle(),
     supabase.from("suplepuntos_clientes").select("saldo_actual, nivel").eq("cliente_id", user.id).maybeSingle(),
+    contarNoLeidas(supabase, user.id),
   ]);
 
   // Cliente nuevo (login solo con correo, sin nombre ni contacto): antes de
@@ -60,6 +64,8 @@ export default async function PortalLayout({ children }: { children: React.React
         </main>
         <PortalMobileNav />
       </div>
+      <NotificationCenter userId={user.id} noLeidasIniciales={noLeidas} />
+      <PortalToaster />
     </>
   );
 }

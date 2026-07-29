@@ -15,6 +15,19 @@ export function formatFechaCumple(str: string | null): string {
   return new Date(`${str}T00:00:00`).toLocaleDateString("es-PE", { day: "2-digit", month: "short" });
 }
 
+export function formatFechaRelativa(str: string): string {
+  const segundos = Math.floor((Date.now() - new Date(str).getTime()) / 1000);
+  if (segundos < 60) return "hace un momento";
+  const minutos = Math.floor(segundos / 60);
+  if (minutos < 60) return `hace ${minutos} min`;
+  const horas = Math.floor(minutos / 60);
+  if (horas < 24) return `hace ${horas} h`;
+  const dias = Math.floor(horas / 24);
+  if (dias === 1) return "ayer";
+  if (dias < 7) return `hace ${dias} días`;
+  return formatFecha(str);
+}
+
 export function calcularEdad(fechaNacimiento: string | null): string {
   if (!fechaNacimiento) return "";
   const hoy = new Date();

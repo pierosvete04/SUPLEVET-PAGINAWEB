@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Cat, Dog, PawPrint } from "lucide-react";
+import { Cat, Dog, PawPrint, Star } from "lucide-react";
 import { calcularEdad } from "@/lib/portal/formato";
 import type { Mascota } from "@/lib/data/portal/mascotas";
 import { MascotaFormDialog } from "@/components/portal/mascotas/MascotaFormDialog";
@@ -13,6 +13,21 @@ interface MascotasGridProps {
   mascotasIniciales: Mascota[];
   vacunaPendienteInicial: Record<string, boolean>;
 }
+
+const BENEFICIOS_REGISTRO = [
+  {
+    icono: "vaccines",
+    texto: "Lleva sus vacunas y desparasitaciones al día, con aviso cuando se acerque la próxima.",
+  },
+  {
+    icono: "qr_code_2",
+    texto: "Genera su ficha con código QR para compartirla con veterinarios y paseadores.",
+  },
+  {
+    icono: "star",
+    texto: "Gana 40 SuplePoints al instante apenas termines de registrarla.",
+  },
+] as const;
 
 // Recibe la lista y el estado de vacunas ya resueltos por el servidor (ver
 // app/mi-cuenta/(portal)/mascotas/page.tsx) — el estado local solo existe
@@ -62,22 +77,51 @@ export function MascotasGrid({ clienteId, mascotasIniciales, vacunaPendienteInic
       </div>
 
       {mascotas.length === 0 ? (
-        <div className="flex flex-col items-center rounded-2xl border border-portal-surface-variant bg-white py-16 text-center">
-          <div className="mb-3 flex h-16 w-16 items-center justify-center rounded-full bg-portal-surface-low text-portal-muted">
-            <PawPrint className="h-8 w-8" strokeWidth={1.5} />
+        <div className="relative overflow-hidden rounded-[10px] border border-portal-surface-variant bg-white px-6 py-12 text-center sm:px-10 sm:py-16">
+          <div className="pointer-events-none absolute -right-14 -top-14 h-48 w-48 rounded-full bg-portal-orange/10 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-16 -left-14 h-48 w-48 rounded-full bg-portal-teal-light/20 blur-3xl" />
+
+          <div className="relative mx-auto max-w-md">
+            <div className="relative mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-portal-orange/15 via-portal-teal-light/20 to-portal-teal-mid/15">
+              <PawPrint className="h-9 w-9 text-portal-orange" strokeWidth={1.5} />
+              <span className="absolute -right-1 -top-1 flex h-7 w-7 items-center justify-center rounded-full bg-portal-teal-mid text-white shadow-sm">
+                <Star className="h-3.5 w-3.5 fill-white" strokeWidth={0} />
+              </span>
+            </div>
+
+            <h3 className="font-display text-2xl font-semibold text-portal-navy">
+              Dale la bienvenida a tu primera mascota
+            </h3>
+            <p className="mt-2 text-sm text-portal-muted">
+              Regístrala en menos de un minuto y empieza a aprovechar todo lo que el portal tiene para ella.
+            </p>
+
+            <ul className="mt-6 space-y-3 text-left">
+              {BENEFICIOS_REGISTRO.map((beneficio) => (
+                <li
+                  key={beneficio.icono}
+                  className="flex items-start gap-3 rounded-[10px] bg-portal-surface-low/60 p-3"
+                >
+                  <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-portal-orange shadow-sm">
+                    <span className="material-symbols-rounded text-[18px]">{beneficio.icono}</span>
+                  </span>
+                  <span className="text-sm text-portal-navy">{beneficio.texto}</span>
+                </li>
+              ))}
+            </ul>
+
+            <button
+              type="button"
+              onClick={() => {
+                setMascotaEditar(null);
+                setFormAbierto(true);
+              }}
+              className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-[17px] bg-portal-navy-dark px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-portal-navy sm:w-auto"
+            >
+              <span className="material-symbols-rounded text-[20px]">add</span>
+              Registrar primera mascota
+            </button>
           </div>
-          <h3 className="font-display text-2xl font-semibold text-portal-navy">Aún no tienes mascotas</h3>
-          <p className="mt-2 text-portal-muted">Registra a tu compañero y gana 40 SuplePoints.</p>
-          <button
-            type="button"
-            onClick={() => {
-              setMascotaEditar(null);
-              setFormAbierto(true);
-            }}
-            className="mt-4 rounded-[17px] bg-portal-navy-dark px-6 py-2 text-white"
-          >
-            Registrar primera mascota
-          </button>
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">

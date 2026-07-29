@@ -10,6 +10,7 @@ import { gsap } from "@/lib/gsap";
 import { calcularEdad, formatFecha } from "@/lib/portal/formato";
 import type { ClientePerfil } from "@/lib/data/portal/cliente";
 import type { SuplepuntosCliente } from "@/lib/data/portal/puntos";
+import { crearNotificacion } from "@/lib/data/portal/notificaciones";
 import { NOMBRE_NIVEL, SIGUIENTE_NIVEL, UMBRAL_NIVEL, type LogroConfig } from "@/lib/data/portal/logros";
 import { TiendaSheet } from "@/components/portal/inicio/TiendaSheet";
 
@@ -109,8 +110,10 @@ export function InicioDashboard({
 
   const hora = new Date().getHours();
   const saludo = hora < 12 ? "Buenos días" : hora < 18 ? "Buenas tardes" : "Buenas noches";
-  const nombre =
-    [perfil?.nombre, perfil?.apellido].filter(Boolean).join(" ") || user.email?.split("@")[0] || "";
+  const primerNombre = perfil?.nombre?.trim().split(/\s+/)[0] || user.email?.split("@")[0] || "";
+  const nombre = primerNombre
+    ? primerNombre.charAt(0).toLocaleUpperCase("es") + primerNombre.slice(1).toLocaleLowerCase("es")
+    : "";
 
   const nivel = puntos?.nivel ?? "basico";
   const siguienteNivel = SIGUIENTE_NIVEL[nivel];
@@ -396,7 +399,17 @@ async function verificarLogrosNuevos(
       const { error } = await supabase
         .from("cliente_logros")
         .insert({ cliente_id: user.id, logro_clave: logro.clave });
-      if (!error) nuevos.add(logro.clave);
+      if (!error) {
+        nuevos.add(logro.clave);
+        await crearNotificacion(
+          supabase,
+          user.id,
+          "logro",
+          "¡Nuevo logro desbloqueado!",
+          logro.nombre,
+          "/mi-cuenta"
+        );
+      }
     }
   }
   if (nuevos.size !== ganados.size) setGanados(nuevos);

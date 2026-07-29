@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
-import { Check, Loader2, Search, UserRound } from "lucide-react";
+import { ArrowLeft, Check, Loader2, Search, UserRound } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { ClientePerfil } from "@/lib/data/portal/cliente";
+import { acreditarPuntos } from "@/lib/data/portal/puntos";
 import { consultarDocumento, esConsultable, largoEsperado, TIPOS_DOCUMENTO, type TipoDocumento } from "@/lib/documento";
 import { MaskedTextReveal } from "@/components/shared/MaskedTextReveal";
 
@@ -17,20 +18,34 @@ interface CompletarPerfilFormProps {
 const inputClass =
   "w-full rounded-md border border-border px-4 py-3 font-body text-sm text-secondary placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50";
 
+// Un paso por container: documento (opcional) → nombre → celular → dirección
+// (opcional — si la saltan, la piden igual en el checkout, ver
+// ShippingStep.tsx). El correo no se pide — ya se conoce por el login OTP
+// (user.email) y cambiarlo pasa por el flujo de cambio de correo, no por acá.
+const TOTAL_PASOS = 4;
+
+// Arranca en 20% en vez de 0% apenas entra (recién pasó el OTP, así que ya
+// "algo" hizo) para que la barra motive a seguir en vez de desanimar —
+// pedido explícito de negocio. Del 20 al 100 se reparte en partes iguales
+// entre los pasos restantes.
+function calcularProgreso(paso: number): number {
+  return Math.round(20 + (paso / TOTAL_PASOS) * 80);
+}
+
 // Único paso obligatorio antes de entrar al portal (ver
 // app/mi-cuenta/(portal)/layout.tsx). Solo pide lo esencial para poder
-// procesar un pedido — nombre, forma de contacto y dirección — con el DNI
-// como atajo opcional (misma consulta RENIEC/SUNAT que ya usa el checkout,
-// ver lib/documento.ts) para no tener que escribir el nombre a mano.
+// contactar al cliente — nombre y forma de contacto — con el DNI y la
+// dirección como atajos opcionales (misma consulta RENIEC/SUNAT que ya usa
+// el checkout, ver lib/documento.ts) para no tener que escribir el nombre a
+// mano ni repetir la dirección si ya la puso acá.
 export function CompletarPerfilForm({ user, perfilInicial }: CompletarPerfilFormProps) {
   const router = useRouter();
+  const [paso, setPaso] = useState(0);
   const [form, setForm] = useState({
     nombre: perfilInicial?.nombre ?? "",
     apellido: perfilInicial?.apellido ?? "",
     telefono: perfilInicial?.telefono ?? "",
     direccion: perfilInicial?.direccion ?? "",
-    distrito: perfilInicial?.distrito ?? "",
-    ciudad: perfilInicial?.ciudad ?? "Lima",
     tipo_documento: (perfilInicial?.tipo_documento as TipoDocumento) ?? "dni",
     numero_documento: perfilInicial?.numero_documento ?? "",
   });
@@ -68,15 +83,30 @@ export function CompletarPerfilForm({ user, perfilInicial }: CompletarPerfilForm
     setConsultandoDoc(false);
   }
 
-  async function handleGuardar(e: React.FormEvent) {
-    e.preventDefault();
-    if (!form.nombre.trim() || !form.apellido.trim() || !form.telefono.trim() || !form.direccion.trim() || !form.distrito.trim()) {
-      setError("Completa todos los campos para continuar");
-      return;
-    }
+  // Documento (paso 0) y dirección (paso 3) son opcionales y nunca bloquean
+  // el avance — solo nombre/apellido y celular son obligatorios.
+  function validarPaso(): string | null {
+    if (paso === 1 && (!form.nombre.trim() || !form.apellido.trim())) return "Completa tu nombre y apellido";
+    if (paso === 2 && !form.telefono.trim()) return "Completa tu celular";
+    return null;
+  }
+
+  async function guardarPerfil() {
     setGuardando(true);
     setError(null);
     const supabase = createClient();
+
+    // Mismo chequeo que components/portal/perfil/PerfilForm.tsx: este wizard
+    // es el paso obligatorio de onboarding, así que para casi todo cliente
+    // nuevo perfil_completo pasa de false a true justo acá — sin este
+    // acreditarPuntos() el bono de +30 quedaba inalcanzable para siempre,
+    // porque PerfilForm.tsx solo lo otorga cuando detecta esa misma
+    // transición false→true.
+    const { data: perfilAntes } = await supabase
+      .from("clientes_perfil")
+      .select("perfil_completo")
+      .eq("id", user.id)
+      .maybeSingle();
 
     const { error: updateError } = await supabase
       .from("clientes_perfil")
@@ -84,9 +114,7 @@ export function CompletarPerfilForm({ user, perfilInicial }: CompletarPerfilForm
         nombre: form.nombre.trim(),
         apellido: form.apellido.trim(),
         telefono: form.telefono.trim(),
-        direccion: form.direccion.trim(),
-        distrito: form.distrito.trim(),
-        ciudad: form.ciudad.trim(),
+        direccion: form.direccion.trim() || null,
         tipo_documento: form.numero_documento ? form.tipo_documento : null,
         numero_documento: form.numero_documento || null,
         perfil_completo: true,
@@ -99,9 +127,45 @@ export function CompletarPerfilForm({ user, perfilInicial }: CompletarPerfilForm
       return;
     }
 
+    if (!perfilAntes?.perfil_completo) {
+      const { data: yaAcreditado } = await supabase
+        .from("suplepuntos_transacciones")
+        .select("id")
+        .eq("cliente_id", user.id)
+        .eq("accion", "perfil_completo")
+        .limit(1);
+      if (!yaAcreditado || yaAcreditado.length === 0) {
+        await acreditarPuntos(supabase, user.id, "perfil_completo", 30, "Perfil completado");
+      }
+    }
+
     router.push("/mi-cuenta/bienvenida");
     router.refresh();
   }
+
+  function handleContinuar(e: React.FormEvent) {
+    e.preventDefault();
+    const mensaje = validarPaso();
+    if (mensaje) {
+      setError(mensaje);
+      return;
+    }
+    setError(null);
+    if (paso === TOTAL_PASOS - 1) {
+      guardarPerfil();
+      return;
+    }
+    setPaso((p) => p + 1);
+  }
+
+  function handleAtras() {
+    setError(null);
+    setPaso((p) => Math.max(0, p - 1));
+  }
+
+  // Al guardar (último paso confirmado) salta a 100% de una vez — la
+  // sensación de meta cumplida, en vez de quedarse en 80% mientras redirige.
+  const progreso = guardando ? 100 : calcularProgreso(paso);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-secondary px-mobile-margin py-section-y">
@@ -119,119 +183,143 @@ export function CompletarPerfilForm({ user, perfilInicial }: CompletarPerfilForm
           Antes de entrar, cuéntanos lo básico para poder atenderte y enviarte tus pedidos.
         </MaskedTextReveal>
 
-        <form onSubmit={handleGuardar} className="mt-6 flex flex-col gap-3">
-          <div className="flex flex-col gap-2">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,9rem)_1fr]">
-              <select
-                value={form.tipo_documento}
-                onChange={(e) => {
-                  setForm((f) => ({ ...f, tipo_documento: e.target.value as TipoDocumento }));
-                  setErrorDoc(null);
-                  setDocAutocompletado(false);
-                }}
-                className={inputClass}
-              >
-                {TIPOS_DOCUMENTO.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.label}
-                  </option>
-                ))}
-              </select>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  placeholder="N° de documento (opcional)"
-                  value={form.numero_documento}
-                  onChange={(e) => setNumeroDocumento(e.target.value)}
-                  className={`${inputClass} min-w-0 flex-1`}
-                />
-                {esConsultable(form.tipo_documento) && (
-                  <button
-                    type="button"
-                    onClick={consultar}
-                    disabled={!puedeConsultarDoc || consultandoDoc}
-                    className="flex shrink-0 items-center gap-1.5 rounded-md border border-border px-3 font-body text-xs font-bold text-secondary transition-opacity hover:bg-soft-gray disabled:opacity-40"
-                  >
-                    {consultandoDoc ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
-                    Buscar
-                  </button>
-                )}
+        <div className="mt-5">
+          <div className="flex items-center justify-between">
+            <span className="font-body text-xs font-bold text-secondary">Tu progreso</span>
+            <span className="font-body text-xs font-bold text-primary">{progreso}%</span>
+          </div>
+          <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-soft-gray">
+            <div
+              className="h-full rounded-full bg-primary transition-all duration-500"
+              style={{ width: `${progreso}%` }}
+            />
+          </div>
+        </div>
+
+        <form onSubmit={handleContinuar} className="mt-5 flex flex-col gap-3">
+          {paso === 0 && (
+            <div className="flex flex-col gap-2">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,9rem)_1fr]">
+                <select
+                  value={form.tipo_documento}
+                  onChange={(e) => {
+                    setForm((f) => ({ ...f, tipo_documento: e.target.value as TipoDocumento }));
+                    setErrorDoc(null);
+                    setDocAutocompletado(false);
+                  }}
+                  className={inputClass}
+                >
+                  {TIPOS_DOCUMENTO.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.label}
+                    </option>
+                  ))}
+                </select>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    placeholder="N° de documento (opcional)"
+                    value={form.numero_documento}
+                    onChange={(e) => setNumeroDocumento(e.target.value)}
+                    className={`${inputClass} min-w-0 flex-1`}
+                  />
+                  {esConsultable(form.tipo_documento) && (
+                    <button
+                      type="button"
+                      onClick={consultar}
+                      disabled={!puedeConsultarDoc || consultandoDoc}
+                      className="flex shrink-0 items-center gap-1.5 rounded-md border border-border px-3 font-body text-xs font-bold text-secondary transition-opacity hover:bg-soft-gray disabled:opacity-40"
+                    >
+                      {consultandoDoc ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
+                      Buscar
+                    </button>
+                  )}
+                </div>
               </div>
+              {errorDoc ? (
+                <p className="font-body text-xs text-destructive">{errorDoc}</p>
+              ) : docAutocompletado ? (
+                <p className="flex items-center gap-1 font-body text-xs text-green-700">
+                  <Check className="h-3.5 w-3.5" /> Nombre y apellido completados en el siguiente paso.
+                </p>
+              ) : (
+                <p className="font-body text-xs text-muted-foreground">
+                  Con tu DNI autocompletamos tu nombre — o escríbelo tú mismo en el siguiente paso. Este dato es
+                  opcional, puedes continuar sin llenarlo.
+                </p>
+              )}
             </div>
-            {errorDoc ? (
-              <p className="font-body text-xs text-destructive">{errorDoc}</p>
-            ) : docAutocompletado ? (
-              <p className="flex items-center gap-1 font-body text-xs text-green-700">
-                <Check className="h-3.5 w-3.5" /> Nombre y apellido completados abajo.
-              </p>
-            ) : (
+          )}
+
+          {paso === 1 && (
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <input
+                autoFocus
+                value={form.nombre}
+                onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))}
+                placeholder="Nombre"
+                required
+                className={inputClass}
+              />
+              <input
+                value={form.apellido}
+                onChange={(e) => setForm((f) => ({ ...f, apellido: e.target.value }))}
+                placeholder="Apellido"
+                required
+                className={inputClass}
+              />
+            </div>
+          )}
+
+          {paso === 2 && (
+            <input
+              autoFocus
+              type="tel"
+              value={form.telefono}
+              onChange={(e) => setForm((f) => ({ ...f, telefono: e.target.value }))}
+              placeholder="Celular"
+              required
+              className={inputClass}
+            />
+          )}
+
+          {paso === 3 && (
+            <div className="flex flex-col gap-2">
+              <input
+                autoFocus
+                value={form.direccion}
+                onChange={(e) => setForm((f) => ({ ...f, direccion: e.target.value }))}
+                placeholder="Dirección (opcional)"
+                className={inputClass}
+              />
               <p className="font-body text-xs text-muted-foreground">
-                Con tu DNI autocompletamos tu nombre — o escríbelo tú mismo abajo.
+                Opcional — si la dejas en blanco, te la pediremos al momento de tu primera compra.
               </p>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <input
-              value={form.nombre}
-              onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))}
-              placeholder="Nombre"
-              required
-              className={inputClass}
-            />
-            <input
-              value={form.apellido}
-              onChange={(e) => setForm((f) => ({ ...f, apellido: e.target.value }))}
-              placeholder="Apellido"
-              required
-              className={inputClass}
-            />
-          </div>
-
-          <input
-            type="tel"
-            value={form.telefono}
-            onChange={(e) => setForm((f) => ({ ...f, telefono: e.target.value }))}
-            placeholder="Teléfono"
-            required
-            className={inputClass}
-          />
-
-          <input
-            value={form.direccion}
-            onChange={(e) => setForm((f) => ({ ...f, direccion: e.target.value }))}
-            placeholder="Dirección"
-            required
-            className={inputClass}
-          />
-
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <input
-              value={form.distrito}
-              onChange={(e) => setForm((f) => ({ ...f, distrito: e.target.value }))}
-              placeholder="Distrito"
-              required
-              className={inputClass}
-            />
-            <input
-              value={form.ciudad}
-              onChange={(e) => setForm((f) => ({ ...f, ciudad: e.target.value }))}
-              placeholder="Ciudad"
-              required
-              className={inputClass}
-            />
-          </div>
+            </div>
+          )}
 
           {error && <p className="font-body text-sm text-destructive">{error}</p>}
 
-          <button
-            type="submit"
-            disabled={guardando}
-            className="mt-2 rounded-[17px] bg-primary px-6 py-3 font-body font-bold text-primary-foreground disabled:opacity-60"
-          >
-            {guardando ? "Guardando…" : "Continuar"}
-          </button>
+          <div className="mt-2 flex gap-2">
+            {paso > 0 && (
+              <button
+                type="button"
+                onClick={handleAtras}
+                className="flex items-center justify-center gap-1 rounded-[17px] border border-border px-4 py-3 font-body text-sm font-bold text-secondary"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Atrás
+              </button>
+            )}
+            <button
+              type="submit"
+              disabled={guardando}
+              className="flex-1 rounded-[17px] bg-primary px-6 py-3 font-body font-bold text-primary-foreground disabled:opacity-60"
+            >
+              {guardando ? "Guardando…" : paso === TOTAL_PASOS - 1 ? "Finalizar" : "Continuar"}
+            </button>
+          </div>
         </form>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { crearNotificacion } from "./notificaciones";
 
 export interface SuplepuntosCliente {
   cliente_id: string;
@@ -65,9 +66,12 @@ export async function acreditarPuntos(
   const saldoAnterior = actual?.saldo_actual ?? 0;
   const saldoNuevo = saldoAnterior + puntos;
 
-  await supabase.from("suplepuntos_transacciones").insert({
+  const { error: txError } = await supabase.from("suplepuntos_transacciones").insert({
     cliente_id: clienteId,
-    tipo: puntos >= 0 ? "credito" : "debito",
+    // "credito"/"debito" no existen en la constraint suplepuntos_transacciones_tipo_check
+    // (solo acepta acreditacion/canje/vencimiento/ajuste_manual) — con esos valores el
+    // INSERT fallaba silenciosamente porque este await no revisaba el error.
+    tipo: puntos >= 0 ? "acreditacion" : "canje",
     accion,
     puntos,
     saldo_anterior: saldoAnterior,
@@ -76,12 +80,29 @@ export async function acreditarPuntos(
     mascota_id: mascotaId,
     descripcion,
   });
+  if (txError) {
+    console.error(`acreditarPuntos: no se pudo registrar la transacción (accion=${accion}):`, txError.message);
+  }
 
-  await supabase
+  const { error: saldoError } = await supabase
     .from("suplepuntos_clientes")
     .update({
       saldo_actual: saldoNuevo,
       puntos_historicos: puntos > 0 ? (actual?.puntos_historicos ?? 0) + puntos : actual?.puntos_historicos,
     })
     .eq("cliente_id", clienteId);
+  if (saldoError) {
+    console.error(`acreditarPuntos: no se pudo actualizar el saldo (accion=${accion}):`, saldoError.message);
+  }
+
+  if (puntos > 0) {
+    await crearNotificacion(
+      supabase,
+      clienteId,
+      "puntos",
+      `¡Ganaste ${puntos.toLocaleString()} SuplePoints!`,
+      descripcion,
+      "/mi-cuenta/puntos"
+    );
+  }
 }

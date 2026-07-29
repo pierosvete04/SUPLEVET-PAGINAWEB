@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { ShoppingBag, Star, Clock } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { formatFecha } from "@/lib/portal/formato";
 import { formatPrecio } from "@/lib/data/productos-shared";
-import { ESTADO_PEDIDO, estadoParaMostrar, type Pedido, type PedidoVet } from "@/lib/data/portal/pedidos";
+import { ESTADO_PEDIDO, type Pedido, type PedidoVet } from "@/lib/data/portal/pedidos";
+import { estadoBadgePedido } from "@/lib/data/portal/pedido-timeline";
 import { getProductos } from "@/lib/data/productos";
 import { PedidoProductoDialog } from "@/components/portal/pedidos/PedidoProductoDialog";
 import type { EstadoResena } from "@/lib/resenas";
@@ -25,7 +25,7 @@ export default async function PortalPedidosPage() {
     supabase
       .from("pedidos")
       .select(
-        "id, shopify_order_number, shopify_order_id, estado, estado_pago, total, productos, puntos_acreditados, fecha_agotamiento_estimada, fecha_pago, created_at"
+        "id, shopify_order_number, shopify_order_id, estado, estado_pago, estado_preparacion, total, productos, puntos_acreditados, fecha_agotamiento_estimada, fecha_pago, created_at"
       )
       .eq("cliente_id", user.id)
       .order("created_at", { ascending: false })
@@ -77,9 +77,9 @@ export default async function PortalPedidosPage() {
 
   if (todos.length === 0) {
     return (
-      <div className="flex items-center justify-center gap-2 rounded-sm bg-white p-8 font-body text-sm text-muted-foreground shadow-sm">
-        <ShoppingBag className="h-6 w-6" strokeWidth={1.5} />
-        Aún no tienes pedidos
+      <div className="flex flex-col items-center justify-center gap-2 rounded-[24px] border border-portal-surface-variant bg-white p-10 text-center">
+        <span className="material-symbols-rounded text-4xl text-portal-muted">shopping_bag</span>
+        <p className="text-sm text-portal-muted">Aún no tienes pedidos</p>
       </div>
     );
   }
@@ -88,10 +88,13 @@ export default async function PortalPedidosPage() {
     <div className="flex flex-col gap-3">
       {todos.map((p) => {
         if (p.canal === "tienda") {
-          const estado = ESTADO_PEDIDO[estadoParaMostrar(p)] ?? ESTADO_PEDIDO.pagado;
+          const estado = estadoBadgePedido(p);
           const productos = Array.isArray(p.productos) ? p.productos : [];
           return (
-            <div key={p.id} className="relative rounded-sm bg-white p-5 shadow-sm">
+            <div
+              key={p.id}
+              className="relative rounded-[24px] border border-portal-surface-variant bg-white p-5 transition-colors hover:border-portal-teal-light"
+            >
               <Link
                 href={`/mi-cuenta/pedidos/${p.id}`}
                 aria-label={`Ver detalle del pedido ${p.shopify_order_number || p.shopify_order_id}`}
@@ -99,41 +102,39 @@ export default async function PortalPedidosPage() {
               />
               <div className="pointer-events-none relative flex flex-wrap items-center justify-between gap-2">
                 <div>
-                  <p className="font-display text-base font-bold text-secondary">
+                  <p className="font-display text-base font-bold text-portal-navy">
                     {p.shopify_order_number || `#${p.shopify_order_id}`}
                   </p>
-                  <p className="font-body text-xs text-muted-foreground">
-                    {formatFecha(p.fecha_pago || p.created_at)}
-                  </p>
+                  <p className="text-xs text-portal-muted">{formatFecha(p.fecha_pago || p.created_at)}</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <span
-                    className="rounded-full px-3 py-1 font-body text-[11px] font-bold"
+                    className="rounded-full px-3 py-1 text-[11px] font-bold"
                     style={{ background: estado.bg, color: estado.color }}
                   >
                     {estado.texto}
                   </span>
-                  <span className="font-display text-lg font-bold text-secondary">
+                  <span className="font-display text-lg font-bold text-portal-navy">
                     {formatPrecio(Number(p.total))}
                   </span>
                 </div>
               </div>
               {productos.length > 0 && (
-                <div className="pointer-events-none relative mt-3 rounded-sm bg-soft-gray p-3">
+                <div className="pointer-events-none relative mt-3 rounded-xl bg-portal-surface-low p-3">
                   {productos.slice(0, 3).map((pr, i) => {
                     const nombreProducto = pr.nombre || pr.name || "Producto";
                     const productoShopifyId = pr.producto_id ?? null;
                     return (
                       <div
                         key={i}
-                        className="flex items-center justify-between gap-3 border-b border-border/50 py-2 last:border-0 first:pt-0 last:pb-0"
+                        className="flex items-center justify-between gap-3 border-b border-portal-surface-variant/70 py-2 last:border-0 first:pt-0 last:pb-0"
                       >
-                        <div className="min-w-0 flex-1 font-body text-xs text-muted-foreground">
+                        <div className="min-w-0 flex-1 text-xs text-portal-muted">
                           <p className="truncate">
                             {nombreProducto}
                             {(pr.cantidad ?? 1) > 1 ? ` ×${pr.cantidad}` : ""}
                           </p>
-                          <p className="font-bold text-secondary">{formatPrecio(Number(pr.precio ?? 0))}</p>
+                          <p className="font-bold text-portal-navy">{formatPrecio(Number(pr.precio ?? 0))}</p>
                         </div>
                         <PedidoProductoDialog
                           clienteId={user.id}
@@ -146,7 +147,7 @@ export default async function PortalPedidosPage() {
                           productoImagen={resolverImagen(productoShopifyId, nombreProducto)}
                           cantidad={pr.cantidad ?? 1}
                           precio={Number(pr.precio ?? 0)}
-                          puedeResenar={p.estado === "entregado"}
+                          puedeResenar={p.estado_preparacion === "entregado"}
                           resenaExistente={
                             productoShopifyId
                               ? resenaPorProducto.get(`${p.id}:${productoShopifyId}`) ?? null
@@ -157,22 +158,20 @@ export default async function PortalPedidosPage() {
                     );
                   })}
                   {productos.length > 3 && (
-                    <p className="mt-1 font-body text-[11px] text-muted-foreground">
-                      +{productos.length - 3} productos más
-                    </p>
+                    <p className="mt-1 text-[11px] text-portal-muted">+{productos.length - 3} productos más</p>
                   )}
                 </div>
               )}
               <div className="pointer-events-none relative mt-3 flex flex-wrap gap-4">
                 {!!p.puntos_acreditados && p.puntos_acreditados > 0 && (
-                  <span className="flex items-center gap-1 font-body text-xs font-bold text-secondary">
-                    <Star className="h-3.5 w-3.5" strokeWidth={1.75} />
+                  <span className="flex items-center gap-1 text-xs font-bold text-portal-navy">
+                    <span className="material-symbols-rounded text-[16px] text-portal-orange">star</span>
                     {p.puntos_acreditados} SuplePoints acreditados
                   </span>
                 )}
-                {p.fecha_agotamiento_estimada && p.estado === "entregado" && (
-                  <span className="flex items-center gap-1 font-body text-xs font-bold text-accent-foreground">
-                    <Clock className="h-3.5 w-3.5" strokeWidth={1.75} />
+                {p.fecha_agotamiento_estimada && p.estado_preparacion === "entregado" && (
+                  <span className="flex items-center gap-1 text-xs font-bold text-portal-teal">
+                    <span className="material-symbols-rounded text-[16px]">schedule</span>
                     Reposición: {formatFecha(p.fecha_agotamiento_estimada)}
                   </span>
                 )}
@@ -183,27 +182,27 @@ export default async function PortalPedidosPage() {
 
         const estado = ESTADO_PEDIDO[p.estado] ?? ESTADO_PEDIDO.confirmado;
         return (
-          <div key={p.id} className="rounded-sm bg-white p-5 shadow-sm">
+          <div key={p.id} className="rounded-[24px] border border-portal-surface-variant bg-white p-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <p className="font-display text-base font-bold text-secondary">{p.veterinaria_nombre}</p>
-                <p className="font-body text-xs text-muted-foreground">{formatFecha(p.created_at)}</p>
+                <p className="font-display text-base font-bold text-portal-navy">{p.veterinaria_nombre}</p>
+                <p className="text-xs text-portal-muted">{formatFecha(p.created_at)}</p>
               </div>
               <div className="flex items-center gap-3">
                 <span
-                  className="rounded-full px-3 py-1 font-body text-[11px] font-bold"
+                  className="rounded-full px-3 py-1 text-[11px] font-bold"
                   style={{ background: estado.bg, color: estado.color }}
                 >
                   Compra en veterinaria
                 </span>
-                <span className="font-display text-lg font-bold text-secondary">
+                <span className="font-display text-lg font-bold text-portal-navy">
                   {formatPrecio(Number(p.monto_total))}
                 </span>
               </div>
             </div>
             {!!p.puntos_acreditados && p.puntos_acreditados > 0 && (
-              <span className="mt-2 flex items-center gap-1 font-body text-xs font-bold text-secondary">
-                <Star className="h-3.5 w-3.5" strokeWidth={1.75} />
+              <span className="mt-2 flex items-center gap-1 text-xs font-bold text-portal-navy">
+                <span className="material-symbols-rounded text-[16px] text-portal-orange">star</span>
                 {p.puntos_acreditados} SuplePoints acreditados
               </span>
             )}

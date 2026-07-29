@@ -12,6 +12,7 @@ export interface Pedido {
   shopify_order_id: string | null;
   estado: string;
   estado_pago: string | null;
+  estado_preparacion: string;
   total: number;
   productos: ProductoPedido[];
   puntos_acreditados: number | null;
@@ -19,15 +20,6 @@ export interface Pedido {
   fecha_pago: string | null;
   created_at: string;
   canal: "tienda";
-}
-
-// El estado a mostrarle al cliente: si el pago todavía no se confirma
-// (estado_pago != "pagado"), eso pesa más que el `estado` de fulfillment
-// (que en la BD arranca en "pagado" por defecto pero no refleja la
-// verificación real — ver migración fix_registrar_pedido_web_estado_check).
-export function estadoParaMostrar(p: Pick<Pedido, "estado" | "estado_pago">): string {
-  if (p.estado_pago && p.estado_pago !== "pagado") return p.estado_pago;
-  return p.estado;
 }
 
 export interface PedidoVet {

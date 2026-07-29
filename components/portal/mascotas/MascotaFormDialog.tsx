@@ -13,7 +13,6 @@ import { MaleIcon, FemaleIcon } from "@/components/portal/icons/GenderIcons";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 
 interface MascotaFormDialogProps {
   clienteId: string;
@@ -52,14 +51,12 @@ const VACIO = {
   fecha_nacimiento: "",
   peso_kg: "",
   genero: "" as "" | Mascota["genero"],
-  descripcion: "",
   familiares: [] as Familiar[],
   instagram_url: "",
   facebook_url: "",
   tiktok_url: "",
   color_primario: "",
   color_secundario: "",
-  color_texto: "",
   color_etiqueta: "",
 };
 
@@ -67,6 +64,26 @@ const PRESETS_NEUTROS = [
   { label: "Blanco", valor: "#ffffff" },
   { label: "Navy oscuro", valor: "#1e3a5f" },
 ];
+
+// Rasgos sugeridos para armar "descripcion" como chips en vez de texto libre.
+// Los que el usuario escribe a mano vía "Agregar más" se suman a esta lista
+// de opciones visibles (y desaparecen si los vuelve a deseleccionar).
+const RASGOS_PERSONALIDAD_BASE = [
+  "Juguetón",
+  "Hiperactivo",
+  "Dormilón",
+  "Cariñoso",
+  "Tranquilo",
+  "Protector",
+  "Curioso",
+  "Sociable",
+];
+
+// Tokens de sombra reutilizados en todas las "cajas" del formulario para
+// lograr el look del Figma: relleno claro sin borde, definido por sombra.
+const SOMBRA_CAJA = "shadow-[0_2px_8px_rgba(30,58,95,0.10)]";
+const SOMBRA_TARJETA = "shadow-[0_6px_18px_rgba(30,58,95,0.12)]";
+const SOMBRA_FLOTANTE = "shadow-[0_10px_24px_rgba(30,58,95,0.18)]";
 
 const RELACIONES_FAMILIAR = [
   "Papá",
@@ -169,6 +186,9 @@ export function MascotaFormDialog({
   const [fotoPreview, setFotoPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
+  const [personalidadTags, setPersonalidadTags] = useState<string[]>([]);
+  const [agregandoRasgo, setAgregandoRasgo] = useState(false);
+  const [nuevoRasgo, setNuevoRasgo] = useState("");
   const razasSugeridas = useRazasSugeridas(open ? form.especie : "otro");
 
   useEffect(() => {
@@ -183,22 +203,43 @@ export function MascotaFormDialog({
             fecha_nacimiento: mascota.fecha_nacimiento ?? "",
             peso_kg: String(mascota.peso_kg ?? ""),
             genero: mascota.genero ?? "",
-            descripcion: mascota.descripcion ?? "",
             familiares: mascota.familiares ?? [],
             instagram_url: mascota.instagram_url ?? "",
             facebook_url: mascota.facebook_url ?? "",
             tiktok_url: mascota.tiktok_url ?? "",
             color_primario: mascota.color_primario ?? "",
             color_secundario: mascota.color_secundario ?? "",
-            color_texto: mascota.color_texto ?? "",
             color_etiqueta: mascota.color_etiqueta ?? "",
           }
         : VACIO
     );
+    setPersonalidadTags(
+      mascota?.descripcion
+        ? mascota.descripcion
+            .split(",")
+            .map((t) => t.trim())
+            .filter(Boolean)
+        : []
+    );
+    setAgregandoRasgo(false);
+    setNuevoRasgo("");
     setFotoFile(null);
     setFotoPreview(mascota?.foto_url ?? null);
     setError(null);
   }, [open, mascota]);
+
+  function alternarRasgo(rasgo: string) {
+    setPersonalidadTags((tags) => (tags.includes(rasgo) ? tags.filter((t) => t !== rasgo) : [...tags, rasgo]));
+  }
+
+  function confirmarRasgoPersonalizado() {
+    const valor = nuevoRasgo.trim();
+    if (valor && !personalidadTags.includes(valor)) {
+      setPersonalidadTags((tags) => [...tags, valor]);
+    }
+    setNuevoRasgo("");
+    setAgregandoRasgo(false);
+  }
 
   function handleFotoSeleccionada(file: File | null) {
     setFotoFile(file);
@@ -236,7 +277,7 @@ export function MascotaFormDialog({
       fecha_nacimiento: form.fecha_nacimiento || null,
       peso_kg: peso,
       genero: form.genero || null,
-      descripcion: form.descripcion.trim() || null,
+      descripcion: personalidadTags.length > 0 ? personalidadTags.join(", ") : null,
       familiares: form.familiares
         .map((f) => ({ relacion: f.relacion.trim(), nombre: f.nombre.trim() }))
         .filter((f) => f.relacion && f.nombre),
@@ -245,7 +286,9 @@ export function MascotaFormDialog({
       tiktok_url: normalizarUrl(form.tiktok_url),
       color_primario: form.color_primario || null,
       color_secundario: form.color_secundario || null,
-      color_texto: form.color_texto || null,
+      // La tipografía/color de letra ya no es editable desde este formulario;
+      // se conserva el valor que la mascota ya tuviera en vez de sobrescribirlo.
+      color_texto: mascota?.color_texto ?? null,
       color_etiqueta: form.color_etiqueta || null,
     };
 
@@ -332,39 +375,53 @@ export function MascotaFormDialog({
     onEliminada();
   }
 
-  const inputBase =
-    "w-full rounded-2xl border border-portal-surface-variant bg-portal-surface-low/40 px-4 py-3 text-sm font-semibold text-portal-navy placeholder:font-normal placeholder:text-portal-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portal-teal-light focus-visible:border-portal-teal-mid";
+  const inputBase = `w-full rounded-2xl border-0 bg-portal-surface-low/60 px-4 py-3 text-sm font-semibold text-portal-navy placeholder:font-normal placeholder:text-portal-muted ${SOMBRA_CAJA} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portal-teal-light`;
+
+  // Color de portada — customizable (sección "1. Color de portada" más abajo).
+  // Se reutiliza tanto en la banda superior del formulario como en la vista
+  // previa, para que ambas reflejen el mismo color/degradado en vivo.
+  const colorPortadaFondo = form.color_primario
+    ? form.color_secundario
+      ? `linear-gradient(135deg, ${form.color_primario}, ${form.color_secundario})`
+      : form.color_primario
+    : "linear-gradient(135deg, var(--portal-navy), var(--portal-navy-dark))";
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-h-[90vh] max-w-md overflow-y-auto rounded-3xl border-0 bg-white p-6 shadow-2xl">
-        <DialogHeader>
-          <div className="flex items-center justify-between pr-6">
-            <DialogTitle className="font-display text-xl font-semibold text-portal-navy">
-              {mascota ? `Editar a ${mascota.nombre}` : "Agregar mascota"}
-            </DialogTitle>
-            {mascota && (
-              <button
-                type="button"
-                onClick={handleEliminar}
-                className="flex items-center gap-1 rounded-[17px] px-2 py-1 text-xs font-semibold text-portal-error/70 hover:bg-red-50 hover:text-portal-error"
-              >
-                <span className="material-symbols-rounded text-[16px]">delete</span>
-                Eliminar
-              </button>
-            )}
-          </div>
+      <DialogContent className="max-h-[90vh] max-w-md overflow-y-auto rounded-3xl border-0 bg-white p-0 shadow-2xl">
+        {/* El título sigue existiendo para accesibilidad (lectores de pantalla),
+            pero visualmente la portada rosa reemplaza al header de diálogo clásico. */}
+        <DialogHeader className="sr-only">
+          <DialogTitle>{mascota ? `Editar a ${mascota.nombre}` : "Agregar mascota"}</DialogTitle>
         </DialogHeader>
 
-        <form onSubmit={handleGuardar} className="flex flex-col gap-5">
-          {/* Avatar + nombre — primero lo visual, para que el formulario se
-              sienta como un perfil y no como una planilla de datos. */}
-          <div className="flex flex-col items-center gap-3 pt-1">
+        {/* Portada + foto + nombre flotante — replica el layout del Figma:
+            banda con esquinas redondeadas arriba (color de portada
+            personalizable, en vivo), foto circular superpuesta al borde
+            inferior, y una cápsula blanca con el nombre flotando sobre esa
+            unión. */}
+        <div className="relative h-28 shrink-0 rounded-t-3xl" style={{ background: colorPortadaFondo }}>
+          {mascota && (
+            <button
+              type="button"
+              onClick={handleEliminar}
+              className="absolute left-4 top-4 flex items-center gap-1 rounded-full bg-white/80 px-2.5 py-1 text-xs font-semibold text-portal-error/80 backdrop-blur-sm hover:bg-white hover:text-portal-error"
+            >
+              <span className="material-symbols-rounded text-[15px]">delete</span>
+              Eliminar
+            </button>
+          )}
+        </div>
+
+        <form onSubmit={handleGuardar} className="flex flex-col gap-5 px-6 pb-6">
+          <div className="flex flex-col items-center gap-3 -mt-12">
             {/* El botón de cámara vive fuera del círculo con overflow-hidden:
                 si estuviera dentro, el recorte circular le cortaba la esquina
                 (bottom-right cae fuera del círculo inscrito en el cuadrado). */}
             <div className="relative h-24 w-24 shrink-0">
-              <div className="relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-portal-surface-low bg-portal-surface-low shadow-sm">
+              <div
+                className={`relative flex h-24 w-24 items-center justify-center overflow-hidden rounded-full border-4 border-white bg-portal-surface-low ${SOMBRA_FLOTANTE}`}
+              >
                 {fotoPreview ? (
                   <Image src={fotoPreview} alt="" fill unoptimized className="object-cover" sizes="96px" />
                 ) : (
@@ -381,13 +438,13 @@ export function MascotaFormDialog({
                 />
               </label>
             </div>
-            <div className="w-full max-w-[240px]">
+            <div className={`rounded-full bg-white px-2 ${SOMBRA_FLOTANTE}`}>
               <Input
                 id="mascota-nombre"
                 value={form.nombre}
                 onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))}
                 placeholder="Nombre de tu mascota"
-                className="rounded-2xl border-transparent bg-transparent text-center font-display text-lg font-semibold text-portal-navy focus-visible:border-portal-teal-mid focus-visible:ring-2 focus-visible:ring-portal-teal-light"
+                className="w-48 border-0 bg-transparent text-center font-display text-lg font-semibold text-portal-navy shadow-none focus-visible:ring-0"
               />
             </div>
           </div>
@@ -401,10 +458,10 @@ export function MascotaFormDialog({
                   type="button"
                   aria-pressed={form.especie === valor}
                   onClick={() => setForm((f) => ({ ...f, especie: valor }))}
-                  className={`flex min-h-[64px] flex-col items-center justify-center gap-1 rounded-2xl border text-xs font-bold transition-all active:scale-95 ${
+                  className={`flex min-h-[64px] flex-col items-center justify-center gap-1 rounded-2xl text-xs font-bold transition-all active:scale-95 ${
                     form.especie === valor
-                      ? "border-portal-navy bg-portal-navy text-white shadow-md"
-                      : "border-portal-surface-variant bg-portal-surface-low/40 text-portal-navy hover:bg-portal-surface-low"
+                      ? `bg-portal-navy text-white ${SOMBRA_TARJETA}`
+                      : `bg-portal-surface-low/60 text-portal-navy ${SOMBRA_CAJA} hover:bg-portal-surface-low`
                   }`}
                 >
                   <Icono className="h-6 w-6" strokeWidth={1.5} aria-hidden="true" />
@@ -485,10 +542,10 @@ export function MascotaFormDialog({
                   type="button"
                   aria-pressed={form.genero === valor}
                   onClick={() => setForm((f) => ({ ...f, genero: valor }))}
-                  className={`flex min-h-[64px] flex-col items-center justify-center gap-1 rounded-2xl border text-xs font-bold transition-all active:scale-95 ${
+                  className={`flex min-h-[64px] flex-col items-center justify-center gap-1 rounded-2xl text-xs font-bold transition-all active:scale-95 ${
                     form.genero === valor
-                      ? "border-portal-navy bg-portal-navy text-white shadow-md"
-                      : "border-portal-surface-variant bg-portal-surface-low/40 text-portal-navy hover:bg-portal-surface-low"
+                      ? `bg-portal-navy text-white ${SOMBRA_TARJETA}`
+                      : `bg-portal-surface-low/60 text-portal-navy ${SOMBRA_CAJA} hover:bg-portal-surface-low`
                   }`}
                 >
                   <Icono className="h-6 w-6" strokeWidth={1.5} aria-hidden="true" />
@@ -566,7 +623,7 @@ export function MascotaFormDialog({
               <button
                 type="button"
                 onClick={() => setForm((f) => ({ ...f, familiares: [...f.familiares, { relacion: "", nombre: "" }] }))}
-                className="flex items-center justify-center gap-1 rounded-2xl border border-dashed border-portal-surface-variant py-2 text-xs font-semibold text-portal-muted transition-colors hover:border-portal-teal-mid hover:text-portal-teal-mid"
+                className={`flex items-center justify-center gap-1 rounded-2xl bg-portal-surface-low/60 py-2 text-xs font-semibold text-portal-muted transition-colors ${SOMBRA_CAJA} hover:text-portal-teal-mid`}
               >
                 <span className="material-symbols-rounded text-[16px]">add</span> Agregar familiar
               </button>
@@ -574,28 +631,64 @@ export function MascotaFormDialog({
           </div>
 
           <div className="grid gap-1.5">
-            <CampoLabel htmlFor="mascota-descripcion" icono="auto_stories">
-              Personalidad (opcional)
-            </CampoLabel>
-            <Textarea
-              id="mascota-descripcion"
-              rows={3}
-              placeholder="Ej: juguetón, protector con la familia, le encanta el parque…"
-              value={form.descripcion}
-              onChange={(e) => setForm((f) => ({ ...f, descripcion: e.target.value }))}
-              className="rounded-2xl border-portal-surface-variant bg-portal-surface-low/40 px-4 py-3 text-sm text-portal-navy placeholder:text-portal-muted focus-visible:ring-2 focus-visible:ring-portal-teal-light"
-            />
-          </div>
-
-          <div className="grid gap-3 rounded-2xl border border-portal-surface-variant bg-portal-surface-low/30 p-4">
-            <div className="flex items-center justify-between">
-              <CampoLabel icono="palette">Personalización de color</CampoLabel>
-              {(form.color_primario || form.color_texto || form.color_etiqueta) && (
+            <CampoLabel icono="auto_stories">Personalidad (opcional)</CampoLabel>
+            <div className="flex flex-wrap gap-2">
+              {Array.from(new Set([...RASGOS_PERSONALIDAD_BASE, ...personalidadTags])).map((rasgo) => {
+                const activo = personalidadTags.includes(rasgo);
+                return (
+                  <button
+                    key={rasgo}
+                    type="button"
+                    aria-pressed={activo}
+                    onClick={() => alternarRasgo(rasgo)}
+                    className={`rounded-full px-3.5 py-2 text-xs font-bold transition-all active:scale-95 ${
+                      activo
+                        ? `bg-portal-navy text-white ${SOMBRA_TARJETA}`
+                        : `bg-portal-surface-low/60 text-portal-navy ${SOMBRA_CAJA} hover:bg-portal-surface-low`
+                    }`}
+                  >
+                    {rasgo}
+                  </button>
+                );
+              })}
+              {agregandoRasgo ? (
+                <input
+                  autoFocus
+                  value={nuevoRasgo}
+                  onChange={(e) => setNuevoRasgo(e.target.value)}
+                  onBlur={confirmarRasgoPersonalizado}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      confirmarRasgoPersonalizado();
+                    }
+                    if (e.key === "Escape") {
+                      setNuevoRasgo("");
+                      setAgregandoRasgo(false);
+                    }
+                  }}
+                  placeholder="Escribe y presiona Enter"
+                  className={`rounded-full bg-portal-surface-low/60 px-3.5 py-2 text-xs font-semibold text-portal-navy placeholder:font-normal placeholder:text-portal-muted ${SOMBRA_CAJA} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portal-teal-light`}
+                />
+              ) : (
                 <button
                   type="button"
-                  onClick={() =>
-                    setForm((f) => ({ ...f, color_primario: "", color_secundario: "", color_texto: "", color_etiqueta: "" }))
-                  }
+                  onClick={() => setAgregandoRasgo(true)}
+                  className={`flex items-center gap-1 rounded-full bg-portal-surface-low/60 px-3.5 py-2 text-xs font-semibold text-portal-muted transition-colors ${SOMBRA_CAJA} hover:text-portal-teal-mid`}
+                >
+                  <span className="material-symbols-rounded text-[16px]">add</span> Agregar más
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="grid gap-3">
+            <div className="flex items-center justify-between">
+              <CampoLabel icono="palette">Personaliza su perfil</CampoLabel>
+              {(form.color_primario || form.color_etiqueta) && (
+                <button
+                  type="button"
+                  onClick={() => setForm((f) => ({ ...f, color_primario: "", color_secundario: "", color_etiqueta: "" }))}
                   className="text-xs font-semibold text-portal-muted underline-offset-2 hover:text-portal-error hover:underline"
                 >
                   Restablecer todo
@@ -603,127 +696,115 @@ export function MascotaFormDialog({
               )}
             </div>
 
-            {/* Vista previa en vivo — combina los 3 colores tal como se ven en el perfil */}
+            {/* Vista previa en vivo — mismo color/degradado de portada que la
+                banda superior, más el color de etiquetas sobre texto blanco
+                (la tipografía ya no es personalizable desde este formulario). */}
             <div
-              className="flex h-16 w-full items-center gap-2 rounded-2xl border border-portal-surface-variant px-4 shadow-inner transition-colors"
-              style={{
-                background: form.color_primario
-                  ? form.color_secundario
-                    ? `linear-gradient(135deg, ${form.color_primario}, ${form.color_secundario})`
-                    : form.color_primario
-                  : "linear-gradient(135deg, var(--portal-navy), var(--portal-navy-dark))",
-                color: form.color_texto || "#ffffff",
-              }}
+              className={`flex h-16 w-full items-center gap-2 rounded-2xl px-4 text-white transition-colors ${SOMBRA_TARJETA}`}
+              style={{ background: colorPortadaFondo }}
             >
               <span className="font-display text-base font-semibold">{form.nombre || "Vista previa"}</span>
               <span
                 className="rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide"
                 style={{
-                  color: form.color_etiqueta || form.color_texto || "#ffffff",
-                  backgroundColor: `color-mix(in srgb, ${form.color_etiqueta || form.color_texto || "#ffffff"} 20%, transparent)`,
+                  color: form.color_etiqueta || "#ffffff",
+                  backgroundColor: `color-mix(in srgb, ${form.color_etiqueta || "#ffffff"} 20%, transparent)`,
                 }}
               >
                 Activo
               </span>
             </div>
 
-            {/* 1. Portada */}
-            <div className="grid gap-1.5 border-t border-portal-surface-variant pt-3">
-              <span className="text-xs font-bold text-portal-navy">1. Color de portada</span>
-              <p className="text-xs text-portal-muted">El fondo de la tarjeta de tu mascota.</p>
-              <div className="flex flex-wrap items-center gap-2">
-                {COLORES_MASCOTA.map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    aria-label={`Elegir color ${color}`}
-                    aria-pressed={form.color_primario === color}
-                    onClick={() => setForm((f) => ({ ...f, color_primario: color }))}
-                    className={`h-7 w-7 shrink-0 rounded-full border-2 transition-transform active:scale-90 ${
-                      form.color_primario === color ? "scale-110 border-portal-navy shadow-md" : "border-white shadow-sm hover:scale-105"
-                    }`}
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
-                <BotonColorPersonalizado
-                  valor={form.color_primario || "#1e3a5f"}
-                  onChange={(valor) => setForm((f) => ({ ...f, color_primario: valor }))}
-                  label="Color de portada personalizado"
-                />
-                {form.color_primario && (
-                  <button
-                    type="button"
-                    onClick={() => setForm((f) => ({ ...f, color_primario: "", color_secundario: "" }))}
-                    className="text-xs font-semibold text-portal-muted underline-offset-2 hover:text-portal-error hover:underline"
-                  >
-                    Quitar
-                  </button>
-                )}
-              </div>
-              {form.color_primario && (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-portal-muted">Degradado con:</span>
-                  {COLORES_MASCOTA.filter((c) => c !== form.color_primario).map((color) => (
+            <span className="text-xs font-bold text-portal-navy">Colores</span>
+            {/* Grid 2 columnas: portada y etiquetas — ambas personalizables.
+                El color de letra ya no se edita aquí. */}
+            <div className="grid grid-cols-2 gap-3">
+              {/* 1. Portada */}
+              <div className={`grid gap-1.5 rounded-2xl bg-white p-3 ${SOMBRA_TARJETA}`}>
+                <span className="text-xs font-bold text-portal-navy">1. Color de portada</span>
+                <p className="text-xs text-portal-muted">El fondo de la tarjeta.</p>
+                <div className="flex flex-wrap items-center gap-2">
+                  {COLORES_MASCOTA.map((color) => (
                     <button
                       key={color}
                       type="button"
-                      aria-label={`Degradado hacia ${color}`}
-                      aria-pressed={form.color_secundario === color}
-                      onClick={() =>
-                        setForm((f) => ({ ...f, color_secundario: f.color_secundario === color ? "" : color }))
-                      }
-                      className={`h-6 w-6 shrink-0 rounded-full border-2 transition-transform active:scale-90 ${
-                        form.color_secundario === color ? "scale-110 border-portal-navy shadow-md" : "border-white shadow-sm hover:scale-105"
+                      aria-label={`Elegir color ${color}`}
+                      aria-pressed={form.color_primario === color}
+                      onClick={() => setForm((f) => ({ ...f, color_primario: color }))}
+                      className={`h-7 w-7 shrink-0 rounded-full border-2 transition-transform active:scale-90 ${
+                        form.color_primario === color ? "scale-110 border-portal-navy shadow-md" : "border-white shadow-sm hover:scale-105"
                       }`}
                       style={{ backgroundColor: color }}
                     />
                   ))}
+                  <BotonColorPersonalizado
+                    valor={form.color_primario || "#1e3a5f"}
+                    onChange={(valor) => setForm((f) => ({ ...f, color_primario: valor }))}
+                    label="Color de portada personalizado"
+                  />
                 </div>
-              )}
-            </div>
+                {form.color_primario && (
+                  <>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-xs font-semibold text-portal-muted">Degradado con:</span>
+                      {COLORES_MASCOTA.filter((c) => c !== form.color_primario).map((color) => (
+                        <button
+                          key={color}
+                          type="button"
+                          aria-label={`Degradado hacia ${color}`}
+                          aria-pressed={form.color_secundario === color}
+                          onClick={() =>
+                            setForm((f) => ({ ...f, color_secundario: f.color_secundario === color ? "" : color }))
+                          }
+                          className={`h-6 w-6 shrink-0 rounded-full border-2 transition-transform active:scale-90 ${
+                            form.color_secundario === color ? "scale-110 border-portal-navy shadow-md" : "border-white shadow-sm hover:scale-105"
+                          }`}
+                          style={{ backgroundColor: color }}
+                        />
+                      ))}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setForm((f) => ({ ...f, color_primario: "", color_secundario: "" }))}
+                      className="justify-self-start text-xs font-semibold text-portal-muted underline-offset-2 hover:text-portal-error hover:underline"
+                    >
+                      Quitar
+                    </button>
+                  </>
+                )}
+              </div>
 
-            {/* 2. Letra */}
-            <div className="grid gap-1.5 border-t border-portal-surface-variant pt-3">
-              <span className="text-xs font-bold text-portal-navy">2. Color de letra</span>
-              <p className="text-xs text-portal-muted">El nombre y la descripción de tu mascota.</p>
-              <SelectorColor
-                valor={form.color_texto || "#ffffff"}
-                onChange={(valor) => setForm((f) => ({ ...f, color_texto: valor }))}
-                presets={PRESETS_NEUTROS}
-              />
-            </div>
-
-            {/* 3. Etiquetas */}
-            <div className="grid gap-1.5 border-t border-portal-surface-variant pt-3">
-              <span className="text-xs font-bold text-portal-navy">3. Color de etiquetas</span>
-              <p className="text-xs text-portal-muted">La insignia “Activo”, el peso y el cumpleaños.</p>
-              <SelectorColor
-                valor={form.color_etiqueta || form.color_texto || "#ffffff"}
-                onChange={(valor) => setForm((f) => ({ ...f, color_etiqueta: valor }))}
-                presets={[...PRESETS_NEUTROS, ...COLORES_MASCOTA.map((c) => ({ label: c, valor: c }))]}
-              />
+              {/* 2. Etiquetas */}
+              <div className={`grid gap-1.5 rounded-2xl bg-white p-3 ${SOMBRA_TARJETA}`}>
+                <span className="text-xs font-bold text-portal-navy">2. Color de etiquetas</span>
+                <p className="text-xs text-portal-muted">La insignia “Activo”, el peso y el cumpleaños.</p>
+                <SelectorColor
+                  valor={form.color_etiqueta || "#ffffff"}
+                  onChange={(valor) => setForm((f) => ({ ...f, color_etiqueta: valor }))}
+                  presets={[...PRESETS_NEUTROS, ...COLORES_MASCOTA.map((c) => ({ label: c, valor: c }))]}
+                />
+              </div>
             </div>
           </div>
 
           <div className="grid gap-1.5">
-            <CampoLabel icono="share">Redes sociales de tu mascota (opcional)</CampoLabel>
+            <CampoLabel icono="share">Añade las redes sociales de tu mascota (opcional)</CampoLabel>
             <div className="flex flex-col gap-2">
               {REDES.map(({ campo, label, icono, placeholder }) => (
-                <div key={campo} className="relative">
-                  <Image
-                    src={icono}
-                    alt=""
-                    width={18}
-                    height={18}
-                    className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 rounded-[4px]"
-                  />
+                <div
+                  key={campo}
+                  className={`flex items-center gap-3 rounded-full bg-portal-navy py-1.5 pl-1.5 pr-4 ${SOMBRA_TARJETA}`}
+                >
+                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white">
+                    <Image src={icono} alt="" width={18} height={18} className="rounded-[3px]" />
+                  </span>
                   <Input
                     id={`mascota-${campo}`}
                     value={form[campo]}
                     onChange={(e) => setForm((f) => ({ ...f, [campo]: e.target.value }))}
                     placeholder={placeholder}
                     aria-label={label}
-                    className={`${inputBase} pl-11`}
+                    className="h-auto w-full border-0 bg-transparent p-0 text-sm font-medium text-white shadow-none placeholder:text-white/60 focus-visible:ring-0"
                   />
                 </div>
               ))}

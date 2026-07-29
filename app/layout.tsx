@@ -5,6 +5,7 @@ import "./globals.css";
 import { AnalyticsScripts } from "@/components/analytics/AnalyticsScripts";
 import { ConsoleBanner } from "@/components/branding/ConsoleBanner";
 import { SiteChrome } from "@/components/layout/SiteChrome";
+import { SplashScreen } from "@/components/layout/SplashScreen";
 import { CartProvider } from "@/lib/cart/CartContext";
 import { createStaticClient } from "@/lib/supabase/static";
 import { siteConfig } from "@/lib/site-config";
@@ -101,6 +102,7 @@ export default async function RootLayout({
       <body
         className={`${fontDisplay.variable} ${fontImpact.variable} ${fontBody.variable} flex min-h-screen flex-col antialiased`}
       >
+        <SplashScreen />
         <AnalyticsScripts />
         <ConsoleBanner />
 

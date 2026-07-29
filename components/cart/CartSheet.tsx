@@ -99,25 +99,27 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
                   </div>
                 ))}
               </div>
+
+              <div className="mt-4 border-t border-border pt-4">
+                <div className="flex justify-between font-body text-sm text-secondary">
+                  <span>Subtotal</span>
+                  <span className="font-bold">{formatPrecio(subtotal)}</span>
+                </div>
+                <p className="mt-1 font-body text-xs text-muted-foreground">
+                  El envío se calcula en el checkout según tu dirección.
+                </p>
+
+                <div className="mt-3">
+                  <RegaloBandanaSelector />
+                </div>
+              </div>
             </div>
 
             <div className="border-t border-border pt-4">
-              <div className="flex justify-between font-body text-sm text-secondary">
-                <span>Subtotal</span>
-                <span className="font-bold">{formatPrecio(subtotal)}</span>
-              </div>
-              <p className="mt-1 font-body text-xs text-muted-foreground">
-                El envío se calcula en el checkout según tu dirección.
-              </p>
-
-              <div className="mt-3">
-                <RegaloBandanaSelector />
-              </div>
-
               <button
                 type="button"
                 onClick={handlePagarPedido}
-                className="mt-4 w-full rounded-[17px] bg-primary px-6 py-3 font-body font-bold text-primary-foreground hover:opacity-90"
+                className="w-full rounded-[17px] bg-primary px-6 py-3 font-body font-bold text-primary-foreground hover:opacity-90"
               >
                 Continuar al checkout
               </button>
