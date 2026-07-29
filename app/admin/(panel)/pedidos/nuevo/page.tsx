@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,14 +19,8 @@ import {
 import { BuscarProductoModal } from "@/components/admin/pedidos/BuscarProductoModal";
 import { ClienteSelector, type ClientePedidoSeleccionado } from "@/components/admin/pedidos/ClienteSelector";
 import { departamentosCheckout } from "@/lib/shipping";
+import { METODO_PAGO_LABEL } from "@/lib/data/productos-shared";
 import type { ItemPedido } from "@/lib/data/pedidos-admin";
-
-const FORMA_PAGO_LABEL: Record<string, string> = {
-  tarjeta: "Tarjeta",
-  yape_plin: "Yape / Plin",
-  transferencia: "Transferencia",
-  contra_entrega: "Contra entrega",
-};
 
 export default function AdminCrearPedidoPage() {
   const router = useRouter();
@@ -86,6 +81,7 @@ export default function AdminCrearPedidoPage() {
       setGuardando(false);
       return;
     }
+    toast.success("Pedido creado.");
     router.push(`/admin/pedidos/${data.pedido_id}`);
   }
 
@@ -118,7 +114,7 @@ export default function AdminCrearPedidoPage() {
             <CardContent className="flex flex-col gap-2">
               {productos.length === 0 && (
                 <p className="py-6 text-center text-sm text-muted-foreground">
-                  Todavía no agregaste productos.
+                  Sin productos todavía.
                 </p>
               )}
               {productos.map((item, i) => (
@@ -137,7 +133,13 @@ export default function AdminCrearPedidoPage() {
                   <span className="w-20 text-right text-sm font-medium">
                     S/.{(item.precio * item.cantidad).toFixed(2)}
                   </span>
-                  <Button type="button" variant="ghost" size="sm" onClick={() => quitarProducto(i)}>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    aria-label="Quitar producto"
+                    onClick={() => quitarProducto(i)}
+                  >
                     <Trash2 className="h-4 w-4 text-muted-foreground" />
                   </Button>
                 </div>
@@ -178,7 +180,7 @@ export default function AdminCrearPedidoPage() {
                       <SelectValue placeholder="Sin especificar" />
                     </SelectTrigger>
                     <SelectContent>
-                      {Object.entries(FORMA_PAGO_LABEL).map(([valor, label]) => (
+                      {Object.entries(METODO_PAGO_LABEL).map(([valor, label]) => (
                         <SelectItem key={valor} value={valor}>
                           {label}
                         </SelectItem>

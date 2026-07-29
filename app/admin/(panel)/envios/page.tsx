@@ -128,7 +128,7 @@ export default function AdminEnviosPage() {
             {!cargando && zonas.length === 0 && (
               <TableRow>
                 <TableCell colSpan={7} className="text-center text-muted-foreground">
-                  Sin zonas configuradas.
+                  Sin zonas todavía.
                 </TableCell>
               </TableRow>
             )}
@@ -195,7 +195,7 @@ export default function AdminEnviosPage() {
             {!cargando && distritos.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-muted-foreground">
-                  Sin tarifas de distrito configuradas.
+                  Sin tarifas de distrito todavía.
                 </TableCell>
               </TableRow>
             )}

@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "sonner";
+import { traducirErrorSupabase } from "@/lib/errores-supabase";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { uploadFileToR2 } from "@/lib/uploadToR2";
@@ -89,10 +91,11 @@ export function RegaloForm({ regalo, onClose, onSaved }: RegaloFormProps) {
       : await supabase.from("regalos").insert(form);
 
     if (saveError) {
-      setError(saveError.message);
+      setError(traducirErrorSupabase(saveError));
       setGuardando(false);
       return;
     }
+    toast.success("Regalo guardado.");
     onSaved();
   }
 
@@ -161,8 +164,8 @@ export function RegaloForm({ regalo, onClose, onSaved }: RegaloFormProps) {
 
         {form.condicion_tipo === "categoria" && (
           <p className="text-sm text-muted-foreground">
-            Se activa con la compra de cualquier producto de categoría &ldquo;combo&rdquo; — el
-            cliente puede elegir una bandana de regalo por cada combo que lleve.
+            Se activa con la compra de cualquier combo. El cliente elige una bandana de regalo por
+            cada combo que lleve.
           </p>
         )}
 
@@ -202,9 +205,8 @@ export function RegaloForm({ regalo, onClose, onSaved }: RegaloFormProps) {
 
         {form.condicion_tipo === "evento" && (
           <p className="text-sm text-muted-foreground">
-            Se activa manualmente para clientes que reciben el regalo por una fecha o campaña
-            especial, sin depender de un monto mínimo ni de un producto puntual. Usa las fechas de
-            vigencia y el interruptor &ldquo;Activo&rdquo; de abajo para controlarlo.
+            Se activa manualmente, sin depender de un monto mínimo ni de un producto. Actívalo con
+            las fechas de vigencia y el interruptor &ldquo;Activo&rdquo; de abajo.
           </p>
         )}
 

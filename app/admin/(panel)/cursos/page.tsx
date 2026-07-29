@@ -96,7 +96,7 @@ export default function AdminCursosPage() {
             {!cargando && cursos.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-muted-foreground">
-                  Sin cursos configurados.
+                  Sin cursos todavía.
                 </TableCell>
               </TableRow>
             )}

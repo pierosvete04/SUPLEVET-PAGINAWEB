@@ -4,6 +4,9 @@ import CarritoAbandonado, { type CarritoAbandonadoProps } from "@/emails/carrito
 import PagoConfirmado, { type PagoConfirmadoProps } from "@/emails/pago-confirmado";
 import PagoEnVerificacion, { type PagoEnVerificacionProps } from "@/emails/pago-en-verificacion";
 import PagoRechazado, { type PagoRechazadoProps } from "@/emails/pago-rechazado";
+import LibroReclamacionRespondido, {
+  type LibroReclamacionRespondidoProps,
+} from "@/emails/libro-reclamacion-respondido";
 import PedidoCancelado, { type PedidoCanceladoProps } from "@/emails/pedido-cancelado";
 import PedidoConfirmado, { type PedidoConfirmadoProps } from "@/emails/pedido-confirmado";
 import PedidoDevuelto, { type PedidoDevueltoProps } from "@/emails/pedido-devuelto";
@@ -28,6 +31,7 @@ export type EmailPayload =
   | { tipo: "pedido_en_preparacion"; data: PedidoEnPreparacionProps }
   | { tipo: "pedido_en_camino"; data: PedidoEnCaminoProps }
   | { tipo: "pedido_devuelto"; data: PedidoDevueltoProps }
+  | { tipo: "libro_reclamacion_respondido"; data: LibroReclamacionRespondidoProps }
   | { tipo: "puntos_acreditados"; data: SuplepointsAcreditadosProps }
   | { tipo: "canje_confirmado"; data: CanjeConfirmadoProps }
   | { tipo: "carrito_abandonado"; data: CarritoAbandonadoProps };
@@ -78,6 +82,11 @@ function render(payload: EmailPayload): RenderedEmail {
       return {
         subject: `Tu pedido #${payload.data.numeroPedido} fue devuelto`,
         element: <PedidoDevuelto {...payload.data} />,
+      };
+    case "libro_reclamacion_respondido":
+      return {
+        subject: `Respondimos tu ${payload.data.tipoSolicitud} #${payload.data.correlativo}`,
+        element: <LibroReclamacionRespondido {...payload.data} />,
       };
     case "puntos_acreditados":
       return {

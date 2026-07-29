@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
+import { traducirErrorSupabase } from "@/lib/errores-supabase";
 import { createClient } from "@/lib/supabase/client";
 import type { LogroConfig } from "@/lib/data/portal/logros";
 import { Modal } from "@/components/admin/Modal";
@@ -65,10 +67,11 @@ export function LogroConfigForm({ logro, onClose, onSaved }: LogroConfigFormProp
       : await supabase.from("logros_config").insert(form);
 
     if (saveError) {
-      setError(saveError.message);
+      setError(traducirErrorSupabase(saveError));
       setGuardando(false);
       return;
     }
+    toast.success("Logro guardado.");
     onSaved();
   }
 

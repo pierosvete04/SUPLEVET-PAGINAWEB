@@ -4,12 +4,24 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Gift, Plus, Pencil, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { traducirErrorSupabase } from "@/lib/errores-supabase";
 import { getVariantesDeRegalo, type RegaloVariante, type TallaBandana } from "@/lib/regalo-variantes";
 import type { Regalo } from "@/lib/regalos";
 import { Badge } from "@/components/admin/Badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { VarianteForm } from "@/components/admin/regalos/VarianteForm";
 import { BrandedLoader } from "@/components/ui/branded-loader";
 
@@ -44,6 +56,7 @@ export function RegaloVariantesManager({ regaloId }: RegaloVariantesManagerProps
     imagenSugerida?: string | null;
     tallaSugerida?: TallaBandana;
   } | null>(null);
+  const [eliminarPendiente, setEliminarPendiente] = useState<string | null>(null);
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -61,9 +74,18 @@ export function RegaloVariantesManager({ regaloId }: RegaloVariantesManagerProps
     cargar();
   }, [cargar]);
 
-  async function borrarVariante(id: string) {
-    if (!confirm("¿Eliminar esta variante de regalo?")) return;
-    await createClient().from("regalo_variantes").delete().eq("id", id);
+  async function confirmarEliminarVariante() {
+    if (!eliminarPendiente) return;
+    const { error: deleteError } = await createClient()
+      .from("regalo_variantes")
+      .delete()
+      .eq("id", eliminarPendiente);
+    setEliminarPendiente(null);
+    if (deleteError) {
+      toast.error(traducirErrorSupabase(deleteError));
+      return;
+    }
+    toast.success("Variante eliminada.");
     cargar();
   }
 
@@ -74,12 +96,10 @@ export function RegaloVariantesManager({ regaloId }: RegaloVariantesManagerProps
 
   return (
     <div className="flex flex-col gap-6">
+      <Link href="/admin/regalos" className="flex w-fit items-center gap-1 text-sm font-medium text-secondary">
+        <ArrowLeft className="h-4 w-4" /> Volver a regalos
+      </Link>
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/admin/regalos">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
         <div>
           <h2 className="text-lg font-semibold">{regalo.nombre}</h2>
           <p className="text-sm text-muted-foreground">
@@ -162,10 +182,20 @@ export function RegaloVariantesManager({ regaloId }: RegaloVariantesManagerProps
                             </span>
                           </div>
                           <div className="flex gap-1">
-                            <Button variant="ghost" size="icon" onClick={() => setVarianteForm({ variante: fila })}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Editar variante"
+                              onClick={() => setVarianteForm({ variante: fila })}
+                            >
                               <Pencil className="h-4 w-4" />
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={() => borrarVariante(fila.id)}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              aria-label="Eliminar variante"
+                              onClick={() => setEliminarPendiente(fila.id)}
+                            >
                               <Trash2 className="h-4 w-4 text-destructive" />
                             </Button>
                           </div>
@@ -196,6 +226,19 @@ export function RegaloVariantesManager({ regaloId }: RegaloVariantesManagerProps
           }}
         />
       )}
+
+      <AlertDialog open={!!eliminarPendiente} onOpenChange={(open) => !open && setEliminarPendiente(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Eliminar esta variante de regalo?</AlertDialogTitle>
+            <AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Volver</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmarEliminarVariante}>Eliminar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { Plus } from "lucide-react";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { traducirErrorSupabase } from "@/lib/errores-supabase";
 import { uploadFileToR2 } from "@/lib/uploadToR2";
 import { Badge } from "@/components/admin/Badge";
 import { SortableTableHead } from "@/components/admin/table/SortableTableHead";
@@ -86,7 +88,6 @@ export default function AdminNosotrosPage() {
   const [textos, setTextos] = useState<TextosNosotros | null>(null);
   const [subiendo, setSubiendo] = useState(false);
   const [guardando, setGuardando] = useState(false);
-  const [guardado, setGuardado] = useState(false);
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -112,7 +113,6 @@ export default function AdminNosotrosPage() {
 
   function actualizar<K extends keyof TextosNosotros>(campo: K, valor: TextosNosotros[K]) {
     setTextos((t) => (t ? { ...t, [campo]: valor } : t));
-    setGuardado(false);
   }
 
   async function subirImagen(campo: "nosotros_hero_imagen" | "nosotros_overlay_imagen", file: File) {
@@ -125,9 +125,16 @@ export default function AdminNosotrosPage() {
   async function guardarTextos() {
     if (!textos) return;
     setGuardando(true);
-    await createClient().from("configuracion_sitio").update(textos).eq("id", 1);
+    const { error: saveError } = await createClient()
+      .from("configuracion_sitio")
+      .update(textos)
+      .eq("id", 1);
     setGuardando(false);
-    setGuardado(true);
+    if (saveError) {
+      toast.error(traducirErrorSupabase(saveError));
+      return;
+    }
+    toast.success("Textos de Nosotros guardados.");
   }
 
   function cerrar() {
@@ -248,7 +255,6 @@ export default function AdminNosotrosPage() {
                 <Button onClick={guardarTextos} disabled={guardando || subiendo} className="w-fit">
                   {guardando ? "Guardando…" : "Guardar cambios"}
                 </Button>
-                {guardado && <span className="text-sm text-green-600">Guardado ✓</span>}
               </div>
             </>
           )}
@@ -277,7 +283,7 @@ export default function AdminNosotrosPage() {
             {!cargando && valores.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-muted-foreground">
-                  Sin valores configurados.
+                  Sin valores todavía.
                 </TableCell>
               </TableRow>
             )}

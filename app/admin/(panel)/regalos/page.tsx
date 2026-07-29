@@ -91,7 +91,7 @@ export default function AdminRegalosPage() {
             {!cargando && regalos.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-muted-foreground">
-                  Sin regalos configurados.
+                  Sin regalos todavía.
                 </TableCell>
               </TableRow>
             )}

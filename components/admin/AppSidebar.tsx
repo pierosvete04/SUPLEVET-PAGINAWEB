@@ -28,6 +28,7 @@ import {
   Layers,
   Handshake,
   FileText,
+  FileWarning,
   Inbox,
 } from "lucide-react";
 import { NavMain, type NavEntry } from "@/components/admin/nav/NavMain";
@@ -47,6 +48,7 @@ const navMain: NavEntry[] = [
   { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
   { title: "Pedidos", url: "/admin/pedidos", icon: ShoppingBag },
   { title: "Clientes", url: "/admin/clientes", icon: Users },
+  { title: "Libro de reclamaciones", url: "/admin/libro-reclamaciones", icon: FileWarning },
   {
     title: "Catálogo",
     icon: Package,
@@ -58,7 +60,7 @@ const navMain: NavEntry[] = [
     ],
   },
   {
-    title: "Ventas",
+    title: "Envíos y promociones",
     icon: Truck,
     items: [
       { title: "Envíos", url: "/admin/envios", icon: Truck },

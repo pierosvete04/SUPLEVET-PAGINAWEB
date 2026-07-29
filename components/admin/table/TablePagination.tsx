@@ -30,6 +30,7 @@ export function TablePagination({ page, totalPages, totalRows, onPageChange, cla
           size="icon"
           className="h-8 w-8"
           disabled={page <= 1}
+          aria-label="Página anterior"
           onClick={() => onPageChange(page - 1)}
         >
           <ChevronLeft className="size-4" />
@@ -56,6 +57,7 @@ export function TablePagination({ page, totalPages, totalRows, onPageChange, cla
           size="icon"
           className="h-8 w-8"
           disabled={page >= totalPages}
+          aria-label="Página siguiente"
           onClick={() => onPageChange(page + 1)}
         >
           <ChevronRight className="size-4" />

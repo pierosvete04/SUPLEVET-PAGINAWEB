@@ -102,7 +102,7 @@ export default function AdminResultadosPage() {
             {!cargando && resultados.length === 0 && (
               <TableRow>
                 <TableCell colSpan={7} className="text-center text-muted-foreground">
-                  Sin resultados configurados.
+                  Sin resultados todavía.
                 </TableCell>
               </TableRow>
             )}

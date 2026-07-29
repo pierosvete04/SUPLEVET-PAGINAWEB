@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { Check, Copy, ExternalLink, MapPin, Pencil } from "lucide-react";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { traducirErrorSupabase } from "@/lib/errores-supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -129,11 +131,16 @@ export function DireccionEnvioCard({
     // Se conserva lo que ya traía el pedido (metodoEnvio, documento) para no
     // borrarlo al reescribir el jsonb completo.
     const actualizada: DireccionEnvioPedidoAdmin = { ...direccion, ...form };
-    await createClient()
+    const { error: saveError } = await createClient()
       .from("pedidos")
       .update({ direccion_envio: actualizada })
       .eq("id", pedidoId);
     setGuardando(false);
+    if (saveError) {
+      toast.error(traducirErrorSupabase(saveError));
+      return;
+    }
+    toast.success("Dirección guardada.");
     setEditando(false);
     onGuardado();
   }

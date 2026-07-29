@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
+import { traducirErrorSupabase } from "@/lib/errores-supabase";
 import { createClient } from "@/lib/supabase/client";
 import { Modal } from "@/components/admin/Modal";
 import { Button } from "@/components/ui/button";
@@ -57,10 +59,11 @@ export function VentajaForm({ ventaja, onClose, onSaved }: VentajaFormProps) {
       : await supabase.from("oportunidad_ventajas").insert(form);
 
     if (saveError) {
-      setError(saveError.message);
+      setError(traducirErrorSupabase(saveError));
       setGuardando(false);
       return;
     }
+    toast.success("Ventaja guardada.");
     onSaved();
   }
 

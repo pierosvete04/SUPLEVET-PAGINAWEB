@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Badge } from "@/components/admin/Badge";
 import { SortableTableHead } from "@/components/admin/table/SortableTableHead";
@@ -96,6 +97,10 @@ export default function AdminPedidosPage() {
     });
     if (res.ok) {
       setPedidos((prev) => prev.map((p) => (p.id === id ? { ...p, estado_pago: estado } : p)));
+      toast.success("Estado del pago actualizado.");
+    } else {
+      const data = await res.json().catch(() => null);
+      toast.error(data?.error ?? "No se pudo actualizar el estado del pago.");
     }
     setActualizandoId(null);
   }
@@ -109,6 +114,10 @@ export default function AdminPedidosPage() {
     });
     if (res.ok) {
       setPedidos((prev) => prev.map((p) => (p.id === id ? { ...p, estado_preparacion: estado } : p)));
+      toast.success("Preparación actualizada.");
+    } else {
+      const data = await res.json().catch(() => null);
+      toast.error(data?.error ?? "No se pudo actualizar la preparación.");
     }
     setActualizandoId(null);
   }

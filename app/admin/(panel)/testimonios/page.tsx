@@ -92,7 +92,7 @@ export default function AdminTestimoniosPage() {
             {!cargando && testimonios.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-muted-foreground">
-                  Sin testimonios configurados.
+                  Sin testimonios todavía.
                 </TableCell>
               </TableRow>
             )}

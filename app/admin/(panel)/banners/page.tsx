@@ -101,7 +101,7 @@ export default function AdminBannersPage() {
             {!cargando && banners.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-muted-foreground">
-                  Sin banners configurados.
+                  Sin banners todavía.
                 </TableCell>
               </TableRow>
             )}

@@ -135,7 +135,7 @@ export default function AdminSuplepuntosPage() {
             {!cargando && itemsFiltrados.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-muted-foreground">
-                  Sin configuraciones para este filtro.
+                  No hay configuraciones con este filtro.
                 </TableCell>
               </TableRow>
             )}

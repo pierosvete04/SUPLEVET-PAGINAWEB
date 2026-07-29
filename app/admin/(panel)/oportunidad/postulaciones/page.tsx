@@ -1,7 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { traducirErrorSupabase } from "@/lib/errores-supabase";
 import { Badge } from "@/components/admin/Badge";
 import { TableCard } from "@/components/admin/table/TableCard";
 import { BrandedLoader } from "@/components/ui/branded-loader";
@@ -35,6 +37,12 @@ interface DistribuidorLead {
 
 const ESTADOS_LEAD = ["nuevo", "contactado", "descartado"] as const;
 
+const BADGE_ESTADO_LEAD: Record<(typeof ESTADOS_LEAD)[number], { color: "azul" | "verde" | "gris"; label: string }> = {
+  nuevo: { color: "azul", label: "Nuevo" },
+  contactado: { color: "verde", label: "Contactado" },
+  descartado: { color: "gris", label: "Descartado" },
+};
+
 export default function AdminOportunidadPostulacionesPage() {
   const [leads, setLeads] = useState<DistribuidorLead[]>([]);
   const [cargando, setCargando] = useState(true);
@@ -54,8 +62,18 @@ export default function AdminOportunidadPostulacionesPage() {
   }, [cargar]);
 
   async function cambiarEstadoLead(id: string, estado: string) {
+    const anteriores = leads;
     setLeads((ls) => ls.map((l) => (l.id === id ? { ...l, estado } : l)));
-    await createClient().from("distribuidores_leads").update({ estado }).eq("id", id);
+    const { error: saveError } = await createClient()
+      .from("distribuidores_leads")
+      .update({ estado })
+      .eq("id", id);
+    if (saveError) {
+      setLeads(anteriores);
+      toast.error(traducirErrorSupabase(saveError));
+      return;
+    }
+    toast.success("Postulación actualizada.");
   }
 
   return (
@@ -99,13 +117,15 @@ export default function AdminOportunidadPostulacionesPage() {
                   </TableCell>
                   <TableCell>
                     <Select value={l.estado} onValueChange={(v) => cambiarEstadoLead(l.id, v)}>
-                      <SelectTrigger className="w-36">
-                        <SelectValue />
+                      <SelectTrigger className="h-auto w-fit gap-1.5 border-none bg-transparent p-0 shadow-none focus:ring-0 [&_svg]:opacity-50">
+                        <Badge color={BADGE_ESTADO_LEAD[l.estado as (typeof ESTADOS_LEAD)[number]]?.color ?? "gris"}>
+                          {BADGE_ESTADO_LEAD[l.estado as (typeof ESTADOS_LEAD)[number]]?.label ?? l.estado}
+                        </Badge>
                       </SelectTrigger>
                       <SelectContent>
                         {ESTADOS_LEAD.map((estado) => (
                           <SelectItem key={estado} value={estado}>
-                            {estado.charAt(0).toUpperCase() + estado.slice(1)}
+                            {BADGE_ESTADO_LEAD[estado].label}
                           </SelectItem>
                         ))}
                       </SelectContent>

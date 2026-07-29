@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
+import { traducirErrorSupabase } from "@/lib/errores-supabase";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import { uploadFileToR2 } from "@/lib/uploadToR2";
@@ -61,10 +63,11 @@ export function ResultadoRealForm({ resultado, onClose, onSaved }: ResultadoReal
       : await supabase.from("resultados_reales").insert(form);
 
     if (saveError) {
-      setError(saveError.message);
+      setError(traducirErrorSupabase(saveError));
       setGuardando(false);
       return;
     }
+    toast.success("Resultado guardado.");
     onSaved();
   }
 

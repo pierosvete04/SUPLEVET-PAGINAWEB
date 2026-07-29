@@ -77,7 +77,7 @@ export default function AdminClientesPage() {
             {!cargando && clientes.length === 0 && (
               <TableRow>
                 <TableCell colSpan={6} className="text-center text-muted-foreground">
-                  Sin clientes registrados todavía.
+                  Sin clientes todavía.
                 </TableCell>
               </TableRow>
             )}

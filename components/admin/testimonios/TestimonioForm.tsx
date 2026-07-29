@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
+import { traducirErrorSupabase } from "@/lib/errores-supabase";
 import { createClient } from "@/lib/supabase/client";
 import { uploadFileToR2 } from "@/lib/uploadToR2";
 import { Modal } from "@/components/admin/Modal";
@@ -59,10 +61,11 @@ export function TestimonioForm({ testimonio, onClose, onSaved }: TestimonioFormP
       : await supabase.from("testimonios_videos").insert(form);
 
     if (saveError) {
-      setError(saveError.message);
+      setError(traducirErrorSupabase(saveError));
       setGuardando(false);
       return;
     }
+    toast.success("Testimonio guardado.");
     onSaved();
   }
 

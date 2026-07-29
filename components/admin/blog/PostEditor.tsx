@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
+import { traducirErrorSupabase } from "@/lib/errores-supabase";
 import { createClient } from "@/lib/supabase/client";
 import { uploadFileToR2 } from "@/lib/uploadToR2";
 import { RichTextEditor } from "@/components/admin/blog/RichTextEditor";
@@ -112,10 +114,11 @@ export function PostEditor({ post }: PostEditorProps) {
       : await supabase.from("blog_posts").insert(payload);
 
     if (saveError) {
-      setError(saveError.message);
+      setError(traducirErrorSupabase(saveError));
       setGuardando(false);
       return;
     }
+    toast.success(estado === "publicado" ? "Post publicado." : "Borrador guardado.");
     router.push("/admin/blog");
     router.refresh();
   }

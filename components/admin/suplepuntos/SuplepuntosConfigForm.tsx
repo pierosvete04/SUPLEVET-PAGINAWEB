@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
+import { traducirErrorSupabase } from "@/lib/errores-supabase";
 import { createClient } from "@/lib/supabase/client";
 import type { SuplepuntosConfig, TipoSuplepuntosConfig } from "@/lib/data/portal/puntos";
 import { Modal } from "@/components/admin/Modal";
@@ -70,10 +72,11 @@ export function SuplepuntosConfigForm({ config, onClose, onSaved }: SuplepuntosC
       : await supabase.from("suplepuntos_config").insert(form);
 
     if (saveError) {
-      setError(saveError.message);
+      setError(traducirErrorSupabase(saveError));
       setGuardando(false);
       return;
     }
+    toast.success(`Se guardó "${form.nombre.trim()}".`);
     onSaved();
   }
 

@@ -3,10 +3,22 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Plus, Pencil, Trash2, FileText, Download } from "lucide-react";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { traducirErrorSupabase } from "@/lib/errores-supabase";
 import { getCursoDetalle, type CursoDetalle, type CursoLeccion, type CursoModulo, type CursoRecurso } from "@/lib/cursos";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { ModuloForm } from "@/components/admin/cursos/ModuloForm";
 import { LeccionForm } from "@/components/admin/cursos/LeccionForm";
 import { RecursoForm } from "@/components/admin/cursos/RecursoForm";
@@ -16,6 +28,26 @@ interface CursoContenidoManagerProps {
   cursoId: string;
 }
 
+type EliminarPendiente =
+  | { tipo: "modulo"; id: string }
+  | { tipo: "leccion"; id: string }
+  | { tipo: "recurso"; id: string };
+
+const CONFIRMACION_ELIMINAR: Record<EliminarPendiente["tipo"], { titulo: string; descripcion: string }> = {
+  modulo: {
+    titulo: "¿Eliminar este módulo?",
+    descripcion: "También se eliminan todas sus lecciones. Esta acción no se puede deshacer.",
+  },
+  leccion: {
+    titulo: "¿Eliminar esta lección?",
+    descripcion: "Esta acción no se puede deshacer.",
+  },
+  recurso: {
+    titulo: "¿Eliminar este recurso?",
+    descripcion: "Esta acción no se puede deshacer.",
+  },
+};
+
 export function CursoContenidoManager({ cursoId }: CursoContenidoManagerProps) {
   const [curso, setCurso] = useState<CursoDetalle | null>(null);
   const [cargando, setCargando] = useState(true);
@@ -23,6 +55,7 @@ export function CursoContenidoManager({ cursoId }: CursoContenidoManagerProps) {
   const [moduloForm, setModuloForm] = useState<{ modulo: CursoModulo | null } | null>(null);
   const [leccionForm, setLeccionForm] = useState<{ moduloId: string; leccion: CursoLeccion | null } | null>(null);
   const [recursoForm, setRecursoForm] = useState<{ recurso: CursoRecurso | null } | null>(null);
+  const [eliminarPendiente, setEliminarPendiente] = useState<EliminarPendiente | null>(null);
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -35,21 +68,19 @@ export function CursoContenidoManager({ cursoId }: CursoContenidoManagerProps) {
     cargar();
   }, [cargar]);
 
-  async function borrarModulo(id: string) {
-    if (!confirm("¿Eliminar este módulo y todas sus lecciones?")) return;
-    await createClient().from("curso_modulos").delete().eq("id", id);
-    cargar();
-  }
-
-  async function borrarLeccion(id: string) {
-    if (!confirm("¿Eliminar esta lección?")) return;
-    await createClient().from("curso_lecciones").delete().eq("id", id);
-    cargar();
-  }
-
-  async function borrarRecurso(id: string) {
-    if (!confirm("¿Eliminar este recurso?")) return;
-    await createClient().from("curso_recursos").delete().eq("id", id);
+  async function confirmarEliminar() {
+    if (!eliminarPendiente) return;
+    const { tipo, id } = eliminarPendiente;
+    const tabla = tipo === "modulo" ? "curso_modulos" : tipo === "leccion" ? "curso_lecciones" : "curso_recursos";
+    const { error: deleteError } = await createClient().from(tabla).delete().eq("id", id);
+    setEliminarPendiente(null);
+    if (deleteError) {
+      toast.error(traducirErrorSupabase(deleteError));
+      return;
+    }
+    toast.success(
+      tipo === "modulo" ? "Módulo eliminado." : tipo === "leccion" ? "Lección eliminada." : "Recurso eliminado."
+    );
     cargar();
   }
 
@@ -58,12 +89,10 @@ export function CursoContenidoManager({ cursoId }: CursoContenidoManagerProps) {
 
   return (
     <div className="flex flex-col gap-6">
+      <Link href="/admin/cursos" className="flex w-fit items-center gap-1 text-sm font-medium text-secondary">
+        <ArrowLeft className="h-4 w-4" /> Volver a cursos
+      </Link>
       <div className="flex items-center gap-3">
-        <Button variant="ghost" size="icon" asChild>
-          <Link href="/admin/cursos">
-            <ArrowLeft className="h-4 w-4" />
-          </Link>
-        </Button>
         <div>
           <h2 className="text-lg font-semibold">{curso.titulo}</h2>
           <p className="text-sm text-muted-foreground">Módulos, lecciones y material de apoyo del curso.</p>
@@ -101,10 +130,20 @@ export function CursoContenidoManager({ cursoId }: CursoContenidoManagerProps) {
                 >
                   <Plus className="h-4 w-4" /> Lección
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => setModuloForm({ modulo })}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Editar módulo"
+                  onClick={() => setModuloForm({ modulo })}
+                >
                   <Pencil className="h-4 w-4" />
                 </Button>
-                <Button variant="ghost" size="icon" onClick={() => borrarModulo(modulo.id)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  aria-label="Eliminar módulo"
+                  onClick={() => setEliminarPendiente({ tipo: "modulo", id: modulo.id })}
+                >
                   <Trash2 className="h-4 w-4 text-destructive" />
                 </Button>
               </div>
@@ -125,11 +164,17 @@ export function CursoContenidoManager({ cursoId }: CursoContenidoManagerProps) {
                       <Button
                         variant="ghost"
                         size="icon"
+                        aria-label="Editar lección"
                         onClick={() => setLeccionForm({ moduloId: modulo.id, leccion })}
                       >
                         <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => borrarLeccion(leccion.id)}>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        aria-label="Eliminar lección"
+                        onClick={() => setEliminarPendiente({ tipo: "leccion", id: leccion.id })}
+                      >
                         <Trash2 className="h-4 w-4 text-destructive" />
                       </Button>
                     </div>
@@ -170,10 +215,20 @@ export function CursoContenidoManager({ cursoId }: CursoContenidoManagerProps) {
                     </div>
                   </div>
                   <div className="flex gap-1">
-                    <Button variant="ghost" size="icon" onClick={() => setRecursoForm({ recurso })}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Editar recurso"
+                      onClick={() => setRecursoForm({ recurso })}
+                    >
                       <Pencil className="h-4 w-4" />
                     </Button>
-                    <Button variant="ghost" size="icon" onClick={() => borrarRecurso(recurso.id)}>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label="Eliminar recurso"
+                      onClick={() => setEliminarPendiente({ tipo: "recurso", id: recurso.id })}
+                    >
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
@@ -222,6 +277,23 @@ export function CursoContenidoManager({ cursoId }: CursoContenidoManagerProps) {
           }}
         />
       )}
+
+      <AlertDialog open={!!eliminarPendiente} onOpenChange={(open) => !open && setEliminarPendiente(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {eliminarPendiente && CONFIRMACION_ELIMINAR[eliminarPendiente.tipo].titulo}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {eliminarPendiente && CONFIRMACION_ELIMINAR[eliminarPendiente.tipo].descripcion}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Volver</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmarEliminar}>Eliminar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

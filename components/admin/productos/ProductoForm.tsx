@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
+import { traducirErrorSupabase } from "@/lib/errores-supabase";
 import Image from "next/image";
 import { X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -147,10 +149,11 @@ export function ProductoForm({ producto, onClose, onSaved }: ProductoFormProps) 
       : await supabase.from("productos_web").insert(payload);
 
     if (saveError) {
-      setError(saveError.message);
+      setError(traducirErrorSupabase(saveError));
       setGuardando(false);
       return;
     }
+    toast.success("Producto guardado.");
     onSaved();
   }
 

@@ -146,7 +146,7 @@ export default function AdminClienteDetallePage({ params }: { params: Promise<{ 
             </CardHeader>
             <CardContent>
               {transacciones.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Sin transacciones.</p>
+                <p className="text-sm text-muted-foreground">Sin transacciones todavía.</p>
               ) : (
                 <div className="flex flex-col gap-2">
                   {transacciones.map((t) => (
@@ -169,7 +169,7 @@ export default function AdminClienteDetallePage({ params }: { params: Promise<{ 
             </CardHeader>
             <CardContent>
               {resenas.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Sin reseñas dejadas.</p>
+                <p className="text-sm text-muted-foreground">Sin reseñas todavía.</p>
               ) : (
                 <div className="flex flex-col gap-3">
                   {resenas.map((r) => (

@@ -4,6 +4,7 @@ import { AppSidebar } from "@/components/admin/AppSidebar";
 import { RestrictedSidebar } from "@/components/admin/RestrictedSidebar";
 import { SiteHeader } from "@/components/admin/SiteHeader";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import { Toaster } from "@/components/ui/sonner";
 
 // Roles restringidos (pensados para personal externo) no ven el sidebar
 // completo — solo su única sección permitida, con un header minimalista.
@@ -37,6 +38,7 @@ export default async function AdminPanelLayout({ children }: { children: React.R
           <SiteHeader />
           <main className="flex flex-1 flex-col gap-4 bg-soft-gray p-4 md:p-6">{children}</main>
         </SidebarInset>
+        <Toaster />
       </SidebarProvider>
     );
   }
@@ -48,6 +50,7 @@ export default async function AdminPanelLayout({ children }: { children: React.R
         <SiteHeader />
         <main className="flex flex-1 flex-col gap-4 bg-soft-gray p-4 md:p-6">{children}</main>
       </SidebarInset>
+      <Toaster />
     </SidebarProvider>
   );
 }

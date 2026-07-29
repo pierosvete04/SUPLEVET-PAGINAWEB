@@ -3,7 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import { Plus } from "lucide-react";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { traducirErrorSupabase } from "@/lib/errores-supabase";
 import { uploadFileToR2 } from "@/lib/uploadToR2";
 import { Badge } from "@/components/admin/Badge";
 import { Button } from "@/components/ui/button";
@@ -110,11 +112,19 @@ function CampoImagen({
 
 type Seccion = "hero" | "intro" | "ventajasHeader" | "producto" | "pasos" | "postular";
 
+const LABEL_SECCION: Record<Seccion, string> = {
+  hero: "Hero",
+  intro: "Introducción editorial",
+  ventajasHeader: "Encabezado de Ventajas",
+  producto: "Banda de producto destacado",
+  pasos: "Cómo empezar",
+  postular: "Formulario de postulación",
+};
+
 export default function AdminOportunidadPage() {
   const [textos, setTextos] = useState<TextosOportunidad | null>(null);
   const [subiendo, setSubiendo] = useState(false);
   const [seccionGuardando, setSeccionGuardando] = useState<Seccion | null>(null);
-  const [seccionGuardada, setSeccionGuardada] = useState<Seccion | null>(null);
 
   const [ventajas, setVentajas] = useState<OportunidadVentaja[]>([]);
   const [editando, setEditando] = useState<OportunidadVentaja | null>(null);
@@ -140,7 +150,6 @@ export default function AdminOportunidadPage() {
 
   function actualizar<K extends keyof TextosOportunidad>(campo: K, valor: TextosOportunidad[K]) {
     setTextos((t) => (t ? { ...t, [campo]: valor } : t));
-    setSeccionGuardada(null);
   }
 
   async function subirImagen(
@@ -156,7 +165,7 @@ export default function AdminOportunidadPage() {
   async function guardarSeccion(seccion: Seccion) {
     if (!textos) return;
     setSeccionGuardando(seccion);
-    await createClient().rpc("update_oportunidad_config", {
+    const { error: saveError } = await createClient().rpc("update_oportunidad_config", {
       p_hero_titulo: textos.oportunidad_hero_titulo,
       p_hero_texto: textos.oportunidad_hero_texto,
       p_hero_imagen: textos.oportunidad_hero_imagen,
@@ -182,7 +191,11 @@ export default function AdminOportunidadPage() {
       p_postular_texto_2: textos.oportunidad_postular_texto_2,
     });
     setSeccionGuardando(null);
-    setSeccionGuardada(seccion);
+    if (saveError) {
+      toast.error(traducirErrorSupabase(saveError));
+      return;
+    }
+    toast.success(`Sección "${LABEL_SECCION[seccion]}" guardada.`);
   }
 
   function BotonGuardarSeccion({ seccion }: { seccion: Seccion }) {
@@ -195,7 +208,6 @@ export default function AdminOportunidadPage() {
         >
           {seccionGuardando === seccion ? "Guardando…" : "Guardar"}
         </Button>
-        {seccionGuardada === seccion && <span className="text-sm text-green-600">Guardado ✓</span>}
         {subiendo && seccionGuardando === null && (
           <span className="text-sm text-muted-foreground">Espera a que termine de subir la imagen…</span>
         )}
@@ -445,7 +457,7 @@ export default function AdminOportunidadPage() {
               {!cargando && ventajas.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center text-muted-foreground">
-                    Sin ventajas configuradas.
+                    Sin ventajas todavía.
                   </TableCell>
                 </TableRow>
               )}

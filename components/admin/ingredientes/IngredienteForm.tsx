@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
+import { traducirErrorSupabase } from "@/lib/errores-supabase";
 import { Plus, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Modal } from "@/components/admin/Modal";
@@ -53,10 +55,11 @@ export function IngredienteForm({ ingrediente, onClose, onSaved }: IngredienteFo
       : await supabase.from("ingredientes_producto").insert(payload);
 
     if (saveError) {
-      setError(saveError.message);
+      setError(traducirErrorSupabase(saveError));
       setGuardando(false);
       return;
     }
+    toast.success("Ingrediente guardado.");
     onSaved();
   }
 

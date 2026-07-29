@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { toast } from "sonner";
+import { traducirErrorSupabase } from "@/lib/errores-supabase";
 import { createClient } from "@/lib/supabase/client";
 import type { CursoModulo } from "@/lib/cursos";
 import { Modal } from "@/components/admin/Modal";
@@ -38,10 +40,11 @@ export function ModuloForm({ cursoId, modulo, siguienteOrden, onClose, onSaved }
       : await supabase.from("curso_modulos").insert(payload);
 
     if (saveError) {
-      setError(saveError.message);
+      setError(traducirErrorSupabase(saveError));
       setGuardando(false);
       return;
     }
+    toast.success("Módulo guardado.");
     onSaved();
   }
 

@@ -3,7 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, Printer } from "lucide-react";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { traducirErrorSupabase } from "@/lib/errores-supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -74,11 +76,15 @@ export function RotuloPedido({ pedido }: { pedido: PedidoAdmin }) {
     if (faltaCodigo) return;
     if (codigoLimpio !== (pedido.codigo_rotulo ?? "")) {
       setGuardando(true);
-      await createClient()
+      const { error: saveError } = await createClient()
         .from("pedidos")
         .update({ codigo_rotulo: codigoLimpio || null })
         .eq("id", pedido.id);
       setGuardando(false);
+      if (saveError) {
+        toast.error(traducirErrorSupabase(saveError));
+        return;
+      }
     }
     window.print();
   }

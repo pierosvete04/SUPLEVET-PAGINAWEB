@@ -4,7 +4,9 @@ import { useEffect, useState, use as usePromise } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowLeft, Gift, MessageCircle, Package, Printer } from "lucide-react";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { traducirErrorSupabase } from "@/lib/errores-supabase";
 import { Badge } from "@/components/admin/Badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +18,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { whatsappLink } from "@/lib/site-config";
 import { mensajeWhatsappPedido } from "@/lib/whatsapp-pedido";
 import { BrandedLoader } from "@/components/ui/branded-loader";
@@ -40,6 +52,7 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
   const [imagenesPorSlug, setImagenesPorSlug] = useState<Record<string, string>>({});
   const [cargando, setCargando] = useState(true);
   const [actualizando, setActualizando] = useState(false);
+  const [confirmarEstadoPago, setConfirmarEstadoPago] = useState<"rechazado" | "cancelado" | null>(null);
 
   async function cargar() {
     setCargando(true);
@@ -96,11 +109,21 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
+  const LABEL_CAMPO: Record<string, string> = {
+    courier: "Empresa de envío",
+    courier_otro: "Nombre del courier",
+  };
+
   async function actualizarCampo(campo: string, valor: string) {
     setActualizando(true);
-    await createClient().from("pedidos").update({ [campo]: valor }).eq("id", id);
+    const { error: saveError } = await createClient().from("pedidos").update({ [campo]: valor }).eq("id", id);
     await cargar();
     setActualizando(false);
+    if (saveError) {
+      toast.error(traducirErrorSupabase(saveError));
+      return;
+    }
+    toast.success(`Se actualizó "${LABEL_CAMPO[campo] ?? "el pedido"}".`);
   }
 
   // A diferencia de actualizarCampo(), este pasa por una ruta API en vez de
@@ -110,13 +133,21 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
   // actualiza pedidos") así que la autorización no cambia.
   async function actualizarEstadoPago(estado: "pagado" | "rechazado" | "cancelado") {
     setActualizando(true);
-    await fetch(`/api/admin/pedidos/${id}/estado-pago`, {
+    const res = await fetch(`/api/admin/pedidos/${id}/estado-pago`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ estado }),
     });
+    const data = await res.json().catch(() => null);
     await cargar();
     setActualizando(false);
+    if (!res.ok) {
+      toast.error(data?.error ?? "No se pudo actualizar el estado del pago.");
+      return;
+    }
+    toast.success(
+      estado === "pagado" ? "Pago confirmado." : estado === "rechazado" ? "Pago rechazado." : "Pedido cancelado."
+    );
   }
 
   // Igual que actualizarEstadoPago(): al marcar "entregado" la ruta además
@@ -124,13 +155,19 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
   // devolución inmediata) y manda el correo correspondiente.
   async function actualizarEstadoPreparacion(estado: string) {
     setActualizando(true);
-    await fetch(`/api/admin/pedidos/${id}/estado-preparacion`, {
+    const res = await fetch(`/api/admin/pedidos/${id}/estado-preparacion`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ estado }),
     });
+    const data = await res.json().catch(() => null);
     await cargar();
     setActualizando(false);
+    if (!res.ok) {
+      toast.error(data?.error ?? "No se pudo actualizar el estado de preparación.");
+      return;
+    }
+    toast.success("Estado de preparación actualizado.");
   }
 
   if (cargando) return <BrandedLoader />;
@@ -266,7 +303,7 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
                 </Button>
                 <Button
                   disabled={actualizando}
-                  onClick={() => actualizarEstadoPago("rechazado")}
+                  onClick={() => setConfirmarEstadoPago("rechazado")}
                   variant="destructive"
                   className="flex-1"
                 >
@@ -275,7 +312,7 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
               </div>
               <Button
                 disabled={actualizando}
-                onClick={() => actualizarEstadoPago("cancelado")}
+                onClick={() => setConfirmarEstadoPago("cancelado")}
                 variant="outline"
                 className="w-full"
               >
@@ -370,6 +407,31 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
           </Card>
         </div>
       </div>
+
+      <AlertDialog open={!!confirmarEstadoPago} onOpenChange={(open) => !open && setConfirmarEstadoPago(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {confirmarEstadoPago === "cancelado" ? "¿Cancelar este pedido?" : "¿Rechazar el pago de este pedido?"}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              El cliente recibirá un correo avisándole que su pedido fue{" "}
+              {confirmarEstadoPago === "cancelado" ? "cancelado" : "rechazado"}. Esta acción no se puede deshacer.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Volver</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmarEstadoPago) actualizarEstadoPago(confirmarEstadoPago);
+                setConfirmarEstadoPago(null);
+              }}
+            >
+              {confirmarEstadoPago === "cancelado" ? "Cancelar pedido" : "Rechazar pago"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -96,7 +96,7 @@ export default function AdminFaqsPage() {
             {!cargando && faqs.length === 0 && (
               <TableRow>
                 <TableCell colSpan={4} className="text-center text-muted-foreground">
-                  Sin preguntas configuradas.
+                  Sin preguntas todavía.
                 </TableCell>
               </TableRow>
             )}

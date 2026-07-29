@@ -133,6 +133,7 @@ export default function AdminResenasPage() {
                         size="icon"
                         className="h-8 w-8"
                         disabled={procesando === r.id}
+                        aria-label="Aprobar reseña"
                         onClick={() => moderar(r.id, "aprobada")}
                       >
                         <Check className="h-4 w-4 text-green-700" />
@@ -142,6 +143,7 @@ export default function AdminResenasPage() {
                         size="icon"
                         className="h-8 w-8"
                         disabled={procesando === r.id}
+                        aria-label="Rechazar reseña"
                         onClick={() => moderar(r.id, "rechazada")}
                       >
                         <X className="h-4 w-4 text-destructive" />

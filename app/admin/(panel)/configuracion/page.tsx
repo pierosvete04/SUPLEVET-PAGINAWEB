@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
+import { traducirErrorSupabase } from "@/lib/errores-supabase";
 import { uploadFileToR2 } from "@/lib/uploadToR2";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -75,7 +77,6 @@ export default function AdminConfiguracionPage() {
   const [config, setConfig] = useState<ConfiguracionSitio | null>(null);
   const [subiendo, setSubiendo] = useState(false);
   const [guardando, setGuardando] = useState(false);
-  const [guardado, setGuardado] = useState(false);
 
   useEffect(() => {
     createClient()
@@ -88,7 +89,6 @@ export default function AdminConfiguracionPage() {
 
   function actualizar<K extends keyof ConfiguracionSitio>(campo: K, valor: ConfiguracionSitio[K]) {
     setConfig((c) => (c ? { ...c, [campo]: valor } : c));
-    setGuardado(false);
   }
 
   async function subirQr(file: File) {
@@ -108,9 +108,16 @@ export default function AdminConfiguracionPage() {
   async function guardar() {
     if (!config) return;
     setGuardando(true);
-    await createClient().from("configuracion_sitio").update(config).eq("id", 1);
+    const { error: saveError } = await createClient()
+      .from("configuracion_sitio")
+      .update(config)
+      .eq("id", 1);
     setGuardando(false);
-    setGuardado(true);
+    if (saveError) {
+      toast.error(traducirErrorSupabase(saveError));
+      return;
+    }
+    toast.success("Configuración del sitio guardada.");
   }
 
   if (!config) return <BrandedLoader />;
@@ -443,7 +450,6 @@ export default function AdminConfiguracionPage() {
         <Button onClick={guardar} disabled={guardando || subiendo}>
           {guardando ? "Guardando…" : "Guardar cambios"}
         </Button>
-        {guardado && <span className="text-sm text-green-600">Guardado ✓</span>}
       </div>
     </div>
   );

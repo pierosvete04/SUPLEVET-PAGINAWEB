@@ -99,7 +99,7 @@ export default function AdminIngredientesPage() {
             {!cargando && ingredientes.length === 0 && (
               <TableRow>
                 <TableCell colSpan={5} className="text-center text-muted-foreground">
-                  Sin ingredientes configurados.
+                  Sin ingredientes todavía.
                 </TableCell>
               </TableRow>
             )}
