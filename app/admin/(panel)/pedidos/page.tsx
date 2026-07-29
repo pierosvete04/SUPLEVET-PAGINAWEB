@@ -10,7 +10,9 @@ import { SortableTableHead } from "@/components/admin/table/SortableTableHead";
 import { TableCard } from "@/components/admin/table/TableCard";
 import { TablePagination } from "@/components/admin/table/TablePagination";
 import { useTableRows } from "@/components/admin/table/useTableRows";
+import { useResponsivePageSize } from "@/components/admin/table/useResponsivePageSize";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -32,6 +34,7 @@ import {
   formatFechaPedido,
   type PedidoAdmin,
 } from "@/lib/data/pedidos-admin";
+import { capitalizar } from "@/lib/utils";
 
 function valorOrden(p: PedidoAdmin, columna: string) {
   switch (columna) {
@@ -61,6 +64,8 @@ export default function AdminPedidosPage() {
   const [filtroPreparacion, setFiltroPreparacion] = useState(
     () => searchParams.get("estado_preparacion") ?? "todos"
   );
+  const [fechaDesde, setFechaDesde] = useState(() => searchParams.get("fecha_desde") ?? "");
+  const [fechaHasta, setFechaHasta] = useState(() => searchParams.get("fecha_hasta") ?? "");
   const [actualizandoId, setActualizandoId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -73,12 +78,14 @@ export default function AdminPedidosPage() {
       } else if (filtroPreparacion !== "todos") {
         query = query.eq("estado_preparacion", filtroPreparacion);
       }
+      if (fechaDesde) query = query.gte("created_at", `${fechaDesde}T00:00:00`);
+      if (fechaHasta) query = query.lte("created_at", `${fechaHasta}T23:59:59.999`);
       const { data } = await query;
       setPedidos((data as PedidoAdmin[]) ?? []);
       setCargando(false);
     }
     cargar();
-  }, [filtroPago, filtroPreparacion]);
+  }, [filtroPago, filtroPreparacion, fechaDesde, fechaHasta]);
 
   async function actualizarEstadoPago(id: string, estado: keyof typeof BADGE_ESTADO_PAGO) {
     setActualizandoId(id);
@@ -106,9 +113,11 @@ export default function AdminPedidosPage() {
     setActualizandoId(null);
   }
 
+  const pageSize = useResponsivePageSize();
   const { pageRows, totalRows, page, totalPages, setPage, sortColumn, sortDirection, toggleSort } = useTableRows({
     rows: pedidos,
     getSortValue: valorOrden,
+    pageSize,
   });
 
   return (
@@ -122,7 +131,7 @@ export default function AdminPedidosPage() {
             </Button>
           </Link>
           <Select value={filtroPago} onValueChange={setFiltroPago}>
-            <SelectTrigger className="w-64">
+            <SelectTrigger className="w-64 bg-white">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -134,7 +143,7 @@ export default function AdminPedidosPage() {
             </SelectContent>
           </Select>
           <Select value={filtroPreparacion} onValueChange={setFiltroPreparacion}>
-            <SelectTrigger className="w-64">
+            <SelectTrigger className="w-64 bg-white">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -147,6 +156,37 @@ export default function AdminPedidosPage() {
               <SelectItem value="devuelto">Devuelto</SelectItem>
             </SelectContent>
           </Select>
+          <div className="flex items-center gap-1.5">
+            <Input
+              type="date"
+              value={fechaDesde}
+              onChange={(e) => setFechaDesde(e.target.value)}
+              max={fechaHasta || undefined}
+              className="w-40 bg-white"
+              aria-label="Desde"
+            />
+            <span className="text-sm text-muted-foreground">a</span>
+            <Input
+              type="date"
+              value={fechaHasta}
+              onChange={(e) => setFechaHasta(e.target.value)}
+              min={fechaDesde || undefined}
+              className="w-40 bg-white"
+              aria-label="Hasta"
+            />
+            {(fechaDesde || fechaHasta) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setFechaDesde("");
+                  setFechaHasta("");
+                }}
+              >
+                Limpiar
+              </Button>
+            )}
+          </div>
         </div>
       </div>
 
@@ -239,7 +279,9 @@ export default function AdminPedidosPage() {
                     </div>
                   </TableCell>
                   <TableCell>{p.productos.reduce((acc, i) => acc + i.cantidad, 0)}</TableCell>
-                  <TableCell className="text-muted-foreground">{p.zona_envio ?? "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {p.zona_envio ? capitalizar(p.zona_envio) : "—"}
+                  </TableCell>
                 </TableRow>
               );
             })}

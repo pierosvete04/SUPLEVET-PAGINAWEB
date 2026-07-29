@@ -25,7 +25,7 @@ export interface PedidoAdmin {
   cliente_telefono: string | null;
   estado: string;
   estado_pago: "pendiente_verificacion" | "pagado" | "rechazado" | "cancelado";
-  estado_preparacion: "no_preparado" | "en_preparacion" | "preparado" | "entregado" | "devuelto";
+  estado_preparacion: "no_preparado" | "en_preparacion" | "preparado" | "entregado" | "devuelto" | "cancelado";
   forma_pago: "tarjeta" | "yape_plin" | "transferencia" | "contra_entrega" | "shopify" | null;
   captura_pago_url: string | null;
   subtotal: number;
@@ -58,6 +58,7 @@ export const BADGE_ESTADO_PREPARACION = {
   preparado: { color: "celeste" as const, label: "Preparado" },
   entregado: { color: "verde" as const, label: "Entregado" },
   devuelto: { color: "rojo" as const, label: "Devuelto" },
+  cancelado: { color: "naranja" as const, label: "Cancelado" },
 };
 
 export function formatFechaPedido(iso: string): string {

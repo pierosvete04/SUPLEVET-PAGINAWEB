@@ -83,6 +83,27 @@ function CopyField({ label, value }: { label: string; value: string }) {
   );
 }
 
+/** Titular de Yape/Plin: es la cuenta personal del dueño, a diferencia de la
+ * cuenta bancaria (a nombre de la empresa) no debe quedar disponible para
+ * copiar ni seleccionar — solo el número de la transacción es copiable. */
+function LockedField({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="flex items-center justify-between gap-3 rounded-md bg-soft-gray px-4 py-2.5">
+      <div>
+        <p className="font-body text-[11px] uppercase tracking-wide text-muted-foreground">{label}</p>
+        <p
+          className="select-none font-body text-sm font-bold text-secondary"
+          style={{ userSelect: "none", WebkitUserSelect: "none" }}
+          onCopy={(e) => e.preventDefault()}
+          onContextMenu={(e) => e.preventDefault()}
+        >
+          {value}
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export function PaymentStep({
   metodo,
   onChange,
@@ -199,7 +220,7 @@ export function PaymentStep({
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                       <div className="flex flex-1 flex-col gap-3">
                         <CopyField label="Yapea o plinea al número" value={DATOS_YAPE_PLIN.numero} />
-                        <CopyField label="Titular" value={DATOS_YAPE_PLIN.titular} />
+                        <LockedField label="Titular" value={DATOS_YAPE_PLIN.titular} />
                       </div>
                       <div className="relative h-40 w-40 shrink-0 overflow-hidden rounded-md border border-border bg-white">
                         <Image src="/pago/yape-qr.png" alt="Código QR de Yape" fill className="object-contain p-1" sizes="160px" />

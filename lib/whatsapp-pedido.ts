@@ -83,6 +83,9 @@ function cuerpo(pedido: PedidoAdmin): string {
 
     case "devuelto":
       return `Te escribimos por tu pedido ${numero}: nos figura como devuelto. Queremos entender qué pasó para ayudarte a resolverlo.`;
+
+    case "cancelado":
+      return `Te escribimos por tu pedido ${numero}: lo cancelamos porque no llegamos a despacharlo. Si quieres retomarlo, dinos por acá y lo vemos.`;
   }
 }
 

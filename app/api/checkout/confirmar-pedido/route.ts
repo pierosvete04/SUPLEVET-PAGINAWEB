@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendTransactionalEmail } from "@/lib/emails/send";
+import { notificarEquipoVentas } from "@/lib/emails/notificar-ventas";
 import type { PagoEnVerificacionProps } from "@/emails/pago-en-verificacion";
 import { siteConfig, whatsappLink } from "@/lib/site-config";
 
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
   const supabase = await createClient();
   const { data: pedido, error } = await supabase
     .from("pedidos")
-    .select("cliente_email, cliente_nombre, shopify_order_number, forma_pago")
+    .select("cliente_email, cliente_nombre, cliente_telefono, shopify_order_number, forma_pago, total")
     .eq("id", pedidoId)
     .maybeSingle();
 
@@ -56,6 +57,22 @@ export async function POST(request: Request) {
   if (sendError) {
     console.error("No se pudo enviar el correo de pedido recibido:", sendError);
     return NextResponse.json({ ok: false, error: sendError }, { status: 502 });
+  }
+
+  // No bloquea la respuesta al cliente: si el aviso interno falla, el pedido
+  // ya quedó registrado y el cliente ya recibió su correo — solo se pierde
+  // la notificación a ventas@suplevet.pe, que queda logueada para revisar.
+  const { error: notifyError } = await notificarEquipoVentas("nuevo_pedido", {
+    pedidoId,
+    numeroPedido,
+    clienteNombre: pedido.cliente_nombre ?? "Cliente",
+    clienteEmail: pedido.cliente_email,
+    clienteTelefono: pedido.cliente_telefono,
+    metodoPago,
+    total: pedido.total ?? 0,
+  });
+  if (notifyError) {
+    console.error("No se pudo notificar al equipo de ventas del pedido nuevo:", notifyError);
   }
 
   return NextResponse.json({ ok: true });

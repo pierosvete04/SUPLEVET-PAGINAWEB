@@ -45,6 +45,8 @@ import {
 
 const navMain: NavEntry[] = [
   { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
+  { title: "Pedidos", url: "/admin/pedidos", icon: ShoppingBag },
+  { title: "Clientes", url: "/admin/clientes", icon: Users },
   {
     title: "Catálogo",
     icon: Package,
@@ -57,23 +59,11 @@ const navMain: NavEntry[] = [
   },
   {
     title: "Ventas",
-    icon: ShoppingBag,
+    icon: Truck,
     items: [
-      { title: "Pedidos", url: "/admin/pedidos", icon: ShoppingBag },
       { title: "Envíos", url: "/admin/envios", icon: Truck },
       { title: "Cupones", url: "/admin/cupones", icon: Ticket },
       { title: "Regalos", url: "/admin/regalos", icon: Gift },
-    ],
-  },
-  {
-    title: "Clientes",
-    icon: Users,
-    items: [
-      { title: "Clientes", url: "/admin/clientes", icon: Users },
-      { title: "Testimonios", url: "/admin/testimonios", icon: Clapperboard },
-      { title: "Reseñas", url: "/admin/resenas", icon: MessageSquareText },
-      { title: "Logros", url: "/admin/logros", icon: Trophy },
-      { title: "SuplePoints", url: "/admin/suplepuntos", icon: Star },
     ],
   },
   {
@@ -85,6 +75,10 @@ const navMain: NavEntry[] = [
       { title: "Cursos", url: "/admin/cursos", icon: GraduationCap },
       { title: "FAQs", url: "/admin/faqs", icon: HelpCircle },
       { title: "Nosotros", url: "/admin/nosotros", icon: Heart },
+      { title: "Testimonios", url: "/admin/testimonios", icon: Clapperboard },
+      { title: "Reseñas", url: "/admin/resenas", icon: MessageSquareText },
+      { title: "Logros", url: "/admin/logros", icon: Trophy },
+      { title: "SuplePoints", url: "/admin/suplepuntos", icon: Star },
     ],
   },
   {

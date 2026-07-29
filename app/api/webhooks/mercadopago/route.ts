@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { getMercadoPagoPaymentClient } from "@/lib/mercadopago";
 import { sendTransactionalEmail } from "@/lib/emails/send";
+import { notificarEquipoVentas } from "@/lib/emails/notificar-ventas";
 import { siteConfig, whatsappLink } from "@/lib/site-config";
 
 // Mercado Pago llama a esta URL (configurada como notification_url en la
@@ -90,7 +91,7 @@ export async function POST(request: Request) {
   const supabase = createAdminClient();
   const { data: pedido, error } = await supabase
     .from("pedidos")
-    .select("cliente_email, cliente_nombre, shopify_order_number, estado_pago")
+    .select("cliente_email, cliente_nombre, cliente_telefono, shopify_order_number, estado_pago, total")
     .eq("id", pedidoId)
     .maybeSingle();
 
@@ -156,6 +157,29 @@ export async function POST(request: Request) {
 
   if (sendError) {
     console.error("No se pudo enviar el correo de resultado de pago:", sendError);
+  }
+
+  // Este webhook solo dispara para pagos con tarjeta (ver comentario de
+  // arriba), así que el método de pago siempre es "Tarjeta" acá.
+  const EVENTO_POR_ESTADO = {
+    pagado: "pago_confirmado",
+    rechazado: "pago_rechazado",
+    cancelado: "pago_cancelado",
+  } as const;
+  const evento = EVENTO_POR_ESTADO[nuevoEstado as keyof typeof EVENTO_POR_ESTADO];
+  if (evento) {
+    const { error: notifyError } = await notificarEquipoVentas(evento, {
+      pedidoId,
+      numeroPedido,
+      clienteNombre: nombre,
+      clienteEmail: pedido.cliente_email,
+      clienteTelefono: pedido.cliente_telefono,
+      metodoPago: "Tarjeta",
+      total: pedido.total ?? 0,
+    });
+    if (notifyError) {
+      console.error("No se pudo notificar al equipo de ventas del cambio de pago:", notifyError);
+    }
   }
 
   return NextResponse.json({ ok: true });

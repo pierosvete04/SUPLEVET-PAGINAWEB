@@ -1,16 +1,27 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendTransactionalEmail } from "@/lib/emails/send";
+import { siteConfig, whatsappLink } from "@/lib/site-config";
 
 // Llamado por el selector de "Estado de preparación" en
 // app/admin/(panel)/pedidos/[id]. Cada transición manda un aviso al cliente
 // (salvo el estado inicial "no_preparado", que no es una notificación útil).
+// "cancelado" es para pedidos que nunca llegaron a despacharse (el cliente se
+// arrepintió, no completó la verificación, etc.) — distinto de "devuelto",
+// que es para pedidos ya entregados que el cliente regresó.
 // Cuando el nuevo estado es "entregado", además de actualizar la fila dispara
 // acreditar_puntos_pedido_web() (SuplePoints se acreditan a la entrega, no al
 // pago — SuplePoints_Documento_Corporativo.docx §6, para evitar fraude por
 // devolución inmediata) y manda el correo puntos_acreditados con el saldo real
 // en vez del aviso genérico de entrega.
-const ESTADOS_VALIDOS = ["no_preparado", "en_preparacion", "preparado", "entregado", "devuelto"] as const;
+const ESTADOS_VALIDOS = [
+  "no_preparado",
+  "en_preparacion",
+  "preparado",
+  "entregado",
+  "devuelto",
+  "cancelado",
+] as const;
 type EstadoPreparacion = (typeof ESTADOS_VALIDOS)[number];
 
 function esEstadoValido(valor: unknown): valor is EstadoPreparacion {
@@ -57,10 +68,23 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
                 tipo: "pedido_en_camino",
                 data: { nombre, numeroPedido },
               })
-            : await sendTransactionalEmail(pedido.cliente_email, {
-                tipo: "pedido_devuelto",
-                data: { nombre, numeroPedido },
-              });
+            : estado === "cancelado"
+              ? await sendTransactionalEmail(pedido.cliente_email, {
+                  tipo: "pago_cancelado",
+                  data: {
+                    nombre,
+                    numeroPedido,
+                    motivo: "no llegamos a despacharlo",
+                    whatsappUrl: whatsappLink(
+                      siteConfig.whatsappB2C,
+                      `Hola, tuve una consulta sobre mi pedido ${numeroPedido} que figura cancelado`
+                    ),
+                  },
+                })
+              : await sendTransactionalEmail(pedido.cliente_email, {
+                  tipo: "pedido_devuelto",
+                  data: { nombre, numeroPedido },
+                });
 
       if (sendError) {
         console.error("No se pudo enviar el correo de estado de preparación:", sendError);

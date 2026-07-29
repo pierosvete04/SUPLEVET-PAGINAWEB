@@ -34,6 +34,7 @@ const LABEL_PASO: Record<string, string> = {
   preparado: "Pedido en camino",
   entregado: "Pedido entregado",
   devuelto: "Pedido devuelto",
+  cancelado: "Pedido cancelado",
 };
 
 export function construirTimeline(pedido: PedidoParaTimeline, historial: PedidoHistorialRow[]): PasoTimeline[] {
@@ -50,6 +51,18 @@ export function construirTimeline(pedido: PedidoParaTimeline, historial: PedidoH
     return [
       pasoCreado,
       { key: "devuelto", label: LABEL_PASO.devuelto, fecha: fechaPorEstado.get("devuelto") ?? null, completado: true },
+    ];
+  }
+
+  if (pedido.estado_preparacion === "cancelado") {
+    return [
+      pasoCreado,
+      {
+        key: "cancelado",
+        label: LABEL_PASO.cancelado,
+        fecha: fechaPorEstado.get("cancelado") ?? null,
+        completado: true,
+      },
     ];
   }
 
@@ -104,6 +117,8 @@ export function estadoBadgePedido(p: {
       return { texto: "Preparando", bg: "#fef3c7", color: "#92400e" };
     case "devuelto":
       return { texto: "Devuelto", bg: "#f3f4f6", color: "#374151" };
+    case "cancelado":
+      return { texto: "Cancelado", bg: "#fee2e2", color: "#991b1b" };
     default:
       return { texto: "Pagado", bg: "#fef3c7", color: "#92400e" };
   }
