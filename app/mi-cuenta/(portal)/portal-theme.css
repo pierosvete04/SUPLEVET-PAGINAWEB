@@ -50,7 +50,7 @@
 
 /* ===== Sidebar ===== */
 .portal-sidebar {
-  width: 256px;
+  width: 212px; /* -17% vs. los 256px originales, mismo contenido centrado */
   flex-shrink: 0;
   background: linear-gradient(180deg, var(--portal-navy) 0%, var(--portal-navy-dark) 100%);
   color: #fff;

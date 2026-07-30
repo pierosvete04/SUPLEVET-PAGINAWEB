@@ -385,7 +385,13 @@ export function MascotaFormDialog({
     onEliminada();
   }
 
-  const inputBase = `w-full rounded-2xl border-0 bg-portal-surface-low/60 px-4 py-3 text-sm font-semibold text-portal-navy placeholder:font-normal placeholder:text-portal-muted ${SOMBRA_CAJA} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portal-teal-light`;
+  // Sin el ancho incluido: permite componer con un ancho distinto a w-full
+  // (ej. el select de relación) sin que ambas utilidades de "width" choquen
+  // en la misma cadena de clases (Tailwind resuelve el empate por el orden
+  // en que genera el CSS, no por el orden en el className, así que combinar
+  // "w-full" con "w-28" en un mismo string terminaba dejando siempre w-full).
+  const campoBase = `rounded-2xl border-0 bg-portal-surface-low/60 px-4 py-3 text-sm font-semibold text-portal-navy placeholder:font-normal placeholder:text-portal-muted ${SOMBRA_CAJA} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portal-teal-light`;
+  const inputBase = `w-full ${campoBase}`;
 
   // Color de portada — customizable (sección "1. Color de portada" más abajo).
   // Se reutiliza tanto en la banda superior del formulario como en la vista
@@ -584,7 +590,7 @@ export function MascotaFormDialog({
                             familiares: f.familiares.map((fam, j) => (j === i ? { ...fam, relacion: e.target.value } : fam)),
                           }))
                         }
-                        className={`${inputBase} w-28 shrink-0`}
+                        className={`${campoBase} w-auto max-w-[130px] shrink-0`}
                       >
                         <option value="" disabled>
                           Relación
@@ -804,11 +810,25 @@ export function MascotaFormDialog({
               {REDES.map(({ campo, label, icono, placeholder }) => (
                 <div
                   key={campo}
-                  className={`flex items-center gap-3 rounded-full bg-portal-navy py-1.5 pl-1.5 pr-4 ${SOMBRA_TARJETA}`}
+                  className={`flex items-center gap-3 rounded-full bg-portal-navy py-2.5 pl-4 pr-4 ${SOMBRA_TARJETA}`}
                 >
-                  <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white">
-                    <Image src={icono} alt="" width={18} height={18} className="rounded-[3px]" />
-                  </span>
+                  {/* Ícono en blanco sólido vía CSS mask sobre el PNG: sin
+                      círculo de fondo, solo la silueta recortando el color
+                      blanco directamente contra la píldora navy. */}
+                  <span
+                    aria-hidden="true"
+                    className="h-5 w-5 shrink-0 bg-white"
+                    style={{
+                      WebkitMaskImage: `url(${icono})`,
+                      maskImage: `url(${icono})`,
+                      WebkitMaskSize: "contain",
+                      maskSize: "contain",
+                      WebkitMaskRepeat: "no-repeat",
+                      maskRepeat: "no-repeat",
+                      WebkitMaskPosition: "center",
+                      maskPosition: "center",
+                    }}
+                  />
                   <Input
                     id={`mascota-${campo}`}
                     value={form[campo]}
