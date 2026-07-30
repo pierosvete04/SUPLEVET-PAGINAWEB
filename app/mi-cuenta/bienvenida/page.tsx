@@ -45,17 +45,17 @@ export default function BienvenidaPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-secondary px-mobile-margin py-section-y">
-      <div className="w-full max-w-sm rounded-[var(--radius-card,1rem)] bg-white p-8 text-center shadow-lg">
-        <Gift className="mx-auto h-10 w-10 text-secondary" strokeWidth={1.5} />
-        <MaskedTextReveal as="h1" className="mt-3 font-display text-lg font-bold text-secondary">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-portal-navy to-portal-navy-dark px-mobile-margin py-section-y">
+      <div className="w-full max-w-sm rounded-[18px] bg-white p-8 text-center shadow-lg">
+        <Gift className="mx-auto h-10 w-10 text-portal-orange" strokeWidth={1.5} />
+        <MaskedTextReveal as="h1" className="mt-3 font-display text-lg font-bold text-portal-navy">
           ¿Tienes un código de referido?
         </MaskedTextReveal>
         <MaskedTextReveal
           as="p"
           type="words"
           delay={0.3}
-          className="mt-2 font-body text-xs text-muted-foreground"
+          className="mt-2 font-body text-xs text-portal-muted"
         >
           Si alguien te invitó a Suplevet, ambos ganarán 100 SuplePoints cuando hagas tu primera compra.
         </MaskedTextReveal>
@@ -64,20 +64,20 @@ export default function BienvenidaPage() {
             value={codigo}
             onChange={(e) => setCodigo(e.target.value.toUpperCase())}
             placeholder="Ej: SUPLE-A1B2C3"
-            className="rounded-lg border border-border px-4 py-3 text-center font-body text-sm font-bold tracking-wide text-secondary"
+            className="rounded-lg border border-portal-surface-variant px-4 py-3 text-center font-body text-sm font-bold tracking-wide text-portal-navy"
           />
-          {error && <p className="font-body text-xs text-destructive">{error}</p>}
+          {error && <p className="font-body text-xs text-portal-error">{error}</p>}
           <button
             type="submit"
             disabled={cargando}
-            className="rounded-[17px] bg-primary px-6 py-3 font-body font-bold text-primary-foreground disabled:opacity-60"
+            className="rounded-[17px] bg-portal-orange px-6 py-3 font-body font-bold text-white transition-colors hover:bg-portal-orange-dark disabled:opacity-60"
           >
             {cargando ? "Aplicando…" : "Aplicar código y entrar"}
           </button>
           <button
             type="button"
             onClick={omitir}
-            className="font-body text-xs font-bold text-muted-foreground"
+            className="font-body text-xs font-bold text-portal-muted"
           >
             Omitir, no tengo código →
           </button>

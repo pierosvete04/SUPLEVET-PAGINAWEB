@@ -177,7 +177,7 @@ export function InicioDashboard({
           </div>
         </Link>
 
-        <div className="flex flex-col items-center justify-center rounded-[24px] border border-portal-surface-variant bg-white p-6 text-center">
+        <div className="flex flex-col items-center justify-center rounded-[18px] border border-portal-surface-variant bg-white p-6 text-center">
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-portal-teal-light/20">
             <span className="material-symbols-rounded text-3xl text-portal-teal-mid">shopping_basket</span>
           </div>
@@ -186,7 +186,7 @@ export function InicioDashboard({
           <button
             type="button"
             onClick={() => setTiendaAbierta(true)}
-            className="w-full rounded-[17px] bg-portal-navy-dark py-2.5 text-sm font-semibold text-white transition-colors hover:bg-portal-navy"
+            className="w-full rounded-[17px] bg-portal-orange py-2.5 text-sm font-semibold text-white transition-colors hover:bg-portal-orange-dark"
           >
             Comprar ahora
           </button>
@@ -284,7 +284,7 @@ export function InicioDashboard({
 
       {/* Achievements & Activity */}
       <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
-        <div className="rounded-[24px] border border-portal-surface-variant bg-white p-6">
+        <div className="rounded-[18px] border border-portal-surface-variant bg-white p-6">
           <div className="mb-6 flex items-center justify-between">
             <h2 className="font-display text-xl font-semibold text-portal-navy">Logros Recientes</h2>
             <span className="rounded-full bg-portal-surface-low px-3 py-1 text-sm font-medium text-portal-muted">
@@ -322,7 +322,7 @@ export function InicioDashboard({
           </Link>
         </div>
 
-        <div className="rounded-[24px] border border-portal-surface-variant bg-white p-6">
+        <div className="rounded-[18px] border border-portal-surface-variant bg-white p-6">
           <h2 className="mb-6 font-display text-xl font-semibold text-portal-navy">Actividad</h2>
           {transacciones.length === 0 ? (
             <p className="text-center text-xs text-portal-muted">Sin actividad reciente</p>

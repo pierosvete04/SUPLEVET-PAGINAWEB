@@ -16,6 +16,12 @@ function esEstadoValido(valor: unknown): valor is EstadoPago {
   return typeof valor === "string" && (ESTADOS_VALIDOS as readonly string[]).includes(valor);
 }
 
+// Yape/Plin y transferencia no tienen procesador que confirme el pago solo
+// (a diferencia de tarjeta vía Mercado Pago), así que el comprobante subido
+// por el admin es la única evidencia real del pago — se exige antes de
+// aceptar el "pagado", aunque el panel ya bloquee el botón del lado cliente.
+const FORMAS_QUE_EXIGEN_COMPROBANTE = ["yape_plin", "transferencia"];
+
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const body = await request.json().catch(() => null);
@@ -26,6 +32,24 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const estado = body.estado;
 
   const supabase = await createClient();
+
+  if (estado === "pagado") {
+    const { data: previo } = await supabase
+      .from("pedidos")
+      .select("forma_pago, captura_pago_url")
+      .eq("id", id)
+      .maybeSingle();
+    if (
+      FORMAS_QUE_EXIGEN_COMPROBANTE.includes(previo?.forma_pago ?? "") &&
+      !previo?.captura_pago_url
+    ) {
+      return NextResponse.json(
+        { error: "Adjunta el comprobante de pago antes de confirmar." },
+        { status: 400 }
+      );
+    }
+  }
+
   const { data: pedido, error } = await supabase
     .from("pedidos")
     .update({ estado_pago: estado })

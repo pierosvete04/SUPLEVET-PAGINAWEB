@@ -10,7 +10,8 @@ export type CarpetaR2 =
   | "productos-web-videos"
   | "blog-fotos"
   | "cursos-contenido"
-  | "testimonios-videos";
+  | "testimonios-videos"
+  | "pedidos-comprobantes";
 
 // El PUT directo a R2 puede fallar por red o por CORS (el bucket solo
 // autoriza ciertos orígenes — ver scripts/set-r2-cors.mjs). Un CORS block

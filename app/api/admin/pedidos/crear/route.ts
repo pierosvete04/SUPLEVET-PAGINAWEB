@@ -11,6 +11,12 @@ import { zonaEnvioSlug } from "@/lib/shipping";
 const FORMAS_PAGO_VALIDAS = ["tarjeta", "yape_plin", "transferencia", "contra_entrega"] as const;
 const ESTADOS_PAGO_VALIDOS = ["pendiente_verificacion", "pagado"] as const;
 
+// Yape/Plin y transferencia no tienen procesador que confirme el pago solo
+// (a diferencia de tarjeta vía Mercado Pago) — si el admin ya lo marca como
+// "pagado" al crear el pedido, el comprobante es la única evidencia de que
+// realmente se cobró, así que se exige antes de guardar.
+const FORMAS_QUE_EXIGEN_COMPROBANTE = ["yape_plin", "transferencia"] as const;
+
 type SupabaseServerClient = Awaited<ReturnType<typeof createClient>>;
 
 interface ItemBody {
@@ -123,6 +129,7 @@ export async function POST(request: Request) {
   const direccion = typeof body.direccion === "string" && body.direccion.trim() ? body.direccion.trim() : null;
   const formaPago = FORMAS_PAGO_VALIDAS.includes(body.forma_pago) ? body.forma_pago : null;
   const estadoPago = ESTADOS_PAGO_VALIDOS.includes(body.estado_pago) ? body.estado_pago : "pendiente_verificacion";
+  const capturaPagoUrl = typeof body.captura_pago_url === "string" && body.captura_pago_url.trim() ? body.captura_pago_url.trim() : null;
 
   if (!clienteEmail || !/^\S+@\S+\.\S+$/.test(clienteEmail)) {
     return NextResponse.json({ error: "Email de cliente inválido" }, { status: 400 });
@@ -132,6 +139,16 @@ export async function POST(request: Request) {
   }
   if (productos.length === 0 || !productos.every(esItemValido)) {
     return NextResponse.json({ error: "Agrega al menos un producto válido" }, { status: 400 });
+  }
+  if (
+    estadoPago === "pagado" &&
+    (FORMAS_QUE_EXIGEN_COMPROBANTE as readonly string[]).includes(formaPago ?? "") &&
+    !capturaPagoUrl
+  ) {
+    return NextResponse.json(
+      { error: "Adjunta el comprobante de pago antes de marcar el pedido como pagado." },
+      { status: 400 }
+    );
   }
 
   const subtotal = productos.reduce((acc: number, i: ItemBody) => acc + i.precio * i.cantidad, 0);
@@ -165,6 +182,7 @@ export async function POST(request: Request) {
       estado_pago: estadoPago,
       estado_preparacion: "no_preparado",
       forma_pago: formaPago,
+      captura_pago_url: capturaPagoUrl,
       zona_envio: departamento ? zonaEnvioSlug(departamento) : null,
       direccion_envio: departamento || distrito || direccion ? { departamento, distrito, direccion } : null,
     })

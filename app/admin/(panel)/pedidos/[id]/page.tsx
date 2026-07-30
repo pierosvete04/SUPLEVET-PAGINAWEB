@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState, use as usePromise } from "react";
+import { useEffect, useRef, useState, use as usePromise } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Gift, MessageCircle, Package, Printer } from "lucide-react";
+import { ArrowLeft, Gift, MessageCircle, Package, Printer, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { traducirErrorSupabase } from "@/lib/errores-supabase";
@@ -44,6 +44,21 @@ import {
   DireccionEnvioCard,
   type DireccionEnvioPedidoAdmin,
 } from "@/components/admin/pedidos/DireccionEnvioCard";
+import { uploadFileToR2 } from "@/lib/uploadToR2";
+
+// Yape/Plin y transferencia no tienen procesador que confirme el pago solo
+// (a diferencia de tarjeta vía Mercado Pago) — el comprobante que sube el
+// admin es la única evidencia real del cobro, así que se exige antes de
+// habilitar "Confirmar". La API además lo vuelve a validar server-side.
+const FORMAS_QUE_EXIGEN_COMPROBANTE = ["yape_plin", "transferencia"];
+
+const FORMA_PAGO_LABEL: Record<string, string> = {
+  tarjeta: "Tarjeta (Mercado Pago)",
+  yape_plin: "Yape / Plin",
+  transferencia: "Transferencia bancaria",
+  contra_entrega: "Pago contra entrega",
+  shopify: "Checkout de Shopify",
+};
 
 export default function AdminPedidoDetallePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = usePromise(params);
@@ -52,7 +67,9 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
   const [imagenesPorSlug, setImagenesPorSlug] = useState<Record<string, string>>({});
   const [cargando, setCargando] = useState(true);
   const [actualizando, setActualizando] = useState(false);
+  const [subiendoComprobante, setSubiendoComprobante] = useState(false);
   const [confirmarEstadoPago, setConfirmarEstadoPago] = useState<"rechazado" | "cancelado" | null>(null);
+  const inputComprobanteRef = useRef<HTMLInputElement>(null);
 
   async function cargar() {
     setCargando(true);
@@ -112,6 +129,7 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
   const LABEL_CAMPO: Record<string, string> = {
     courier: "Empresa de envío",
     courier_otro: "Nombre del courier",
+    captura_pago_url: "el comprobante de pago",
   };
 
   async function actualizarCampo(campo: string, valor: string) {
@@ -124,6 +142,17 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
       return;
     }
     toast.success(`Se actualizó "${LABEL_CAMPO[campo] ?? "el pedido"}".`);
+  }
+
+  async function subirComprobante(file: File) {
+    setSubiendoComprobante(true);
+    const url = await uploadFileToR2("pedidos-comprobantes", file, id);
+    setSubiendoComprobante(false);
+    if (!url) {
+      toast.error("No se pudo subir el comprobante. Intenta de nuevo.");
+      return;
+    }
+    await actualizarCampo("captura_pago_url", url);
   }
 
   // A diferencia de actualizarCampo(), este pasa por una ruta API en vez de
@@ -175,6 +204,8 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
 
   const dir = pedido.direccion_envio as DireccionEnvioPedidoAdmin | null;
   const pago = BADGE_ESTADO_PAGO[pedido.estado_pago];
+  const requiereComprobante = FORMAS_QUE_EXIGEN_COMPROBANTE.includes(pedido.forma_pago ?? "");
+  const comprobantePendiente = requiereComprobante && !pedido.captura_pago_url;
 
   return (
     <div className="flex flex-col gap-6">
@@ -266,22 +297,55 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
             onGuardado={cargar}
           />
 
-          {pedido.captura_pago_url && (
+          {(pedido.captura_pago_url || requiereComprobante) && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm text-muted-foreground">
-                  Captura de pago ({pedido.forma_pago})
+                  Captura de pago ({FORMA_PAGO_LABEL[pedido.forma_pago ?? ""] ?? pedido.forma_pago})
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="relative h-96 w-full overflow-hidden rounded-lg bg-soft-gray">
-                  <Image
-                    src={pedido.captura_pago_url}
-                    alt="Captura de pago"
-                    fill
-                    className="object-contain"
-                  />
-                </div>
+              <CardContent className="flex flex-col gap-3">
+                {pedido.captura_pago_url ? (
+                  <div className="relative h-96 w-full overflow-hidden rounded-lg bg-soft-gray">
+                    <Image
+                      src={pedido.captura_pago_url}
+                      alt="Captura de pago"
+                      fill
+                      className="object-contain"
+                    />
+                  </div>
+                ) : (
+                  <p className="text-sm text-amber-600">
+                    Este pedido usa {FORMA_PAGO_LABEL[pedido.forma_pago ?? ""]?.toLowerCase()}: sube el comprobante
+                    antes de poder confirmar el pago.
+                  </p>
+                )}
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="w-fit"
+                  disabled={subiendoComprobante || actualizando}
+                  onClick={() => inputComprobanteRef.current?.click()}
+                >
+                  <Upload className="h-4 w-4" />
+                  {subiendoComprobante
+                    ? "Subiendo…"
+                    : pedido.captura_pago_url
+                      ? "Reemplazar comprobante"
+                      : "Subir comprobante"}
+                </Button>
+                <input
+                  ref={inputComprobanteRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) subirComprobante(file);
+                    e.target.value = "";
+                  }}
+                />
               </CardContent>
             </Card>
           )}
@@ -293,31 +357,44 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
               <CardTitle className="text-sm text-muted-foreground">Verificación de pago</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
-              <div className="flex gap-2">
-                <Button
-                  disabled={actualizando}
-                  onClick={() => actualizarEstadoPago("pagado")}
-                  className="flex-1 bg-green-600 hover:bg-green-600/90"
-                >
-                  Confirmar
-                </Button>
-                <Button
-                  disabled={actualizando}
-                  onClick={() => setConfirmarEstadoPago("rechazado")}
-                  variant="destructive"
-                  className="flex-1"
-                >
-                  Rechazar
-                </Button>
-              </div>
-              <Button
-                disabled={actualizando}
-                onClick={() => setConfirmarEstadoPago("cancelado")}
-                variant="outline"
-                className="w-full"
-              >
-                Cancelar pedido
-              </Button>
+              {pedido.estado_pago === "cancelado" ? (
+                <p className="text-sm text-muted-foreground">Este pedido fue cancelado. No hay nada más que verificar.</p>
+              ) : pedido.estado_pago === "pagado" ? (
+                <p className="text-sm text-muted-foreground">Este pago ya fue confirmado. No hay nada más que verificar.</p>
+              ) : (
+                <>
+                  {comprobantePendiente && (
+                    <p className="text-xs text-amber-600">
+                      Sube el comprobante de pago en la tarjeta &quot;Captura de pago&quot; para poder confirmar.
+                    </p>
+                  )}
+                  <div className="flex gap-2">
+                    <Button
+                      disabled={actualizando || comprobantePendiente}
+                      onClick={() => actualizarEstadoPago("pagado")}
+                      className="flex-1 bg-green-600 hover:bg-green-600/90"
+                    >
+                      Confirmar
+                    </Button>
+                    <Button
+                      disabled={actualizando}
+                      onClick={() => setConfirmarEstadoPago("rechazado")}
+                      variant="destructive"
+                      className="flex-1"
+                    >
+                      Rechazar
+                    </Button>
+                  </div>
+                  <Button
+                    disabled={actualizando}
+                    onClick={() => setConfirmarEstadoPago("cancelado")}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    Cancelar pedido
+                  </Button>
+                </>
+              )}
             </CardContent>
           </Card>
 

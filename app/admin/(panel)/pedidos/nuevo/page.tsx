@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Plus, Trash2 } from "lucide-react";
+import Image from "next/image";
+import { ArrowLeft, Plus, Trash2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -21,6 +22,12 @@ import { ClienteSelector, type ClientePedidoSeleccionado } from "@/components/ad
 import { departamentosCheckout } from "@/lib/shipping";
 import { METODO_PAGO_LABEL } from "@/lib/data/productos-shared";
 import type { ItemPedido } from "@/lib/data/pedidos-admin";
+import { uploadFileToR2 } from "@/lib/uploadToR2";
+
+// Yape/Plin y transferencia no tienen procesador que confirme el pago solo
+// (a diferencia de tarjeta vía Mercado Pago): si se marca "pagado" con uno de
+// estos métodos, el comprobante es la única evidencia real del cobro.
+const FORMAS_QUE_EXIGEN_COMPROBANTE = ["yape_plin", "transferencia"];
 
 export default function AdminCrearPedidoPage() {
   const router = useRouter();
@@ -33,12 +40,33 @@ export default function AdminCrearPedidoPage() {
   const [direccion, setDireccion] = useState("");
   const [formaPago, setFormaPago] = useState<string>("");
   const [estadoPago, setEstadoPago] = useState<"pendiente_verificacion" | "pagado">("pagado");
+  const [capturaPagoUrl, setCapturaPagoUrl] = useState<string | null>(null);
+  const [subiendoComprobante, setSubiendoComprobante] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const inputComprobanteRef = useRef<HTMLInputElement>(null);
 
   const subtotal = productos.reduce((acc, i) => acc + i.precio * i.cantidad, 0);
   const total = subtotal + costoEnvio;
-  const puedeGuardar = !!cliente && productos.length > 0 && !guardando;
+  const requiereComprobante =
+    estadoPago === "pagado" && FORMAS_QUE_EXIGEN_COMPROBANTE.includes(formaPago);
+  const puedeGuardar =
+    !!cliente &&
+    productos.length > 0 &&
+    !guardando &&
+    !subiendoComprobante &&
+    (!requiereComprobante || !!capturaPagoUrl);
+
+  async function subirComprobante(file: File) {
+    setSubiendoComprobante(true);
+    const url = await uploadFileToR2("pedidos-comprobantes", file);
+    setSubiendoComprobante(false);
+    if (!url) {
+      toast.error("No se pudo subir el comprobante. Intenta de nuevo.");
+      return;
+    }
+    setCapturaPagoUrl(url);
+  }
 
   function agregarProducto(item: ItemPedido) {
     setProductos((prev) => [...prev, item]);
@@ -73,6 +101,7 @@ export default function AdminCrearPedidoPage() {
         direccion: direccion || null,
         forma_pago: formaPago || null,
         estado_pago: estadoPago,
+        captura_pago_url: capturaPagoUrl,
       }),
     });
     const data = await res.json().catch(() => null);
@@ -201,6 +230,55 @@ export default function AdminCrearPedidoPage() {
                   </Select>
                 </div>
               </div>
+
+              {requiereComprobante && (
+                <div className="flex flex-col gap-1.5">
+                  <Label>Comprobante de pago</Label>
+                  {capturaPagoUrl ? (
+                    <div className="flex items-center gap-3 rounded-md border p-2">
+                      <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded bg-soft-gray">
+                        <Image src={capturaPagoUrl} alt="Comprobante de pago" fill className="object-contain" sizes="64px" />
+                      </div>
+                      <p className="flex-1 text-xs text-muted-foreground">Comprobante subido.</p>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        aria-label="Quitar comprobante"
+                        onClick={() => setCapturaPagoUrl(null)}
+                      >
+                        <X className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={subiendoComprobante}
+                        onClick={() => inputComprobanteRef.current?.click()}
+                      >
+                        <Upload className="h-4 w-4" />
+                        {subiendoComprobante ? "Subiendo…" : "Subir comprobante"}
+                      </Button>
+                      <input
+                        ref={inputComprobanteRef}
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) subirComprobante(file);
+                          e.target.value = "";
+                        }}
+                      />
+                      <p className="text-xs text-muted-foreground">
+                        Yape/Plin y transferencia necesitan el comprobante antes de marcar el pedido como pagado.
+                      </p>
+                    </>
+                  )}
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

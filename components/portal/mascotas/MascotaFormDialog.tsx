@@ -11,6 +11,16 @@ import { useRazasSugeridas } from "@/lib/portal/useRazasSugeridas";
 import { BreedCombobox } from "@/components/portal/mascotas/BreedCombobox";
 import { MaleIcon, FemaleIcon } from "@/components/portal/icons/GenderIcons";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -186,6 +196,7 @@ export function MascotaFormDialog({
   const [fotoPreview, setFotoPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [guardando, setGuardando] = useState(false);
+  const [confirmandoEliminar, setConfirmandoEliminar] = useState(false);
   const [personalidadTags, setPersonalidadTags] = useState<string[]>([]);
   const [agregandoRasgo, setAgregandoRasgo] = useState(false);
   const [nuevoRasgo, setNuevoRasgo] = useState("");
@@ -300,7 +311,7 @@ export function MascotaFormDialog({
         .select()
         .single();
       if (updateError || !actualizada) {
-        setError(updateError?.message ?? "No se pudo guardar");
+        setError("No pudimos guardar los cambios. Puede ser tu conexión — inténtalo de nuevo en unos segundos.");
         setGuardando(false);
         return;
       }
@@ -320,7 +331,7 @@ export function MascotaFormDialog({
         .select()
         .single();
       if (insertError || !nueva) {
-        setError(insertError?.message ?? "No se pudo guardar");
+        setError("No pudimos registrar a tu mascota. Puede ser tu conexión — inténtalo de nuevo en unos segundos.");
         setGuardando(false);
         return;
       }
@@ -362,7 +373,6 @@ export function MascotaFormDialog({
 
   async function handleEliminar() {
     if (!mascota) return;
-    if (!confirm(`¿Eliminar a ${mascota.nombre}? Esta acción no se puede deshacer.`)) return;
     const supabase = createClient();
     const desvincular = { mascota_id: null };
     await Promise.all([
@@ -387,8 +397,9 @@ export function MascotaFormDialog({
     : "linear-gradient(135deg, var(--portal-navy), var(--portal-navy-dark))";
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-h-[90vh] max-w-md overflow-y-auto rounded-3xl border-0 bg-white p-0 shadow-2xl">
+      <DialogContent className="max-h-[90vh] max-w-md overflow-y-auto rounded-[18px] sm:rounded-[18px] border-0 bg-white p-0 shadow-2xl">
         {/* El título sigue existiendo para accesibilidad (lectores de pantalla),
             pero visualmente la portada rosa reemplaza al header de diálogo clásico. */}
         <DialogHeader className="sr-only">
@@ -400,11 +411,11 @@ export function MascotaFormDialog({
             personalizable, en vivo), foto circular superpuesta al borde
             inferior, y una cápsula blanca con el nombre flotando sobre esa
             unión. */}
-        <div className="relative h-28 shrink-0 rounded-t-3xl" style={{ background: colorPortadaFondo }}>
+        <div className="relative h-28 shrink-0 rounded-t-[18px]" style={{ background: colorPortadaFondo }}>
           {mascota && (
             <button
               type="button"
-              onClick={handleEliminar}
+              onClick={() => setConfirmandoEliminar(true)}
               className="absolute left-4 top-4 flex items-center gap-1 rounded-full bg-white/80 px-2.5 py-1 text-xs font-semibold text-portal-error/80 backdrop-blur-sm hover:bg-white hover:text-portal-error"
             >
               <span className="material-symbols-rounded text-[15px]">delete</span>
@@ -823,5 +834,23 @@ export function MascotaFormDialog({
         </form>
       </DialogContent>
     </Dialog>
+
+    <AlertDialog open={confirmandoEliminar} onOpenChange={setConfirmandoEliminar}>
+      <AlertDialogContent className="rounded-[18px] sm:rounded-[18px]">
+        <AlertDialogHeader>
+          <AlertDialogTitle>¿Eliminar a {mascota?.nombre}?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Se borrará su información, historial de salud y actividad asociada. Esta acción no se puede deshacer.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={handleEliminar} className="bg-portal-error text-white hover:bg-portal-error/90">
+            Eliminar
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

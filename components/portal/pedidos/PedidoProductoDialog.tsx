@@ -44,9 +44,9 @@ interface PedidoProductoDialogProps {
 }
 
 const ESTADO_RESENA_BADGE: Record<EstadoResena, { icon: typeof CheckCircle2; texto: string; color: string }> = {
-  pendiente: { icon: Clock, texto: "Reseña en revisión", color: "text-muted-foreground" },
+  pendiente: { icon: Clock, texto: "Reseña en revisión", color: "text-portal-muted" },
   aprobada: { icon: CheckCircle2, texto: "Reseña publicada", color: "text-green-700" },
-  rechazada: { icon: XCircle, texto: "Reseña rechazada", color: "text-destructive" },
+  rechazada: { icon: XCircle, texto: "Reseña rechazada", color: "text-portal-error" },
 };
 
 export function PedidoProductoDialog({
@@ -119,7 +119,7 @@ export function PedidoProductoDialog({
       setError(
         insertError.code === "23505"
           ? "Ya dejaste una reseña para este producto en este pedido"
-          : insertError.message
+          : "No pudimos publicar tu reseña. Inténtalo de nuevo en unos segundos."
       );
       setEnviando(false);
       return;
@@ -157,10 +157,10 @@ export function PedidoProductoDialog({
         onClick={() => setAbierto(true)}
         className={`pointer-events-auto relative z-10 shrink-0 rounded-[17px] px-3 py-1.5 font-body text-[11px] font-bold transition-colors ${
           badge
-            ? `bg-soft-gray ${badge.color}`
+            ? `bg-portal-surface-low ${badge.color}`
             : puedeResenar
-              ? "bg-primary text-primary-foreground hover:opacity-90"
-              : "bg-soft-gray text-muted-foreground hover:bg-border"
+              ? "bg-portal-orange text-white hover:bg-portal-orange-dark"
+              : "bg-portal-surface-low text-portal-muted hover:bg-portal-surface-variant"
         }`}
       >
         {badge && Icono ? (
@@ -176,25 +176,25 @@ export function PedidoProductoDialog({
       </button>
 
       <Dialog open={abierto} onOpenChange={(o) => !o && cerrar()}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-md rounded-[18px] sm:rounded-[18px]">
           <DialogHeader>
             <DialogTitle>Detalle del producto</DialogTitle>
           </DialogHeader>
 
           <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-3 rounded-lg bg-soft-gray p-3">
+            <div className="flex items-center gap-3 rounded-lg bg-portal-surface-low p-3">
               <div className="relative h-16 w-16 shrink-0 overflow-hidden rounded-lg bg-white">
                 {productoImagen ? (
                   <Image src={productoImagen} alt={productoNombre} fill className="object-cover" sizes="64px" />
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center text-muted-foreground">
+                  <div className="flex h-full w-full items-center justify-center text-portal-muted">
                     <Package className="h-6 w-6" strokeWidth={1.5} />
                   </div>
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate font-body text-sm font-bold text-secondary">{productoNombre}</p>
-                <p className="font-body text-xs text-muted-foreground">
+                <p className="truncate font-body text-sm font-bold text-portal-navy">{productoNombre}</p>
+                <p className="font-body text-xs text-portal-muted">
                   {cantidad > 1 ? `${cantidad} unidades · ` : ""}{formatPrecio(precio)}
                 </p>
               </div>
@@ -202,8 +202,8 @@ export function PedidoProductoDialog({
 
             <div className="flex items-center justify-between">
               <div>
-                <p className="font-body text-xs font-bold text-secondary">{pedidoNumero}</p>
-                <p className="font-body text-[11px] text-muted-foreground">{formatFecha(pedidoFecha)}</p>
+                <p className="font-body text-xs font-bold text-portal-navy">{pedidoNumero}</p>
+                <p className="font-body text-[11px] text-portal-muted">{formatFecha(pedidoFecha)}</p>
               </div>
               <span
                 className="rounded-full px-3 py-1 font-body text-[11px] font-bold"
@@ -214,7 +214,7 @@ export function PedidoProductoDialog({
             </div>
 
             {resena ? (
-              <div className="rounded-lg border border-border p-3">
+              <div className="rounded-lg border border-portal-surface-variant p-3">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-0.5">
                     {[1, 2, 3, 4, 5].map((v) => (
@@ -233,7 +233,7 @@ export function PedidoProductoDialog({
                     </span>
                   )}
                 </div>
-                <p className="mt-2 font-body text-sm text-secondary">{resena.texto}</p>
+                <p className="mt-2 font-body text-sm text-portal-navy">{resena.texto}</p>
               </div>
             ) : puedeResenar && productoShopifyId ? (
               <form onSubmit={handleEnviar} className="flex flex-col gap-3">
@@ -264,19 +264,23 @@ export function PedidoProductoDialog({
                     value={texto}
                     onChange={(e) => setTexto(e.target.value)}
                   />
-                  <p className="font-body text-xs text-muted-foreground">
+                  <p className="font-body text-xs text-portal-muted">
                     {texto.trim().length}/{TEXTO_MIN} caracteres mínimo
                   </p>
                 </div>
 
-                {error && <p className="font-body text-sm text-destructive">{error}</p>}
+                {error && <p className="font-body text-sm text-portal-error">{error}</p>}
 
-                <Button type="submit" disabled={enviando} className="ml-auto">
+                <Button
+                  type="submit"
+                  disabled={enviando}
+                  className="ml-auto bg-portal-orange text-white hover:bg-portal-orange-dark"
+                >
                   {enviando ? "Enviando…" : "Enviar reseña"}
                 </Button>
               </form>
             ) : (
-              <p className="font-body text-sm text-muted-foreground">
+              <p className="font-body text-sm text-portal-muted">
                 Podrás dejar tu reseña cuando el pedido esté entregado.
               </p>
             )}

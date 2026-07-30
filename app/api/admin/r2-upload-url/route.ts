@@ -17,6 +17,7 @@ const CARPETAS_PERMITIDAS = [
   "blog-fotos",
   "cursos-contenido",
   "testimonios-videos",
+  "pedidos-comprobantes",
 ] as const;
 
 const TIPOS_PERMITIDOS = [

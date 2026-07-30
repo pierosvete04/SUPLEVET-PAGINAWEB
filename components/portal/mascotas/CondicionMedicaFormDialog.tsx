@@ -4,6 +4,16 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { TIPOS_CONDICION_MEDICA, type CondicionMedica, type TipoCondicionMedica } from "@/lib/data/portal/mascotas";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +45,7 @@ export function CondicionMedicaFormDialog({
   const [fecha, setFecha] = useState("");
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [confirmandoEliminar, setConfirmandoEliminar] = useState(false);
 
   const editando = indexEditar !== null ? condicionesActuales[indexEditar] : null;
 
@@ -56,7 +67,7 @@ export function CondicionMedicaFormDialog({
       .eq("id", mascotaId);
     setGuardando(false);
     if (saveError) {
-      setError(saveError.message);
+      setError("No pudimos guardar los cambios. Puede ser tu conexión — inténtalo de nuevo en unos segundos.");
       return;
     }
     onSaved();
@@ -78,13 +89,14 @@ export function CondicionMedicaFormDialog({
 
   async function handleEliminar() {
     if (indexEditar === null) return;
-    if (!confirm("¿Eliminar esta condición médica?")) return;
+    setConfirmandoEliminar(false);
     await guardarArreglo(condicionesActuales.filter((_, i) => i !== indexEditar));
   }
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-h-[90vh] max-w-sm overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-sm overflow-y-auto rounded-[18px] sm:rounded-[18px]">
         <DialogHeader>
           <DialogTitle>{editando ? "Editar condición médica" : "Nueva condición médica"}</DialogTitle>
         </DialogHeader>
@@ -116,14 +128,14 @@ export function CondicionMedicaFormDialog({
             <Label>Fecha (opcional)</Label>
             <Input type="date" value={fecha} onChange={(e) => setFecha(e.target.value)} />
           </div>
-          {error && <p className="font-body text-sm text-destructive">{error}</p>}
+          {error && <p className="font-body text-sm text-portal-error">{error}</p>}
           <div className="flex items-center justify-between gap-2">
             {editando ? (
               <button
                 type="button"
-                onClick={handleEliminar}
+                onClick={() => setConfirmandoEliminar(true)}
                 disabled={guardando}
-                className="text-xs font-semibold text-destructive/70 hover:text-destructive"
+                className="text-xs font-semibold text-portal-error/70 hover:text-portal-error"
               >
                 Eliminar
               </button>
@@ -137,5 +149,21 @@ export function CondicionMedicaFormDialog({
         </form>
       </DialogContent>
     </Dialog>
+
+    <AlertDialog open={confirmandoEliminar} onOpenChange={setConfirmandoEliminar}>
+      <AlertDialogContent className="rounded-[18px] sm:rounded-[18px]">
+        <AlertDialogHeader>
+          <AlertDialogTitle>¿Eliminar esta condición médica?</AlertDialogTitle>
+          <AlertDialogDescription>Esta acción no se puede deshacer.</AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancelar</AlertDialogCancel>
+          <AlertDialogAction onClick={handleEliminar} className="bg-portal-error text-white hover:bg-portal-error/90">
+            Eliminar
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }

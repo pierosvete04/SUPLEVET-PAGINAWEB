@@ -154,7 +154,7 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
         Mis Pedidos
       </Link>
 
-      <div className="rounded-[24px] border border-portal-surface-variant bg-white p-6">
+      <div className="rounded-[18px] border border-portal-surface-variant bg-white p-6">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="font-display text-2xl font-bold text-portal-navy">
@@ -188,7 +188,7 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="flex flex-col gap-4 lg:col-span-2">
-          <div className="rounded-[24px] border border-portal-surface-variant bg-white p-6">
+          <div className="rounded-[18px] border border-portal-surface-variant bg-white p-6">
             <h2 className="mb-3 font-display text-lg font-semibold text-portal-navy">Productos</h2>
             <div className="flex flex-col gap-3">
               {productos.map((pr, i) => {
@@ -242,14 +242,14 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div className="rounded-[24px] border border-portal-surface-variant bg-white p-6">
+            <div className="rounded-[18px] border border-portal-surface-variant bg-white p-6">
               <h2 className="mb-2 flex items-center gap-1.5 text-sm font-bold text-portal-navy">
                 <span className="material-symbols-rounded text-[18px]">credit_card</span> Método de pago
               </h2>
               <p className="text-sm text-portal-muted">{FORMA_PAGO_LABEL[p.forma_pago ?? ""] ?? "No especificado"}</p>
             </div>
 
-            <div className="rounded-[24px] border border-portal-surface-variant bg-white p-6">
+            <div className="rounded-[18px] border border-portal-surface-variant bg-white p-6">
               <h2 className="mb-2 flex items-center gap-1.5 text-sm font-bold text-portal-navy">
                 <span className="material-symbols-rounded text-[18px]">location_on</span> Dirección de envío
               </h2>
@@ -274,7 +274,7 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
           </div>
 
           {(!!p.puntos_acreditados || (p.fecha_agotamiento_estimada && p.estado_preparacion === "entregado")) && (
-            <div className="flex flex-wrap gap-4 rounded-[24px] border border-portal-surface-variant bg-white p-6">
+            <div className="flex flex-wrap gap-4 rounded-[18px] border border-portal-surface-variant bg-white p-6">
               {!!p.puntos_acreditados && p.puntos_acreditados > 0 && (
                 <span className="flex items-center gap-1 text-xs font-bold text-portal-navy">
                   <span className="material-symbols-rounded text-[16px] text-portal-orange">star</span>
@@ -291,7 +291,7 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
           )}
         </div>
 
-        <div className="rounded-[24px] border border-portal-surface-variant bg-white p-6">
+        <div className="rounded-[18px] border border-portal-surface-variant bg-white p-6">
           <h2 className="mb-4 font-display text-lg font-semibold text-portal-navy">Historial del pedido</h2>
           <div className="flex flex-col">
             {timeline.map((paso, i) => (

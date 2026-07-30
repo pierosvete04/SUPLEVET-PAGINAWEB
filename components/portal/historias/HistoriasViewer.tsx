@@ -151,7 +151,7 @@ export function HistoriasViewer({ user }: HistoriasViewerProps) {
       )}
 
       <Dialog open={nuevaAbierta} onOpenChange={setNuevaAbierta}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm rounded-[18px] sm:rounded-[18px]">
           <DialogHeader>
             <DialogTitle>Nueva historia</DialogTitle>
           </DialogHeader>

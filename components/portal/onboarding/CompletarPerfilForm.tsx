@@ -16,7 +16,7 @@ interface CompletarPerfilFormProps {
 }
 
 const inputClass =
-  "w-full rounded-md border border-border px-4 py-3 font-body text-sm text-secondary placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:opacity-50";
+  "w-full rounded-md border border-portal-surface-variant px-4 py-3 font-body text-sm text-portal-navy placeholder:text-portal-muted focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-portal-teal-light disabled:opacity-50";
 
 // Un paso por container: documento (opcional) → nombre → celular → dirección
 // (opcional — si la saltan, la piden igual en el checkout, ver
@@ -168,29 +168,29 @@ export function CompletarPerfilForm({ user, perfilInicial }: CompletarPerfilForm
   const progreso = guardando ? 100 : calcularProgreso(paso);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-secondary px-mobile-margin py-section-y">
-      <div className="w-full max-w-md rounded-[var(--radius-card,1rem)] bg-white p-8 shadow-lg">
-        <UserRound className="mx-auto h-10 w-10 text-secondary" strokeWidth={1.5} />
-        <MaskedTextReveal as="h1" className="mt-3 text-center font-display text-lg font-bold text-secondary">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-portal-navy to-portal-navy-dark px-mobile-margin py-section-y">
+      <div className="w-full max-w-md rounded-[18px] bg-white p-8 shadow-lg">
+        <UserRound className="mx-auto h-10 w-10 text-portal-orange" strokeWidth={1.5} />
+        <MaskedTextReveal as="h1" className="mt-3 text-center font-display text-lg font-bold text-portal-navy">
           Completa tu perfil
         </MaskedTextReveal>
         <MaskedTextReveal
           as="p"
           type="words"
           delay={0.3}
-          className="mt-2 text-center font-body text-xs text-muted-foreground"
+          className="mt-2 text-center font-body text-xs text-portal-muted"
         >
           Antes de entrar, cuéntanos lo básico para poder atenderte y enviarte tus pedidos.
         </MaskedTextReveal>
 
         <div className="mt-5">
           <div className="flex items-center justify-between">
-            <span className="font-body text-xs font-bold text-secondary">Tu progreso</span>
-            <span className="font-body text-xs font-bold text-primary">{progreso}%</span>
+            <span className="font-body text-xs font-bold text-portal-navy">Tu progreso</span>
+            <span className="font-body text-xs font-bold text-portal-orange">{progreso}%</span>
           </div>
-          <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-soft-gray">
+          <div className="mt-1.5 h-2 w-full overflow-hidden rounded-full bg-portal-surface-low">
             <div
-              className="h-full rounded-full bg-primary transition-all duration-500"
+              className="h-full rounded-full bg-portal-orange transition-all duration-500"
               style={{ width: `${progreso}%` }}
             />
           </div>
@@ -229,7 +229,7 @@ export function CompletarPerfilForm({ user, perfilInicial }: CompletarPerfilForm
                       type="button"
                       onClick={consultar}
                       disabled={!puedeConsultarDoc || consultandoDoc}
-                      className="flex shrink-0 items-center gap-1.5 rounded-md border border-border px-3 font-body text-xs font-bold text-secondary transition-opacity hover:bg-soft-gray disabled:opacity-40"
+                      className="flex shrink-0 items-center gap-1.5 rounded-md border border-portal-surface-variant px-3 font-body text-xs font-bold text-portal-navy transition-opacity hover:bg-portal-surface-low disabled:opacity-40"
                     >
                       {consultandoDoc ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Search className="h-3.5 w-3.5" />}
                       Buscar
@@ -238,13 +238,13 @@ export function CompletarPerfilForm({ user, perfilInicial }: CompletarPerfilForm
                 </div>
               </div>
               {errorDoc ? (
-                <p className="font-body text-xs text-destructive">{errorDoc}</p>
+                <p className="font-body text-xs text-portal-error">{errorDoc}</p>
               ) : docAutocompletado ? (
                 <p className="flex items-center gap-1 font-body text-xs text-green-700">
                   <Check className="h-3.5 w-3.5" /> Nombre y apellido completados en el siguiente paso.
                 </p>
               ) : (
-                <p className="font-body text-xs text-muted-foreground">
+                <p className="font-body text-xs text-portal-muted">
                   Con tu DNI autocompletamos tu nombre — o escríbelo tú mismo en el siguiente paso. Este dato es
                   opcional, puedes continuar sin llenarlo.
                 </p>
@@ -293,20 +293,20 @@ export function CompletarPerfilForm({ user, perfilInicial }: CompletarPerfilForm
                 placeholder="Dirección (opcional)"
                 className={inputClass}
               />
-              <p className="font-body text-xs text-muted-foreground">
+              <p className="font-body text-xs text-portal-muted">
                 Opcional — si la dejas en blanco, te la pediremos al momento de tu primera compra.
               </p>
             </div>
           )}
 
-          {error && <p className="font-body text-sm text-destructive">{error}</p>}
+          {error && <p className="font-body text-sm text-portal-error">{error}</p>}
 
           <div className="mt-2 flex gap-2">
             {paso > 0 && (
               <button
                 type="button"
                 onClick={handleAtras}
-                className="flex items-center justify-center gap-1 rounded-[17px] border border-border px-4 py-3 font-body text-sm font-bold text-secondary"
+                className="flex items-center justify-center gap-1 rounded-[17px] border border-portal-surface-variant px-4 py-3 font-body text-sm font-bold text-portal-navy"
               >
                 <ArrowLeft className="h-4 w-4" />
                 Atrás
@@ -315,7 +315,7 @@ export function CompletarPerfilForm({ user, perfilInicial }: CompletarPerfilForm
             <button
               type="submit"
               disabled={guardando}
-              className="flex-1 rounded-[17px] bg-primary px-6 py-3 font-body font-bold text-primary-foreground disabled:opacity-60"
+              className="flex-1 rounded-[17px] bg-portal-orange px-6 py-3 font-body font-bold text-white transition-colors hover:bg-portal-orange-dark disabled:opacity-60"
             >
               {guardando ? "Guardando…" : paso === TOTAL_PASOS - 1 ? "Finalizar" : "Continuar"}
             </button>

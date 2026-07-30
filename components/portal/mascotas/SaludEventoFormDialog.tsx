@@ -119,7 +119,7 @@ export function SaludEventoFormDialog({
 
     setGuardando(false);
     if (saveError) {
-      setError(saveError.message);
+      setError("No pudimos guardar el registro. Puede ser tu conexión — inténtalo de nuevo en unos segundos.");
       return;
     }
     onSaved();
@@ -127,7 +127,7 @@ export function SaludEventoFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={(o) => !o && onClose()}>
-      <DialogContent className="max-h-[90vh] max-w-md overflow-y-auto">
+      <DialogContent className="max-h-[90vh] max-w-md overflow-y-auto rounded-[18px] sm:rounded-[18px]">
         <DialogHeader>
           <DialogTitle>{evento ? "Editar registro" : "Nuevo registro de salud"}</DialogTitle>
         </DialogHeader>
@@ -180,8 +180,12 @@ export function SaludEventoFormDialog({
             <Label>Notas</Label>
             <Textarea rows={2} value={notas} onChange={(e) => setNotas(e.target.value)} />
           </div>
-          {error && <p className="font-body text-sm text-destructive">{error}</p>}
-          <Button type="submit" disabled={guardando} className="ml-auto">
+          {error && <p className="font-body text-sm text-portal-error">{error}</p>}
+          <Button
+            type="submit"
+            disabled={guardando}
+            className="ml-auto bg-portal-navy-dark text-white hover:bg-portal-navy"
+          >
             {guardando ? "Guardando…" : "Guardar"}
           </Button>
         </form>

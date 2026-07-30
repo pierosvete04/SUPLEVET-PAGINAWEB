@@ -134,7 +134,7 @@ export function MascotasGrid({ clienteId, mascotasIniciales, vacunaPendienteInic
                 href={`/mi-cuenta/mascotas/${m.id}`}
                 className="portal-pet-card cursor-pointer overflow-hidden !p-0 text-left"
               >
-                <div className="relative aspect-square w-full overflow-hidden rounded-t-[24px] bg-portal-surface-low">
+                <div className="relative aspect-square w-full overflow-hidden rounded-t-[18px] bg-portal-surface-low">
                   {m.foto_url ? (
                     <Image src={m.foto_url} alt={m.nombre} fill className="object-cover" sizes="300px" />
                   ) : (

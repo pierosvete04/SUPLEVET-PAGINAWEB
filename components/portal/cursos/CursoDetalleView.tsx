@@ -90,7 +90,7 @@ export function CursoDetalleView({ curso, leccionesCompletadasIniciales }: Curso
               href={leccionActual.video_url}
               target="_blank"
               rel="noreferrer"
-              className="group relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-[24px] bg-portal-navy"
+              className="group relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-[18px] bg-portal-navy"
             >
               {curso.thumbnail_url && (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -106,7 +106,7 @@ export function CursoDetalleView({ curso, leccionesCompletadasIniciales }: Curso
               </div>
             </a>
           ) : (
-            <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-[24px] bg-portal-navy">
+            <div className="relative flex aspect-video w-full items-center justify-center overflow-hidden rounded-[18px] bg-portal-navy">
               {curso.thumbnail_url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={curso.thumbnail_url} alt="" className="h-full w-full object-cover opacity-80" />
@@ -118,7 +118,7 @@ export function CursoDetalleView({ curso, leccionesCompletadasIniciales }: Curso
             </div>
           )}
 
-          <div className="overflow-hidden rounded-[24px] bg-white">
+          <div className="overflow-hidden rounded-[18px] bg-white">
             <div className="flex border-b border-portal-surface-low">
               {(
                 [
@@ -279,7 +279,7 @@ export function CursoDetalleView({ curso, leccionesCompletadasIniciales }: Curso
         {/* Columna derecha */}
         <div className="space-y-4 lg:col-span-4">
           {siguiente && (
-            <div className="relative overflow-hidden rounded-[24px] bg-portal-navy p-6 text-white">
+            <div className="relative overflow-hidden rounded-[18px] bg-portal-navy p-6 text-white">
               <span className="material-symbols-rounded pointer-events-none absolute -bottom-8 -right-8 rotate-[-12deg] text-[140px] text-white/10">
                 restaurant
               </span>
@@ -304,7 +304,7 @@ export function CursoDetalleView({ curso, leccionesCompletadasIniciales }: Curso
             </div>
           )}
 
-          <div className="rounded-[24px] bg-white p-6">
+          <div className="rounded-[18px] bg-white p-6">
             <h5 className="mb-4 font-display text-lg text-portal-navy">Material de apoyo</h5>
             {curso.recursos.length === 0 ? (
               <p className="text-xs text-portal-muted">Sin materiales aún.</p>
@@ -337,7 +337,7 @@ export function CursoDetalleView({ curso, leccionesCompletadasIniciales }: Curso
             </button>
           </div>
 
-          <div className="rounded-[24px] border border-white bg-portal-surface-low p-6">
+          <div className="rounded-[18px] border border-white bg-portal-surface-low p-6">
             <div className="mb-4 flex items-end justify-between">
               <div>
                 <p className="text-xs font-bold uppercase tracking-widest text-portal-muted">Tu progreso</p>

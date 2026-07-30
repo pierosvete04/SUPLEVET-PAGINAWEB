@@ -1,6 +1,15 @@
 /* Sistema de diseño del portal de clientes — porteado 1:1 desde los mockups
    Stitch en stitch_pet_portal_experience_revamp/. Todo vive bajo .portal-shell
-   para no afectar /admin ni el resto del sitio. */
+   para no afectar /admin ni el resto del sitio.
+
+   Regla de color para botones de acción (naranja vs. navy):
+   - `portal-orange`: la acción de conversión — la que gasta puntos o dinero,
+     o hace avanzar una compra/canje (Confirmar canje, Continuar al checkout,
+     Comprar ahora, guardar un formulario que registra datos del cliente).
+   - `portal-navy-dark`: la acción de gestión/navegación — abrir un flujo,
+     descargar, marcar como completado, continuar leyendo.
+   Antes de agregar un botón nuevo, ubícalo en una de las dos categorías en
+   vez de elegir el color a ojo. */
 
 .portal-shell {
   --portal-navy: #1e3a5f;
@@ -452,7 +461,7 @@
 /* ===== Wallet / balance hero card (Inicio, SuplePoints) ===== */
 .portal-wallet-card {
   background: linear-gradient(145deg, var(--portal-navy), var(--portal-navy-dark));
-  border-radius: 24px;
+  border-radius: 18px;
   padding: 32px;
   color: white;
   position: relative;
@@ -499,7 +508,7 @@
 /* ===== Pet cards (Inicio row + Mis Mascotas grid) ===== */
 .portal-pet-card {
   background: #fff;
-  border-radius: 24px;
+  border-radius: 18px;
   padding: 20px;
   border: 1px solid var(--portal-surface-variant);
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
@@ -541,7 +550,7 @@
 .portal-achievement-badge {
   aspect-ratio: 1;
   background: var(--portal-surface-low);
-  border-radius: 20px;
+  border-radius: 18px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -580,7 +589,7 @@
 /* ===== Generic content card ===== */
 .portal-card {
   background: #fff;
-  border-radius: 24px;
+  border-radius: 18px;
   border: 1px solid var(--portal-surface-variant);
 }
 

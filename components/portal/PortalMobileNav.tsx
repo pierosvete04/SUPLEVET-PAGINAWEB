@@ -4,32 +4,22 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { PORTAL_NAV_SECTIONS, esRutaActiva } from "@/lib/portal/nav";
 
-const ITEMS_VISIBLES = [
-  { title: "Inicio", url: "/mi-cuenta", icon: "home" },
-  { title: "Puntos", url: "/mi-cuenta/puntos", icon: "star" },
-  { title: "Mascotas", url: "/mi-cuenta/mascotas", icon: "pets" },
-  { title: "Pedidos", url: "/mi-cuenta/pedidos", icon: "shopping_bag" },
-];
-
-const ITEMS_MAS = [
-  // { title: "Ranking", url: "/mi-cuenta/ranking", icon: "leaderboard" }, // desactivado temporalmente
-  { title: "Cursos", url: "/mi-cuenta/cursos", icon: "school" },
-  { title: "Alianzas", url: "/mi-cuenta/alianzas", icon: "handshake" },
-  { title: "Mi Perfil", url: "/mi-cuenta/perfil", icon: "manage_accounts" },
-];
-
-function esActivo(pathname: string, url: string): boolean {
-  if (url === "/mi-cuenta") return pathname === "/mi-cuenta";
-  return pathname.startsWith(url);
-}
+// Misma fuente que el sidebar de escritorio (lib/portal/nav.ts) — evita que
+// un ítem tenga un nombre en escritorio y otro distinto en móvil por
+// mantener dos listas a mano. `mobilePrimary` decide si va en los accesos
+// directos del bottom nav o dentro de "Más".
+const TODOS_LOS_ITEMS = PORTAL_NAV_SECTIONS.flatMap((s) => s.items);
+const ITEMS_VISIBLES = TODOS_LOS_ITEMS.filter((item) => item.mobilePrimary);
+const ITEMS_MAS = TODOS_LOS_ITEMS.filter((item) => !item.mobilePrimary);
 
 export function PortalMobileNav() {
   const pathname = usePathname() ?? "";
   const router = useRouter();
   const [menuAbierto, setMenuAbierto] = useState(false);
 
-  const masActivo = ITEMS_MAS.some((item) => esActivo(pathname, item.url));
+  const masActivo = ITEMS_MAS.some((item) => esRutaActiva(pathname, item.url));
 
   async function handleLogout() {
     setMenuAbierto(false);
@@ -42,11 +32,11 @@ export function PortalMobileNav() {
     <>
       <nav className="portal-mobile-nav print:hidden">
         {ITEMS_VISIBLES.map((item) => {
-          const activo = esActivo(pathname, item.url);
+          const activo = esRutaActiva(pathname, item.url);
           return (
             <Link key={item.url} href={item.url} className={`portal-nav-item ${activo ? "active" : ""}`}>
               <span className="material-symbols-rounded text-[22px]">{item.icon}</span>
-              <span>{item.title}</span>
+              <span>{item.mobileTitle ?? item.title}</span>
             </Link>
           );
         })}
@@ -72,7 +62,7 @@ export function PortalMobileNav() {
             <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-white/20" />
             <div className="grid grid-cols-2 gap-2">
               {ITEMS_MAS.map((item) => {
-                const activo = esActivo(pathname, item.url);
+                const activo = esRutaActiva(pathname, item.url);
                 return (
                   <Link
                     key={item.url}

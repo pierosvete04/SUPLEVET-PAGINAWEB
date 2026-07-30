@@ -547,7 +547,7 @@ export function PuntosDashboard({
       </div>
 
       <Dialog open={!!canjeSeleccionado} onOpenChange={(o) => !o && setCanjeSeleccionado(null)}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm rounded-[18px] sm:rounded-[18px]">
           <DialogHeader>
             <DialogTitle>Confirmar canje</DialogTitle>
           </DialogHeader>
@@ -575,7 +575,7 @@ export function PuntosDashboard({
       </Dialog>
 
       <Dialog open={!!canjeConfirmado} onOpenChange={(o) => !o && setCanjeConfirmado(null)}>
-        <DialogContent className="max-w-sm">
+        <DialogContent className="max-w-sm rounded-[18px] sm:rounded-[18px]">
           <DialogHeader>
             <DialogTitle>¡Canje confirmado!</DialogTitle>
           </DialogHeader>

@@ -19,7 +19,7 @@ export const siteConfig = {
     razonSocial: "Nutrova for Pets S.A.C.",
     ruc: "20613665995",
     domicilioFiscal: "Calle Río Elba 132, La Molina, Lima, Perú",
-    correoAtencion: ["suplevetperu@gmail.com", "ventas@suplevet.pe"],
+    correoAtencion: ["soporte@suplevet.pe"],
   },
   correoContacto: "ventas@suplevet.pe",
   horarioAtencion: "Lunes a viernes, 9:00 AM – 6:00 PM",

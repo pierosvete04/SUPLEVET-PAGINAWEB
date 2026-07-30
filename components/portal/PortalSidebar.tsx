@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { NOMBRE_NIVEL } from "@/lib/data/portal/logros";
+import { PORTAL_NAV_SECTIONS, esRutaActiva } from "@/lib/portal/nav";
 
 interface PortalSidebarUsuario {
   nombre: string;
@@ -14,35 +15,6 @@ interface PortalSidebarUsuario {
   fotoUrl: string | null;
 }
 
-const NAV_SECTIONS = [
-  {
-    label: "Principal",
-    items: [
-      { title: "Inicio", url: "/mi-cuenta", icon: "home" },
-      { title: "SuplePoints", url: "/mi-cuenta/puntos", icon: "star", showSaldo: true },
-    ],
-  },
-  {
-    label: "Mis Cosas",
-    items: [
-      { title: "Mis Mascotas", url: "/mi-cuenta/mascotas", icon: "pets" },
-      { title: "Mis Pedidos", url: "/mi-cuenta/pedidos", icon: "shopping_bag" },
-    ],
-  },
-  {
-    label: "Comunidad",
-    items: [
-      // { title: "Ranking", url: "/mi-cuenta/ranking", icon: "leaderboard" }, // desactivado temporalmente
-      { title: "Cursos", url: "/mi-cuenta/cursos", icon: "school" },
-      { title: "Alianzas", url: "/mi-cuenta/alianzas", icon: "handshake" },
-    ],
-  },
-  {
-    label: "Cuenta",
-    items: [{ title: "Mi Perfil", url: "/mi-cuenta/perfil", icon: "manage_accounts" }],
-  },
-];
-
 function iniciales(nombre: string): string {
   const base = nombre.trim() || "?";
   return base
@@ -51,11 +23,6 @@ function iniciales(nombre: string): string {
     .slice(0, 2)
     .join("")
     .toUpperCase();
-}
-
-function esActivo(pathname: string, url: string): boolean {
-  if (url === "/mi-cuenta") return pathname === "/mi-cuenta";
-  return pathname.startsWith(url);
 }
 
 export function PortalSidebar({ usuario }: { usuario: PortalSidebarUsuario }) {
@@ -104,13 +71,13 @@ export function PortalSidebar({ usuario }: { usuario: PortalSidebarUsuario }) {
       </Link>
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 pb-3 pt-1">
-        {NAV_SECTIONS.map((seccion, i) => (
+        {PORTAL_NAV_SECTIONS.map((seccion, i) => (
           <div key={seccion.label}>
             <div className={`mb-1.5 px-3 text-xs font-bold uppercase tracking-wider text-white/40 ${i === 0 ? "mt-1" : "mt-3"}`}>
               {seccion.label}
             </div>
             {seccion.items.map((item) => {
-              const activo = esActivo(pathname, item.url);
+              const activo = esRutaActiva(pathname, item.url);
               return (
                 <Link key={item.url} href={item.url} className={`portal-nav-item ${activo ? "active" : ""}`}>
                   <span className="material-symbols-rounded text-[20px]">{item.icon}</span>

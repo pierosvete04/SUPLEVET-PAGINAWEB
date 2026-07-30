@@ -77,7 +77,7 @@ export default async function PortalPedidosPage() {
 
   if (todos.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center gap-2 rounded-[24px] border border-portal-surface-variant bg-white p-10 text-center">
+      <div className="flex flex-col items-center justify-center gap-2 rounded-[18px] border border-portal-surface-variant bg-white p-10 text-center">
         <span className="material-symbols-rounded text-4xl text-portal-muted">shopping_bag</span>
         <p className="text-sm text-portal-muted">Aún no tienes pedidos</p>
       </div>
@@ -93,7 +93,7 @@ export default async function PortalPedidosPage() {
           return (
             <div
               key={p.id}
-              className="relative rounded-[24px] border border-portal-surface-variant bg-white p-5 transition-colors hover:border-portal-teal-light"
+              className="relative rounded-[18px] border border-portal-surface-variant bg-white p-5 transition-colors hover:border-portal-teal-light"
             >
               <Link
                 href={`/mi-cuenta/pedidos/${p.id}`}
@@ -182,7 +182,7 @@ export default async function PortalPedidosPage() {
 
         const estado = ESTADO_PEDIDO[p.estado] ?? ESTADO_PEDIDO.confirmado;
         return (
-          <div key={p.id} className="rounded-[24px] border border-portal-surface-variant bg-white p-5">
+          <div key={p.id} className="rounded-[18px] border border-portal-surface-variant bg-white p-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <p className="font-display text-base font-bold text-portal-navy">{p.veterinaria_nombre}</p>
