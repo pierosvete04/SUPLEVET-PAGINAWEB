@@ -70,7 +70,7 @@ export function MascotasGrid({ clienteId, mascotasIniciales, vacunaPendienteInic
             setMascotaEditar(null);
             setFormAbierto(true);
           }}
-          className="flex items-center gap-2 rounded-[17px] bg-portal-navy-dark px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-portal-navy"
+          className="flex items-center gap-2 self-start rounded-[17px] bg-portal-navy-dark px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-portal-navy md:mt-9"
         >
           <span className="material-symbols-rounded text-[20px]">add</span> Añadir mascota
         </button>
