@@ -37,7 +37,7 @@ export function PortalSidebar({ usuario }: { usuario: PortalSidebarUsuario }) {
 
   return (
     <aside className="portal-sidebar print:hidden">
-      <div className="px-4 pb-3 pt-4">
+      <div className="portal-sidebar-logo px-4 pb-3 pt-4">
         <Link href="/mi-cuenta" className="flex items-center justify-center">
           <Image
             src="/logos/logo-white-mixed-horizontal.png"
@@ -52,7 +52,7 @@ export function PortalSidebar({ usuario }: { usuario: PortalSidebarUsuario }) {
 
       <Link
         href="/mi-cuenta/perfil"
-        className="mx-2 mb-1 flex items-center gap-3 rounded-lg border border-white/10 p-4 transition-all hover:border-transparent hover:bg-gradient-to-r hover:from-portal-orange/25 hover:via-portal-teal-mid/20 hover:to-portal-teal-light/10"
+        className="portal-sidebar-profile mx-2 mb-1 flex items-center gap-3 rounded-lg border border-white/10 p-4 transition-all hover:border-transparent hover:bg-gradient-to-r hover:from-portal-orange/25 hover:via-portal-teal-mid/20 hover:to-portal-teal-light/10"
       >
         <div className="relative flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-portal-orange font-bold text-white">
           {usuario.fotoUrl ? (
@@ -73,7 +73,9 @@ export function PortalSidebar({ usuario }: { usuario: PortalSidebarUsuario }) {
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 pb-3 pt-1">
         {PORTAL_NAV_SECTIONS.map((seccion, i) => (
           <div key={seccion.label}>
-            <div className={`mb-1.5 px-3 text-xs font-bold uppercase tracking-wider text-white/40 ${i === 0 ? "mt-1" : "mt-3"}`}>
+            <div
+              className={`portal-nav-section-label mb-1.5 px-3 text-xs font-bold uppercase tracking-wider text-white/40 ${i === 0 ? "mt-1" : "mt-3"}`}
+            >
               {seccion.label}
             </div>
             {seccion.items.map((item) => {
@@ -94,7 +96,7 @@ export function PortalSidebar({ usuario }: { usuario: PortalSidebarUsuario }) {
         ))}
       </nav>
 
-      <div className="border-t border-white/10 p-4">
+      <div className="portal-sidebar-footer border-t border-white/10 p-4">
         <Link
           href="/"
           className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-white/50 transition-colors hover:bg-white/5 hover:text-white/80"

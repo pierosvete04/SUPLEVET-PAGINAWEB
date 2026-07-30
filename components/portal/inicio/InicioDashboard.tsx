@@ -196,8 +196,8 @@ export function InicioDashboard({
       <TiendaSheet open={tiendaAbierta} onOpenChange={setTiendaAbierta} />
 
       {/* Pets */}
-      <div className="mt-10">
-        <div className="mb-6 flex items-end justify-between">
+      <div className="mt-6">
+        <div className="mb-4 flex items-end justify-between">
           <h2 className="font-display text-2xl font-semibold text-portal-navy">Mis Mascotas</h2>
           <Link
             href="/mi-cuenta/mascotas"
@@ -269,15 +269,6 @@ export function InicioDashboard({
                 </Link>
               );
             })}
-            <Link
-              href="/mi-cuenta/mascotas"
-              className="portal-pet-card flex min-h-[182px] cursor-pointer flex-col items-center justify-center gap-3 border-2 border-dashed border-portal-surface-variant bg-transparent hover:bg-portal-surface-low"
-            >
-              <div className="flex h-14 w-14 items-center justify-center rounded-full bg-portal-surface-variant">
-                <span className="material-symbols-rounded text-2xl text-portal-muted">add</span>
-              </div>
-              <span className="text-sm font-semibold text-portal-navy">Añadir mascota</span>
-            </Link>
           </div>
         )}
       </div>

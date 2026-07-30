@@ -67,6 +67,46 @@
 .portal-sidebar::-webkit-scrollbar {
   display: none;
 }
+.portal-sidebar nav {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.portal-sidebar nav::-webkit-scrollbar {
+  display: none;
+}
+
+/* Laptops de pantalla corta (~800px de alto o menos): el sidebar completo
+   (logo + tarjeta de perfil + nav + footer) no cabe con el espaciado normal
+   y el <nav> termina con scroll interno. En vez de eso, se compacta un poco
+   el tipo y los paddings para que todo el menú entre sin necesidad de scroll. */
+@media (max-height: 800px) {
+  .portal-sidebar-logo {
+    padding-top: 10px;
+    padding-bottom: 6px;
+  }
+  .portal-sidebar-profile {
+    padding: 10px;
+  }
+  .portal-sidebar .portal-nav-item {
+    padding: 6px 12px;
+    font-size: 13px;
+  }
+  .portal-nav-section-label {
+    margin-top: 6px !important;
+    margin-bottom: 4px;
+  }
+  .portal-sidebar nav {
+    padding-top: 2px;
+  }
+  .portal-sidebar-footer {
+    padding: 10px 16px;
+  }
+  .portal-sidebar-footer a,
+  .portal-sidebar-footer button {
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
+}
 
 .portal-nav-item {
   display: flex;
