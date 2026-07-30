@@ -124,25 +124,22 @@ export function LoginPanel({ className, next = "/mi-cuenta", onAuthenticated }: 
   return (
     <div
       className={cn(
-        "relative grid overflow-visible rounded-[var(--radius-card,1rem)] bg-white shadow-lg md:overflow-hidden md:grid-cols-2",
+        "grid overflow-hidden rounded-[var(--radius-card,1rem)] bg-white shadow-lg md:grid-cols-2",
         className
       )}
     >
-      <div className="absolute -top-10 left-1/2 -translate-x-1/2 md:hidden">
-        <Image
-          src="/logos/icon-only/icon-outline-celeste.png"
-          alt="Suplevet"
-          width={80}
-          height={80}
-          className="h-20 w-20 object-contain drop-shadow-md"
-          priority
-        />
-      </div>
-
-      <div className="flex flex-col justify-center p-8 pt-12 md:p-10">
+      <div className="flex flex-col justify-center p-8 md:p-10">
         {paso === "email" ? (
           <form onSubmit={handleEnviarCodigo} className="flex flex-col gap-5">
             <div className="flex flex-col items-center gap-2 text-center">
+              <Image
+                src="/logos/icon-only/icon-outline-celeste.png"
+                alt="Suplevet"
+                width={64}
+                height={64}
+                className="h-16 w-16 object-contain md:hidden"
+                priority
+              />
               <span className="inline-flex items-center rounded-full bg-accent px-3 py-1 font-body text-xs font-semibold text-secondary">
                 No necesitas registrarte antes
               </span>

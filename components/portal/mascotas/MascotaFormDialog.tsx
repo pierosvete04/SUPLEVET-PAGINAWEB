@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ComponentType, type ReactNode, type SVGProps } from "react";
+import { useEffect, useState, type ComponentType, type SVGProps } from "react";
 import Image from "next/image";
 import { Dog, Cat, PawPrint } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -10,6 +10,8 @@ import { COLORES_MASCOTA, type Familiar, type Mascota } from "@/lib/data/portal/
 import { useRazasSugeridas } from "@/lib/portal/useRazasSugeridas";
 import { BreedCombobox } from "@/components/portal/mascotas/BreedCombobox";
 import { MaleIcon, FemaleIcon } from "@/components/portal/icons/GenderIcons";
+import { CampoLabel } from "@/components/portal/CampoLabel";
+import { SOMBRA_CAJA, SOMBRA_TARJETA, SOMBRA_FLOTANTE, campoBase, inputBase } from "@/lib/portal/formTokens";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   AlertDialog,
@@ -89,12 +91,6 @@ const RASGOS_PERSONALIDAD_BASE = [
   "Sociable",
 ];
 
-// Tokens de sombra reutilizados en todas las "cajas" del formulario para
-// lograr el look del Figma: relleno claro sin borde, definido por sombra.
-const SOMBRA_CAJA = "shadow-[0_2px_8px_rgba(30,58,95,0.10)]";
-const SOMBRA_TARJETA = "shadow-[0_6px_18px_rgba(30,58,95,0.12)]";
-const SOMBRA_FLOTANTE = "shadow-[0_10px_24px_rgba(30,58,95,0.18)]";
-
 const RELACIONES_FAMILIAR = [
   "Papá",
   "Mamá",
@@ -108,18 +104,6 @@ const RELACIONES_FAMILIAR = [
   "Prima",
   "Otro",
 ];
-
-function CampoLabel({ htmlFor, icono, children }: { htmlFor?: string; icono: string; children: ReactNode }) {
-  return (
-    <label
-      htmlFor={htmlFor}
-      className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-portal-muted"
-    >
-      <span className="material-symbols-rounded text-[14px] text-portal-orange">{icono}</span>
-      {children}
-    </label>
-  );
-}
 
 function SelectorColor({
   valor,
@@ -385,14 +369,6 @@ export function MascotaFormDialog({
     onEliminada();
   }
 
-  // Sin el ancho incluido: permite componer con un ancho distinto a w-full
-  // (ej. el select de relación) sin que ambas utilidades de "width" choquen
-  // en la misma cadena de clases (Tailwind resuelve el empate por el orden
-  // en que genera el CSS, no por el orden en el className, así que combinar
-  // "w-full" con "w-28" en un mismo string terminaba dejando siempre w-full).
-  const campoBase = `rounded-2xl border-0 bg-portal-surface-low/60 px-4 py-3 text-sm font-semibold text-portal-navy placeholder:font-normal placeholder:text-portal-muted ${SOMBRA_CAJA} focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-portal-teal-light`;
-  const inputBase = `w-full ${campoBase}`;
-
   // Color de portada — customizable (sección "1. Color de portada" más abajo).
   // Se reutiliza tanto en la banda superior del formulario como en la vista
   // previa, para que ambas reflejen el mismo color/degradado en vivo.
@@ -474,7 +450,9 @@ export function MascotaFormDialog({
                   key={valor}
                   type="button"
                   aria-pressed={form.especie === valor}
-                  onClick={() => setForm((f) => ({ ...f, especie: valor }))}
+                  // Al elegir "otro" ya no aplica una raza definida, así que
+                  // se limpia para no arrastrar (y guardar) un valor oculto.
+                  onClick={() => setForm((f) => ({ ...f, especie: valor, raza: valor === "otro" ? "" : f.raza }))}
                   className={`flex min-h-[64px] flex-col items-center justify-center gap-1 rounded-2xl text-xs font-bold transition-all active:scale-95 ${
                     form.especie === valor
                       ? `bg-portal-navy text-white ${SOMBRA_TARJETA}`
@@ -502,20 +480,25 @@ export function MascotaFormDialog({
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="grid gap-1.5">
-              <CampoLabel htmlFor="mascota-raza" icono="pets">
-                Raza
-              </CampoLabel>
-              <BreedCombobox
-                id="mascota-raza"
-                value={form.raza}
-                onChange={(valor) => setForm((f) => ({ ...f, raza: valor }))}
-                opciones={razasSugeridas}
-                placeholder="Golden Retriever"
-                className={inputBase}
-              />
-            </div>
+          {/* Con especie "otro" la raza no aplica (no hay catálogo de razas
+              para una especie sin definir), así que ese campo se oculta por
+              completo y el peso pasa a ocupar todo el ancho. */}
+          <div className={form.especie === "otro" ? "grid gap-3" : "grid grid-cols-2 gap-3"}>
+            {form.especie !== "otro" && (
+              <div className="grid gap-1.5">
+                <CampoLabel htmlFor="mascota-raza" icono="pets">
+                  Raza
+                </CampoLabel>
+                <BreedCombobox
+                  id="mascota-raza"
+                  value={form.raza}
+                  onChange={(valor) => setForm((f) => ({ ...f, raza: valor }))}
+                  opciones={razasSugeridas}
+                  placeholder="Golden Retriever"
+                  className={inputBase}
+                />
+              </div>
+            )}
             <div className="grid gap-1.5">
               <CampoLabel htmlFor="mascota-peso" icono="monitor_weight">
                 Peso

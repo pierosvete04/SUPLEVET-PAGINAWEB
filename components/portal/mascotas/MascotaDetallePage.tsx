@@ -141,69 +141,78 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
         <div className="pointer-events-none absolute -right-10 -top-10 h-44 w-44 rounded-full bg-portal-teal-mid/20 blur-2xl" />
         <div className="pointer-events-none absolute bottom-2 right-24 h-16 w-16 rounded-full bg-[color-mix(in_srgb,var(--mc-text)_5%,transparent)]" />
         <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-portal-orange via-portal-teal-light to-portal-teal-mid" />
-        <div className="relative z-10 flex flex-wrap items-center gap-4">
-          <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-portal-orange to-portal-orange-dark p-[3px] shadow-lg">
-            <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border-2 border-portal-navy-dark bg-portal-orange">
-              {mascota.foto_url ? (
-                <Image src={mascota.foto_url} alt={mascota.nombre} width={80} height={80} className="h-full w-full object-cover" />
-              ) : (
-                <Image src="/logos/icon-only/icon-outline-white.png" alt="" width={38} height={38} />
-              )}
+        <div className="relative z-10 flex flex-col gap-3">
+          {/* Foto + nombre siempre juntos en la misma fila (referencia: layout
+              foto-izquierda/datos-derecha) — los íconos y el engranaje se
+              mueven a su propia fila en mobile en vez de apretarse contra el
+              texto, que era lo que se veía mal en pantallas chicas. */}
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex min-w-0 items-start gap-4">
+              <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gradient-to-br from-portal-orange to-portal-orange-dark p-[3px] shadow-lg">
+                <div className="flex h-full w-full items-center justify-center overflow-hidden rounded-full border-2 border-portal-navy-dark bg-portal-orange">
+                  {mascota.foto_url ? (
+                    <Image src={mascota.foto_url} alt={mascota.nombre} width={80} height={80} className="h-full w-full object-cover" />
+                  ) : (
+                    <Image src="/logos/icon-only/icon-outline-white.png" alt="" width={38} height={38} />
+                  )}
+                </div>
+              </div>
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h2 className="font-display text-2xl font-semibold">{mascota.nombre}</h2>
+                  <span className="flex items-center gap-1.5 rounded-full bg-[color-mix(in_srgb,var(--mc-tag)_18%,transparent)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--mc-tag)]">
+                    <span className={`h-1.5 w-1.5 rounded-full ${mascota.activa ? "bg-portal-teal-light" : "bg-[color-mix(in_srgb,var(--mc-tag)_60%,transparent)]"}`} />
+                    {mascota.activa ? "Activo" : "Inactivo"}
+                  </span>
+                </div>
+                <p className="text-sm opacity-80">
+                  {[mascota.raza, mascota.fecha_nacimiento ? calcularEdad(mascota.fecha_nacimiento) : null, mascota.genero === "macho" ? "Macho" : mascota.genero === "hembra" ? "Hembra" : null]
+                    .filter(Boolean)
+                    .join(" • ")}
+                </p>
+              </div>
+            </div>
+            {/* En sm+ los íconos/engranaje van arriba, junto al nombre. */}
+            <div className="hidden shrink-0 items-center gap-1.5 sm:flex print:hidden">
+              <RedesYEngranaje redesSociales={redesSociales} nombre={mascota.nombre} onEditar={() => setFormMascotaAbierto(true)} />
             </div>
           </div>
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <h2 className="font-display text-2xl font-semibold">{mascota.nombre}</h2>
-              <span className="flex items-center gap-1.5 rounded-full bg-[color-mix(in_srgb,var(--mc-tag)_18%,transparent)] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-[var(--mc-tag)]">
-                <span className={`h-1.5 w-1.5 rounded-full ${mascota.activa ? "bg-portal-teal-light" : "bg-[color-mix(in_srgb,var(--mc-tag)_60%,transparent)]"}`} />
-                {mascota.activa ? "Activo" : "Inactivo"}
-              </span>
-            </div>
-            <p className="text-sm opacity-80">
-              {[mascota.raza, mascota.fecha_nacimiento ? calcularEdad(mascota.fecha_nacimiento) : null, mascota.genero === "macho" ? "Macho" : mascota.genero === "hembra" ? "Hembra" : null]
-                .filter(Boolean)
-                .join(" • ")}
-            </p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              <span className="flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--mc-tag)_18%,transparent)] px-3 py-1 text-xs text-[var(--mc-tag)]">
-                <span className="material-symbols-rounded text-[14px]">monitor_weight</span>
-                {mascota.peso_kg} kg
-              </span>
-              {mascota.fecha_nacimiento && (
-                <span className="flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--mc-tag)_18%,transparent)] px-3 py-1 text-xs text-[var(--mc-tag)]">
-                  <span className="material-symbols-rounded text-[14px]">cake</span>
-                  {formatFechaCumple(mascota.fecha_nacimiento)}
-                </span>
-              )}
-            </div>
-          </div>
-          <div className="flex shrink-0 items-center gap-1.5 print:hidden">
-            {redesSociales.map((red) => (
-              <a
-                key={red.label}
-                href={red.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={`${red.label} de ${mascota.nombre}`}
-                className="flex h-9 w-9 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--mc-text)_12%,transparent)] transition-colors hover:bg-[color-mix(in_srgb,var(--mc-text)_22%,transparent)]"
-              >
-                <Image src={red.icono} alt="" width={16} height={16} />
-              </a>
-            ))}
-            <button
-              type="button"
-              onClick={() => setFormMascotaAbierto(true)}
-              aria-label="Editar perfil de la mascota"
-              className="flex h-9 w-9 items-center justify-center rounded-full bg-portal-orange text-white transition-colors hover:bg-portal-orange-dark"
-            >
-              <span className="material-symbols-rounded text-[18px]">settings</span>
-            </button>
-          </div>
-        </div>
 
-        {mascota.descripcion && (
-          <p className="relative z-10 mt-4 max-w-2xl text-sm leading-relaxed opacity-85">{mascota.descripcion}</p>
-        )}
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--mc-tag)_18%,transparent)] px-3 py-1 text-xs text-[var(--mc-tag)]">
+              <span className="material-symbols-rounded text-[14px]">monitor_weight</span>
+              {mascota.peso_kg} kg
+            </span>
+            {mascota.fecha_nacimiento && (
+              <span className="flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--mc-tag)_18%,transparent)] px-3 py-1 text-xs text-[var(--mc-tag)]">
+                <span className="material-symbols-rounded text-[14px]">cake</span>
+                {formatFechaCumple(mascota.fecha_nacimiento)}
+              </span>
+            )}
+            {/* En mobile los íconos/engranaje bajan a esta fila junto a las
+                etiquetas, en vez de apretarse contra el nombre. */}
+            <div className="flex items-center gap-1.5 sm:hidden print:hidden">
+              <RedesYEngranaje redesSociales={redesSociales} nombre={mascota.nombre} onEditar={() => setFormMascotaAbierto(true)} />
+            </div>
+          </div>
+
+          {mascota.descripcion && (
+            <div className="flex flex-wrap gap-1.5">
+              {mascota.descripcion
+                .split(",")
+                .map((rasgo) => rasgo.trim())
+                .filter(Boolean)
+                .map((rasgo) => (
+                  <span
+                    key={rasgo}
+                    className="rounded-full bg-[color-mix(in_srgb,var(--mc-tag)_14%,transparent)] px-3 py-1 text-xs font-semibold text-[var(--mc-tag)]"
+                  >
+                    {rasgo}
+                  </span>
+                ))}
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="mt-4 grid grid-cols-1 gap-4 print:hidden lg:grid-cols-3">
@@ -546,5 +555,40 @@ function InfoTile({ etiqueta, valor, icono }: { etiqueta: string; valor: string;
       <p className="mt-2 text-[10px] font-bold uppercase tracking-wide text-portal-muted">{etiqueta}</p>
       <p className="truncate text-sm font-bold text-portal-navy">{valor}</p>
     </div>
+  );
+}
+
+function RedesYEngranaje({
+  redesSociales,
+  nombre,
+  onEditar,
+}: {
+  redesSociales: { url: string; icono: string; label: string }[];
+  nombre: string;
+  onEditar: () => void;
+}) {
+  return (
+    <>
+      {redesSociales.map((red) => (
+        <a
+          key={red.label}
+          href={red.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`${red.label} de ${nombre}`}
+          className="flex h-9 w-9 items-center justify-center rounded-full bg-[color-mix(in_srgb,var(--mc-text)_12%,transparent)] transition-colors hover:bg-[color-mix(in_srgb,var(--mc-text)_22%,transparent)]"
+        >
+          <Image src={red.icono} alt="" width={16} height={16} />
+        </a>
+      ))}
+      <button
+        type="button"
+        onClick={onEditar}
+        aria-label="Editar perfil de la mascota"
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-portal-orange text-white transition-colors hover:bg-portal-orange-dark"
+      >
+        <span className="material-symbols-rounded text-[18px]">settings</span>
+      </button>
+    </>
   );
 }

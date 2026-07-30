@@ -14,7 +14,8 @@ import { NOMBRE_NIVEL } from "@/lib/data/portal/logros";
 import { TIPOS_DOCUMENTO, type TipoDocumento } from "@/lib/documento";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { CampoLabel } from "@/components/portal/CampoLabel";
+import { SOMBRA_TARJETA, inputBase } from "@/lib/portal/formTokens";
 
 interface PerfilFormProps {
   user: User;
@@ -184,29 +185,41 @@ export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTiene
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="space-y-6 lg:col-span-2">
-          <form onSubmit={handleGuardar} className="rounded-2xl border border-portal-surface-variant bg-white p-6">
+          <form onSubmit={handleGuardar} className={`rounded-2xl border-0 bg-white p-6 ${SOMBRA_TARJETA}`}>
             <h3 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold text-portal-navy">
               <span className="material-symbols-rounded text-portal-navy">person</span> Datos Personales
             </h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="grid gap-1.5">
-                <Label>Nombre</Label>
-                <Input value={form.nombre} onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))} />
+                <CampoLabel icono="person">Nombre</CampoLabel>
+                <Input
+                  value={form.nombre}
+                  onChange={(e) => setForm((f) => ({ ...f, nombre: e.target.value }))}
+                  className={inputBase}
+                />
               </div>
               <div className="grid gap-1.5">
-                <Label>Apellido</Label>
-                <Input value={form.apellido} onChange={(e) => setForm((f) => ({ ...f, apellido: e.target.value }))} />
+                <CampoLabel icono="badge">Apellido</CampoLabel>
+                <Input
+                  value={form.apellido}
+                  onChange={(e) => setForm((f) => ({ ...f, apellido: e.target.value }))}
+                  className={inputBase}
+                />
               </div>
               <div className="grid gap-1.5">
-                <Label>Teléfono</Label>
-                <Input value={form.telefono} onChange={(e) => setForm((f) => ({ ...f, telefono: e.target.value }))} />
+                <CampoLabel icono="call">Teléfono</CampoLabel>
+                <Input
+                  value={form.telefono}
+                  onChange={(e) => setForm((f) => ({ ...f, telefono: e.target.value }))}
+                  className={inputBase}
+                />
               </div>
               <div className="grid gap-1.5">
-                <Label>Tipo de documento</Label>
+                <CampoLabel icono="description">Tipo de documento</CampoLabel>
                 <select
                   value={form.tipo_documento}
                   onChange={(e) => setForm((f) => ({ ...f, tipo_documento: e.target.value as TipoDocumento }))}
-                  className="h-9 rounded-md border border-portal-surface-variant bg-transparent px-3 text-sm"
+                  className={inputBase}
                 >
                   {TIPOS_DOCUMENTO.map((t) => (
                     <option key={t.id} value={t.id}>
@@ -216,24 +229,37 @@ export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTiene
                 </select>
               </div>
               <div className="grid gap-1.5 sm:col-span-2">
-                <Label>N° de documento (opcional)</Label>
+                <CampoLabel icono="fingerprint">N° de documento (opcional)</CampoLabel>
                 <Input
                   value={form.numero_documento}
                   onChange={(e) => setForm((f) => ({ ...f, numero_documento: e.target.value }))}
                   placeholder="Nos ayuda a validar tu identidad en la entrega"
+                  className={inputBase}
                 />
               </div>
               <div className="grid gap-1.5">
-                <Label>Distrito</Label>
-                <Input value={form.distrito} onChange={(e) => setForm((f) => ({ ...f, distrito: e.target.value }))} />
+                <CampoLabel icono="location_on">Distrito</CampoLabel>
+                <Input
+                  value={form.distrito}
+                  onChange={(e) => setForm((f) => ({ ...f, distrito: e.target.value }))}
+                  className={inputBase}
+                />
               </div>
               <div className="grid gap-1.5 sm:col-span-2">
-                <Label>Dirección</Label>
-                <Input value={form.direccion} onChange={(e) => setForm((f) => ({ ...f, direccion: e.target.value }))} />
+                <CampoLabel icono="home">Dirección</CampoLabel>
+                <Input
+                  value={form.direccion}
+                  onChange={(e) => setForm((f) => ({ ...f, direccion: e.target.value }))}
+                  className={inputBase}
+                />
               </div>
             </div>
             <div className="mt-5 flex items-center gap-3">
-              <Button type="submit" disabled={guardando} className="bg-portal-orange hover:bg-portal-orange-dark">
+              <Button
+                type="submit"
+                disabled={guardando}
+                className="h-12 rounded-[17px] bg-portal-orange px-6 text-base font-semibold shadow-md hover:bg-portal-orange-dark"
+              >
                 {guardando ? "Guardando…" : "Guardar cambios"}
               </Button>
               {guardado && (
@@ -265,7 +291,7 @@ export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTiene
           </div>
 
           {!referidoAplicado ? (
-            <div className="rounded-2xl border border-portal-surface-variant bg-white p-5">
+            <div className={`rounded-2xl border-0 bg-white p-5 ${SOMBRA_TARJETA}`}>
               <h3 className="flex items-center gap-2 font-display text-base font-semibold text-portal-navy">
                 <span className="material-symbols-rounded text-[18px]">group_add</span> ¿Te invitó un amigo?
               </h3>
@@ -277,7 +303,7 @@ export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTiene
                   value={codigoInvitado}
                   onChange={(e) => setCodigoInvitado(e.target.value)}
                   placeholder="CÓDIGO"
-                  className="uppercase"
+                  className={`${inputBase} uppercase`}
                 />
                 <Button
                   type="button"
@@ -291,7 +317,7 @@ export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTiene
               {referidoMsg && <p className="mt-2 text-xs text-portal-muted">{referidoMsg}</p>}
             </div>
           ) : (
-            <div className="flex items-center gap-2 rounded-2xl border border-portal-surface-variant bg-white p-5 text-sm text-portal-muted">
+            <div className={`flex items-center gap-2 rounded-2xl border-0 bg-white p-5 text-sm text-portal-muted ${SOMBRA_TARJETA}`}>
               <CheckCircle2 className="h-4 w-4 shrink-0 text-portal-teal-mid" strokeWidth={1.75} />
               Ya tienes un código de referido aplicado.
             </div>
@@ -299,7 +325,7 @@ export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTiene
 
           <Link
             href="/mi-cuenta/libro-reclamaciones"
-            className="flex items-center justify-between rounded-2xl border border-portal-surface-variant bg-white p-5 hover:bg-portal-surface-low"
+            className={`flex items-center justify-between rounded-2xl border-0 bg-white p-5 hover:bg-portal-surface-low ${SOMBRA_TARJETA}`}
           >
             <div className="flex items-center gap-2">
               <span className="material-symbols-rounded text-portal-navy">menu_book</span>
