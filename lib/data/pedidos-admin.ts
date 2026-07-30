@@ -42,6 +42,9 @@ export interface PedidoAdmin {
   courier: string | null;
   /** Nombre libre cuando courier === "otro". */
   courier_otro: string | null;
+  /** Soft-delete para pedidos de prueba — oculto del panel, pero se conserva
+   * en Supabase (ver migración agregar_anulado_a_pedidos). */
+  anulado: boolean;
   created_at: string;
 }
 

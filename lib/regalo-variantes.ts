@@ -2,6 +2,22 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type TallaBandana = "S" | "M" | "L";
 
+// Medida de cuello por talla, para mostrarla junto al selector de talla en
+// el checkout y en el detalle de pedido — no se muestra en la home, donde la
+// sección de bandanas es solo informativa (ver BandanaShowcase).
+export const MEDIDA_TALLA_BANDANA: Record<TallaBandana, string> = {
+  S: "Hasta 66 cm de cuello",
+  M: "Hasta 70 cm de cuello",
+  L: "Hasta 80 cm de cuello",
+};
+
+// Versión corta para el botón de talla del selector (espacio reducido).
+export const MEDIDA_TALLA_BANDANA_CORTA: Record<TallaBandana, string> = {
+  S: "66 cm",
+  M: "70 cm",
+  L: "80 cm",
+};
+
 export interface RegaloVariante {
   id: string;
   regalo_id: string;

@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
@@ -14,6 +14,7 @@ import { useTableRows } from "@/components/admin/table/useTableRows";
 import { useResponsivePageSize } from "@/components/admin/table/useResponsivePageSize";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -30,11 +31,22 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   BADGE_ESTADO_PAGO,
   BADGE_ESTADO_PREPARACION,
   formatFechaPedido,
   type PedidoAdmin,
 } from "@/lib/data/pedidos-admin";
+import { mesActual, opcionesMes, rangoMes } from "@/lib/admin/filtro-mes";
 import { capitalizar } from "@/lib/utils";
 
 function valorOrden(p: PedidoAdmin, columna: string) {
@@ -65,14 +77,31 @@ export default function AdminPedidosPage() {
   const [filtroPreparacion, setFiltroPreparacion] = useState(
     () => searchParams.get("estado_preparacion") ?? "todos"
   );
-  const [fechaDesde, setFechaDesde] = useState(() => searchParams.get("fecha_desde") ?? "");
-  const [fechaHasta, setFechaHasta] = useState(() => searchParams.get("fecha_hasta") ?? "");
+  const [filtroMes, setFiltroMes] = useState(() => searchParams.get("mes") ?? mesActual());
+  const [fechaDesde, setFechaDesde] = useState(() => {
+    const desdeUrl = searchParams.get("fecha_desde");
+    if (desdeUrl) return desdeUrl;
+    return filtroMes === "todos" ? "" : rangoMes(filtroMes).desde;
+  });
+  const [fechaHasta, setFechaHasta] = useState(() => {
+    const hastaUrl = searchParams.get("fecha_hasta");
+    if (hastaUrl) return hastaUrl;
+    return filtroMes === "todos" ? "" : rangoMes(filtroMes).hasta;
+  });
   const [actualizandoId, setActualizandoId] = useState<string | null>(null);
+  const [seleccionados, setSeleccionados] = useState<Set<string>>(new Set());
+  const [confirmarAnular, setConfirmarAnular] = useState(false);
+  const [anulando, setAnulando] = useState(false);
+  const [busqueda, setBusqueda] = useState("");
 
   useEffect(() => {
     async function cargar() {
       setCargando(true);
-      let query = createClient().from("pedidos").select("*").order("created_at", { ascending: false });
+      let query = createClient()
+        .from("pedidos")
+        .select("*")
+        .eq("anulado", false)
+        .order("created_at", { ascending: false });
       if (filtroPago !== "todos") query = query.eq("estado_pago", filtroPago);
       if (filtroPreparacion === "por_preparar") {
         query = query.in("estado_preparacion", ["no_preparado", "en_preparacion"]);
@@ -83,10 +112,50 @@ export default function AdminPedidosPage() {
       if (fechaHasta) query = query.lte("created_at", `${fechaHasta}T23:59:59.999`);
       const { data } = await query;
       setPedidos((data as PedidoAdmin[]) ?? []);
+      setSeleccionados(new Set());
       setCargando(false);
     }
     cargar();
   }, [filtroPago, filtroPreparacion, fechaDesde, fechaHasta]);
+
+  function alCambiarMes(valor: string) {
+    setFiltroMes(valor);
+    if (valor === "todos") {
+      setFechaDesde("");
+      setFechaHasta("");
+    } else {
+      const { desde, hasta } = rangoMes(valor);
+      setFechaDesde(desde);
+      setFechaHasta(hasta);
+    }
+  }
+
+  function alternarSeleccion(id: string) {
+    setSeleccionados((prev) => {
+      const siguiente = new Set(prev);
+      if (siguiente.has(id)) siguiente.delete(id);
+      else siguiente.add(id);
+      return siguiente;
+    });
+  }
+
+  async function anularSeleccionados() {
+    const ids = Array.from(seleccionados);
+    setAnulando(true);
+    const { error } = await createClient()
+      .from("pedidos")
+      .update({ anulado: true, anulado_en: new Date().toISOString() })
+      .in("id", ids);
+    if (error) {
+      toast.error("No se pudo anular los pedidos seleccionados.");
+    } else {
+      setPedidos((prev) => prev.filter((p) => !seleccionados.has(p.id)));
+      setSeleccionados(new Set());
+      toast.success(`${ids.length} pedido${ids.length === 1 ? "" : "s"} anulado${ids.length === 1 ? "" : "s"}. Se conservan en Supabase, solo se ocultan del panel.`);
+    }
+    setAnulando(false);
+    setConfirmarAnular(false);
+  }
 
   async function actualizarEstadoPago(id: string, estado: keyof typeof BADGE_ESTADO_PAGO) {
     setActualizandoId(id);
@@ -122,12 +191,27 @@ export default function AdminPedidosPage() {
     setActualizandoId(null);
   }
 
+  const pedidosFiltrados = useMemo(() => {
+    const termino = busqueda.trim().toLowerCase();
+    if (!termino) return pedidos;
+    return pedidos.filter((p) =>
+      [p.shopify_order_number, p.cliente_nombre, p.cliente_email, p.cliente_telefono]
+        .filter(Boolean)
+        .some((campo) => campo!.toLowerCase().includes(termino))
+    );
+  }, [pedidos, busqueda]);
+
   const pageSize = useResponsivePageSize();
   const { pageRows, totalRows, page, totalPages, setPage, sortColumn, sortDirection, toggleSort } = useTableRows({
-    rows: pedidos,
+    rows: pedidosFiltrados,
     getSortValue: valorOrden,
     pageSize,
   });
+
+  useEffect(() => {
+    setPage(1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [busqueda]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -165,11 +249,27 @@ export default function AdminPedidosPage() {
               <SelectItem value="devuelto">Devuelto</SelectItem>
             </SelectContent>
           </Select>
+          <Select value={filtroMes} onValueChange={alCambiarMes}>
+            <SelectTrigger className="w-44 bg-white">
+              <SelectValue placeholder="Mes" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todos">Todos los meses</SelectItem>
+              {opcionesMes().map((m) => (
+                <SelectItem key={m.value} value={m.value}>
+                  {m.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <div className="flex items-center gap-1.5">
             <Input
               type="date"
               value={fechaDesde}
-              onChange={(e) => setFechaDesde(e.target.value)}
+              onChange={(e) => {
+                setFechaDesde(e.target.value);
+                setFiltroMes("");
+              }}
               max={fechaHasta || undefined}
               className="w-40 bg-white"
               aria-label="Desde"
@@ -178,7 +278,10 @@ export default function AdminPedidosPage() {
             <Input
               type="date"
               value={fechaHasta}
-              onChange={(e) => setFechaHasta(e.target.value)}
+              onChange={(e) => {
+                setFechaHasta(e.target.value);
+                setFiltroMes("");
+              }}
               min={fechaDesde || undefined}
               className="w-40 bg-white"
               aria-label="Hasta"
@@ -190,6 +293,7 @@ export default function AdminPedidosPage() {
                 onClick={() => {
                   setFechaDesde("");
                   setFechaHasta("");
+                  setFiltroMes("todos");
                 }}
               >
                 Limpiar
@@ -199,10 +303,55 @@ export default function AdminPedidosPage() {
         </div>
       </div>
 
+      <div className="relative w-full max-w-sm">
+        <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+        <Input
+          type="search"
+          value={busqueda}
+          onChange={(e) => setBusqueda(e.target.value)}
+          placeholder="Buscar por N° de pedido, cliente, email o teléfono…"
+          className="bg-white pl-9"
+          aria-label="Buscar pedidos"
+        />
+      </div>
+
+      {seleccionados.size > 0 && (
+        <div className="flex items-center justify-between gap-3 rounded-lg border border-secondary/20 bg-secondary/5 px-4 py-2.5">
+          <p className="text-sm font-medium">
+            {seleccionados.size} pedido{seleccionados.size === 1 ? "" : "s"} seleccionado
+            {seleccionados.size === 1 ? "" : "s"}
+          </p>
+          <div className="flex items-center gap-2">
+            <Button variant="ghost" size="sm" onClick={() => setSeleccionados(new Set())}>
+              Quitar selección
+            </Button>
+            <Button variant="destructive" size="sm" onClick={() => setConfirmarAnular(true)}>
+              Anular seleccionados
+            </Button>
+          </div>
+        </div>
+      )}
+
       <TableCard badge={<Badge color="gris">{totalRows}</Badge>}>
         <Table>
           <TableHeader>
             <TableRow>
+              <TableHead className="w-10">
+                <Checkbox
+                  aria-label="Seleccionar todos los pedidos de esta página"
+                  checked={pageRows.length > 0 && pageRows.every((p) => seleccionados.has(p.id))}
+                  onCheckedChange={(marcado) => {
+                    setSeleccionados((prev) => {
+                      const siguiente = new Set(prev);
+                      for (const p of pageRows) {
+                        if (marcado) siguiente.add(p.id);
+                        else siguiente.delete(p.id);
+                      }
+                      return siguiente;
+                    });
+                  }}
+                />
+              </TableHead>
               <SortableTableHead columnId="numero" label="N° pedido" activeColumn={sortColumn} direction={sortDirection} onSort={toggleSort} />
               <SortableTableHead columnId="fecha" label="Fecha" activeColumn={sortColumn} direction={sortDirection} onSort={toggleSort} />
               <SortableTableHead columnId="cliente" label="Cliente" activeColumn={sortColumn} direction={sortDirection} onSort={toggleSort} />
@@ -214,9 +363,9 @@ export default function AdminPedidosPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {!cargando && pedidos.length === 0 && (
+            {!cargando && pedidosFiltrados.length === 0 && (
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground">
+                <TableCell colSpan={9} className="text-center text-muted-foreground">
                   No hay pedidos con este filtro.
                 </TableCell>
               </TableRow>
@@ -231,6 +380,13 @@ export default function AdminPedidosPage() {
                   className="cursor-pointer"
                   onClick={() => router.push(`/admin/pedidos/${p.id}`)}
                 >
+                  <TableCell onClick={(e) => e.stopPropagation()}>
+                    <Checkbox
+                      aria-label={`Seleccionar pedido ${p.shopify_order_number ?? p.id}`}
+                      checked={seleccionados.has(p.id)}
+                      onCheckedChange={() => alternarSeleccion(p.id)}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">
                     <Link
                       href={`/admin/pedidos/${p.id}`}
@@ -298,6 +454,24 @@ export default function AdminPedidosPage() {
         </Table>
         <TablePagination page={page} totalPages={totalPages} totalRows={totalRows} onPageChange={setPage} />
       </TableCard>
+
+      <AlertDialog open={confirmarAnular} onOpenChange={(open) => !open && setConfirmarAnular(false)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Anular {seleccionados.size} pedido{seleccionados.size === 1 ? "" : "s"}?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Van a dejar de aparecer en este panel, pero se conservan en Supabase (no se borran de la base de
+              datos). No se envía ningún correo al cliente. Esta acción no se puede deshacer desde aquí.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Volver</AlertDialogCancel>
+            <AlertDialogAction disabled={anulando} onClick={anularSeleccionados}>
+              {anulando ? "Anulando…" : "Anular"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

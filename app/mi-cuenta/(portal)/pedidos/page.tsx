@@ -109,7 +109,7 @@ export default async function PortalPedidosPage() {
                 </div>
                 <div className="flex items-center gap-3">
                   <span
-                    className="rounded-full px-3 py-1 text-[11px] font-bold"
+                    className="rounded-[10px] px-3 py-1 text-[11px] font-bold"
                     style={{ background: estado.bg, color: estado.color }}
                   >
                     {estado.texto}
@@ -169,12 +169,6 @@ export default async function PortalPedidosPage() {
                     {p.puntos_acreditados} SuplePoints acreditados
                   </span>
                 )}
-                {p.fecha_agotamiento_estimada && p.estado_preparacion === "entregado" && (
-                  <span className="flex items-center gap-1 text-xs font-bold text-portal-teal">
-                    <span className="material-symbols-rounded text-[16px]">schedule</span>
-                    Reposición: {formatFecha(p.fecha_agotamiento_estimada)}
-                  </span>
-                )}
               </div>
             </div>
           );
@@ -190,7 +184,7 @@ export default async function PortalPedidosPage() {
               </div>
               <div className="flex items-center gap-3">
                 <span
-                  className="rounded-full px-3 py-1 text-[11px] font-bold"
+                  className="rounded-[10px] px-3 py-1 text-[11px] font-bold"
                   style={{ background: estado.bg, color: estado.color }}
                 >
                   Compra en veterinaria

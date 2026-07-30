@@ -6,7 +6,7 @@ import { formatFecha } from "@/lib/portal/formato";
 import { formatPrecio } from "@/lib/data/productos-shared";
 import { construirTimeline, estadoBadgePedido, type PedidoHistorialRow } from "@/lib/data/portal/pedido-timeline";
 import { getProductos } from "@/lib/data/productos";
-import { getVariantesPorSlugs } from "@/lib/regalo-variantes";
+import { getVariantesPorSlugs, MEDIDA_TALLA_BANDANA, type TallaBandana } from "@/lib/regalo-variantes";
 import { etiquetaCorta } from "@/lib/documento";
 import { nombreCourier } from "@/lib/couriers";
 
@@ -164,7 +164,7 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
           </div>
           <div className="flex items-center gap-3">
             <span
-              className="rounded-full px-3 py-1 text-[11px] font-bold"
+              className="rounded-[10px] px-3 py-1 text-[11px] font-bold"
               style={{ background: badge.bg, color: badge.color }}
             >
               {badge.texto}
@@ -233,10 +233,17 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
                     />
                   )}
                 </div>
-                <p className="flex items-center gap-1.5 text-sm text-portal-navy">
-                  <span className="material-symbols-rounded text-[18px] text-portal-orange">redeem</span>
-                  Regalo: <strong>Bandana {bandana.nombre} — Talla {bandana.talla}</strong>
-                </p>
+                <div>
+                  <p className="flex items-center gap-1.5 text-sm text-portal-navy">
+                    <span className="material-symbols-rounded text-[18px] text-portal-orange">redeem</span>
+                    Regalo: <strong>Bandana {bandana.nombre} — Talla {bandana.talla}</strong>
+                  </p>
+                  {bandana.talla && MEDIDA_TALLA_BANDANA[bandana.talla as TallaBandana] && (
+                    <p className="pl-6 text-xs text-portal-muted">
+                      {MEDIDA_TALLA_BANDANA[bandana.talla as TallaBandana]}
+                    </p>
+                  )}
+                </div>
               </div>
             ))}
           </div>
@@ -273,20 +280,12 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
             </div>
           </div>
 
-          {(!!p.puntos_acreditados || (p.fecha_agotamiento_estimada && p.estado_preparacion === "entregado")) && (
+          {!!p.puntos_acreditados && p.puntos_acreditados > 0 && (
             <div className="flex flex-wrap gap-4 rounded-[18px] border border-portal-surface-variant bg-white p-6">
-              {!!p.puntos_acreditados && p.puntos_acreditados > 0 && (
-                <span className="flex items-center gap-1 text-xs font-bold text-portal-navy">
-                  <span className="material-symbols-rounded text-[16px] text-portal-orange">star</span>
-                  {p.puntos_acreditados} SuplePoints acreditados
-                </span>
-              )}
-              {p.fecha_agotamiento_estimada && p.estado_preparacion === "entregado" && (
-                <span className="flex items-center gap-1 text-xs font-bold text-portal-teal">
-                  <span className="material-symbols-rounded text-[16px]">schedule</span>
-                  Reposición: {formatFecha(p.fecha_agotamiento_estimada)}
-                </span>
-              )}
+              <span className="flex items-center gap-1 text-xs font-bold text-portal-navy">
+                <span className="material-symbols-rounded text-[16px] text-portal-orange">star</span>
+                {p.puntos_acreditados} SuplePoints acreditados
+              </span>
             </div>
           )}
         </div>

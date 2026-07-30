@@ -155,7 +155,7 @@ export function PedidoProductoDialog({
       <button
         type="button"
         onClick={() => setAbierto(true)}
-        className={`pointer-events-auto relative z-10 shrink-0 rounded-[17px] px-3 py-1.5 font-body text-[11px] font-bold transition-colors ${
+        className={`pointer-events-auto relative z-10 shrink-0 rounded-[10px] px-3 py-1.5 font-body text-[11px] font-bold transition-colors ${
           badge
             ? `bg-portal-surface-low ${badge.color}`
             : puedeResenar
@@ -206,7 +206,7 @@ export function PedidoProductoDialog({
                 <p className="font-body text-[11px] text-portal-muted">{formatFecha(pedidoFecha)}</p>
               </div>
               <span
-                className="rounded-full px-3 py-1 font-body text-[11px] font-bold"
+                className="rounded-[10px] px-3 py-1 font-body text-[11px] font-bold"
                 style={{ background: pedidoEstado.bg, color: pedidoEstado.color }}
               >
                 {pedidoEstado.texto}

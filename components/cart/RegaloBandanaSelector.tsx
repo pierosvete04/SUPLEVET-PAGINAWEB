@@ -10,6 +10,7 @@ import { getRegalosDisponiblesEnCarrito, type Regalo } from "@/lib/regalos";
 import {
   agruparVariantesPorDiseno,
   getVariantesActivas,
+  MEDIDA_TALLA_BANDANA_CORTA,
   tallaBandanaDisponible,
   type DisenoBandana,
   type RegaloVariante,
@@ -217,13 +218,20 @@ function SlotBandana({ etiqueta, disenos, seleccion, onCambiar }: SlotBandanaPro
                         type="button"
                         disabled={!disponible}
                         onClick={() => elegirTalla(diseno, talla)}
-                        className={`rounded-[10px] border px-2.5 py-1 font-body text-[11px] font-bold transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                        className={`flex flex-col items-center gap-0.5 rounded-[10px] border px-2.5 py-1 transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
                           activa
                             ? "border-accent bg-accent text-white"
                             : "border-border text-secondary hover:border-secondary/40"
                         }`}
                       >
-                        {talla}
+                        <span className="font-body text-[11px] font-bold leading-none">{talla}</span>
+                        <span
+                          className={`font-body text-[9px] leading-none ${
+                            activa ? "text-white/80" : "text-muted-foreground"
+                          }`}
+                        >
+                          {MEDIDA_TALLA_BANDANA_CORTA[talla]}
+                        </span>
                       </button>
                     );
                   })}
