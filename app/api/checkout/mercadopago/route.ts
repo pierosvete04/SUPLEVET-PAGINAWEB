@@ -134,12 +134,14 @@ export async function POST(request: Request) {
           // que esta preferencia (que ya nació con forma_pago "tarjeta") no
           // ofrezca ninguna alternativa (efectivo, transferencia, billetera,
           // etc.) en la pantalla de Checkout Pro.
+          // "account_money" (saldo en cuenta de MP) no se puede incluir acá
+          // — la API responde 400 "account_money cannot be excluded" si se
+          // intenta (probado en producción el 2026-08-01).
           excluded_payment_types: [
             { id: "ticket" },
             { id: "atm" },
             { id: "bank_transfer" },
             { id: "digital_wallet" },
-            { id: "account_money" },
             { id: "prepaid_card" },
             { id: "digital_currency" },
             { id: "voucher_card" },
