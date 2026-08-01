@@ -52,6 +52,15 @@ function tituloPedido(pedido: PedidoSimulado): string {
   return mensajePorMetodo[pedido.metodo];
 }
 
+// Mensaje corto para el QR del checkout — el mensaje completo (con
+// productos, dirección, etc.) ya se ve en pantalla, así que repetirlo en el
+// QR solo infla el payload codificado y produce un QR de tantos módulos que
+// la cámara del celular no logra leerlo. El botón "Escribir por WhatsApp" sí
+// usa el mensaje completo, porque ahí no hay límite de legibilidad.
+function construirMensajeWhatsappCorto(pedido: PedidoSimulado): string {
+  return `Hola, soy ${pedido.nombre || "[nombre]"}. Quisiera ayuda con mi pedido N° ${pedido.numero}.`;
+}
+
 function construirMensajeWhatsapp(pedido: PedidoSimulado, bandanas: RegaloVariante[]): string {
   const lineasProductos =
     pedido.productos?.map((p) => `- ${p.nombre} x${p.cantidad}`).join("\n") ?? "";
@@ -103,6 +112,15 @@ function CheckoutExitoContent() {
   const config = useConfiguracionSitio();
   const searchParams = useSearchParams();
   const pedidoIdMp = searchParams.get("pedido");
+  // Mercado Pago agrega esto al volver del Checkout Pro (mismo valor en
+  // success/pending/failure, ya que las tres apuntan a esta misma URL). Si ya
+  // dice "approved" acá, el pago se acreditó al toque — no tiene sentido
+  // mostrar "estamos confirmando" mientras se espera el webhook, que puede
+  // tardar unos segundos más en reflejarse en la BD. Solo se usa para decidir
+  // qué mensaje mostrar en esta página — el estado real del pedido (usado
+  // para todo lo demás: preparación, stock, etc.) lo sigue definiendo
+  // únicamente el webhook.
+  const statusMp = searchParams.get("status") ?? searchParams.get("collection_status");
   const [pedido, setPedido] = useState<PedidoSimulado | null>(null);
   const [bandanasElegidas, setBandanasElegidas] = useState<RegaloVariante[]>([]);
 
@@ -122,6 +140,11 @@ function CheckoutExitoContent() {
         .maybeSingle()
         .then(({ data }) => {
           if (!data) return;
+          const estadoPagoDb = data.estado_pago as EstadoPago;
+          const estadoPago: EstadoPago =
+            estadoPagoDb === "pendiente_verificacion" && statusMp === "approved"
+              ? "pagado"
+              : estadoPagoDb;
           setPedido({
             numero: data.shopify_order_number ?? "",
             metodo: "tarjeta",
@@ -141,7 +164,7 @@ function CheckoutExitoContent() {
               : data.regalo_bandana
                 ? [data.regalo_bandana]
                 : null,
-            estadoPago: data.estado_pago as EstadoPago,
+            estadoPago,
           });
         });
       return;
@@ -149,7 +172,8 @@ function CheckoutExitoContent() {
 
     const guardado = sessionStorage.getItem("ultimo_pedido");
     if (guardado) setPedido(JSON.parse(guardado));
-  }, [pedidoIdMp]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pedidoIdMp, statusMp]);
 
   useEffect(() => {
     const slugs = pedido?.regaloBandanas ?? [];
@@ -164,6 +188,10 @@ function CheckoutExitoContent() {
   const linkWhatsapp = pedido
     ? whatsappLink(config.whatsappB2C, construirMensajeWhatsapp(pedido, bandanasElegidas))
     : null;
+  // El QR usa el mensaje corto (ver construirMensajeWhatsappCorto) — con el
+  // mensaje completo el payload es tan largo que el QR sale con demasiados
+  // módulos para escanearlo con la cámara del celular.
+  const linkWhatsappQr = pedido ? whatsappLink(config.whatsappB2C, construirMensajeWhatsappCorto(pedido)) : null;
 
   const pagoTarjetaResuelto = pedido?.metodo === "tarjeta" ? pedido.estadoPago : undefined;
   const mostrarCardWhatsapp = pedido && pagoTarjetaResuelto !== "pagado";
@@ -265,7 +293,7 @@ function CheckoutExitoContent() {
               Escribir por WhatsApp
             </a>
             <div className="flex shrink-0 flex-col items-center gap-1">
-              <LinkQrCode link={linkWhatsapp} size={150} />
+              {linkWhatsappQr && <LinkQrCode link={linkWhatsappQr} size={150} />}
               <span className="font-body text-[11px] text-muted-foreground">O escanea el QR</span>
             </div>
           </div>
