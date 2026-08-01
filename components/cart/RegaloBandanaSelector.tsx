@@ -63,8 +63,16 @@ export function RegaloBandanaSelector({ variant = "carrito", onSlotsRequeridos }
   const montoMinimo = regalo?.condicion_monto_minimo ?? 0;
   const faltante = !regalo || esEvento || esCategoria ? 0 : Math.max(montoMinimo - subtotal, 0);
   const calificaParaRegalo = !!regalo && (esEvento || (esCategoria ? combosQty > 0 : faltante === 0));
-  const progreso =
-    esEvento || esCategoria ? 100 : montoMinimo > 0 ? Math.min(subtotal / montoMinimo, 1) * 100 : 100;
+  // Para "categoria" no hay un monto que promedie el avance (es un sí/no: ¿hay
+  // un combo en el carrito o no?), así que la barra queda en 0% o 100% — sigue
+  // siendo la misma barra resumen que para monto mínimo, solo que binaria.
+  const progreso = esEvento
+    ? 100
+    : esCategoria
+      ? (calificaParaRegalo ? 100 : 0)
+      : montoMinimo > 0
+        ? Math.min(subtotal / montoMinimo, 1) * 100
+        : 100;
   const slotsCount = esCategoria ? combosQty : 1;
 
   useEffect(() => {
@@ -73,14 +81,20 @@ export function RegaloBandanaSelector({ variant = "carrito", onSlotsRequeridos }
   }, [calificaParaRegalo, slotsCount]);
 
   if (!regalo) return null;
-  if (!calificaParaRegalo && variant === "checkout") return null;
+
+  // En el checkout, si aún no califica no tiene sentido mostrar "Elige tus
+  // bandanas" (no hay nada que elegir todavía) — se muestra igual la tarjeta,
+  // pero con un título neutro y la barra de progreso, para que el cliente vea
+  // qué le falta en vez de que la sección desaparezca sin explicación.
+  const tituloHeader =
+    variant === "checkout" ? (calificaParaRegalo ? "Elige tus bandanas" : "Tu regalo") : "Elige tu regalo";
 
   return (
     <div className="rounded-[17px] border border-border bg-soft-gray p-4">
       <div className="flex items-center justify-between gap-2">
         <p className="flex items-center gap-1.5 font-body text-xs font-bold text-secondary">
           <Gift className="h-4 w-4 text-secondary" strokeWidth={1.75} />
-          {variant === "checkout" ? "Elige tus bandanas" : "Elige tu regalo"}
+          {tituloHeader}
         </p>
         {calificaParaRegalo && variant === "carrito" && (
           <button
@@ -108,7 +122,7 @@ export function RegaloBandanaSelector({ variant = "carrito", onSlotsRequeridos }
         </p>
       )}
 
-      {!esEvento && !esCategoria && (
+      {!esEvento && (
         <div className="relative mt-2.5 h-2.5 overflow-hidden rounded-full bg-white">
           <div
             className="h-full rounded-full bg-accent transition-all"

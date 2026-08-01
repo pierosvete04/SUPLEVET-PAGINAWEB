@@ -7,6 +7,7 @@ import { Minus, Plus, Trash2, PawPrint } from "lucide-react";
 import { useCart } from "@/lib/cart/CartContext";
 import { formatPrecio } from "@/lib/data/productos-shared";
 import { RegaloBandanaSelector } from "@/components/cart/RegaloBandanaSelector";
+import { BENEFICIOS_CARRITO_VACIO } from "@/lib/cart/beneficios-carrito-vacio";
 import {
   Sheet,
   SheetContent,
@@ -36,13 +37,36 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
         </SheetHeader>
 
         {items.length === 0 ? (
-          <div className="flex flex-1 flex-col items-center justify-center gap-3 text-center">
-            <PawPrint className="h-10 w-10 text-accent" strokeWidth={1.5} />
-            <p className="font-body text-sm text-muted-foreground">Tu carrito está vacío.</p>
+          <div className="relative flex flex-1 flex-col items-center justify-center overflow-hidden px-2 py-6 text-center">
+            <div className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-accent/10 blur-3xl" />
+            <div className="pointer-events-none absolute -bottom-12 -left-10 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
+
+            <div className="relative flex h-16 w-16 items-center justify-center rounded-full bg-soft-gray">
+              <PawPrint className="h-7 w-7 text-accent" strokeWidth={1.5} />
+            </div>
+            <p className="relative mt-4 font-body text-base font-bold text-secondary">
+              Tu carrito está vacío
+            </p>
+            <p className="relative mt-1 font-body text-xs text-muted-foreground">
+              Elige productos y empieza a sumar beneficios en cada compra.
+            </p>
+
+            <ul className="relative mt-5 flex w-full flex-col gap-2 text-left">
+              {BENEFICIOS_CARRITO_VACIO.map(({ icono: Icono, texto }) => (
+                <li
+                  key={texto}
+                  className="flex items-center gap-2.5 rounded-[17px] bg-soft-gray px-3 py-2.5"
+                >
+                  <Icono className="h-4 w-4 shrink-0 text-accent" strokeWidth={1.75} />
+                  <span className="font-body text-xs text-secondary">{texto}</span>
+                </li>
+              ))}
+            </ul>
+
             <Link
               href="/productos"
               onClick={() => onOpenChange(false)}
-              className="rounded-[17px] bg-primary px-5 py-2.5 font-body text-sm font-bold text-primary-foreground hover:opacity-90"
+              className="relative mt-5 rounded-[17px] bg-primary px-6 py-2.5 font-body text-sm font-bold text-primary-foreground hover:opacity-90"
             >
               Ver productos
             </Link>
