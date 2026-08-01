@@ -64,15 +64,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Este pedido ya fue procesado" }, { status: 400 });
   }
 
-  // Origen de la request (localhost en desarrollo, dominio real en
-  // producción) — sirve para que MP redirija de vuelta al mismo entorno
-  // desde el que se inició la compra. El webhook, en cambio, siempre apunta
-  // al dominio de producción (es el único servidor públicamente alcanzable).
+  // Origen de la request (localhost en desarrollo, dominio real o preview de
+  // Vercel en producción/pruebas) — sirve para que MP redirija de vuelta al
+  // mismo entorno desde el que se inició la compra.
   const origin = new URL(request.url).origin;
   // auto_return exige que back_urls.success sea una URL pública HTTPS
   // alcanzable — con un origin de localhost, MP rechaza la preferencia
   // entera (400 "auto_return invalid"), así que en local se omite y el
   // cliente vuelve a la tienda manualmente en vez de con redirect automático.
+  // El mismo booleano decide a dónde apunta el webhook (ver notification_url
+  // más abajo): si el origin es HTTPS, es públicamente alcanzable por MP, así
+  // que las notificaciones van ahí — al mismo entorno donde se probó el pago
+  // (ej. el preview de Vercel), no siempre a producción. Solo con localhost
+  // (no alcanzable por MP) se cae al dominio de producción como fallback.
   const puedeAutoRetornar = origin.startsWith("https://");
   // En modo prueba NO se envía el email real del cliente como payer: si ese
   // correo pertenece a una cuenta real de Mercado Pago, la preferencia queda
@@ -122,14 +126,24 @@ export async function POST(request: Request) {
           failure: `${origin}/checkout/exito?pedido=${pedido.id}`,
         },
         ...(puedeAutoRetornar ? { auto_return: "approved" as const } : {}),
-        notification_url: `${siteConfig.siteUrl}/api/webhooks/mercadopago`,
+        notification_url: `${puedeAutoRetornar ? origin : siteConfig.siteUrl}/api/webhooks/mercadopago`,
         binary_mode: true,
         payment_methods: {
+          // Solo tarjeta de crédito/débito — se excluyen explícitamente
+          // todos los demás payment_type_id que existen en la API de MP para
+          // que esta preferencia (que ya nació con forma_pago "tarjeta") no
+          // ofrezca ninguna alternativa (efectivo, transferencia, billetera,
+          // etc.) en la pantalla de Checkout Pro.
           excluded_payment_types: [
             { id: "ticket" },
             { id: "atm" },
             { id: "bank_transfer" },
             { id: "digital_wallet" },
+            { id: "account_money" },
+            { id: "prepaid_card" },
+            { id: "digital_currency" },
+            { id: "voucher_card" },
+            { id: "crypto_transfer" },
           ],
         },
       },
