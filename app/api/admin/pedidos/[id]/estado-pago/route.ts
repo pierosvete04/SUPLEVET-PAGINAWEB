@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendTransactionalEmail } from "@/lib/emails/send";
-import { siteConfig, whatsappLink } from "@/lib/site-config";
+import { notificarPedidoTelegram } from "@/lib/notificaciones/pedido-telegram";
+import { whatsappPedido } from "@/lib/whatsapp-mensajes";
 
 // Llamado por el botón Confirmar/Rechazar de app/admin/(panel)/pedidos/[id] en
 // vez del UPDATE directo desde el cliente — así el correo de resultado
@@ -29,7 +30,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!esEstadoValido(body?.estado)) {
     return NextResponse.json({ error: "estado inválido" }, { status: 400 });
   }
-  const estado = body.estado;
+  const estado: EstadoPago = body.estado;
 
   const supabase = await createClient();
 
@@ -64,53 +65,58 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     );
   }
 
+  // Antes del early-return por falta de correo: el equipo igual quiere el aviso
+  // aunque el pedido no tenga email al que responderle.
+  const EVENTO_TELEGRAM = {
+    pagado: "pago_confirmado",
+    rechazado: "pago_rechazado",
+    cancelado: "pago_cancelado",
+  } as const;
+  const { error: telegramError } = await notificarPedidoTelegram(EVENTO_TELEGRAM[estado], id);
+  if (telegramError) {
+    console.error("No se pudo enviar el aviso de Telegram del estado de pago:", telegramError);
+  }
+
   if (!pedido.cliente_email) {
     return NextResponse.json({ ok: true });
   }
 
   const numeroPedido = pedido.shopify_order_number ?? "";
   const nombre = pedido.cliente_nombre ?? "cliente";
-  const whatsappUrlProblema = whatsappLink(
-    siteConfig.whatsappB2C,
-    `Hola, tuve un problema con el pago de mi pedido ${numeroPedido}`
-  );
-
   let sendError: string | null;
 
   if (estado === "pagado") {
     // El cliente escribe primero (en vez de que el negocio le escriba), así la
     // conversación de WhatsApp Business entra como iniciada por el usuario.
-    const whatsappUrlConfirmado = whatsappLink(
-      siteConfig.whatsappB2C,
-      `Hola, soy ${nombre}. Mi pedido ${numeroPedido} ya fue confirmado, ¿cuándo me lo traen?`
-    );
     ({ error: sendError } = await sendTransactionalEmail(pedido.cliente_email, {
       tipo: "pago_confirmado",
       data: {
         nombre,
         numeroPedido,
         puntosGanados: 0,
-        whatsappUrl: whatsappUrlConfirmado,
+        whatsappUrl: whatsappPedido("coordinarEntrega", { nombre, numeroPedido }),
       },
     }));
   } else if (estado === "rechazado") {
+    const motivo = "no pudimos validar tu comprobante de pago";
     ({ error: sendError } = await sendTransactionalEmail(pedido.cliente_email, {
       tipo: "pago_error",
       data: {
         nombre,
         numeroPedido,
-        motivo: "no pudimos validar tu comprobante de pago",
-        whatsappUrl: whatsappUrlProblema,
+        motivo,
+        whatsappUrl: whatsappPedido("problemaPago", { nombre, numeroPedido, motivo }),
       },
     }));
   } else {
+    const motivo = "no pudimos completar el proceso de compra";
     ({ error: sendError } = await sendTransactionalEmail(pedido.cliente_email, {
       tipo: "pago_cancelado",
       data: {
         nombre,
         numeroPedido,
-        motivo: "no pudimos completar el proceso de compra",
-        whatsappUrl: whatsappUrlProblema,
+        motivo,
+        whatsappUrl: whatsappPedido("pedidoCancelado", { nombre, numeroPedido, motivo }),
       },
     }));
   }

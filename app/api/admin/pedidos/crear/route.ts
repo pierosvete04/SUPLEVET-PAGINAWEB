@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { zonaEnvioSlug } from "@/lib/shipping";
+import { notificarPedidoTelegram } from "@/lib/notificaciones/pedido-telegram";
 
 // Pedido creado a mano desde /admin/pedidos/nuevo (venta telefónica, WhatsApp,
 // etc). El INSERT directo en `pedidos` ya está permitido por RLS para
@@ -194,6 +195,14 @@ export async function POST(request: Request) {
       { error: error?.message ?? "No se pudo crear el pedido" },
       { status: 403 }
     );
+  }
+
+  // También avisa por Telegram las ventas cargadas a mano (teléfono, WhatsApp),
+  // no solo las del checkout web — si no, el canal solo mostraría una parte de
+  // las ventas y no serviría como fuente única.
+  const { error: telegramError } = await notificarPedidoTelegram("nuevo_pedido", pedido.id);
+  if (telegramError) {
+    console.error("No se pudo enviar el aviso de Telegram del pedido manual:", telegramError);
   }
 
   return NextResponse.json({ ok: true, pedido_id: pedido.id });

@@ -4,7 +4,8 @@ import { createAdminClient } from "@/lib/supabase/admin";
 import { getMercadoPagoPaymentClient } from "@/lib/mercadopago";
 import { sendTransactionalEmail } from "@/lib/emails/send";
 import { notificarEquipoVentas } from "@/lib/emails/notificar-ventas";
-import { siteConfig, whatsappLink } from "@/lib/site-config";
+import { notificarPedidoTelegram } from "@/lib/notificaciones/pedido-telegram";
+import { whatsappPedido } from "@/lib/whatsapp-mensajes";
 
 // Mercado Pago llama a esta URL (configurada como notification_url en la
 // preferencia, ver app/api/checkout/mercadopago) cada vez que un pago cambia
@@ -147,36 +148,39 @@ export async function POST(request: Request) {
 
   const numeroPedido = pedido.shopify_order_number ?? "";
   const nombre = pedido.cliente_nombre ?? "cliente";
-  const whatsappUrlProblema = whatsappLink(
-    siteConfig.whatsappB2C,
-    `Hola, tuve un problema con el pago de mi pedido ${numeroPedido}`
-  );
-
   let sendError: string | null = null;
 
   if (nuevoEstado === "pagado") {
-    const whatsappUrlConfirmado = whatsappLink(
-      siteConfig.whatsappB2C,
-      `Hola, soy ${nombre}. Mi pedido ${numeroPedido} ya fue confirmado, ¿cuándo me lo traen?`
-    );
     ({ error: sendError } = await sendTransactionalEmail(pedido.cliente_email, {
       tipo: "pago_confirmado",
-      data: { nombre, numeroPedido, puntosGanados: 0, whatsappUrl: whatsappUrlConfirmado },
+      data: {
+        nombre,
+        numeroPedido,
+        puntosGanados: 0,
+        whatsappUrl: whatsappPedido("coordinarEntrega", { nombre, numeroPedido }),
+      },
     }));
   } else if (nuevoEstado === "rechazado") {
+    const motivo = "tu tarjeta fue rechazada por el banco o el procesador de pagos";
     ({ error: sendError } = await sendTransactionalEmail(pedido.cliente_email, {
       tipo: "pago_error",
       data: {
         nombre,
         numeroPedido,
-        motivo: "tu tarjeta fue rechazada por el banco o el procesador de pagos",
-        whatsappUrl: whatsappUrlProblema,
+        motivo,
+        whatsappUrl: whatsappPedido("problemaPago", { nombre, numeroPedido, motivo }),
       },
     }));
   } else if (nuevoEstado === "cancelado") {
+    const motivo = "no pudimos completar el proceso de pago";
     ({ error: sendError } = await sendTransactionalEmail(pedido.cliente_email, {
       tipo: "pago_cancelado",
-      data: { nombre, numeroPedido, motivo: "no pudimos completar el proceso de pago", whatsappUrl: whatsappUrlProblema },
+      data: {
+        nombre,
+        numeroPedido,
+        motivo,
+        whatsappUrl: whatsappPedido("pedidoCancelado", { nombre, numeroPedido, motivo }),
+      },
     }));
   }
 
@@ -204,6 +208,11 @@ export async function POST(request: Request) {
     });
     if (notifyError) {
       console.error("No se pudo notificar al equipo de ventas del cambio de pago:", notifyError);
+    }
+
+    const { error: telegramError } = await notificarPedidoTelegram(evento, pedidoId);
+    if (telegramError) {
+      console.error("No se pudo enviar el aviso de Telegram del cambio de pago:", telegramError);
     }
   }
 

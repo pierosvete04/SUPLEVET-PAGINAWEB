@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendTransactionalEmail } from "@/lib/emails/send";
 import { notificarEquipoVentas } from "@/lib/emails/notificar-ventas";
+import { notificarPedidoTelegram } from "@/lib/notificaciones/pedido-telegram";
 import type { PagoEnVerificacionProps } from "@/emails/pago-en-verificacion";
-import { siteConfig, whatsappLink } from "@/lib/site-config";
+import { whatsappPedido } from "@/lib/whatsapp-mensajes";
 
 // Llamado por app/checkout/page.tsx justo después de registrar_pedido_web().
 // Server-only a propósito: RESEND_API_KEY nunca debe llegar al bundle del
@@ -39,17 +40,19 @@ export async function POST(request: Request) {
   const metodoPago = METODO_PAGO_LABEL[pedido.forma_pago ?? ""] ?? "transferencia";
   const numeroPedido = pedido.shopify_order_number ?? "";
 
+  const nombre = pedido.cliente_nombre ?? "cliente";
+
   const { error: sendError } = await sendTransactionalEmail(pedido.cliente_email, {
     tipo: "pago_pendiente_verificacion",
     data: {
-      nombre: pedido.cliente_nombre ?? "cliente",
+      nombre,
       numeroPedido,
       metodoPago,
-      whatsappUrl: whatsappLink(
-        siteConfig.whatsappB2C,
-        metodoPago === "contra entrega"
-          ? `Hola, quiero coordinar la entrega de mi pedido ${numeroPedido} (pago contra entrega)`
-          : `Hola, quiero enviar mi voucher de pago del pedido ${numeroPedido}`
+      // Contra entrega no tiene voucher que enviar: lo único pendiente es
+      // acordar cuándo pasa el motorizado.
+      whatsappUrl: whatsappPedido(
+        metodoPago === "contra entrega" ? "coordinarEntrega" : "enviarVoucher",
+        { nombre, numeroPedido }
       ),
     },
   });
@@ -73,6 +76,12 @@ export async function POST(request: Request) {
   });
   if (notifyError) {
     console.error("No se pudo notificar al equipo de ventas del pedido nuevo:", notifyError);
+  }
+
+  // Mismo criterio que el correo interno: best-effort, no bloquea al cliente.
+  const { error: telegramError } = await notificarPedidoTelegram("nuevo_pedido", pedidoId);
+  if (telegramError) {
+    console.error("No se pudo enviar el aviso de Telegram del pedido nuevo:", telegramError);
   }
 
   return NextResponse.json({ ok: true });
