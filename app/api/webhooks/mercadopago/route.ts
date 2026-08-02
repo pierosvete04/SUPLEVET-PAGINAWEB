@@ -53,8 +53,21 @@ function firmaValida(request: Request, dataId: string): boolean {
 
   const bufferEsperado = Buffer.from(hmacEsperado, "hex");
   const bufferRecibido = Buffer.from(v1, "hex");
-  if (bufferEsperado.length !== bufferRecibido.length) return false;
-  return timingSafeEqual(bufferEsperado, bufferRecibido);
+  const valida = bufferEsperado.length === bufferRecibido.length && timingSafeEqual(bufferEsperado, bufferRecibido);
+
+  // DEBUG TEMPORAL (quitar una vez resuelto el 401 persistente) — nunca
+  // loguea el secreto, solo su largo (para detectar espacios/saltos de
+  // línea de más al pegarlo en Vercel) y los hashes derivados.
+  console.log("[MP webhook debug]", {
+    secretLength: secret.length,
+    secretLengthTrimmed: secret.trim().length,
+    manifest,
+    hmacEsperado,
+    v1Recibido: v1,
+    valida,
+  });
+
+  return valida;
 }
 
 export async function POST(request: Request) {

@@ -7,7 +7,16 @@ export function formatFecha(str: string | null): string {
   // formatear en local. Forzamos medianoche local solo cuando no trae hora —
   // los timestamps completos (created_at) se parsean tal cual.
   const fecha = str.includes("T") ? new Date(str) : new Date(`${str}T00:00:00`);
-  return fecha.toLocaleDateString("es-PE", { day: "2-digit", month: "short", year: "numeric" });
+  // timeZone explícito: el servidor (Vercel) corre en UTC, así que sin esto
+  // un timestamp completo (created_at) se muestra en la fecha UTC en vez de
+  // la de Perú — un pedido de las 21:11 del 1 de agosto (hora Perú) queda
+  // como 02:11 del 2 de agosto en UTC y se mostraba "02 ago" en vez de "01 ago".
+  return fecha.toLocaleDateString("es-PE", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    timeZone: "America/Lima",
+  });
 }
 
 export function formatFechaCumple(str: string | null): string {
