@@ -12,6 +12,16 @@ import {
 import * as React from "react";
 import { brand, gradients } from "./brand";
 
+// Se aplica en el <body> y además en la tabla exterior: Gmail descarta parte de
+// los estilos del <body>, así que sin el duplicado el patrón desaparece ahí.
+// `backgroundColor` va siempre junto a la imagen como respaldo para clientes que
+// bloquean imágenes remotas.
+const canvasBackground = {
+  backgroundColor: brand.colors.canvas,
+  backgroundImage: `url(${brand.pawTileUrl})`,
+  backgroundRepeat: "repeat",
+} as const;
+
 interface EmailLayoutProps {
   previewText: string;
   /** Gradiente de la franja de 5px arriba de la tarjeta. Ver `gradients` en brand.ts. */
@@ -19,10 +29,14 @@ interface EmailLayoutProps {
   children: React.ReactNode;
 }
 
-// Envoltorio compartido por todos los correos: fondo navy, logo, tarjeta blanca
-// con franja de color, y footer — igual a la estructura ya usada en los 7
-// correos de PORTAL DE CLIENTES/email-templates/*.html, pero como componente
-// reutilizable en vez de HTML repetido en cada archivo.
+// Envoltorio compartido por todos los correos: lienzo blanco, columna navy
+// centrada del ancho del contenido, y dentro de ella el logo, la tarjeta blanca
+// con franja de color, y el footer.
+//
+// El navy vive en la columna interna y NO en el <Body> a propósito: así los
+// costados del correo quedan blancos y la marca se lee como una pieza vertical
+// centrada. Nota para Outlook (motor Word): ignora border-radius, así que ahí
+// la columna se ve con esquinas rectas — el resto del diseño no cambia.
 export function EmailLayout({
   previewText,
   stripeGradient = gradients.orange,
@@ -38,49 +52,57 @@ export function EmailLayout({
         style={{
           margin: 0,
           padding: 0,
-          backgroundColor: brand.colors.navy,
+          ...canvasBackground,
           WebkitFontSmoothing: "antialiased",
         }}
       >
-        <Section style={{ padding: "48px 16px" }}>
+        <Section style={{ padding: "48px 16px", ...canvasBackground }}>
           <Container style={{ maxWidth: 520, margin: "0 auto" }}>
-            <Section style={{ textAlign: "center", paddingBottom: 32 }}>
-              <Img
-                src={brand.logoUrl}
-                width="220"
-                alt="Suplevet"
-                style={{ display: "inline-block", maxWidth: 220, border: "0" }}
-              />
-            </Section>
-
             <Section
               style={{
-                backgroundColor: "#ffffff",
-                borderRadius: 20,
-                overflow: "hidden",
-                boxShadow: "0 8px 40px rgba(0,0,0,0.25)",
+                backgroundColor: brand.colors.navy,
+                borderRadius: 24,
+                padding: "40px 16px 24px",
               }}
             >
-              <table role="presentation" width="100%" cellPadding={0} cellSpacing={0}>
-                <tbody>
-                  <tr>
-                    <td
-                      style={{
-                        background: stripeGradient,
-                        height: 5,
-                        fontSize: 0,
-                        lineHeight: 0,
-                      }}
-                    >
-                      &nbsp;
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-              <Section style={{ padding: "44px 44px 40px" }}>{children}</Section>
-            </Section>
+              <Section style={{ textAlign: "center", paddingBottom: 32 }}>
+                <Img
+                  src={brand.logoUrl}
+                  width="220"
+                  alt="Suplevet"
+                  style={{ display: "inline-block", maxWidth: 220, border: "0" }}
+                />
+              </Section>
 
-            <Footer />
+              <Section
+                style={{
+                  backgroundColor: "#ffffff",
+                  borderRadius: 20,
+                  overflow: "hidden",
+                  boxShadow: "0 8px 40px rgba(0,0,0,0.25)",
+                }}
+              >
+                <table role="presentation" width="100%" cellPadding={0} cellSpacing={0}>
+                  <tbody>
+                    <tr>
+                      <td
+                        style={{
+                          background: stripeGradient,
+                          height: 5,
+                          fontSize: 0,
+                          lineHeight: 0,
+                        }}
+                      >
+                        &nbsp;
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+                <Section style={{ padding: "40px 36px 36px" }}>{children}</Section>
+              </Section>
+
+              <Footer />
+            </Section>
           </Container>
         </Section>
       </Body>

@@ -14,6 +14,11 @@ export const brand = {
     // no da suficiente contraste para texto blanco.
     skyDeep: "#2C7A82",
     softGray: "#F8F7F5",
+    // Lienzo exterior del correo (lo que rodea la columna navy). Un paso más
+    // profundo que softGray para que el blanco no domine; es el mismo color
+    // bakeado en el PNG de `pawTileUrl`, así que si el cliente bloquea imágenes
+    // el fondo plano se ve idéntico salvo por las huellas.
+    canvas: "#F0EEEA",
     border: "#F0EFED",
     textMuted: "#6B7280",
     textFaint: "#9CA3AF",
@@ -35,6 +40,10 @@ export const brand = {
   // tienda Shopify vieja, no esta app, así que la ruta daba 404 en los
   // correos. R2 funciona sin depender de cuándo se lance el dominio nuevo.
   logoUrl: "https://pub-ad8cb8681bd8458ba537a43f6735a89d.r2.dev/branding/logo-white-mixed-horizontal.png",
+  // Patrón de huellas de 200x200 que se repite como fondo del lienzo exterior.
+  // Se genera y sube con scripts/generate-email-paw-tile.mjs — editar ahí (no a
+  // mano en R2) si cambia el color o la densidad.
+  pawTileUrl: "https://pub-ad8cb8681bd8458ba537a43f6735a89d.r2.dev/branding/email-paw-tile.png",
   siteUrl: "https://suplevet.pe",
   portalUrl: "https://suplevet.pe/mi-cuenta",
   supportEmail: "soporte@suplevet.com",
