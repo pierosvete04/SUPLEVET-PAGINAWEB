@@ -93,7 +93,7 @@ export default async function PortalPedidosPage() {
           return (
             <div
               key={p.id}
-              className="relative rounded-[18px] border border-portal-surface-variant bg-white p-5 transition-colors hover:border-portal-teal-light"
+              className="relative rounded-[18px] border border-portal-surface-variant bg-white p-5 transition-all duration-200 hover:border-portal-teal-light hover:shadow-lg hover:shadow-portal-navy/10 active:shadow-md active:shadow-portal-navy/15"
             >
               <Link
                 href={`/mi-cuenta/pedidos/${p.id}`}
@@ -120,7 +120,7 @@ export default async function PortalPedidosPage() {
                 </div>
               </div>
               {productos.length > 0 && (
-                <div className="pointer-events-none relative mt-3 rounded-xl bg-portal-surface-low p-3">
+                <div className="pointer-events-none relative mt-3 rounded-[12px] bg-portal-surface-low p-3">
                   {productos.slice(0, 3).map((pr, i) => {
                     const nombreProducto = pr.nombre || pr.name || "Producto";
                     const productoShopifyId = pr.producto_id ?? null;
