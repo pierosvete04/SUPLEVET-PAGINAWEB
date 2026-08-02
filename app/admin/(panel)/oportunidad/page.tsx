@@ -35,6 +35,7 @@ interface TextosOportunidad {
   oportunidad_intro_imagen: string | null;
   oportunidad_ventajas_titulo: string | null;
   oportunidad_ventajas_texto: string | null;
+  oportunidad_ventajas_bullets: string | null;
   oportunidad_producto_titulo: string | null;
   oportunidad_producto_texto: string | null;
   oportunidad_producto_bullets: string | null;
@@ -175,6 +176,7 @@ export default function AdminOportunidadPage() {
       p_intro_imagen: textos.oportunidad_intro_imagen,
       p_ventajas_titulo: textos.oportunidad_ventajas_titulo,
       p_ventajas_texto: textos.oportunidad_ventajas_texto,
+      p_ventajas_bullets: textos.oportunidad_ventajas_bullets,
       p_producto_titulo: textos.oportunidad_producto_titulo,
       p_producto_texto: textos.oportunidad_producto_texto,
       p_producto_bullets: textos.oportunidad_producto_bullets,
@@ -320,6 +322,14 @@ export default function AdminOportunidadPage() {
                 value={textos.oportunidad_ventajas_texto ?? ""}
                 onChange={(v) => actualizar("oportunidad_ventajas_texto", v)}
                 textarea
+              />
+              <Campo
+                id="op-ventajas-bullets"
+                label="Condiciones comerciales (una por línea)"
+                value={textos.oportunidad_ventajas_bullets ?? ""}
+                onChange={(v) => actualizar("oportunidad_ventajas_bullets", v)}
+                textarea
+                rows={5}
               />
             </CardContent>
             <CardFooter>

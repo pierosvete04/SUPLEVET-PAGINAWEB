@@ -42,6 +42,7 @@ export interface ConfiguracionSitio {
   oportunidad_intro_imagen: string | null;
   oportunidad_ventajas_titulo: string | null;
   oportunidad_ventajas_texto: string | null;
+  oportunidad_ventajas_bullets: string | null;
   oportunidad_producto_titulo: string | null;
   oportunidad_producto_texto: string | null;
   oportunidad_producto_bullets: string | null;
@@ -59,7 +60,7 @@ export interface ConfiguracionSitio {
 }
 
 const OPORTUNIDAD_COLUMNAS =
-  "oportunidad_hero_titulo, oportunidad_hero_texto, oportunidad_hero_imagen, oportunidad_intro_titulo, oportunidad_intro_texto_1, oportunidad_intro_texto_2, oportunidad_intro_imagen, oportunidad_ventajas_titulo, oportunidad_ventajas_texto, oportunidad_producto_titulo, oportunidad_producto_texto, oportunidad_producto_bullets, oportunidad_producto_imagen, oportunidad_pasos_titulo, oportunidad_paso1_titulo, oportunidad_paso1_texto, oportunidad_paso2_titulo, oportunidad_paso2_texto, oportunidad_paso3_titulo, oportunidad_paso3_texto, oportunidad_postular_titulo, oportunidad_postular_texto_1, oportunidad_postular_texto_2";
+  "oportunidad_hero_titulo, oportunidad_hero_texto, oportunidad_hero_imagen, oportunidad_intro_titulo, oportunidad_intro_texto_1, oportunidad_intro_texto_2, oportunidad_intro_imagen, oportunidad_ventajas_titulo, oportunidad_ventajas_texto, oportunidad_ventajas_bullets, oportunidad_producto_titulo, oportunidad_producto_texto, oportunidad_producto_bullets, oportunidad_producto_imagen, oportunidad_pasos_titulo, oportunidad_paso1_titulo, oportunidad_paso1_texto, oportunidad_paso2_titulo, oportunidad_paso2_texto, oportunidad_paso3_titulo, oportunidad_paso3_texto, oportunidad_postular_titulo, oportunidad_postular_texto_1, oportunidad_postular_texto_2";
 
 export async function getConfiguracionSitio(
   supabase: SupabaseClient

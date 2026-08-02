@@ -13,6 +13,7 @@ import {
 import { ScrollReveal } from "@/components/shared/ScrollReveal";
 import { PageBreadcrumbs } from "@/components/shared/PageBreadcrumbs";
 import { FormularioDistribuidor } from "@/components/oportunidad/FormularioDistribuidor";
+import { ListaChecks } from "@/components/oportunidad/ListaChecks";
 import { getConfiguracionSitio } from "@/lib/data/configuracion";
 import { getVentajasActivas } from "@/lib/oportunidad-ventajas";
 import { createClient } from "@/lib/supabase/server";
@@ -35,6 +36,13 @@ const ICONOS: Record<string, LucideIcon> = {
   HeartPulse,
 };
 
+/** Los campos de lista del panel son un textarea: una viñeta por línea. */
+const lineas = (campo: string | null | undefined) =>
+  (campo ?? "")
+    .split("\n")
+    .map((linea) => linea.trim())
+    .filter(Boolean);
+
 const pasos = (config: Awaited<ReturnType<typeof getConfiguracionSitio>>) => [
   { n: "01", titulo: config?.oportunidad_paso1_titulo, texto: config?.oportunidad_paso1_texto },
   { n: "02", titulo: config?.oportunidad_paso2_titulo, texto: config?.oportunidad_paso2_texto },
@@ -48,10 +56,8 @@ export default async function OportunidadDeNegocioPage() {
     getVentajasActivas(supabase),
   ]);
 
-  const bullets = (config?.oportunidad_producto_bullets ?? "")
-    .split("\n")
-    .map((b) => b.trim())
-    .filter(Boolean);
+  const bulletsProducto = lineas(config?.oportunidad_producto_bullets);
+  const bulletsVentajas = lineas(config?.oportunidad_ventajas_bullets);
 
   return (
     <div>
@@ -141,6 +147,19 @@ export default async function OportunidadDeNegocioPage() {
             <p className="mt-4 font-body text-muted-foreground">{config?.oportunidad_ventajas_texto}</p>
           </ScrollReveal>
 
+          {/* Condiciones comerciales — panel único a lo ancho para que no compita
+              con la grilla de tarjetas de abajo. La lista va alineada a la
+              izquierda aunque el encabezado esté centrado: una lista centrada
+              obliga a rastrear el inicio de cada línea. */}
+          {bulletsVentajas.length > 0 && (
+            <ScrollReveal
+              delay={0.1}
+              className="mx-auto mt-10 max-w-2xl rounded-[var(--radius-card)] border border-border bg-white p-6 text-left shadow-sm md:p-8"
+            >
+              <ListaChecks items={bulletsVentajas} className="gap-4 text-base text-secondary" />
+            </ScrollReveal>
+          )}
+
           <div className="mt-12 grid grid-cols-1 gap-gutter md:grid-cols-2 lg:grid-cols-3">
             {ventajas.map(({ id, icono, titulo, texto }, i) => {
               const Icon = ICONOS[icono] ?? FlaskConical;
@@ -171,18 +190,7 @@ export default async function OportunidadDeNegocioPage() {
               {config?.oportunidad_producto_titulo}
             </h2>
             <p className="mt-5 font-body text-white/85">{config?.oportunidad_producto_texto}</p>
-            <ul className="mt-6 flex flex-col gap-3 font-body text-sm text-white/90">
-              {bullets.map((item) => (
-                <li key={item} className="flex items-start gap-3">
-                  <span className="mt-1 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-accent text-accent-foreground">
-                    <svg viewBox="0 0 24 24" className="h-3 w-3" fill="none" stroke="currentColor" strokeWidth={3}>
-                      <path d="M5 13l4 4L19 7" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                  </span>
-                  {item}
-                </li>
-              ))}
-            </ul>
+            <ListaChecks items={bulletsProducto} className="mt-6 text-white/90" />
           </ScrollReveal>
 
           <ScrollReveal delay={0.1} className="relative">
