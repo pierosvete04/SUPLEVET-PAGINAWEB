@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendTransactionalEmail } from "@/lib/emails/send";
-import { siteConfig, whatsappLink } from "@/lib/site-config";
+import { whatsappPedido } from "@/lib/whatsapp-mensajes";
 
 // Llamado por el selector de "Estado de preparación" en
 // app/admin/(panel)/pedidos/[id]. Cada transición manda un aviso al cliente
@@ -14,6 +14,12 @@ import { siteConfig, whatsappLink } from "@/lib/site-config";
 // pago — SuplePoints_Documento_Corporativo.docx §6, para evitar fraude por
 // devolución inmediata) y manda el correo puntos_acreditados con el saldo real
 // en vez del aviso genérico de entrega.
+// El panel todavía no pide el motivo de la devolución al marcar el estado, así
+// que el correo usa este texto genérico. Cuando exista ese campo en
+// app/admin/(panel)/pedidos/[id], se pasa el motivo real en su lugar — el
+// componente y el mensaje de WhatsApp ya lo aceptan como parámetro.
+const MOTIVO_DEVOLUCION = "no se pudo completar la entrega";
+
 const ESTADOS_VALIDOS = [
   "no_preparado",
   "en_preparacion",
@@ -75,15 +81,28 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
                     nombre,
                     numeroPedido,
                     motivo: "no llegamos a despacharlo",
-                    whatsappUrl: whatsappLink(
-                      siteConfig.whatsappB2C,
-                      `Hola, tuve una consulta sobre mi pedido ${numeroPedido} que figura cancelado`
-                    ),
+                    whatsappUrl: whatsappPedido("pedidoCancelado", {
+                      nombre,
+                      numeroPedido,
+                      motivo: "no llegamos a despacharlo",
+                    }),
                   },
                 })
               : await sendTransactionalEmail(pedido.cliente_email, {
                   tipo: "pedido_devuelto",
-                  data: { nombre, numeroPedido },
+                  data: {
+                    nombre,
+                    numeroPedido,
+                    motivo: MOTIVO_DEVOLUCION,
+                    // Sin esto el correo caía al número de ejemplo del
+                    // componente (wa.me/51999999999) y el cliente terminaba en
+                    // un chat con un número que no existe.
+                    whatsappUrl: whatsappPedido("reenvio", {
+                      nombre,
+                      numeroPedido,
+                      motivo: MOTIVO_DEVOLUCION,
+                    }),
+                  },
                 });
 
       if (sendError) {
