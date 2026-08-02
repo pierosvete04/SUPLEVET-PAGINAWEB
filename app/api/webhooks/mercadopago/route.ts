@@ -115,34 +115,33 @@ export async function POST(request: Request) {
   }
 
   const supabase = createAdminClient();
-  const { data: pedido, error } = await supabase
-    .from("pedidos")
-    .select("cliente_email, cliente_nombre, cliente_telefono, shopify_order_number, estado_pago, total")
-    .eq("id", pedidoId)
-    .maybeSingle();
-
-  if (error) {
-    console.error("Error leyendo el pedido para el webhook de Mercado Pago:", error);
-    return NextResponse.json({ error: "Error de base de datos" }, { status: 500 });
-  }
-  // Pedido inexistente (ej. notificación de prueba de otro entorno) o ya
-  // procesado con este mismo estado (MP reintenta notificaciones) — no hay
-  // nada que actualizar ni correo que reenviar.
-  if (!pedido || pedido.estado_pago === nuevoEstado) {
-    return NextResponse.json({ ok: true });
-  }
-
-  const { error: updateError } = await supabase
+  // UPDATE condicional en una sola consulta, en vez de leer el estado y
+  // después escribirlo: Mercado Pago manda varias notificaciones del mismo
+  // pago casi a la vez (el 2026-08-02 llegaron dos en el mismo segundo) y con
+  // el chequeo previo ambas lo veían todavía en "pendiente_verificacion",
+  // así que las dos actualizaban y las dos mandaban el correo de confirmación
+  // — el cliente recibía el mismo mensaje duplicado. Al poner la condición
+  // dentro del propio UPDATE, Postgres la re-evalúa después de tomar el lock
+  // de la fila, así que solo una invocación se lleva la transición y la otra
+  // afecta 0 filas. El `is.null` está porque en SQL `columna <> 'x'` es NULL
+  // (no true) cuando la columna es NULL, y esa fila quedaría sin actualizar.
+  const { data: actualizados, error: updateError } = await supabase
     .from("pedidos")
     .update({ estado_pago: nuevoEstado })
-    .eq("id", pedidoId);
+    .eq("id", pedidoId)
+    .or(`estado_pago.is.null,estado_pago.neq.${nuevoEstado}`)
+    .select("cliente_email, cliente_nombre, cliente_telefono, shopify_order_number, total");
 
   if (updateError) {
     console.error("Error actualizando el pedido desde el webhook de Mercado Pago:", updateError);
     return NextResponse.json({ error: "Error de base de datos" }, { status: 500 });
   }
 
-  if (!pedido.cliente_email) {
+  // Sin filas: o el pedido no existe (ej. notificación de otro entorno), o
+  // otra notificación del mismo pago ya hizo esta misma transición. En ambos
+  // casos no hay nada que avisar.
+  const pedido = actualizados?.[0];
+  if (!pedido || !pedido.cliente_email) {
     return NextResponse.json({ ok: true });
   }
 
