@@ -22,7 +22,7 @@ export default function OtpLogin({ token = "482913", validezMinutos = 10 }: OtpL
       previewText={`${token} — tu código de acceso a Suplevet`}
       stripeGradient={gradients.orange}
     >
-      <CategoryLabel>Portal de clientes</CategoryLabel>
+      <CategoryLabel icon="keyRound">Portal de clientes</CategoryLabel>
       <Headline>
         Tu código
         <br />

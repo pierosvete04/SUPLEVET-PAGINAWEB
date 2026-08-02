@@ -1,20 +1,28 @@
 import * as React from "react";
 import { brand, gradients } from "./components/brand";
 import { EmailLayout } from "./components/EmailLayout";
-import { BodyText, CategoryLabel, CtaButton, Headline, StepsList } from "./components/primitives";
+import {
+  AlertBox,
+  BodyText,
+  CategoryLabel,
+  CtaButton,
+  Headline,
+  OrderProgress,
+  StepsList,
+} from "./components/primitives";
 
 export interface PagoEnVerificacionProps {
   nombre: string;
   numeroPedido: string;
   metodoPago: "Yape" | "Plin" | "transferencia" | "tarjeta" | "contra entrega";
-  whatsappUrl?: string;
+  whatsappUrl: string;
 }
 
 export default function PagoEnVerificacion({
   nombre = "Juan",
   numeroPedido = "W-1001",
   metodoPago = "Yape",
-  whatsappUrl = "https://wa.me/51999999999",
+  whatsappUrl = "https://wa.me/51920723721",
 }: PagoEnVerificacionProps) {
   // Contra entrega no tiene voucher que validar: el pedido ya está confirmado
   // y lo único pendiente es coordinar la entrega, así que el correo cambia de
@@ -28,8 +36,11 @@ export default function PagoEnVerificacion({
         previewText={`Confirmamos tu pedido #${numeroPedido} — pagas al recibirlo`}
         stripeGradient={gradients.warn}
       >
-        <CategoryLabel>Pedido confirmado</CategoryLabel>
-        <Headline>Tu pedido está en camino, {nombre}</Headline>
+        <CategoryLabel icon="packageCheck">Pedido confirmado</CategoryLabel>
+        <Headline size="md">Tu pedido está en camino, {nombre}</Headline>
+
+        <OrderProgress current="preparacion" />
+
         <BodyText>
           Recibimos tu pedido <strong style={{ color: brand.colors.navy }}>#{numeroPedido}</strong>{" "}
           con pago contra entrega. No tienes que pagar nada por adelantado: le pagas al motorizado
@@ -54,7 +65,9 @@ export default function PagoEnVerificacion({
           ]}
         />
 
-        <CtaButton href={whatsappUrl}>Coordinar mi entrega por WhatsApp →</CtaButton>
+        <CtaButton href={whatsappUrl} variant="whatsapp">
+          Coordinar mi entrega
+        </CtaButton>
 
         <BodyText marginBottom={0}>
           Si necesitas cambiar la dirección o la fecha, escríbenos y lo ajustamos.
@@ -68,12 +81,15 @@ export default function PagoEnVerificacion({
       previewText={`Estamos validando tu pago del pedido #${numeroPedido}`}
       stripeGradient={gradients.warn}
     >
-      <CategoryLabel>En verificación</CategoryLabel>
-      <Headline>Estamos validando tu pago, {nombre}</Headline>
-      <BodyText>
-        Recibimos tu pedido <strong style={{ color: brand.colors.navy }}>#{numeroPedido}</strong>.
-        Para confirmarlo, envíanos {textoMetodo} respondiendo este mismo correo o por WhatsApp.
-      </BodyText>
+      <CategoryLabel icon="clock">En verificación</CategoryLabel>
+      <Headline size="md">Estamos validando tu pago, {nombre}</Headline>
+
+      <OrderProgress current="pagado" />
+
+      <AlertBox tone="info" title={`Falta un paso para confirmar el pedido #${numeroPedido}`}>
+        Necesitamos {textoMetodo} para validar la transacción. Puedes enviárnoslo por WhatsApp o
+        respondiendo a este mismo correo.
+      </AlertBox>
 
       <StepsList
         title="Cómo proceder"
@@ -93,7 +109,9 @@ export default function PagoEnVerificacion({
         ]}
       />
 
-      <CtaButton href={whatsappUrl}>Enviar voucher por WhatsApp →</CtaButton>
+      <CtaButton href={whatsappUrl} variant="whatsapp">
+        Enviar mi voucher
+      </CtaButton>
 
       <BodyText marginBottom={0}>
         Si ya enviaste tu comprobante, ignora este mensaje — ya lo estamos procesando.

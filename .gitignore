@@ -35,3 +35,6 @@ next-env.d.ts
 # python cache de scripts de skills (ui-ux-pro-max)
 __pycache__/
 *.pyc
+
+# salida local de scripts/preview-correos.mjs (HTML regenerable de los correos)
+/.preview-correos

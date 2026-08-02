@@ -22,7 +22,7 @@ export default function CanjeConfirmado({
 }: CanjeConfirmadoProps) {
   return (
     <EmailLayout previewText={`Tu canje fue exitoso — ${nombreCanje}`} stripeGradient={gradients.pinkOrange}>
-      <CategoryLabel>🎁 Canje confirmado</CategoryLabel>
+      <CategoryLabel icon="gift">Canje confirmado</CategoryLabel>
       <Headline>
         ¡Listo, {nombre}!
         <br />

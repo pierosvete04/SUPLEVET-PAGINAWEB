@@ -1,8 +1,15 @@
 import { Section, Text } from "@react-email/components";
 import * as React from "react";
-import { brand, gradients } from "./components/brand";
+import { brand, gradients, shadows } from "./components/brand";
 import { EmailLayout } from "./components/EmailLayout";
-import { BodyText, CategoryLabel, CtaButton, Headline } from "./components/primitives";
+import {
+  BodyText,
+  CategoryLabel,
+  CtaButton,
+  EmailIcon,
+  Headline,
+  OrderProgress,
+} from "./components/primitives";
 
 export interface ItemPedido {
   nombre: string;
@@ -47,12 +54,15 @@ export default function PedidoConfirmado({
       previewText={`Recibimos tu pedido #${numeroPedido} y ya lo estamos preparando`}
       stripeGradient={gradients.orange}
     >
-      <CategoryLabel>Pedido recibido</CategoryLabel>
+      <CategoryLabel icon="package">Pedido recibido</CategoryLabel>
       <Headline>
         ¡Gracias, {nombre}!
         <br />
         Ya tenemos tu pedido
       </Headline>
+
+      <OrderProgress current="recibido" />
+
       <BodyText>
         Recibimos tu pedido <strong style={{ color: brand.colors.navy }}>#{numeroPedido}</strong> y
         ya lo estamos preparando. Te avisaremos en cuanto se confirme el pago para comenzar con el
@@ -62,9 +72,11 @@ export default function PedidoConfirmado({
       <Section
         style={{
           backgroundColor: brand.colors.softGray,
+          border: `1px solid ${brand.colors.border}`,
           borderRadius: 14,
           padding: "20px 22px",
           marginBottom: 32,
+          boxShadow: shadows.raised,
         }}
       >
         <Text
@@ -192,7 +204,8 @@ export default function PedidoConfirmado({
           fontFamily: brand.fonts.body,
         }}
       >
-        📦 Dirección de envío
+        <EmailIcon name="mapPin" marginRight={7} />
+        Dirección de envío
       </Text>
       <BodyText marginBottom={32}>
         {direccion.nombreCompleto}

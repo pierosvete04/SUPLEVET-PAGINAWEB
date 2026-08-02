@@ -1,7 +1,13 @@
 import * as React from "react";
 import { brand, gradients } from "./components/brand";
 import { EmailLayout } from "./components/EmailLayout";
-import { BodyText, CategoryLabel, CtaButton, Headline } from "./components/primitives";
+import {
+  BodyText,
+  CategoryLabel,
+  CtaButton,
+  Headline,
+  OrderProgress,
+} from "./components/primitives";
 
 export interface PedidoEnCaminoProps {
   nombre: string;
@@ -19,12 +25,15 @@ export default function PedidoEnCamino({
       previewText={`¡Tu pedido #${numeroPedido} está en camino!`}
       stripeGradient={gradients.sky}
     >
-      <CategoryLabel>Pedido en camino</CategoryLabel>
+      <CategoryLabel icon="truck">Pedido en camino</CategoryLabel>
       <Headline>
         ¡Ya salió, {nombre}!
         <br />
         Tu pedido está en camino
       </Headline>
+
+      <OrderProgress current="camino" />
+
       <BodyText>
         Tu pedido <strong style={{ color: brand.colors.navy }}>#{numeroPedido}</strong> quedó listo
         y ya va rumbo a tu dirección. Cualquier duda sobre el envío, escríbenos por WhatsApp.

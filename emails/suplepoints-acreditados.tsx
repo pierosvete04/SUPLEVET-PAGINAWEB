@@ -25,13 +25,15 @@ export default function SuplepointsAcreditados({
       previewText={`+${puntosGanados} SuplePoints acreditados a tu cuenta`}
       stripeGradient={gradients.orange}
     >
-      <CategoryLabel align="center">SuplePoints</CategoryLabel>
+      <CategoryLabel align="center" icon="paw">
+        SuplePoints
+      </CategoryLabel>
       <Headline align="center">
         ¡Ganaste {puntosGanados} puntos, {nombre}!
       </Headline>
       <BodyText align="center">
         Por {origen} acreditamos {puntosGanados} SuplePoints a tu cuenta. Ya están listos para
-        canjearse por descuentos y beneficios. 🐾
+        canjearse por descuentos y beneficios.
       </BodyText>
 
       <DarkBanner

@@ -7,6 +7,7 @@ import {
   CtaButton,
   DarkBanner,
   Headline,
+  OrderProgress,
   WhatsAppCard,
 } from "./components/primitives";
 
@@ -25,11 +26,13 @@ export default function PagoConfirmado({
   puntosGanados = 150,
   tiempoEstimadoEnvio = "2 a 4 días hábiles",
   portalUrl = `${brand.portalUrl}/pedidos`,
-  whatsappUrl = "https://wa.me/51999999999",
+  whatsappUrl = "https://wa.me/51920723721",
 }: PagoConfirmadoProps) {
   return (
     <EmailLayout previewText={`¡Tu pago fue confirmado! Pedido #${numeroPedido}`} stripeGradient={gradients.green}>
-      <CategoryLabel align="center">🎉 Pago confirmado</CategoryLabel>
+      <CategoryLabel align="center" icon="checkOrange">
+        Pago confirmado
+      </CategoryLabel>
       <Headline align="center">
         ¡Listo, {nombre}!
         <br />
@@ -38,8 +41,10 @@ export default function PagoConfirmado({
       <BodyText align="center">
         Tu pedido <strong style={{ color: brand.colors.navy }}>#{numeroPedido}</strong> ya está
         confirmado y pasa a preparación
-        {puntosGanados > 0 ? ". Ganaste SuplePoints con esta compra 🐾" : " 🐾"}
+        {puntosGanados > 0 ? ". Ganaste SuplePoints con esta compra." : "."}
       </BodyText>
+
+      <OrderProgress current="pagado" />
 
       {puntosGanados > 0 && (
         <DarkBanner
@@ -54,6 +59,7 @@ export default function PagoConfirmado({
           title="¿Quieres saber cuándo te llega?"
           description="Escríbenos por WhatsApp y te contamos el estado de tu envío al toque."
           whatsappUrl={whatsappUrl}
+          buttonLabel="Coordinar mi entrega"
         />
       ) : null}
 

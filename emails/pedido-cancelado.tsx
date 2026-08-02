@@ -1,15 +1,21 @@
-import { Section } from "@react-email/components";
 import * as React from "react";
 import { brand, gradients } from "./components/brand";
 import { EmailLayout } from "./components/EmailLayout";
-import { BodyText, CategoryLabel, CtaButton, Divider, Headline } from "./components/primitives";
+import {
+  AlertBox,
+  BodyText,
+  CategoryLabel,
+  CtaButton,
+  Divider,
+  Headline,
+} from "./components/primitives";
 
 export interface PedidoCanceladoProps {
   nombre: string;
   numeroPedido: string;
   motivo?: string;
   tiendaUrl?: string;
-  whatsappUrl?: string;
+  whatsappUrl: string;
 }
 
 export default function PedidoCancelado({
@@ -17,37 +23,29 @@ export default function PedidoCancelado({
   numeroPedido = "W-1001",
   motivo = "no pudimos completar el proceso de compra",
   tiendaUrl = `${brand.siteUrl}/productos`,
-  whatsappUrl = "https://wa.me/51999999999",
+  whatsappUrl = "https://wa.me/51920723721",
 }: PedidoCanceladoProps) {
   return (
     <EmailLayout
-      previewText={`Tu pedido #${numeroPedido} fue cancelado`}
+      previewText={`Cancelamos tu pedido #${numeroPedido} — escríbenos si fue un error`}
       stripeGradient={gradients.red}
     >
-      <CategoryLabel>Pedido cancelado</CategoryLabel>
-      <Headline color={brand.colors.error}>Cancelamos tu pedido, {nombre}</Headline>
-      <BodyText>
-        Tu pedido <strong style={{ color: brand.colors.navy }}>#{numeroPedido}</strong> fue
-        cancelado: {motivo}. Si no realizaste este pedido o crees que se trata de un error,
-        escríbenos y lo revisamos contigo.
-      </BodyText>
+      <CategoryLabel icon="xError">Pedido cancelado</CategoryLabel>
+      <Headline size="md" color={brand.colors.error}>
+        Cancelamos tu pedido, {nombre}
+      </Headline>
 
-      <Section style={{ marginBottom: 8 }}>
-        <table role="presentation" width="100%" cellPadding={0} cellSpacing={0}>
-          <tbody>
-            <tr>
-              <td width="50%" style={{ paddingRight: 6 }}>
-                <CtaButton href={tiendaUrl}>Volver a la tienda →</CtaButton>
-              </td>
-              <td width="50%" style={{ paddingLeft: 6 }}>
-                <CtaButton href={whatsappUrl} variant="outline">
-                  Escribir por WhatsApp
-                </CtaButton>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </Section>
+      <AlertBox tone="error" title={`El pedido #${numeroPedido} quedó cancelado`}>
+        Motivo: {motivo}. No se te cobró nada. Si no hiciste este pedido o crees que fue un error,
+        escríbenos y lo revisamos contigo.
+      </AlertBox>
+
+      <CtaButton href={tiendaUrl} marginBottom={14}>
+        Volver a la tienda →
+      </CtaButton>
+      <CtaButton href={whatsappUrl} variant="whatsapp">
+        Consultar por WhatsApp
+      </CtaButton>
 
       <Divider />
       <BodyText marginBottom={0}>

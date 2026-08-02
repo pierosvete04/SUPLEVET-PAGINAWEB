@@ -23,7 +23,7 @@ export default function ResetPassword({
 }: ResetPasswordProps) {
   return (
     <EmailLayout previewText="Restablece tu contraseña de Suplevet" stripeGradient={gradients.orange}>
-      <CategoryLabel>Portal de clientes</CategoryLabel>
+      <CategoryLabel icon="keyRound">Portal de clientes</CategoryLabel>
       <Headline>
         Restablece tu
         <br />

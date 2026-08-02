@@ -23,7 +23,7 @@ export default function ChangeEmail({
 }: ChangeEmailProps) {
   return (
     <EmailLayout previewText="Confirma tu nuevo correo de Suplevet" stripeGradient={gradients.orange}>
-      <CategoryLabel>Portal de clientes</CategoryLabel>
+      <CategoryLabel icon="mailCheck">Portal de clientes</CategoryLabel>
       <Headline>
         Confirma tu
         <br />

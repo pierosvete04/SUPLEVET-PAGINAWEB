@@ -24,7 +24,7 @@ export default function LibroReclamacionRespondido({
       previewText={`Respondimos tu ${etiqueta} #${correlativo}`}
       stripeGradient={gradients.warn}
     >
-      <CategoryLabel>Libro de reclamaciones</CategoryLabel>
+      <CategoryLabel icon="fileText">Libro de reclamaciones</CategoryLabel>
       <Headline>Respondimos tu {etiqueta}, {nombre}</Headline>
       <BodyText>
         Este es el resultado de la revisión de tu {etiqueta} registrado en nuestro libro de

@@ -1,17 +1,48 @@
-import { Button, Section, Text } from "@react-email/components";
+import { Button, Img, Section, Text } from "@react-email/components";
 import * as React from "react";
-import { brand, gradients } from "./brand";
+import { brand, gradients, icons, shadows, type EmailIconName } from "./brand";
 
 // Bloque de piezas reutilizables para armar el cuerpo de cada correo,
 // manteniendo siempre la misma tipografía de marca: Bebas Neue en
 // titulares (mayúsculas), DM Sans en todo lo demás.
 
+// Ícono PNG alineado al texto. Nunca emojis: se dibujan distinto en cada
+// sistema operativo y no se pueden teñir con los colores de marca. Ver el
+// bloque `icons` en brand.ts para el catálogo y el porqué del formato.
+export function EmailIcon({
+  name,
+  align = "middle",
+  marginRight = 0,
+}: {
+  name: EmailIconName;
+  align?: "middle" | "top" | "baseline";
+  marginRight?: number;
+}) {
+  const icon = icons[name];
+  return (
+    <Img
+      src={icon.src}
+      width={icon.size}
+      height={icon.size}
+      alt={icon.alt}
+      style={{
+        display: "inline-block",
+        verticalAlign: align,
+        border: "0",
+        marginRight,
+      }}
+    />
+  );
+}
+
 export function CategoryLabel({
   children,
   align = "left",
+  icon,
 }: {
   children: React.ReactNode;
   align?: "left" | "center";
+  icon?: EmailIconName;
 }) {
   return (
     <Text
@@ -26,25 +57,33 @@ export function CategoryLabel({
         textAlign: align,
       }}
     >
+      {icon ? <EmailIcon name={icon} marginRight={7} /> : null}
       {children}
     </Text>
   );
 }
 
+// `lg` (40px) es el titular por defecto; `md` (32px) es para titulares que
+// pasan de dos líneas — a 40px de Bebas una frase larga se come el aire de la
+// tarjeta y deja de leerse como titular.
+const HEADLINE_SIZES = { lg: 40, md: 32 } as const;
+
 export function Headline({
   children,
   align = "left",
   color = brand.colors.navy,
+  size = "lg",
 }: {
   children: React.ReactNode;
   align?: "left" | "center";
   color?: string;
+  size?: keyof typeof HEADLINE_SIZES;
 }) {
   return (
     <Text
       style={{
         margin: "0 0 14px",
-        fontSize: 40,
+        fontSize: HEADLINE_SIZES[size],
         fontWeight: 400,
         color,
         lineHeight: 1.05,
@@ -84,36 +123,83 @@ export function BodyText({
   );
 }
 
+// Variantes del CTA. Reglas que aplican a todas:
+//
+// 1. `backgroundColor` y `backgroundImage` van SEPARADOS, nunca con el
+//    shorthand `background`. Outlook de escritorio (motor Word) descarta los
+//    degradados: con el shorthand el botón se quedaba sin fondo y el texto
+//    blanco terminaba invisible sobre blanco. Con el par, Outlook cae al color
+//    sólido, que además es el extremo OSCURO del degradado (el que sostiene el
+//    contraste del texto).
+// 2. La sombra lleva el color del propio botón, no gris — es lo que lo despega
+//    de la tarjeta. Outlook la ignora y degrada a plano sin romper nada.
+// 3. `whatsapp` lleva el glifo de la app, así la acción se reconoce por forma y
+//    no solo por el color verde (regla color-not-only de accesibilidad).
+const CTA_VARIANTS = {
+  primary: {
+    backgroundColor: brand.colors.orangeDark,
+    backgroundImage: `linear-gradient(135deg,${brand.colors.orange},${brand.colors.orangeDark})`,
+    color: "#ffffff",
+    border: "none",
+    boxShadow: shadows.ctaOrange,
+    padding: "16px 44px",
+    icon: undefined,
+  },
+  whatsapp: {
+    backgroundColor: brand.colors.whatsappDark,
+    backgroundImage: gradients.whatsapp,
+    color: "#ffffff",
+    border: "none",
+    boxShadow: shadows.ctaWhatsapp,
+    padding: "16px 38px",
+    icon: "whatsapp",
+  },
+  outline: {
+    backgroundColor: "transparent",
+    backgroundImage: "none",
+    color: brand.colors.navy,
+    border: `2px solid ${brand.colors.navy}`,
+    boxShadow: "none",
+    padding: "14px 42px",
+    icon: undefined,
+  },
+} as const;
+
+export type CtaVariant = keyof typeof CTA_VARIANTS;
+
 export function CtaButton({
   href,
   children,
   variant = "primary",
+  marginBottom = 28,
 }: {
   href: string;
   children: React.ReactNode;
-  variant?: "primary" | "outline";
+  variant?: CtaVariant;
+  marginBottom?: number;
 }) {
-  const isPrimary = variant === "primary";
+  const v = CTA_VARIANTS[variant];
   return (
-    <Section style={{ textAlign: "center", marginBottom: 28 }}>
+    <Section style={{ textAlign: "center", marginBottom }}>
       <Button
         href={href}
         style={{
           display: "inline-block",
-          background: isPrimary
-            ? `linear-gradient(135deg,${brand.colors.orange},${brand.colors.orangeDark})`
-            : "transparent",
-          border: isPrimary ? "none" : `2px solid ${brand.colors.navy}`,
-          color: isPrimary ? "#ffffff" : brand.colors.navy,
+          backgroundColor: v.backgroundColor,
+          backgroundImage: v.backgroundImage,
+          border: v.border,
+          color: v.color,
           fontFamily: brand.fonts.body,
           fontSize: 15,
           fontWeight: 700,
-          padding: isPrimary ? "16px 44px" : "14px 42px",
+          padding: v.padding,
           borderRadius: 12,
           letterSpacing: ".02em",
           textDecoration: "none",
+          boxShadow: v.boxShadow,
         }}
       >
+        {v.icon ? <EmailIcon name={v.icon} marginRight={9} /> : null}
         {children}
       </Button>
     </Section>
@@ -199,6 +285,7 @@ export function TicketCode({
         textAlign: "center",
         marginBottom: 32,
         backgroundColor: brand.colors.softGray,
+        boxShadow: shadows.raised,
       }}
     >
       <Text
@@ -267,9 +354,11 @@ export function StepsList({ title, steps }: { title: string; steps: Step[] }) {
     <Section
       style={{
         backgroundColor: brand.colors.softGray,
+        border: `1px solid ${brand.colors.border}`,
         borderRadius: 14,
         padding: "20px 22px",
         marginBottom: 32,
+        boxShadow: shadows.raised,
       }}
     >
       <Text
@@ -397,7 +486,8 @@ export function OtpCodeBlock({ code, caption }: { code: string; caption?: string
                   letterSpacing: ".03em",
                 }}
               >
-                📋 Mantén presionado el código para copiarlo
+                <EmailIcon name="clipboard" marginRight={7} />
+                Mantén presionado el código para copiarlo
               </Text>
               {caption ? (
                 <Text
@@ -425,8 +515,8 @@ export function SecurityNote({ children }: { children: React.ReactNode }) {
     <table role="presentation" width="100%" cellPadding={0} cellSpacing={0}>
       <tbody>
         <tr>
-          <td width={20} valign="top" style={{ paddingTop: 1 }}>
-            <span style={{ fontSize: 14 }}>🔒</span>
+          <td width={20} valign="top" style={{ paddingTop: 2 }}>
+            <EmailIcon name="lock" align="top" />
           </td>
           <td style={{ paddingLeft: 10 }}>
             <Text
@@ -474,6 +564,7 @@ export function WhatsAppCard({
         marginBottom: 32,
         backgroundColor: brand.colors.softGray,
         textAlign: "center",
+        boxShadow: shadows.raised,
       }}
     >
       <Text
@@ -489,7 +580,7 @@ export function WhatsAppCard({
       </Text>
       <Text
         style={{
-          margin: "0 0 16px",
+          margin: "0 0 18px",
           fontSize: 12.5,
           color: brand.colors.textMuted,
           fontFamily: brand.fonts.body,
@@ -497,22 +588,317 @@ export function WhatsAppCard({
       >
         {description}
       </Text>
-      <Button
-        href={whatsappUrl}
-        style={{
-          display: "inline-block",
-          backgroundColor: "#25D366",
-          color: "#ffffff",
-          fontFamily: brand.fonts.body,
-          fontSize: 14,
-          fontWeight: 700,
-          padding: "14px 28px",
-          borderRadius: 12,
-          textDecoration: "none",
-        }}
-      >
+      <CtaButton href={whatsappUrl} variant="whatsapp" marginBottom={4}>
         {buttonLabel}
-      </Button>
+      </CtaButton>
+    </Section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Barra de progreso del pedido
+// ---------------------------------------------------------------------------
+
+// Las 5 etapas del ciclo de vida de un pedido web, en orden. El orden importa:
+// la barra pinta como completadas todas las que están ANTES de la actual.
+export const ETAPAS_PEDIDO = [
+  { id: "recibido", label: "Recibido" },
+  { id: "pagado", label: "Pagado" },
+  { id: "preparacion", label: "Preparando" },
+  { id: "camino", label: "En camino" },
+  { id: "entregado", label: "Entregado" },
+] as const;
+
+export type EtapaPedido = (typeof ETAPAS_PEDIDO)[number]["id"];
+
+// `warn` = el pedido se salió del camino feliz (devuelto) y `error` = se cortó
+// (cancelado/rechazado). Se pinta el segmento actual con ese color en vez del
+// naranja, y el resto queda en gris para que se lea que no avanzó.
+const PROGRESS_TONES = {
+  normal: brand.colors.orange,
+  warn: brand.colors.warn,
+  error: brand.colors.error,
+} as const;
+
+/**
+ * Barra segmentada que ubica al cliente dentro del ciclo del pedido. Es lo
+ * primero que se ve en los correos de estado: responde "¿en qué voy?" sin que
+ * el cliente tenga que leer nada.
+ *
+ * Se arma con una <table> de dos filas (barras / etiquetas) y celdas de color
+ * plano — sin flex, sin border-radius y sin imágenes — porque es la única
+ * construcción que se ve igual en Gmail, Apple Mail y Outlook de escritorio.
+ */
+export function OrderProgress({
+  current,
+  tone = "normal",
+}: {
+  current: EtapaPedido;
+  tone?: keyof typeof PROGRESS_TONES;
+}) {
+  const activeIndex = ETAPAS_PEDIDO.findIndex((e) => e.id === current);
+  const accent = PROGRESS_TONES[tone];
+  const ancho = `${(100 / ETAPAS_PEDIDO.length).toFixed(2)}%`;
+
+  return (
+    <Section style={{ marginBottom: 30 }}>
+      <table role="presentation" width="100%" cellPadding={0} cellSpacing={0}>
+        <tbody>
+          <tr>
+            {ETAPAS_PEDIDO.map((etapa, i) => {
+              const done = i < activeIndex;
+              const isCurrent = i === activeIndex;
+              return (
+                <td
+                  key={etapa.id}
+                  width={ancho}
+                  style={{ paddingRight: i === ETAPAS_PEDIDO.length - 1 ? 0 : 4 }}
+                >
+                  <div
+                    style={{
+                      height: 5,
+                      fontSize: 0,
+                      lineHeight: 0,
+                      borderRadius: 3,
+                      backgroundColor: done
+                        ? brand.colors.orange
+                        : isCurrent
+                          ? accent
+                          : "#E5E3DF",
+                    }}
+                  >
+                    &nbsp;
+                  </div>
+                </td>
+              );
+            })}
+          </tr>
+          <tr>
+            {ETAPAS_PEDIDO.map((etapa, i) => {
+              const isCurrent = i === activeIndex;
+              const done = i < activeIndex;
+              return (
+                <td
+                  key={etapa.id}
+                  width={ancho}
+                  style={{ paddingTop: 7, paddingRight: i === ETAPAS_PEDIDO.length - 1 ? 0 : 4 }}
+                >
+                  <Text
+                    style={{
+                      margin: 0,
+                      fontSize: 9.5,
+                      lineHeight: 1.3,
+                      letterSpacing: ".04em",
+                      textTransform: "uppercase",
+                      fontFamily: brand.fonts.body,
+                      fontWeight: isCurrent ? 700 : 500,
+                      color: isCurrent
+                        ? brand.colors.navy
+                        : done
+                          ? brand.colors.textMuted
+                          : brand.colors.textFaint,
+                    }}
+                  >
+                    {etapa.label}
+                  </Text>
+                </td>
+              );
+            })}
+          </tr>
+        </tbody>
+      </table>
+    </Section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Caja de estado (alerta)
+// ---------------------------------------------------------------------------
+
+// Cada tono trae ícono + color de borde + tinte de fondo. El ícono NO es
+// decorativo: es lo que permite distinguir un error de una advertencia sin
+// depender del color (regla color-not-only), por eso lleva `alt` en brand.ts.
+const ALERT_TONES = {
+  error: {
+    icon: "alertErrorLg",
+    accent: brand.colors.error,
+    background: brand.colors.errorTint,
+  },
+  warn: {
+    icon: "alertWarnLg",
+    accent: brand.colors.warn,
+    background: brand.colors.warnTint,
+  },
+  success: {
+    icon: "alertSuccessLg",
+    accent: brand.colors.success,
+    background: brand.colors.successTint,
+  },
+  info: {
+    icon: "alertInfoLg",
+    accent: brand.colors.skyDeep,
+    background: brand.colors.infoTint,
+  },
+} as const;
+
+export type AlertTone = keyof typeof ALERT_TONES;
+
+/**
+ * Bloque para comunicar un estado que el cliente necesita entender antes de
+ * actuar (un pago rechazado, un pedido devuelto, una confirmación).
+ *
+ * `title` da el hecho y `children` explica el siguiente paso — un mensaje de
+ * error que no dice cómo salir de él no sirve de nada.
+ */
+export function AlertBox({
+  tone,
+  title,
+  children,
+}: {
+  tone: AlertTone;
+  title: string;
+  children?: React.ReactNode;
+}) {
+  const t = ALERT_TONES[tone];
+  return (
+    <Section style={{ marginBottom: 28 }}>
+      <table role="presentation" width="100%" cellPadding={0} cellSpacing={0}>
+        <tbody>
+          <tr>
+            <td
+              style={{
+                backgroundColor: t.background,
+                borderLeft: `4px solid ${t.accent}`,
+                borderRadius: "0 12px 12px 0",
+                padding: "16px 18px",
+                boxShadow: shadows.raised,
+              }}
+            >
+              <table role="presentation" width="100%" cellPadding={0} cellSpacing={0}>
+                <tbody>
+                  <tr>
+                    <td width={30} valign="top" style={{ paddingTop: 1 }}>
+                      <EmailIcon name={t.icon} align="top" />
+                    </td>
+                    <td valign="top">
+                      <Text
+                        style={{
+                          margin: 0,
+                          fontSize: 13.5,
+                          fontWeight: 700,
+                          color: brand.colors.navy,
+                          lineHeight: 1.4,
+                          fontFamily: brand.fonts.body,
+                        }}
+                      >
+                        {title}
+                      </Text>
+                      {children ? (
+                        <Text
+                          style={{
+                            margin: "5px 0 0",
+                            fontSize: 12.5,
+                            color: brand.colors.textMuted,
+                            lineHeight: 1.6,
+                            fontFamily: brand.fonts.body,
+                          }}
+                        >
+                          {children}
+                        </Text>
+                      ) : null}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </Section>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Ficha resumen del pedido
+// ---------------------------------------------------------------------------
+
+export interface SummaryRow {
+  label: string;
+  value: React.ReactNode;
+  /** Resalta la fila (se usa para el total). */
+  strong?: boolean;
+}
+
+/**
+ * Ficha compacta de datos clave del pedido (número, fecha, total, método de
+ * pago). Antes esa información iba suelta dentro de un párrafo y el cliente
+ * tenía que leerla para encontrarla; acá se escanea de un vistazo.
+ */
+export function SummaryCard({ title, rows }: { title?: string; rows: SummaryRow[] }) {
+  return (
+    <Section
+      style={{
+        backgroundColor: brand.colors.softGray,
+        border: `1px solid ${brand.colors.border}`,
+        borderRadius: 14,
+        padding: "18px 20px",
+        marginBottom: 28,
+        boxShadow: shadows.raised,
+      }}
+    >
+      {title ? (
+        <Text
+          style={{
+            margin: "0 0 12px",
+            fontSize: 11.5,
+            fontWeight: 700,
+            textTransform: "uppercase",
+            letterSpacing: ".08em",
+            color: brand.colors.textFaint,
+            fontFamily: brand.fonts.body,
+          }}
+        >
+          {title}
+        </Text>
+      ) : null}
+      <table role="presentation" width="100%" cellPadding={0} cellSpacing={0}>
+        <tbody>
+          {rows.map((row, i) => (
+            <tr key={row.label}>
+              <td
+                valign="top"
+                style={{
+                  paddingBottom: i === rows.length - 1 ? 0 : 9,
+                  fontSize: 12.5,
+                  color: brand.colors.textMuted,
+                  fontFamily: brand.fonts.body,
+                  lineHeight: 1.5,
+                }}
+              >
+                {row.label}
+              </td>
+              <td
+                valign="top"
+                align="right"
+                style={{
+                  paddingBottom: i === rows.length - 1 ? 0 : 9,
+                  paddingLeft: 12,
+                  fontSize: row.strong ? 14 : 12.5,
+                  fontWeight: row.strong ? 700 : 600,
+                  color: brand.colors.navy,
+                  fontFamily: brand.fonts.body,
+                  lineHeight: 1.5,
+                  // Cifras tabulares: evita que los montos "bailen" de ancho
+                  // entre filas cuando cambian los dígitos.
+                  fontVariantNumeric: "tabular-nums",
+                }}
+              >
+                {row.value}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </Section>
   );
 }
