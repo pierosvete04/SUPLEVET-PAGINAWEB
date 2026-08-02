@@ -357,6 +357,12 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
               <CardTitle className="text-sm text-muted-foreground">Verificación de pago</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
+              <p className="text-sm">
+                <span className="text-muted-foreground">Método de pago: </span>
+                <span className="font-medium">
+                  {FORMA_PAGO_LABEL[pedido.forma_pago ?? ""] ?? "No especificado"}
+                </span>
+              </p>
               {pedido.estado_pago === "cancelado" ? (
                 <p className="text-sm text-muted-foreground">Este pedido fue cancelado. No hay nada más que verificar.</p>
               ) : pedido.estado_pago === "pagado" ? (
