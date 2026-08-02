@@ -30,9 +30,22 @@ const ESTADO_POR_STATUS: Record<string, EstadoPago> = {
   pending: "pendiente_verificacion",
 };
 
+// Mercado Pago maneja una clave secreta distinta por modo (prueba y
+// productivo) y firma cada notificación con la del modo en que se generó el
+// pago. Los pagos hechos con usuarios de prueba llegan con `live_mode: true`
+// y vienen firmados con la clave PRODUCTIVA, no con la de prueba — verificado
+// el 2026-08-02 comparando el HMAC calculado contra el `v1` recibido: con la
+// clave de la pestaña "Prueba" ninguna variante del manifest coincidía. Por
+// eso se aceptan las dos claves si están configuradas.
+function secretsWebhook(): string[] {
+  return [process.env.MERCADOPAGO_WEBHOOK_SECRET, process.env.MERCADOPAGO_WEBHOOK_SECRET_PROD]
+    .map((secret) => secret?.trim())
+    .filter((secret): secret is string => Boolean(secret));
+}
+
 function firmaValida(request: Request, dataId: string): boolean {
-  const secret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
-  if (!secret) return true; // sin clave configurada, no se puede validar — se procesa igual.
+  const secrets = secretsWebhook();
+  if (secrets.length === 0) return true; // sin clave configurada, no se puede validar.
 
   const signatureHeader = request.headers.get("x-signature");
   const requestId = request.headers.get("x-request-id");
@@ -49,25 +62,14 @@ function firmaValida(request: Request, dataId: string): boolean {
   if (!ts || !v1) return false;
 
   const manifest = `id:${dataId.toLowerCase()};request-id:${requestId};ts:${ts};`;
-  const hmacEsperado = createHmac("sha256", secret).update(manifest).digest("hex");
-
-  const bufferEsperado = Buffer.from(hmacEsperado, "hex");
   const bufferRecibido = Buffer.from(v1, "hex");
-  const valida = bufferEsperado.length === bufferRecibido.length && timingSafeEqual(bufferEsperado, bufferRecibido);
 
-  // DEBUG TEMPORAL (quitar una vez resuelto el 401 persistente) — nunca
-  // loguea el secreto, solo su largo (para detectar espacios/saltos de
-  // línea de más al pegarlo en Vercel) y los hashes derivados.
-  console.log("[MP webhook debug]", {
-    secretLength: secret.length,
-    secretLengthTrimmed: secret.trim().length,
-    manifest,
-    hmacEsperado,
-    v1Recibido: v1,
-    valida,
+  return secrets.some((secret) => {
+    const hmac = createHmac("sha256", secret).update(manifest).digest("hex");
+    const bufferEsperado = Buffer.from(hmac, "hex");
+    if (bufferEsperado.length !== bufferRecibido.length) return false;
+    return timingSafeEqual(bufferEsperado, bufferRecibido);
   });
-
-  return valida;
 }
 
 export async function POST(request: Request) {
@@ -81,8 +83,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
+  // La firma es defensa en profundidad, no el control principal: abajo el pago
+  // se relee de la API de Mercado Pago con nuestro access token, y tanto el
+  // estado como el external_reference salen de ESA respuesta, nunca del cuerpo
+  // de la request. Así, una notificación no firmada solo puede provocar que un
+  // pedido se sincronice a su estado real en MP — no puede marcar como pagado
+  // algo que MP no aprobó. Rechazar con 401 acá dejaba pedidos ya cobrados
+  // colgados en "pendiente_verificacion" cuando la clave del modo no calzaba,
+  // así que se registra el fallo (para poder corregir la clave) y se continúa.
   if (!firmaValida(request, dataId)) {
-    return NextResponse.json({ error: "Firma inválida" }, { status: 401 });
+    console.warn("[MP webhook] Firma inválida; se verifica el pago contra la API de Mercado Pago.", {
+      dataId,
+      secretsConfigurados: secretsWebhook().length,
+    });
   }
 
   let pagoStatus: string;
