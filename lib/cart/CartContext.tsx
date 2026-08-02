@@ -51,6 +51,10 @@ const CartContext = createContext<CartContextValue | undefined>(undefined);
 const STORAGE_KEY = "suplevet_carrito";
 const STORAGE_KEY_BANDANAS = "suplevet_bandanas_regalo";
 
+// Espera antes de sincronizar el carrito a Supabase. Sin la pausa, subir la
+// cantidad de un producto de 1 a 4 dispararía cuatro escrituras seguidas.
+const SYNC_DEBOUNCE_MS = 2500;
+
 export function CartProvider({ children }: { children: ReactNode }) {
   const [items, setItems] = useState<CartItem[]>([]);
   const [hidratado, setHidratado] = useState(false);
@@ -186,6 +190,42 @@ export function CartProvider({ children }: { children: ReactNode }) {
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hidratado, subtotal, combosQty]);
+
+  // Copia del carrito en Supabase para clientes con sesión. localStorage sigue
+  // siendo la fuente de verdad de la UI; esta fila existe solo para que el
+  // servidor pueda ver un carrito abandonado y mandar el recordatorio — antes
+  // el carrito vivía únicamente en el navegador y no había nada que detectar.
+  //
+  // Los invitados no se sincronizan a propósito: sin cuenta no hay correo al
+  // que escribir, y guardar carritos anónimos sería recolectar datos que no
+  // podemos usar.
+  //
+  // Al completar un pedido el checkout vacía el carrito, así que la siguiente
+  // sincronización guarda `[]` y la fila deja de calificar. Si el cliente sale
+  // hacia Mercado Pago antes de que corra el debounce, la fila queda con los
+  // items viejos — de ahí que encolar_carritos_abandonados() además descarte a
+  // quien haya generado un pedido después de la última modificación.
+  useEffect(() => {
+    if (!hidratado) return;
+
+    let cancelado = false;
+    const timer = setTimeout(async () => {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (cancelado || !user) return;
+
+      await supabase
+        .from("carritos")
+        .upsert({ cliente_id: user.id, items, subtotal }, { onConflict: "cliente_id" });
+    }, SYNC_DEBOUNCE_MS);
+
+    return () => {
+      cancelado = true;
+      clearTimeout(timer);
+    };
+  }, [hidratado, items, subtotal]);
 
   return (
     <CartContext.Provider
