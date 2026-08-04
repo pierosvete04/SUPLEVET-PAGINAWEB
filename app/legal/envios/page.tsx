@@ -84,11 +84,11 @@ export default function EnviosPage() {
           </tr>
           <tr>
             <td>Costa y Sierra accesible</td>
-            <td>S/.300</td>
+            <td>S/.350</td>
           </tr>
           <tr>
             <td>Selva y zonas logísticas extendidas</td>
-            <td>S/.450</td>
+            <td>S/.500</td>
           </tr>
         </tbody>
       </table>
