@@ -84,20 +84,38 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Este pedido ya fue procesado" }, { status: 400 });
   }
 
-  // Origen de la request (localhost en desarrollo, dominio real o preview de
-  // Vercel en producción/pruebas) — sirve para que MP redirija de vuelta al
-  // mismo entorno desde el que se inició la compra.
-  const origin = new URL(request.url).origin;
-  // auto_return exige que back_urls.success sea una URL pública HTTPS
-  // alcanzable — con un origin de localhost, MP rechaza la preferencia
-  // entera (400 "auto_return invalid"), así que en local se omite y el
-  // cliente vuelve a la tienda manualmente en vez de con redirect automático.
-  // El mismo booleano decide a dónde apunta el webhook (ver notification_url
-  // más abajo): si el origin es HTTPS, es públicamente alcanzable por MP, así
-  // que las notificaciones van ahí — al mismo entorno donde se probó el pago
-  // (ej. el preview de Vercel), no siempre a producción. Solo con localhost
-  // (no alcanzable por MP) se cae al dominio de producción como fallback.
-  const puedeAutoRetornar = origin.startsWith("https://");
+  // Origen de la request (dominio real, preview de Vercel, o localhost/IP en
+  // desarrollo) — por defecto se usa para que MP redirija de vuelta al mismo
+  // entorno desde el que se inició la compra (ej. probar desde el preview de
+  // Vercel sin que el webhook apunte a producción).
+  //
+  // PERO solo si es un origen "confiable": dominio real de producción o
+  // preview de Vercel. Antes se aceptaba cualquier origen con protocolo
+  // https:// sin más validación — eso dejaba pasar cosas como
+  // "https://0.0.0.0:3000" (un servidor local con HTTPS activado), que técnicamente
+  // pasa el chequeo pero no es alcanzable ni por el navegador del cliente ni
+  // por los servidores de Mercado Pago. Resultado real (2026-08-04): un pago
+  // de producción se cobró bien, pero el cliente cayó en un ERR_ADDRESS_INVALID
+  // en vez de ver /checkout/exito, y el webhook nunca pudo notificar el pago.
+  // Con la validación de dominio, cualquier origen no confiable (localhost,
+  // 0.0.0.0, IPs, o cualquier otra cosa) cae siempre al dominio de producción
+  // — el cliente SIEMPRE termina en una página real que carga, nunca en un
+  // error de dirección inválida.
+  function esOrigenConfiable(origenCandidato: string): boolean {
+    try {
+      const { protocol, hostname } = new URL(origenCandidato);
+      if (protocol !== "https:") return false;
+      if (hostname === new URL(siteConfig.siteUrl).hostname) return true;
+      return hostname.endsWith(".vercel.app");
+    } catch {
+      return false;
+    }
+  }
+  const origenSolicitado = new URL(request.url).origin;
+  const origin = esOrigenConfiable(origenSolicitado) ? origenSolicitado : siteConfig.siteUrl;
+  // `origin` ya es siempre un dominio real y alcanzable (producción o preview
+  // de Vercel) por la validación de arriba, así que auto_return puede ir
+  // siempre activo — ya no hace falta omitirlo para localhost.
   // En modo prueba NO se envía el email real del cliente como payer: si ese
   // correo pertenece a una cuenta real de Mercado Pago, la preferencia queda
   // ligada a una "parte real" y el pago de prueba falla con "Una de las
@@ -151,8 +169,8 @@ export async function POST(request: Request) {
           pending: `${origin}/checkout/exito?pedido=${pedido.id}`,
           failure: `${origin}/checkout/exito?pedido=${pedido.id}`,
         },
-        ...(puedeAutoRetornar ? { auto_return: "approved" as const } : {}),
-        notification_url: `${puedeAutoRetornar ? origin : siteConfig.siteUrl}/api/webhooks/mercadopago`,
+        auto_return: "approved",
+        notification_url: `${origin}/api/webhooks/mercadopago`,
         binary_mode: true,
         payment_methods: {
           // Solo tarjeta de crédito/débito — se excluyen explícitamente
