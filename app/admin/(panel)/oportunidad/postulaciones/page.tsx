@@ -27,9 +27,14 @@ interface DistribuidorLead {
   id: string;
   created_at: string;
   nombre: string;
+  dni: string | null;
   telefono: string;
   email: string | null;
+  direccion: string | null;
   ciudad: string | null;
+  distrito: string | null;
+  provincia: string | null;
+  departamento: string | null;
   experiencia: string | null;
   mensaje: string | null;
   estado: string;
@@ -88,8 +93,10 @@ export default function AdminOportunidadPostulacionesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Nombre</TableHead>
+                <TableHead>DNI</TableHead>
                 <TableHead>Teléfono</TableHead>
-                <TableHead>Ciudad</TableHead>
+                <TableHead>Dirección</TableHead>
+                <TableHead>Distrito / Región</TableHead>
                 <TableHead>Ocupación</TableHead>
                 <TableHead>Fecha</TableHead>
                 <TableHead>Estado</TableHead>
@@ -98,7 +105,7 @@ export default function AdminOportunidadPostulacionesPage() {
             <TableBody>
               {leads.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-muted-foreground">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground">
                     Sin postulaciones todavía.
                   </TableCell>
                 </TableRow>
@@ -109,8 +116,17 @@ export default function AdminOportunidadPostulacionesPage() {
                     {l.nombre}
                     {l.email && <span className="block text-xs text-muted-foreground/70">{l.email}</span>}
                   </TableCell>
+                  <TableCell className="text-muted-foreground">{l.dni || "—"}</TableCell>
                   <TableCell className="text-muted-foreground">{l.telefono}</TableCell>
-                  <TableCell className="text-muted-foreground">{l.ciudad || "—"}</TableCell>
+                  <TableCell className="max-w-[16rem] text-muted-foreground">{l.direccion || "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">
+                    {l.distrito || l.ciudad || "—"}
+                    {(l.provincia || l.departamento) && (
+                      <span className="block text-xs text-muted-foreground/70">
+                        {[l.provincia, l.departamento].filter(Boolean).join(", ")}
+                      </span>
+                    )}
+                  </TableCell>
                   <TableCell className="max-w-xs text-muted-foreground">{l.experiencia || "—"}</TableCell>
                   <TableCell className="text-muted-foreground">
                     {new Date(l.created_at).toLocaleDateString("es-PE")}

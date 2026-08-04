@@ -72,38 +72,52 @@ export default async function OportunidadDeNegocioPage() {
             alt=""
             fill
             priority
-            className="object-cover opacity-25"
+            className="object-cover opacity-60"
             sizes="100vw"
           />
         )}
-        <div className="absolute inset-0 bg-gradient-to-r from-secondary via-secondary/85 to-transparent" />
+        {/* Antes esto tapaba casi toda la imagen (opacity-25 de la imagen +
+            hasta 85% de este overlay). Se baja el overlay para que la foto se
+            note, manteniendo suficiente contraste para el texto blanco. */}
+        <div className="absolute inset-0 bg-gradient-to-r from-secondary via-secondary/60 to-secondary/10" />
         <div className="relative mx-auto w-full max-w-container px-mobile-margin py-section-y md:px-gutter">
-          <ScrollReveal className="max-w-2xl">
-            <p className="font-impact text-sm tracking-wide text-sky">
-              DISTRIBUIDOR ESTRATÉGICO SUPLEVET
-            </p>
-            <h1 className="mt-3 font-display text-4xl font-bold leading-tight md:text-6xl">
-              {config?.oportunidad_hero_titulo}
-            </h1>
-            <p className="mt-5 max-w-xl font-body text-base text-white/85 md:text-lg">
-              {config?.oportunidad_hero_texto}
-            </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
-              <a
-                href="#postular"
-                className="flex items-center justify-center gap-2 rounded-[17px] bg-accent px-7 py-3.5 font-body text-base font-bold text-accent-foreground transition-opacity hover:opacity-90"
-              >
-                Quiero ser distribuidor
-                <ArrowRight className="h-5 w-5" strokeWidth={2} />
-              </a>
-              <a
-                href="#ventajas"
-                className="flex items-center justify-center gap-2 rounded-[17px] border border-white/40 px-7 py-3.5 font-body text-base font-bold text-white transition-colors hover:bg-white/10"
-              >
-                Ver ventajas
-              </a>
-            </div>
-          </ScrollReveal>
+          <div className="max-w-2xl">
+            {/* Entrada escalonada: eyebrow+título, texto y botones llegan en
+                tiempos distintos en vez de moverse como un solo bloque. */}
+            <ScrollReveal>
+              <p className="font-impact text-sm tracking-wide text-sky">
+                DISTRIBUIDOR ESTRATÉGICO SUPLEVET
+              </p>
+              <h1 className="mt-3 font-display text-4xl font-bold leading-tight md:text-6xl">
+                {config?.oportunidad_hero_titulo}
+              </h1>
+            </ScrollReveal>
+            <ScrollReveal delay={0.15}>
+              <p className="mt-5 max-w-xl font-body text-base text-white/85 md:text-lg">
+                {config?.oportunidad_hero_texto}
+              </p>
+            </ScrollReveal>
+            <ScrollReveal delay={0.3}>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <a
+                  href="#postular"
+                  className="group flex items-center justify-center gap-2 rounded-[17px] bg-accent px-7 py-3.5 font-body text-base font-bold text-accent-foreground transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-accent/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-secondary"
+                >
+                  Quiero ser distribuidor
+                  <ArrowRight
+                    className="h-5 w-5 transition-transform group-hover:translate-x-1"
+                    strokeWidth={2}
+                  />
+                </a>
+                <a
+                  href="#ventajas"
+                  className="flex items-center justify-center gap-2 rounded-[17px] border border-white/40 px-7 py-3.5 font-body text-base font-bold text-white transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60 focus-visible:ring-offset-2 focus-visible:ring-offset-secondary"
+                >
+                  Ver ventajas
+                </a>
+              </div>
+            </ScrollReveal>
+          </div>
         </div>
       </section>
 
@@ -111,15 +125,15 @@ export default async function OportunidadDeNegocioPage() {
       <section className="bg-white py-section-y">
         <div className="mx-auto grid max-w-container grid-cols-1 items-center gap-10 px-mobile-margin md:grid-cols-2 md:gap-16 md:px-gutter">
           <ScrollReveal className="relative">
-            <div className="absolute -left-4 -top-4 hidden h-full w-full rounded-[var(--radius-card)] bg-accent/30 md:block" />
+            <div className="absolute -left-4 -top-4 hidden aspect-square w-full rounded-[var(--radius-card)] bg-accent/30 md:block" />
             {config?.oportunidad_intro_imagen && (
-              <div className="relative overflow-hidden rounded-[var(--radius-card)] shadow-sm">
+              <div className="relative aspect-square w-full overflow-hidden rounded-[var(--radius-card)] shadow-sm">
                 <Image
                   src={config.oportunidad_intro_imagen}
                   alt="Mascota saludable acompañada de Suplevet"
-                  width={720}
-                  height={560}
-                  className="h-full w-full object-cover"
+                  fill
+                  className="object-cover"
+                  sizes="(min-width: 768px) 50vw, 100vw"
                 />
               </div>
             )}
@@ -139,7 +153,30 @@ export default async function OportunidadDeNegocioPage() {
       {/* VENTAJAS — enfoque en producto y resultados */}
       <section id="ventajas" className="scroll-mt-24 bg-soft-gray py-section-y">
         <div className="mx-auto max-w-container px-mobile-margin md:px-gutter">
-          <ScrollReveal className="mx-auto max-w-2xl text-center">
+          {/* Condiciones comerciales — sube y flota sobre el límite con el hero
+              (margen negativo + z-10) para romper el corte plano entre
+              secciones y dar sensación de capas. La lista va alineada a la
+              izquierda aunque el resto del bloque esté centrado: una lista
+              centrada obliga a rastrear el inicio de cada línea. */}
+          {bulletsVentajas.length > 0 && (
+            <ScrollReveal
+              className="relative z-10 mx-auto -mt-16 max-w-2xl rounded-[var(--radius-card)] border border-border bg-white p-6 text-left shadow-xl md:-mt-20 md:p-8"
+            >
+              <p className="font-impact text-xs tracking-wide text-muted-foreground">
+                CONDICIONES COMERCIALES
+              </p>
+              <ListaChecks items={bulletsVentajas} className="mt-3 gap-4 text-base text-secondary" />
+            </ScrollReveal>
+          )}
+
+          <ScrollReveal
+            delay={0.1}
+            className={
+              bulletsVentajas.length > 0
+                ? "mx-auto mt-12 max-w-2xl text-center md:mt-16"
+                : "mx-auto max-w-2xl text-center"
+            }
+          >
             <p className="font-impact text-sm tracking-wide text-secondary">LA VENTAJA SUPLEVET</p>
             <h2 className="mt-2 font-display text-3xl font-bold text-secondary md:text-4xl">
               {config?.oportunidad_ventajas_titulo}
@@ -147,33 +184,66 @@ export default async function OportunidadDeNegocioPage() {
             <p className="mt-4 font-body text-muted-foreground">{config?.oportunidad_ventajas_texto}</p>
           </ScrollReveal>
 
-          {/* Condiciones comerciales — panel único a lo ancho para que no compita
-              con la grilla de tarjetas de abajo. La lista va alineada a la
-              izquierda aunque el encabezado esté centrado: una lista centrada
-              obliga a rastrear el inicio de cada línea. */}
-          {bulletsVentajas.length > 0 && (
-            <ScrollReveal
-              delay={0.1}
-              className="mx-auto mt-10 max-w-2xl rounded-[var(--radius-card)] border border-border bg-white p-6 text-left shadow-sm md:p-8"
-            >
-              <ListaChecks items={bulletsVentajas} className="gap-4 text-base text-secondary" />
-            </ScrollReveal>
-          )}
-
-          <div className="mt-12 grid grid-cols-1 gap-gutter md:grid-cols-2 lg:grid-cols-3">
+          {/* Bento: la primera ventaja se destaca en tamaño y color (tarjeta
+              "ancla") para romper la grilla uniforme; el resto queda en
+              tarjetas estándar. grid-flow-dense rellena los huecos que deja
+              la tarjeta destacada al ocupar 2 columnas. */}
+          <div className="mt-12 grid grid-cols-1 gap-gutter md:grid-cols-2 lg:grid-cols-3 lg:[grid-auto-flow:dense]">
             {ventajas.map(({ id, icono, titulo, texto }, i) => {
               const Icon = ICONOS[icono] ?? FlaskConical;
+              const destacada = i === 0;
               return (
                 <ScrollReveal
                   key={id}
                   delay={(i % 3) * 0.1}
-                  className="group flex flex-col rounded-[var(--radius-card)] border border-border bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
+                  className={
+                    destacada
+                      ? "group relative flex flex-col overflow-hidden rounded-[var(--radius-card)] bg-gradient-to-br from-secondary via-[#1c3357] to-[#0d1c33] p-7 text-white shadow-md transition-all hover:-translate-y-1 hover:shadow-xl md:col-span-2 lg:col-span-2 lg:row-span-2 lg:p-8"
+                      : "group flex flex-col rounded-[var(--radius-card)] border border-border bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
+                  }
                 >
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent/30 text-secondary transition-colors group-hover:bg-accent">
-                    <Icon className="h-7 w-7" strokeWidth={1.5} />
+                  {destacada && (
+                    <>
+                      {/* Dos glows en esquinas opuestas para que el degradado
+                          "se mueva" en vez de ser un navy plano — llena el
+                          espacio vacío que deja una tarjeta 2x2 con poco texto. */}
+                      <div
+                        aria-hidden
+                        className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-accent/20 blur-3xl"
+                      />
+                      <div
+                        aria-hidden
+                        className="pointer-events-none absolute -bottom-24 -left-16 h-64 w-64 rounded-full bg-sky/10 blur-3xl"
+                      />
+                    </>
+                  )}
+                  <div
+                    className={
+                      destacada
+                        ? "relative flex h-16 w-16 items-center justify-center rounded-full bg-white/10 text-white transition-colors group-hover:bg-accent group-hover:text-secondary lg:h-20 lg:w-20"
+                        : "flex h-14 w-14 items-center justify-center rounded-full bg-accent/30 text-secondary transition-colors group-hover:bg-accent"
+                    }
+                  >
+                    <Icon className={destacada ? "h-8 w-8 lg:h-10 lg:w-10" : "h-7 w-7"} strokeWidth={1.5} />
                   </div>
-                  <h3 className="mt-5 font-display text-lg font-bold text-secondary">{titulo}</h3>
-                  <p className="mt-2 font-body text-sm text-muted-foreground">{texto}</p>
+                  <h3
+                    className={
+                      destacada
+                        ? "relative mt-6 font-display text-2xl font-bold lg:mt-8 lg:text-3xl"
+                        : "mt-5 font-display text-lg font-bold text-secondary"
+                    }
+                  >
+                    {titulo}
+                  </h3>
+                  <p
+                    className={
+                      destacada
+                        ? "relative mt-3 max-w-md font-body text-white/80 lg:text-base"
+                        : "mt-2 font-body text-sm text-muted-foreground"
+                    }
+                  >
+                    {texto}
+                  </p>
                 </ScrollReveal>
               );
             })}
@@ -182,8 +252,12 @@ export default async function OportunidadDeNegocioPage() {
       </section>
 
       {/* PRODUCTO — banda destacada */}
-      <section className="bg-secondary py-section-y text-white">
-        <div className="mx-auto grid max-w-container grid-cols-1 items-center gap-10 px-mobile-margin md:grid-cols-2 md:gap-16 md:px-gutter">
+      <section className="relative overflow-hidden bg-secondary py-section-y text-white">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute right-0 top-1/2 h-[28rem] w-[28rem] -translate-y-1/2 translate-x-1/3 rounded-full bg-accent/10 blur-[100px]"
+        />
+        <div className="relative mx-auto grid max-w-container grid-cols-1 items-center gap-10 px-mobile-margin md:grid-cols-2 md:gap-16 md:px-gutter">
           <ScrollReveal>
             <p className="font-impact text-sm tracking-wide text-sky">EL RESPALDO DE TU NEGOCIO</p>
             <h2 className="mt-2 font-display text-3xl font-bold md:text-4xl">
@@ -195,13 +269,13 @@ export default async function OportunidadDeNegocioPage() {
 
           <ScrollReveal delay={0.1} className="relative">
             {config?.oportunidad_producto_imagen && (
-              <div className="relative mx-auto max-w-sm overflow-hidden rounded-[var(--radius-card)] bg-white/5 p-6">
+              <div className="relative mx-auto aspect-square w-full max-w-xs overflow-hidden rounded-[var(--radius-card)] bg-white/5 p-4 shadow-[0_30px_60px_-15px_rgba(0,0,0,0.35)]">
                 <Image
                   src={config.oportunidad_producto_imagen}
                   alt="Producto Suplevet"
-                  width={520}
-                  height={520}
-                  className="h-full w-full object-contain"
+                  fill
+                  className="object-contain p-2"
+                  sizes="(min-width: 768px) 20rem, 60vw"
                 />
               </div>
             )}
@@ -219,12 +293,18 @@ export default async function OportunidadDeNegocioPage() {
             </h2>
           </ScrollReveal>
 
-          <div className="mt-12 grid grid-cols-1 gap-gutter md:grid-cols-3">
+          <div className="relative mt-12 grid grid-cols-1 gap-gutter md:grid-cols-3">
+            {/* Línea conectora entre los 3 pasos (solo desktop) — refuerza la
+                secuencia sin agregar texto nuevo. */}
+            <div
+              aria-hidden
+              className="absolute left-0 right-0 top-14 hidden h-px bg-gradient-to-r from-transparent via-border to-transparent md:block"
+            />
             {pasos(config).map(({ n, titulo, texto }, i) => (
               <ScrollReveal
                 key={n}
                 delay={i * 0.1}
-                className="relative rounded-[var(--radius-card)] bg-soft-gray p-7"
+                className="relative rounded-[var(--radius-card)] bg-soft-gray p-7 transition-shadow hover:shadow-md"
               >
                 <span className="font-display text-5xl font-bold text-accent">{n}</span>
                 <h3 className="mt-3 font-display text-xl font-bold text-secondary">{titulo}</h3>
