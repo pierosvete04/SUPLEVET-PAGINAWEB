@@ -337,7 +337,7 @@ export function FormularioDistribuidor() {
         ) : (
           <WhatsAppIcon className="h-5 w-5" />
         )}
-        {enviando ? "Enviando…" : "Quiero postular por WhatsApp"}
+        {enviando ? "Enviando…" : "Quiero ser distribuidor"}
       </button>
 
       <p className="text-center font-body text-xs text-muted-foreground">

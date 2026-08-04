@@ -153,30 +153,7 @@ export default async function OportunidadDeNegocioPage() {
       {/* VENTAJAS — enfoque en producto y resultados */}
       <section id="ventajas" className="scroll-mt-24 bg-soft-gray py-section-y">
         <div className="mx-auto max-w-container px-mobile-margin md:px-gutter">
-          {/* Condiciones comerciales — sube y flota sobre el límite con el hero
-              (margen negativo + z-10) para romper el corte plano entre
-              secciones y dar sensación de capas. La lista va alineada a la
-              izquierda aunque el resto del bloque esté centrado: una lista
-              centrada obliga a rastrear el inicio de cada línea. */}
-          {bulletsVentajas.length > 0 && (
-            <ScrollReveal
-              className="relative z-10 mx-auto -mt-16 max-w-2xl rounded-[var(--radius-card)] border border-border bg-white p-6 text-left shadow-xl md:-mt-20 md:p-8"
-            >
-              <p className="font-impact text-xs tracking-wide text-muted-foreground">
-                CONDICIONES COMERCIALES
-              </p>
-              <ListaChecks items={bulletsVentajas} className="mt-3 gap-4 text-base text-secondary" />
-            </ScrollReveal>
-          )}
-
-          <ScrollReveal
-            delay={0.1}
-            className={
-              bulletsVentajas.length > 0
-                ? "mx-auto mt-12 max-w-2xl text-center md:mt-16"
-                : "mx-auto max-w-2xl text-center"
-            }
-          >
+          <ScrollReveal className="mx-auto max-w-2xl text-center">
             <p className="font-impact text-sm tracking-wide text-secondary">LA VENTAJA SUPLEVET</p>
             <h2 className="mt-2 font-display text-3xl font-bold text-secondary md:text-4xl">
               {config?.oportunidad_ventajas_titulo}
@@ -184,11 +161,30 @@ export default async function OportunidadDeNegocioPage() {
             <p className="mt-4 font-body text-muted-foreground">{config?.oportunidad_ventajas_texto}</p>
           </ScrollReveal>
 
-          {/* Bento: la primera ventaja se destaca en tamaño y color (tarjeta
-              "ancla") para romper la grilla uniforme; el resto queda en
-              tarjetas estándar. grid-flow-dense rellena los huecos que deja
-              la tarjeta destacada al ocupar 2 columnas. */}
-          <div className="mt-12 grid grid-cols-1 gap-gutter md:grid-cols-2 lg:grid-cols-3 lg:[grid-auto-flow:dense]">
+          {/* Condiciones comerciales — bloque propio con su título arriba, en
+              flujo normal (sin overlap: el intento anterior lo superponía al
+              límite de la sección INTRO, pero esa sección es a 2 columnas —
+              imagen a la izquierda, texto a la derecha — así que el panel
+              centrado a lo ancho de toda la sección quedaba descolgado y
+              "se salía" respecto a la imagen angosta de arriba). La lista va
+              alineada a la izquierda aunque el título esté centrado: una
+              lista centrada obliga a rastrear el inicio de cada línea. */}
+          {bulletsVentajas.length > 0 && (
+            <ScrollReveal delay={0.1} className="mx-auto mt-10 max-w-2xl text-center">
+              <h3 className="font-display text-xl font-bold text-secondary md:text-2xl">
+                Condiciones comerciales
+              </h3>
+              <div className="mt-5 rounded-[var(--radius-card)] border border-border bg-white p-6 text-left shadow-sm md:p-8">
+                <ListaChecks items={bulletsVentajas} className="gap-4 text-base text-secondary" />
+              </div>
+            </ScrollReveal>
+          )}
+
+          {/* Grilla uniforme de 6 tarjetas — la primera lleva un fondo en
+              degradado navy como único acento de jerarquía (mismo tamaño que
+              las demás, sin col-span/row-span: la versión anterior de tarjeta
+              2x2 quedaba demasiado grande frente al resto). */}
+          <div className="mt-12 grid grid-cols-1 gap-gutter md:grid-cols-2 lg:grid-cols-3">
             {ventajas.map(({ id, icono, titulo, texto }, i) => {
               const Icon = ICONOS[icono] ?? FlaskConical;
               const destacada = i === 0;
@@ -198,38 +194,29 @@ export default async function OportunidadDeNegocioPage() {
                   delay={(i % 3) * 0.1}
                   className={
                     destacada
-                      ? "group relative flex flex-col overflow-hidden rounded-[var(--radius-card)] bg-gradient-to-br from-secondary via-[#1c3357] to-[#0d1c33] p-7 text-white shadow-md transition-all hover:-translate-y-1 hover:shadow-xl md:col-span-2 lg:col-span-2 lg:row-span-2 lg:p-8"
+                      ? "group relative flex flex-col overflow-hidden rounded-[var(--radius-card)] bg-gradient-to-br from-secondary via-[#1c3357] to-[#0d1c33] p-6 text-white shadow-md transition-all hover:-translate-y-1 hover:shadow-xl"
                       : "group flex flex-col rounded-[var(--radius-card)] border border-border bg-white p-6 shadow-sm transition-all hover:-translate-y-1 hover:shadow-md"
                   }
                 >
                   {destacada && (
-                    <>
-                      {/* Dos glows en esquinas opuestas para que el degradado
-                          "se mueva" en vez de ser un navy plano — llena el
-                          espacio vacío que deja una tarjeta 2x2 con poco texto. */}
-                      <div
-                        aria-hidden
-                        className="pointer-events-none absolute -right-16 -top-16 h-56 w-56 rounded-full bg-accent/20 blur-3xl"
-                      />
-                      <div
-                        aria-hidden
-                        className="pointer-events-none absolute -bottom-24 -left-16 h-64 w-64 rounded-full bg-sky/10 blur-3xl"
-                      />
-                    </>
+                    <div
+                      aria-hidden
+                      className="pointer-events-none absolute -right-10 -top-10 h-40 w-40 rounded-full bg-accent/20 blur-3xl"
+                    />
                   )}
                   <div
                     className={
                       destacada
-                        ? "relative flex h-16 w-16 items-center justify-center rounded-full bg-white/10 text-white transition-colors group-hover:bg-accent group-hover:text-secondary lg:h-20 lg:w-20"
+                        ? "relative flex h-14 w-14 items-center justify-center rounded-full bg-white/10 text-white transition-colors group-hover:bg-accent group-hover:text-secondary"
                         : "flex h-14 w-14 items-center justify-center rounded-full bg-accent/30 text-secondary transition-colors group-hover:bg-accent"
                     }
                   >
-                    <Icon className={destacada ? "h-8 w-8 lg:h-10 lg:w-10" : "h-7 w-7"} strokeWidth={1.5} />
+                    <Icon className="h-7 w-7" strokeWidth={1.5} />
                   </div>
                   <h3
                     className={
                       destacada
-                        ? "relative mt-6 font-display text-2xl font-bold lg:mt-8 lg:text-3xl"
+                        ? "relative mt-5 font-display text-lg font-bold"
                         : "mt-5 font-display text-lg font-bold text-secondary"
                     }
                   >
@@ -238,7 +225,7 @@ export default async function OportunidadDeNegocioPage() {
                   <p
                     className={
                       destacada
-                        ? "relative mt-3 max-w-md font-body text-white/80 lg:text-base"
+                        ? "relative mt-2 font-body text-sm text-white/80"
                         : "mt-2 font-body text-sm text-muted-foreground"
                     }
                   >
