@@ -24,24 +24,32 @@ const WHATSAPP = "https://wa.me/51920723721?text=Hola%2C%20soy%20Piero";
 // verosímiles a propósito (nombres reales de producto, montos con decimales,
 // distritos de Lima) — con datos de relleno no se ven los problemas de
 // desborde que sí aparecen con contenido real.
+// El correo de pedido recibido cambia de cuerpo según cómo se pagó, así que se
+// previsualizan los tres caminos: el que espera voucher, el de contra entrega y
+// el de tarjeta (que no pide nada al cliente).
+const PEDIDO_BASE = {
+  nombre: "Piero", numeroPedido: "W-1069",
+  items: [
+    { nombre: "Suplevet Articulaciones 150 g", cantidad: 2, precio: 89.9 },
+    { nombre: "Suplevet Digestivo 90 g", cantidad: 1, precio: 64.5 },
+  ],
+  subtotal: 244.3, envio: 12, descuento: 20, total: 236.3,
+  direccion: {
+    nombreCompleto: "Piero Sánchez", direccion: "Calle Río Elba 132 — Dpto 402",
+    distrito: "La Molina, Lima", telefono: "920723721",
+  },
+  whatsappUrl: WHATSAPP,
+};
+
 const CASOS = [
-  ["pedido-confirmado", "Pedido recibido", {
-    nombre: "Piero", numeroPedido: "W-1069",
-    items: [
-      { nombre: "Suplevet Articulaciones 150 g", cantidad: 2, precio: 89.9 },
-      { nombre: "Suplevet Digestivo 90 g", cantidad: 1, precio: 64.5 },
-    ],
-    envio: 12,
-    direccion: {
-      nombreCompleto: "Piero Sánchez", direccion: "Calle Río Elba 132, Dpto 402",
-      distrito: "La Molina, Lima", telefono: "920723721",
-    },
+  ["pedido-confirmado", "Pedido recibido (Yape — espera voucher)", {
+    ...PEDIDO_BASE, metodoPago: "Yape",
   }],
-  ["pago-en-verificacion", "Pago en verificación (Yape)", {
-    nombre: "Piero", numeroPedido: "W-1069", metodoPago: "Yape", whatsappUrl: WHATSAPP,
+  ["pedido-confirmado", "Pedido recibido (contra entrega)", {
+    ...PEDIDO_BASE, numeroPedido: "W-1070", metodoPago: "contra entrega",
   }],
-  ["pago-en-verificacion", "Pago en verificación (contra entrega)", {
-    nombre: "Piero", numeroPedido: "W-1069", metodoPago: "contra entrega", whatsappUrl: WHATSAPP,
+  ["pedido-confirmado", "Pedido recibido (tarjeta)", {
+    ...PEDIDO_BASE, numeroPedido: "W-1071", metodoPago: "tarjeta",
   }],
   ["pago-confirmado", "Pago confirmado", {
     nombre: "Piero", numeroPedido: "W-1069", puntosGanados: 180, whatsappUrl: WHATSAPP,

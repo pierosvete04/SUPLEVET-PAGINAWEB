@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Check, Loader2, Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { provinciasPorDepartamento, distritosPorProvincia } from "@/lib/data/ubigeo";
@@ -23,7 +23,7 @@ import {
   TIPOS_DOCUMENTO,
   type TipoDocumento,
 } from "@/lib/documento";
-import { tieneCoordenadas } from "@/lib/ubicacion";
+import { tieneCoordenadas, type Coordenadas } from "@/lib/ubicacion";
 import { ubicarDistrito } from "@/lib/ubigeo-match";
 import {
   DireccionAutocomplete,
@@ -68,6 +68,37 @@ export const direccionVacia: DireccionEnvio = {
   lng: null,
 };
 
+/** Lo que Google sabe de un punto, sin las coordenadas (que ya conoce quien llama). */
+type UbicacionDeMaps = Omit<DireccionElegida, "lat" | "lng">;
+
+// Aplica a la dirección del formulario lo que Google resolvió para un punto:
+// el texto, el código postal y —si el distrito se identifica sin ambigüedad,
+// usando la provincia de Google para desempatar nombres repetidos— los 3
+// dropdowns de ubigeo. Si queda ambiguo se dejan como estaban: la zona define
+// el precio del envío, así que autocompletarla mal le cobraría de más (o de
+// menos) al cliente.
+//
+// Es una función pura y fuera del componente a propósito: la usan tanto el
+// buscador de direcciones como el arrastre del pin, y así ambos caminos dejan
+// el formulario exactamente en el mismo estado.
+function conUbicacionDeMaps(base: DireccionEnvio, ubicacion: UbicacionDeMaps): DireccionEnvio {
+  const ubigeo = ubicarDistrito(ubicacion.distrito, ubicacion.provincia);
+  return {
+    ...base,
+    direccion: ubicacion.direccion,
+    // Se pisa siempre (incluso con "") — un código postal de la dirección
+    // anterior es peor que el campo vacío, porque viaja al rótulo del courier.
+    codigoPostal: ubicacion.codigoPostal ?? "",
+    ...(ubigeo
+      ? {
+          departamento: ubigeo.departamento,
+          provincia: ubigeo.provincia,
+          distrito: ubigeo.distrito,
+        }
+      : {}),
+  };
+}
+
 interface ShippingStepProps {
   subtotal: number;
   value: DireccionEnvio;
@@ -77,6 +108,12 @@ interface ShippingStepProps {
 
 const inputClass =
   "rounded-md border border-border px-4 py-3 font-body text-sm text-secondary placeholder:text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed";
+
+// El pin ya quedó guardado aunque el texto no se pueda resolver: lo que el
+// courier abre en su celular son las coordenadas, así que el mensaje aclara que
+// no perdió la ubicación.
+const ERROR_PIN =
+  "No pudimos leer la dirección de ese punto — la ubicación del pin sí quedó guardada. Revisa el distrito antes de continuar.";
 
 const metodosEnvio: { value: MetodoEnvio; nombre: string; descripcion: string }[] = [
   { value: "motorizado", nombre: "Delivery motorizado", descripcion: "Entrega directa en tu domicilio." },
@@ -92,6 +129,18 @@ export function ShippingStep({ subtotal, value, onChange, onZonaChange }: Shippi
   const [consultandoDoc, setConsultandoDoc] = useState(false);
   const [errorDoc, setErrorDoc] = useState<string | null>(null);
   const [docAutocompletado, setDocAutocompletado] = useState(false);
+  const [resolviendoPin, setResolviendoPin] = useState(false);
+  const [errorPin, setErrorPin] = useState<string | null>(null);
+  // Cada arrastre incrementa el contador; solo la respuesta del arrastre más
+  // reciente tiene derecho a escribir en el formulario.
+  const solicitudPinRef = useRef(0);
+  // La dirección se resuelve de forma asíncrona, así que al volver del fetch el
+  // `value` del closure ya puede estar viejo (la persona siguió llenando el
+  // formulario mientras tanto). El ref siempre apunta a lo último.
+  const valueRef = useRef(value);
+  useEffect(() => {
+    valueRef.current = value;
+  }, [value]);
 
   useEffect(() => {
     const supabase = createClient();
@@ -189,30 +238,53 @@ export function ShippingStep({ subtotal, value, onChange, onZonaChange }: Shippi
     set("numeroDocumento", docLargo ? limpio.slice(0, docLargo) : limpio.slice(0, 20));
   }
 
-  // Al elegir una sugerencia de Google se guardan las coordenadas, el código
-  // postal (si Google lo conoce) y, si el distrito se resuelve sin ambigüedad
-  // (usando la provincia de Google para desempatar nombres repetidos), se
-  // preseleccionan los 3 dropdowns. Si aun así es ambiguo se dejan como
-  // estaban: la zona define el precio del envío, así que un autocompletado
-  // errado le cobraría de más (o de menos) al cliente.
-  function elegirDireccionDeMaps(elegida: DireccionElegida) {
-    const ubigeo = ubicarDistrito(elegida.distrito, elegida.provincia);
-    onChange({
-      ...value,
-      direccion: elegida.direccion,
-      lat: elegida.lat,
-      lng: elegida.lng,
-      // Se pisa siempre (incluso con "") — un código postal de la dirección
-      // anterior es peor que el campo vacío, porque viaja al rótulo del courier.
-      codigoPostal: elegida.codigoPostal ?? "",
-      ...(ubigeo
-        ? {
-            departamento: ubigeo.departamento,
-            provincia: ubigeo.provincia,
-            distrito: ubigeo.distrito,
-          }
-        : {}),
-    });
+  // Al elegir una sugerencia de Google se guardan las coordenadas y se
+  // completa el resto de la dirección con lo que Google sabe del lugar.
+  function elegirDireccionDeMaps({ lat, lng, ...ubicacion }: DireccionElegida) {
+    setErrorPin(null);
+    onChange({ ...conUbicacionDeMaps(value, ubicacion), lat, lng });
+  }
+
+  // Arrastrar el pin es el otro camino para fijar la entrega, y tiene que
+  // dejar el formulario igual de completo que el buscador: las coordenadas se
+  // aplican al instante (ya son las buenas para el courier) y la dirección de
+  // texto, el distrito y el código postal se reescriben con lo que Google
+  // reporta para ese punto exacto.
+  async function moverPin(coords: Coordenadas) {
+    onChange({ ...value, lat: coords.lat, lng: coords.lng });
+
+    const solicitud = ++solicitudPinRef.current;
+    setResolviendoPin(true);
+    setErrorPin(null);
+    try {
+      const r = await fetch("/api/direcciones/inversa", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(coords),
+      });
+      const d = await r.json().catch(() => null);
+      // Si arrastró el pin otra vez mientras esperábamos, esta respuesta ya
+      // describe un punto viejo y escribirla pisaría la ubicación más reciente.
+      if (solicitud !== solicitudPinRef.current) return;
+
+      if (r.ok && d?.ok) {
+        onChange(
+          conUbicacionDeMaps(valueRef.current, {
+            direccion: d.direccion,
+            distrito: d.distrito,
+            provincia: d.provincia,
+            departamento: d.departamento,
+            codigoPostal: d.codigoPostal ?? null,
+          })
+        );
+      } else {
+        setErrorPin(ERROR_PIN);
+      }
+    } catch {
+      if (solicitud === solicitudPinRef.current) setErrorPin(ERROR_PIN);
+    } finally {
+      if (solicitud === solicitudPinRef.current) setResolviendoPin(false);
+    }
   }
 
   function setTipoDocumento(tipo: TipoDocumento) {
@@ -315,19 +387,27 @@ export function ShippingStep({ subtotal, value, onChange, onZonaChange }: Shippi
         <DireccionAutocomplete
           value={value.direccion}
           ubicada={tieneCoordenadas(value)}
+          cargandoExterno={resolviendoPin}
           className={inputClass}
           // Escribir a mano invalida las coordenadas anteriores: si no, el
           // courier recibiría el pin de una dirección que ya no es la del pedido.
-          onChange={(direccion) => onChange({ ...value, direccion, lat: null, lng: null })}
+          onChange={(direccion) => {
+            setErrorPin(null);
+            onChange({ ...value, direccion, lat: null, lng: null });
+          }}
           onElegir={elegirDireccionDeMaps}
         />
 
         {value.lat !== null && value.lng !== null && (
-          <MapaUbicacion
-            lat={value.lat}
-            lng={value.lng}
-            onMover={(coords) => onChange({ ...value, lat: coords.lat, lng: coords.lng })}
-          />
+          <div className="flex flex-col gap-1.5">
+            <MapaUbicacion
+              lat={value.lat}
+              lng={value.lng}
+              resolviendo={resolviendoPin}
+              onMover={moverPin}
+            />
+            {errorPin && <p className="font-body text-xs text-destructive">{errorPin}</p>}
+          </div>
         )}
 
         <input

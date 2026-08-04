@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { Loader2 } from "lucide-react";
 import { cargarGoogleMaps } from "@/lib/google-maps-client";
 
 interface MapaUbicacionProps {
@@ -8,22 +9,39 @@ interface MapaUbicacionProps {
   lng: number;
   /** Se dispara al soltar el pin arrastrado, con las coordenadas ajustadas. */
   onMover: (coords: { lat: number; lng: number }) => void;
+  /** Se está resolviendo la dirección del punto donde cayó el pin. */
+  resolviendo?: boolean;
 }
 
 const ZOOM_INICIAL = 17;
+// Dos posiciones más cercanas que esto son, en la práctica, la misma: ~1 cm.
+const EPSILON_COORDENADA = 1e-7;
 
 // Mapa de confirmación visual — el cliente ya eligió su dirección por texto en
-// DireccionAutocomplete; esto solo le deja VER el pin sobre el mapa real y
-// arrastrarlo unos metros si Google puso la marca en el lugar equivocado
-// (pasa seguido en zonas nuevas o direcciones ambiguas). El texto de la
-// dirección no cambia al arrastrar: lo que el courier usa de verdad es
-// lat/lng, así que ajustar el pin es lo que realmente corrige la entrega.
-export function MapaUbicacion({ lat, lng, onMover }: MapaUbicacionProps) {
+// DireccionAutocomplete; esto le deja VER el pin sobre el mapa real y
+// arrastrarlo si Google puso la marca en el lugar equivocado (pasa seguido en
+// zonas nuevas o direcciones ambiguas). Lo que el courier usa de verdad es
+// lat/lng, así que ajustar el pin es lo que corrige la entrega; el padre además
+// reescribe la dirección de texto a partir de la nueva posición.
+export function MapaUbicacion({ lat, lng, onMover, resolviendo = false }: MapaUbicacionProps) {
   const contenedorRef = useRef<HTMLDivElement>(null);
   const mapaRef = useRef<google.maps.Map | null>(null);
   const marcadorRef = useRef<google.maps.Marker | null>(null);
+  // Última posición que salió de un arrastre. Sirve para distinguir "las props
+  // cambiaron porque el usuario movió el pin" (no hay que tocar el mapa) de
+  // "cambiaron porque eligió otra dirección en el buscador" (hay que recentrar).
+  const posicionArrastradaRef = useRef<{ lat: number; lng: number } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [listo, setListo] = useState(false);
+
+  // El listener de `dragend` se registra una sola vez, así que llamarlo
+  // directamente lo dejaría atado al onMover del primer render — y con él, al
+  // resto del formulario tal como estaba en ese momento. Pasar por el ref
+  // garantiza que el arrastre trabaje siempre sobre los datos actuales.
+  const onMoverRef = useRef(onMover);
+  useEffect(() => {
+    onMoverRef.current = onMover;
+  }, [onMover]);
 
   useEffect(() => {
     let cancelado = false;
@@ -47,7 +65,10 @@ export function MapaUbicacion({ lat, lng, onMover }: MapaUbicacionProps) {
         });
         marcador.addListener("dragend", () => {
           const posicion = marcador.getPosition();
-          if (posicion) onMover({ lat: posicion.lat(), lng: posicion.lng() });
+          if (!posicion) return;
+          const coords = { lat: posicion.lat(), lng: posicion.lng() };
+          posicionArrastradaRef.current = coords;
+          onMoverRef.current(coords);
         });
 
         mapaRef.current = mapa;
@@ -67,10 +88,20 @@ export function MapaUbicacion({ lat, lng, onMover }: MapaUbicacionProps) {
   }, []);
 
   // Cuando lat/lng cambian por elegir OTRA dirección en el autocompletado
-  // (no por arrastrar el pin, que ya está en su lugar), recentra el mapa y
-  // mueve el marcador existente en vez de recrear todo el mapa.
+  // recentra el mapa y mueve el marcador existente en vez de recrear todo el
+  // mapa. Si el cambio viene del propio arrastre no se toca nada: el pin ya
+  // está donde el usuario lo soltó y recentrar le movería el mapa bajo el dedo.
   useEffect(() => {
     if (!mapaRef.current || !marcadorRef.current) return;
+    const arrastrada = posicionArrastradaRef.current;
+    if (
+      arrastrada &&
+      Math.abs(arrastrada.lat - lat) < EPSILON_COORDENADA &&
+      Math.abs(arrastrada.lng - lng) < EPSILON_COORDENADA
+    ) {
+      return;
+    }
+    posicionArrastradaRef.current = null;
     const posicion = { lat, lng };
     mapaRef.current.setCenter(posicion);
     marcadorRef.current.setPosition(posicion);
@@ -88,8 +119,15 @@ export function MapaUbicacion({ lat, lng, onMover }: MapaUbicacionProps) {
         aria-label="Mapa de la dirección de entrega"
       />
       {listo && (
-        <p className="font-body text-xs text-muted-foreground">
-          Arrastra el pin si no cayó exactamente en tu puerta.
+        <p className="flex items-center gap-1.5 font-body text-xs text-muted-foreground">
+          {resolviendo ? (
+            <>
+              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+              Actualizando la dirección con la nueva posición del pin…
+            </>
+          ) : (
+            "Arrastra el pin si no cayó exactamente en tu puerta — la dirección de arriba se actualiza sola."
+          )}
         </p>
       )}
     </div>

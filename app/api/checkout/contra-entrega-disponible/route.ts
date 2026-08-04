@@ -4,20 +4,14 @@ import { createAdminClient } from "@/lib/supabase/admin";
 
 // ¿Se puede ofrecer pago contra entrega en este momento?
 //
-// Dinsides solo recoge los paquetes a domicilio (gratis) cuando hay 2 o más
-// pedidos en la salida; con un único pedido el delivery saldría por InDriver,
-// donde no hay cobro contra entrega. Por eso la opción solo se habilita si YA
-// existe al menos otro pedido motorizado pendiente de despachar: el pedido
-// nuevo sería el segundo paquete del recojo.
+// Esto solo decide qué se MUESTRA en el checkout. La regla en sí vive en la
+// función `contra_entrega_disponible()` de Postgres, que es también la que
+// aplica `registrar_pedido_web` antes de insertar el pedido — así la UI y la
+// validación real no se pueden desincronizar. Ver el comentario de la
+// migración `validar_contra_entrega_en_registrar_pedido_web` para el porqué
+// del mínimo de 2 paquetes de Dinsides.
 //
-// Cuenta como "pendiente de despachar" todo pedido de zona Lima (motorizado)
-// que aún no fue entregado ni devuelto y cuyo pago no fue rechazado ni
-// cancelado. Los pagos por verificar de Yape/transferencia sí cuentan (casi
-// siempre se confirman); los de tarjeta NO — un pedido de tarjeta que sigue
-// "pendiente_verificacion" suele ser un checkout abandonado en Mercado Pago
-// y nunca va a salir a reparto.
-//
-// Se usa el service role solo para CONTAR (la RLS de `pedidos` no deja al
+// Se usa el service role solo para invocarla (la RLS de `pedidos` no deja al
 // cliente ver pedidos ajenos) — la respuesta es un booleano sin ningún dato
 // de otros clientes.
 export async function GET() {
@@ -31,16 +25,11 @@ export async function GET() {
 
   try {
     const admin = createAdminClient();
-    const { count, error } = await admin
-      .from("pedidos")
-      .select("id", { count: "exact", head: true })
-      .eq("zona_envio", "lima")
-      .in("estado_preparacion", ["no_preparado", "en_preparacion", "preparado"])
-      .or("estado_pago.eq.pagado,and(estado_pago.eq.pendiente_verificacion,forma_pago.neq.tarjeta)");
+    const { data, error } = await admin.rpc("contra_entrega_disponible");
 
     if (error) throw error;
 
-    return NextResponse.json({ disponible: (count ?? 0) >= 1 });
+    return NextResponse.json({ disponible: data === true });
   } catch (error: unknown) {
     console.error("Error consultando disponibilidad de contra entrega:", error);
     // Fail-closed: si no se puede verificar, mejor no ofrecer contra entrega

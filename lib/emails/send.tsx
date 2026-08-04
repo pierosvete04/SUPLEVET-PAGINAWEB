@@ -2,7 +2,6 @@ import * as React from "react";
 import CanjeConfirmado, { type CanjeConfirmadoProps } from "@/emails/canje-confirmado";
 import CarritoAbandonado, { type CarritoAbandonadoProps } from "@/emails/carrito-abandonado";
 import PagoConfirmado, { type PagoConfirmadoProps } from "@/emails/pago-confirmado";
-import PagoEnVerificacion, { type PagoEnVerificacionProps } from "@/emails/pago-en-verificacion";
 import PagoRechazado, { type PagoRechazadoProps } from "@/emails/pago-rechazado";
 import LibroReclamacionRespondido, {
   type LibroReclamacionRespondidoProps,
@@ -23,9 +22,12 @@ import { EMAIL_FROM, getResendClient } from "./resend";
 // descrita en PLAN.md §18, para que un futuro cron/Edge Function pueda leer
 // una fila pendiente y llamar sendTransactionalEmail(cliente.email, { tipo: fila.tipo, data: fila.metadata }).
 export type EmailPayload =
+  // `pedido_confirmado` cubre también lo que antes era un segundo correo
+  // (`pago_pendiente_verificacion`): incluye el detalle del pedido Y los pasos
+  // del pago según el método elegido. Comprar con Yape disparaba dos correos
+  // seguidos, uno con el resumen y otro con las instrucciones — ahora es uno.
   | { tipo: "pedido_confirmado"; data: PedidoConfirmadoProps }
   | { tipo: "pago_confirmado"; data: PagoConfirmadoProps }
-  | { tipo: "pago_pendiente_verificacion"; data: PagoEnVerificacionProps }
   | { tipo: "pago_error"; data: PagoRechazadoProps }
   | { tipo: "pago_cancelado"; data: PedidoCanceladoProps }
   | { tipo: "pedido_en_preparacion"; data: PedidoEnPreparacionProps }
@@ -43,20 +45,24 @@ interface RenderedEmail {
 
 function render(payload: EmailPayload): RenderedEmail {
   switch (payload.tipo) {
-    case "pedido_confirmado":
+    case "pedido_confirmado": {
+      // Con Yape/Plin/transferencia el pedido queda a la espera del voucher,
+      // así que el asunto lo dice — es la acción que necesitamos del cliente.
+      const esperaComprobante =
+        payload.data.metodoPago === "Yape" ||
+        payload.data.metodoPago === "Plin" ||
+        payload.data.metodoPago === "transferencia";
       return {
-        subject: `Recibimos tu pedido #${payload.data.numeroPedido} 🐾`,
+        subject: esperaComprobante
+          ? `Recibimos tu pedido #${payload.data.numeroPedido} — falta confirmar el pago`
+          : `Recibimos tu pedido #${payload.data.numeroPedido} 🐾`,
         element: <PedidoConfirmado {...payload.data} />,
       };
+    }
     case "pago_confirmado":
       return {
         subject: `¡Tu pago fue confirmado! Pedido #${payload.data.numeroPedido} 🎉`,
         element: <PagoConfirmado {...payload.data} />,
-      };
-    case "pago_pendiente_verificacion":
-      return {
-        subject: `Estamos validando tu pago — pedido #${payload.data.numeroPedido}`,
-        element: <PagoEnVerificacion {...payload.data} />,
       };
     case "pago_error":
       return {

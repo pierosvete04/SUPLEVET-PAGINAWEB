@@ -69,26 +69,34 @@ const ctx = { nombre: "Piero", numeroPedido: "W-1069" };
 
 // Un caso por cada `tipo` de EmailPayload, más las dos variantes del correo de
 // verificación (Yape y contra entrega) que renderizan cuerpos distintos.
+// El correo de pedido recibido cambia de cuerpo según cómo se pagó, así que se
+// prueban los tres caminos: el que espera voucher, el de contra entrega y el de
+// tarjeta (que no pide nada al cliente).
+const PEDIDO_BASE = {
+  ...ctx,
+  items: [
+    { nombre: "Suplevet Articulaciones 150 g", cantidad: 2, precio: 89.9 },
+    { nombre: "Suplevet Digestivo 90 g", cantidad: 1, precio: 64.5 },
+  ],
+  subtotal: 244.3, envio: 12, descuento: 20, total: 236.3,
+  direccion: {
+    nombreCompleto: "Piero Sánchez", direccion: "Calle Río Elba 132 — Dpto 402",
+    distrito: "La Molina, Lima", telefono: "920723721",
+  },
+};
+
 const CASOS = [
   ["pedido_confirmado", {
-    nombre: "Piero", numeroPedido: "W-1069",
-    items: [
-      { nombre: "Suplevet Articulaciones 150 g", cantidad: 2, precio: 89.9 },
-      { nombre: "Suplevet Digestivo 90 g", cantidad: 1, precio: 64.5 },
-    ],
-    envio: 12,
-    direccion: {
-      nombreCompleto: "Piero Sánchez", direccion: "Calle Río Elba 132, Dpto 402",
-      distrito: "La Molina, Lima", telefono: "920723721",
-    },
-  }],
-  ["pago_pendiente_verificacion", {
-    ...ctx, metodoPago: "Yape",
+    ...PEDIDO_BASE, metodoPago: "Yape",
     whatsappUrl: whatsappPedido("enviarVoucher", ctx),
   }],
-  ["pago_pendiente_verificacion", {
-    ...ctx, numeroPedido: "W-1070", metodoPago: "contra entrega",
+  ["pedido_confirmado", {
+    ...PEDIDO_BASE, numeroPedido: "W-1070", metodoPago: "contra entrega",
     whatsappUrl: whatsappPedido("coordinarEntrega", { ...ctx, numeroPedido: "W-1070" }),
+  }],
+  ["pedido_confirmado", {
+    ...PEDIDO_BASE, numeroPedido: "W-1071", metodoPago: "tarjeta",
+    whatsappUrl: whatsappPedido("enviarVoucher", { ...ctx, numeroPedido: "W-1071" }),
   }],
   ["pago_confirmado", {
     ...ctx, puntosGanados: 180,
