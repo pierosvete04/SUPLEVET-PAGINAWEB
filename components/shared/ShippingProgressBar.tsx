@@ -4,7 +4,7 @@ import type { EnvioZona } from "@/lib/shipping";
 // Antes de conocer la dirección del cliente (ej. en /carrito) se usa el
 // umbral de Lima Metropolitana como referencia por defecto (mayor volumen de
 // clientes). Una vez el checkout conoce la zona real, se le pasa por props.
-const UMBRAL_ENVIO_GRATIS_LIMA = 150;
+const UMBRAL_ENVIO_GRATIS_LIMA = 170;
 
 interface ShippingProgressBarProps {
   subtotal: number;
@@ -41,7 +41,7 @@ export function ShippingProgressBar({ subtotal, zona }: ShippingProgressBarProps
       <p className="mt-1 font-body text-[11px] text-muted-foreground">
         {zona
           ? `Envío gratis a ${zona.nombre} desde ${formatPrecio(zona.monto_minimo_gratis)}.`
-          : "Envío gratis en Lima Metropolitana desde S/.150 — el monto varía según tu zona."}
+          : "Envío gratis en Lima Metropolitana desde S/.170 — el monto varía según tu zona."}
       </p>
     </div>
   );

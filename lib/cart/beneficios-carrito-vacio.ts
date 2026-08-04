@@ -10,7 +10,7 @@ export interface BeneficioCarritoVacio {
 // callejón sin salida ("tu carrito está vacío" + botón, sin ningún motivo
 // para volver a la tienda).
 export const BENEFICIOS_CARRITO_VACIO: BeneficioCarritoVacio[] = [
-  { icono: Truck, texto: "Envío gratis en Lima Metropolitana desde S/.150" },
+  { icono: Truck, texto: "Envío gratis en Lima Metropolitana desde S/.170" },
   { icono: Star, texto: "Gana SuplePoints en cada compra y canjéalos por descuentos" },
   { icono: Gift, texto: "Bandana de regalo gratis al llevar cualquier combo" },
 ];

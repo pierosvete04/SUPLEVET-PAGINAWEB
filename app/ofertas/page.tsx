@@ -10,7 +10,7 @@ import { siteConfig } from "@/lib/site-config";
 export const metadata: Metadata = {
   title: "Ofertas y combos Suplevet",
   description:
-    "Aprovecha nuestros combos con mejor precio: Combo Mix, 2x150g y 2x250g. Envío gratis en Lima Metropolitana desde S/.150.",
+    "Aprovecha nuestros combos con mejor precio: Combo Mix, 2x150g y 2x250g. Envío gratis en Lima Metropolitana desde S/.170.",
   alternates: { canonical: `${siteConfig.siteUrl}/ofertas` },
 };
 
@@ -32,7 +32,7 @@ export default async function OfertasPage() {
         </h1>
         <p className="mx-auto mt-4 max-w-xl text-center font-body text-muted-foreground">
           Aprovecha nuestros combos con mejor precio y envío gratis en Lima Metropolitana desde
-          S/.150.
+          S/.170.
         </p>
         <div className="mt-12 grid grid-cols-1 gap-gutter sm:grid-cols-2 lg:grid-cols-3">
           {combos.map((combo) => (

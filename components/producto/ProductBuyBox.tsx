@@ -164,7 +164,7 @@ export function ProductBuyBox({ producto, regalos, resenas }: ProductBuyBoxProps
 
       <div className="mt-5 flex items-center gap-2 font-body text-sm text-muted-foreground">
         <Truck className="h-4 w-4 text-accent" strokeWidth={1.75} />
-        Envío gratis en Lima Metropolitana desde S/.150
+        Envío gratis en Lima Metropolitana desde S/.170
       </div>
 
       {/* Banner de regalo — solo se muestra si hay un regalo activo y vigente

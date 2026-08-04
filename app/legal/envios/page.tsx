@@ -80,7 +80,7 @@ export default function EnviosPage() {
         <tbody>
           <tr>
             <td>Lima Metropolitana y Callao</td>
-            <td>S/.150</td>
+            <td>S/.170</td>
           </tr>
           <tr>
             <td>Costa y Sierra accesible</td>
