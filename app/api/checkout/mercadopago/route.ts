@@ -29,6 +29,26 @@ function construirTituloPago(
   return titulo.length > 250 ? `${titulo.slice(0, 249)}…` : titulo;
 }
 
+// MP recomienda mandar nombre y apellido por separado (payer.name/surname) en
+// vez de solo el nombre completo — mejora la tasa de aprobación porque ayuda
+// a su motor antifraude a validar al comprador. cliente_nombre no separa
+// nombres de apellidos en la BD, así que se parte por el primer espacio:
+// todo lo anterior es "nombre", el resto es "apellido" (suficiente para el
+// caso común de nombres peruanos con uno o dos apellidos).
+function partirNombreCompleto(nombreCompleto: string | null): { name?: string; surname?: string } {
+  const limpio = nombreCompleto?.trim();
+  if (!limpio) return {};
+  const [name, ...resto] = limpio.split(/\s+/);
+  return { name, surname: resto.length > 0 ? resto.join(" ") : undefined };
+}
+
+// cliente_telefono se guarda como el número local de 9 dígitos, sin el
+// código de país — MP separa área/país y número en payer.phone.
+function telefonoPayer(cliente_telefono: string | null): { area_code: string; number: string } | undefined {
+  const numero = cliente_telefono?.trim();
+  return numero ? { area_code: "51", number: numero } : undefined;
+}
+
 // Llamado por app/checkout/page.tsx justo después de registrar_pedido_web()
 // cuando el método elegido es "tarjeta". Crea la preferencia de Checkout Pro
 // para ESE pedido puntual y devuelve el link al que se redirige al cliente
@@ -49,7 +69,7 @@ export async function POST(request: Request) {
   const { data: pedido, error } = await supabase
     .from("pedidos")
     .select(
-      "id, shopify_order_number, total, cliente_email, cliente_nombre, forma_pago, estado_pago, productos, regalo_bandana, regalo_bandanas"
+      "id, shopify_order_number, total, cliente_email, cliente_nombre, cliente_telefono, forma_pago, estado_pago, productos, regalo_bandana, regalo_bandanas"
     )
     .eq("id", pedidoId)
     .maybeSingle();
@@ -102,6 +122,10 @@ export async function POST(request: Request) {
           {
             id: pedido.id,
             title: tituloPago,
+            // Descripción extendida del ítem (distinta del título) — uno de
+            // los campos que pide el checklist de calidad de MP para
+            // optimizar la tasa de aprobación de pagos.
+            description: `Suplementos y accesorios para el cuidado nutricional de mascotas — Pedido ${numero}, Suplevet.`,
             quantity: 1,
             unit_price: Number(pedido.total),
             currency_id: "PEN",
@@ -111,12 +135,14 @@ export async function POST(request: Request) {
           ? {
               // Correo ficticio estilo test user — no puede coincidir con
               // ninguna cuenta real de MP para que el pago de prueba pase.
-              name: "Comprador Prueba",
+              name: "Comprador",
+              surname: "Prueba",
               email: "comprador_prueba@testuser.com",
             }
           : {
-              name: pedido.cliente_nombre ?? undefined,
+              ...partirNombreCompleto(pedido.cliente_nombre),
               email: pedido.cliente_email ?? undefined,
+              phone: telefonoPayer(pedido.cliente_telefono),
             },
         external_reference: pedido.id,
         statement_descriptor: "SUPLEVET",
