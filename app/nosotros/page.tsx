@@ -19,12 +19,13 @@ import { HuellasFondo } from "@/components/shared/HuellasFondo";
 import { TestimoniosCarousel } from "@/components/nosotros/TestimoniosCarousel";
 import { ResenasCarousel } from "@/components/shared/ResenasCarousel";
 import { BlogCoverflowSlider } from "@/components/blog/BlogCoverflowSlider";
-import { getTestimoniosActivos } from "@/lib/testimonios";
-import { getResenasAprobadas } from "@/lib/resenas";
-import { getPublishedPosts } from "@/lib/data/blog";
-import { getValoresActivos } from "@/lib/valores-nosotros";
-import { getConfiguracionSitio } from "@/lib/data/configuracion";
-import { createClient } from "@/lib/supabase/server";
+import {
+  getConfiguracionPublica,
+  getPostsPublicos,
+  getResenasCarrusel,
+  getTestimoniosPublicos,
+  getValoresPublicos,
+} from "@/lib/data/publico";
 import { siteConfig } from "@/lib/site-config";
 
 export const metadata: Metadata = {
@@ -43,14 +44,18 @@ const ICONOS: Record<string, LucideIcon> = { Beaker, Heart, Lightbulb, Shield, S
 const BLOB_A = "rounded-[58%_42%_47%_53%/48%_58%_42%_52%]";
 const BLOB_B = "rounded-[44%_56%_60%_40%/56%_44%_56%_44%]";
 
+// Ver el comentario de app/page.tsx: esta página tenía el mismo problema que la
+// home (1,1 MB de HTML por el carrusel de reseñas sin tope, y render dinámico
+// en cada visita).
+export const revalidate = 60;
+
 export default async function NosotrosPage() {
-  const supabase = await createClient();
   const [testimonios, resenas, posts, valores, config] = await Promise.all([
-    getTestimoniosActivos(supabase),
-    getResenasAprobadas(supabase),
-    getPublishedPosts(),
-    getValoresActivos(supabase),
-    getConfiguracionSitio(supabase),
+    getTestimoniosPublicos(),
+    getResenasCarrusel(),
+    getPostsPublicos(),
+    getValoresPublicos(),
+    getConfiguracionPublica(),
   ]);
 
   return (

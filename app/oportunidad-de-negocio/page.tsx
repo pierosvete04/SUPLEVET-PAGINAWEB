@@ -14,9 +14,8 @@ import { ScrollReveal } from "@/components/shared/ScrollReveal";
 import { PageBreadcrumbs } from "@/components/shared/PageBreadcrumbs";
 import { FormularioDistribuidor } from "@/components/oportunidad/FormularioDistribuidor";
 import { ListaChecks } from "@/components/oportunidad/ListaChecks";
-import { getConfiguracionSitio } from "@/lib/data/configuracion";
-import { getVentajasActivas } from "@/lib/oportunidad-ventajas";
-import { createClient } from "@/lib/supabase/server";
+import type { ConfiguracionSitio } from "@/lib/data/configuracion";
+import { getConfiguracionPublica, getVentajasPublicas } from "@/lib/data/publico";
 import { siteConfig } from "@/lib/site-config";
 
 export const metadata: Metadata = {
@@ -43,17 +42,18 @@ const lineas = (campo: string | null | undefined) =>
     .map((linea) => linea.trim())
     .filter(Boolean);
 
-const pasos = (config: Awaited<ReturnType<typeof getConfiguracionSitio>>) => [
+const pasos = (config: ConfiguracionSitio | null) => [
   { n: "01", titulo: config?.oportunidad_paso1_titulo, texto: config?.oportunidad_paso1_texto },
   { n: "02", titulo: config?.oportunidad_paso2_titulo, texto: config?.oportunidad_paso2_texto },
   { n: "03", titulo: config?.oportunidad_paso3_titulo, texto: config?.oportunidad_paso3_texto },
 ];
 
+export const revalidate = 60;
+
 export default async function OportunidadDeNegocioPage() {
-  const supabase = await createClient();
   const [config, ventajas] = await Promise.all([
-    getConfiguracionSitio(supabase),
-    getVentajasActivas(supabase),
+    getConfiguracionPublica(),
+    getVentajasPublicas(),
   ]);
 
   const bulletsProducto = lineas(config?.oportunidad_producto_bullets);

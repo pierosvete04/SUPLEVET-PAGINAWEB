@@ -104,6 +104,49 @@
   }
 }
 
+/* ScrollReveal (components/shared/ScrollReveal.tsx) — aparición al entrar en
+   pantalla. Vive en CSS y no en GSAP por el mismo motivo que animate-header-intro
+   acá arriba: el estado inicial lo pone la hoja de estilos, que llega con el
+   HTML, en vez de un script que puede tardar. La versión con GSAP dejaba el
+   contenido visible hasta que cargaban los ~70 KB de la librería, ahí lo
+   escondía de golpe y recién entonces lo animaba — un parpadeo en cada sección.
+   Acá el JS solo agrega data-revealed cuando el elemento entra en pantalla.
+
+   El translate y el retraso llegan como variables CSS porque cada uso los
+   ajusta (props `y` y `delay`), y no se pueden expresar como clases de Tailwind
+   al ser valores dinámicos. */
+.scroll-reveal {
+  opacity: 0;
+  transform: translateY(var(--sr-y, 32px));
+  transition:
+    opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1) var(--sr-delay, 0s),
+    transform 0.8s cubic-bezier(0.16, 1, 0.3, 1) var(--sr-delay, 0s);
+  will-change: opacity, transform;
+}
+.scroll-reveal[data-revealed] {
+  opacity: 1;
+  transform: none;
+  will-change: auto;
+}
+/* Sin JS el observador nunca corre y el contenido quedaría invisible para
+   siempre. `scripting: none` cubre navegadores modernos con JS desactivado; el
+   <noscript> de app/layout.tsx cubre el resto. Son dos redes para el mismo
+   agujero a propósito: el modo de fallo es "la página se ve vacía", que es de
+   los peores posibles y no da ninguna pista de qué pasó. */
+@media (scripting: none) {
+  .scroll-reveal {
+    opacity: 1;
+    transform: none;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .scroll-reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}
+
 /* BrandedLoader (components/ui/branded-loader.tsx) — deja la barra estática
    en vez de deslizándose y el logo sin parpadeo cuando el usuario pidió
    menos movimiento. */

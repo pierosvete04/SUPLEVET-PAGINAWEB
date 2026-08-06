@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import { revalidarSitioPublico } from "@/lib/revalidar-publico";
 import { traducirErrorSupabase } from "@/lib/errores-supabase";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
@@ -95,6 +96,7 @@ export function RegaloForm({ regalo, onClose, onSaved }: RegaloFormProps) {
       setGuardando(false);
       return;
     }
+    await revalidarSitioPublico();
     toast.success("Regalo guardado.");
     onSaved();
   }

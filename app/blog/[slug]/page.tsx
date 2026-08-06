@@ -6,9 +6,8 @@ import { ArrowLeft } from "lucide-react";
 import { getPostBySlug, getRelatedPosts, formatFechaPost } from "@/lib/data/blog";
 import { PageBreadcrumbs } from "@/components/shared/PageBreadcrumbs";
 import { getProductoBySlug } from "@/lib/data/productos";
-import { getConfiguracionSitio } from "@/lib/data/configuracion";
+import { getConfiguracionPublica } from "@/lib/data/publico";
 import { whatsappLink, siteConfig } from "@/lib/site-config";
-import { createClient } from "@/lib/supabase/server";
 import { sanitizeHtml } from "@/lib/sanitize-html";
 
 interface BlogPostPageProps {
@@ -61,7 +60,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
   const [relacionados, producto, config] = await Promise.all([
     getRelatedPosts(post.slug, post.producto_slug),
     post.producto_slug ? getProductoBySlug(post.producto_slug) : Promise.resolve(null),
-    getConfiguracionSitio(await createClient()),
+    getConfiguracionPublica(),
   ]);
   const whatsappB2C = config?.whatsapp_b2c || siteConfig.whatsappB2C;
 

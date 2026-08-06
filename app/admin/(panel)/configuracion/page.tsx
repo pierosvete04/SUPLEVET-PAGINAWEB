@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
+import { revalidarSitioPublico } from "@/lib/revalidar-publico";
 import { createClient } from "@/lib/supabase/client";
 import { traducirErrorSupabase } from "@/lib/errores-supabase";
 import { uploadFileToR2 } from "@/lib/uploadToR2";
@@ -117,6 +118,7 @@ export default function AdminConfiguracionPage() {
       toast.error(traducirErrorSupabase(saveError));
       return;
     }
+    await revalidarSitioPublico();
     toast.success("Configuración del sitio guardada.");
   }
 

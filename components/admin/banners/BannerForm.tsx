@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { revalidarSitioPublico } from "@/lib/revalidar-publico";
 import { traducirErrorSupabase } from "@/lib/errores-supabase";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
@@ -78,6 +79,7 @@ export function BannerForm({ banner, onClose, onSaved }: BannerFormProps) {
       setGuardando(false);
       return;
     }
+    await revalidarSitioPublico();
     toast.success("Banner guardado.");
     onSaved();
   }

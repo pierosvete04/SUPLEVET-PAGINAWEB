@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { revalidarSitioPublico } from "@/lib/revalidar-publico";
 import { traducirErrorSupabase } from "@/lib/errores-supabase";
 import Image from "next/image";
 import { X } from "lucide-react";
@@ -153,6 +154,7 @@ export function ProductoForm({ producto, onClose, onSaved }: ProductoFormProps) 
       setGuardando(false);
       return;
     }
+    await revalidarSitioPublico();
     toast.success("Producto guardado.");
     onSaved();
   }

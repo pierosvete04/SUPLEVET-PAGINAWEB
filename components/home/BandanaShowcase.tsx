@@ -1,5 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
-import { agruparVariantesPorDiseno, getVariantesActivas } from "@/lib/regalo-variantes";
+import { getDisenosBandanaPublicos } from "@/lib/data/publico";
 import { BandanaShowcaseCard } from "@/components/home/BandanaShowcaseCard";
 
 // Sección de marketing para el regalo "cualquier combo = bandana gratis" —
@@ -8,19 +7,11 @@ import { BandanaShowcaseCard } from "@/components/home/BandanaShowcaseCard";
 // regalo de categoría "combo" no está activo (ej. si el admin lo desactiva o
 // cambia la promo a otra condición).
 export async function BandanaShowcase() {
-  const supabase = await createClient();
-  const { data: regalo } = await supabase
-    .from("regalos")
-    .select("*")
-    .eq("activo", true)
-    .eq("condicion_tipo", "categoria")
-    .eq("condicion_categoria", "combo")
-    .maybeSingle();
-
-  if (!regalo) return null;
-
-  const variantes = await getVariantesActivas(supabase, regalo.id);
-  const disenos = agruparVariantesPorDiseno(variantes);
+  // La consulta (regalo activo + sus variantes agrupadas) vive cacheada en
+  // lib/data/publico.ts. Antes se hacía acá con el cliente con cookies, y eso
+  // bastaba para que la HOME ENTERA quedara marcada como dinámica: un Server
+  // Component que toca next/headers contagia a toda la página que lo monta.
+  const disenos = await getDisenosBandanaPublicos();
   if (disenos.length === 0) return null;
 
   return (

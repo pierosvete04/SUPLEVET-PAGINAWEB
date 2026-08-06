@@ -2,10 +2,8 @@ import type { Metadata } from "next";
 import { ProductCard } from "@/components/productos/ProductCard";
 import { BannerCarousel } from "@/components/shared/BannerCarousel";
 import { PageBreadcrumbs } from "@/components/shared/PageBreadcrumbs";
-import { getCombos } from "@/lib/data/productos";
-import { getBannersActivos } from "@/lib/banners";
+import { getBannersOfertas, getProductosPublicos } from "@/lib/data/publico";
 import { medirImagenes } from "@/lib/image-size";
-import { createClient } from "@/lib/supabase/server";
 import { siteConfig } from "@/lib/site-config";
 
 export const metadata: Metadata = {
@@ -15,9 +13,14 @@ export const metadata: Metadata = {
   alternates: { canonical: `${siteConfig.siteUrl}/ofertas` },
 };
 
+export const revalidate = 60;
+
 export default async function OfertasPage() {
-  const combos = await getCombos();
-  const banners = await getBannersActivos(await createClient(), "ofertas");
+  // getProductosPublicos + filtrado local en vez de getCombos(): así el catálogo
+  // se lee UNA vez y la caché se comparte con /productos y la home, en lugar de
+  // que cada página guarde su propia copia de la misma tabla.
+  const [productos, banners] = await Promise.all([getProductosPublicos(), getBannersOfertas()]);
+  const combos = productos.filter((p) => p.categoria === "combo");
   const dimensiones = await medirImagenes(banners.flatMap((b) => [b.imagen, b.imagen_mobile]));
 
   return (

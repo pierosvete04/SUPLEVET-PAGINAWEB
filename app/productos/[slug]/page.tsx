@@ -11,14 +11,16 @@ import { ComoSePrepara } from "@/components/shared/ComoSePrepara";
 import { Faq } from "@/components/shared/Faq";
 import { PageBreadcrumbs } from "@/components/shared/PageBreadcrumbs";
 import { getProductoBySlug } from "@/lib/data/productos";
-import { getRegalosAplicables } from "@/lib/regalos";
-import { getResenasDeProducto } from "@/lib/resenas";
-import { getIngredientesActivos } from "@/lib/ingredientes";
-import { getComparativaActiva } from "@/lib/comparativa";
-import { getFaqsActivas } from "@/lib/faqs";
-import { getZonasEnvioActivas, getDistritosEnvioActivos } from "@/lib/shipping";
+import {
+  getComparativaPublica,
+  getDistritosEnvioPublicos,
+  getFaqsPublicas,
+  getIngredientesPublicos,
+  getRegalosProductoPublicos,
+  getResenasProductoPublicas,
+  getZonasEnvioPublicas,
+} from "@/lib/data/publico";
 import { detallesEnvioSchema, politicaDevolucionesSchema } from "@/lib/schema-producto";
-import { createClient } from "@/lib/supabase/server";
 import { createStaticClient } from "@/lib/supabase/static";
 import { siteConfig } from "@/lib/site-config";
 
@@ -74,18 +76,17 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
     notFound();
   }
 
-  const supabase = await createClient();
   const [regalos, resenas, ingredientes, comparativa, faqs, zonasEnvio, distritosEnvio] =
     await Promise.all([
-      getRegalosAplicables(supabase, producto.slug, producto.categoria),
-      getResenasDeProducto(supabase, producto.shopifyProductId ?? producto.slug),
-      getIngredientesActivos(supabase),
-      getComparativaActiva(supabase),
-      getFaqsActivas(supabase),
+      getRegalosProductoPublicos(producto.slug, producto.categoria),
+      getResenasProductoPublicas(producto.shopifyProductId ?? producto.slug),
+      getIngredientesPublicos(),
+      getComparativaPublica(),
+      getFaqsPublicas(),
       // Solo alimentan el JSON-LD de abajo (costo de envío por zona en el
       // snippet de Google); la ficha en sí no muestra tarifas.
-      getZonasEnvioActivas(supabase),
-      getDistritosEnvioActivos(supabase),
+      getZonasEnvioPublicas(),
+      getDistritosEnvioPublicos(),
     ]);
 
   // JSON-LD (schema.org Product) — habilita precio/disponibilidad/estrellas

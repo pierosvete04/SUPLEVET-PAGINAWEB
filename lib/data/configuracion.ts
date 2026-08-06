@@ -4,6 +4,11 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 // /admin/configuracion sin necesitar un deploy. Cada página que consume un
 // subconjunto de estos campos hace su propio `select` acotado.
 export interface ConfiguracionSitio {
+  // Lo consume app/layout.tsx para la variable CSS --radius-card. Viaja en esta
+  // misma consulta (y no en una aparte) porque es la misma fila: pedirlo por
+  // separado era un segundo viaje a Supabase en el layout raíz, o sea en todas
+  // las páginas del sitio.
+  radio_tarjetas: number | null;
   whatsapp_b2c: string | null;
   whatsapp_b2b: string | null;
   whatsapp_distribuidores: string | null;
@@ -68,7 +73,7 @@ export async function getConfiguracionSitio(
   const { data } = await supabase
     .from("configuracion_sitio")
     .select(
-      `whatsapp_b2c, whatsapp_b2b, whatsapp_distribuidores, facebook_url, instagram_url, tiktok_url, linkedin_url, legal_razon_social, legal_ruc, legal_domicilio_fiscal, legal_correo_atencion, correo_contacto, horario_atencion, hero_titulo, hero_subtitulo, hero_banner_desktop, hero_banner_mobile, trustbar_texto_1, trustbar_texto_2, trustbar_texto_3, nosotros_hero_titulo, nosotros_hero_imagen, nosotros_quote, nosotros_origen_texto, nosotros_mision_texto, nosotros_vision_texto, nosotros_overlay_imagen, nosotros_overlay_titulo, nosotros_overlay_texto, ${OPORTUNIDAD_COLUMNAS}`
+      `radio_tarjetas, whatsapp_b2c, whatsapp_b2b, whatsapp_distribuidores, facebook_url, instagram_url, tiktok_url, linkedin_url, legal_razon_social, legal_ruc, legal_domicilio_fiscal, legal_correo_atencion, correo_contacto, horario_atencion, hero_titulo, hero_subtitulo, hero_banner_desktop, hero_banner_mobile, trustbar_texto_1, trustbar_texto_2, trustbar_texto_3, nosotros_hero_titulo, nosotros_hero_imagen, nosotros_quote, nosotros_origen_texto, nosotros_mision_texto, nosotros_vision_texto, nosotros_overlay_imagen, nosotros_overlay_titulo, nosotros_overlay_texto, ${OPORTUNIDAD_COLUMNAS}`
     )
     .eq("id", 1)
     .single();

@@ -29,12 +29,24 @@ export interface ResenaPublica {
   producto_nombre: string;
 }
 
-export async function getResenasAprobadas(supabase: SupabaseClient): Promise<ResenaPublica[]> {
-  const { data } = await supabase
+// `limite` no es un detalle de paginación: el carrusel que consume esto es
+// circular e infinito (InfiniteCarousel triplica la lista en el DOM), así que
+// cada reseña extra son ~6 iconos SVG × 3 copias que el visitante NUNCA va a
+// ver, pero que igual se descargan. Sin límite, las 50 reseñas aprobadas
+// generaban 946 SVGs y 1,1 MB de HTML solo en la home.
+export async function getResenasAprobadas(
+  supabase: SupabaseClient,
+  limite?: number
+): Promise<ResenaPublica[]> {
+  let consulta = supabase
     .from("resenas")
     .select("id, texto, calificacion, cliente_nombre, cliente_ciudad, producto_nombre")
     .eq("estado", "aprobada")
     .order("created_at", { ascending: false });
+
+  if (limite) consulta = consulta.limit(limite);
+
+  const { data } = await consulta;
   return (data as ResenaPublica[]) ?? [];
 }
 

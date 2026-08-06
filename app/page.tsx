@@ -16,11 +16,13 @@ import { ComoSePrepara } from "@/components/shared/ComoSePrepara";
 import { ResenasCarousel } from "@/components/shared/ResenasCarousel";
 import { Faq } from "@/components/shared/Faq";
 import { BlogCoverflowSlider } from "@/components/blog/BlogCoverflowSlider";
-import { getResenasAprobadas } from "@/lib/resenas";
-import { getPublishedPosts } from "@/lib/data/blog";
-import { getFaqsActivas } from "@/lib/faqs";
-import { getResultadosRealesActivos } from "@/lib/resultados-reales";
-import { getConfiguracionSitio } from "@/lib/data/configuracion";
+import {
+  getBannersHeroPublicos,
+  getConfiguracionPublica,
+  getFaqsPublicas,
+  getPostsPublicos,
+  getResenasCarrusel,
+} from "@/lib/data/publico";
 import { siteConfig } from "@/lib/site-config";
 
 // Sin esto, la home no declara su propio canonical (solo hereda title/
@@ -29,8 +31,13 @@ import { siteConfig } from "@/lib/site-config";
 export const metadata: Metadata = {
   alternates: { canonical: siteConfig.siteUrl },
 };
-import { getBannersHero } from "@/lib/banners";
-import { createClient } from "@/lib/supabase/server";
+
+// La home se prerenderiza y se regenera cada 60 s (o antes, si alguien guarda
+// algo en /admin — ver lib/data/publico.ts). Antes era dinámica: se renderizaba
+// entera, con sus consultas a Supabase, en CADA visita de CADA usuario. Eso es
+// lo que el CDN reportaba como `x-hcdn-cache-status: DYNAMIC` y 1,2 s de tiempo
+// de origen, y además impedía que el <Link> del logo prefetcheara nada.
+export const revalidate = 60;
 
 const TRUSTBAR_FALLBACK = [
   "Envíos a todo el Perú",
@@ -41,14 +48,15 @@ const TRUSTBAR_FALLBACK = [
 // Home — jerarquía de intención (PLAN.md sección 5.2):
 // gancho visual -> confianza -> producto -> cómo se usa -> antes/después -> objeciones
 export default async function Home() {
-  const supabase = await createClient();
-  const [resenas, posts, faqs, resultados, config, heroBanners] = await Promise.all([
-    getResenasAprobadas(supabase),
-    getPublishedPosts(),
-    getFaqsActivas(supabase),
-    getResultadosRealesActivos(supabase),
-    getConfiguracionSitio(supabase),
-    getBannersHero(supabase),
+  // Sin `getResultadosRealesActivos`: alimentaba a <AntesDespues>, que está
+  // desactivado más abajo. Era una consulta a Supabase en cada carga de la home
+  // cuyo resultado no se renderizaba en ningún lado.
+  const [resenas, posts, faqs, config, heroBanners] = await Promise.all([
+    getResenasCarrusel(),
+    getPostsPublicos(),
+    getFaqsPublicas(),
+    getConfiguracionPublica(),
+    getBannersHeroPublicos(),
   ]);
 
   const trustbarTextos = [
@@ -112,7 +120,8 @@ export default async function Home() {
       <PresentacionesShowcase />
       <div className="bg-gradient-to-b from-soft-gray to-accent">
         <ComoSePrepara fondoPropio={false} paddingSuperiorReducido paddingInferiorReducido />
-        {/* <AntesDespues resultados={resultados} /> desactivado temporalmente */}
+        {/* <AntesDespues /> desactivado temporalmente. Para reactivarlo hay que
+            volver a traer getResultadosPublicos() de lib/data/publico.ts. */}
       </div>
       {resenas.length > 0 && (
         <section className="bg-white py-section-y">

@@ -6,6 +6,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
+import { revalidarSitioPublico } from "@/lib/revalidar-publico";
 import { traducirErrorSupabase } from "@/lib/errores-supabase";
 import { createClient } from "@/lib/supabase/client";
 import { uploadFileToR2 } from "@/lib/uploadToR2";
@@ -118,6 +119,7 @@ export function PostEditor({ post }: PostEditorProps) {
       setGuardando(false);
       return;
     }
+    await revalidarSitioPublico();
     toast.success(estado === "publicado" ? "Post publicado." : "Borrador guardado.");
     router.push("/admin/blog");
     router.refresh();

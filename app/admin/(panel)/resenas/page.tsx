@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { Check, X, Star } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { revalidarSitioPublico } from "@/lib/revalidar-publico";
 import { Badge } from "@/components/admin/Badge";
 import { SortableTableHead } from "@/components/admin/table/SortableTableHead";
 import { TableCard } from "@/components/admin/table/TableCard";
@@ -65,6 +66,9 @@ export default function AdminResenasPage() {
       .from("resenas")
       .update({ estado, revisado_at: new Date().toISOString() })
       .eq("id", id);
+    // El carrusel de reseñas de la home/nosotros está cacheado: sin esto, una
+    // reseña recién aprobada no aparecería hasta que venza el TTL.
+    await revalidarSitioPublico();
     await cargar();
     setProcesando(null);
   }

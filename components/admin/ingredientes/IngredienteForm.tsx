@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { revalidarSitioPublico } from "@/lib/revalidar-publico";
 import { traducirErrorSupabase } from "@/lib/errores-supabase";
 import { Plus, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
@@ -59,6 +60,7 @@ export function IngredienteForm({ ingrediente, onClose, onSaved }: IngredienteFo
       setGuardando(false);
       return;
     }
+    await revalidarSitioPublico();
     toast.success("Ingrediente guardado.");
     onSaved();
   }

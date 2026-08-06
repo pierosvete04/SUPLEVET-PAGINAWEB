@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
-import { unstable_cache } from "next/cache";
 import { Bebas_Neue, DM_Sans, Fraunces } from "next/font/google";
 import "./globals.css";
 import { AnalyticsScripts } from "@/components/analytics/AnalyticsScripts";
 import { LimpiarParametrosTracking } from "@/components/analytics/LimpiarParametrosTracking";
 import { ConsoleBanner } from "@/components/branding/ConsoleBanner";
+import { ConfiguracionProvider } from "@/components/layout/ConfiguracionProvider";
 import { SiteChrome } from "@/components/layout/SiteChrome";
 import { SplashScreen } from "@/components/layout/SplashScreen";
 import { CartProvider } from "@/lib/cart/CartContext";
-import { createStaticClient } from "@/lib/supabase/static";
+import { mapConfiguracionCliente } from "@/lib/configuracion-cliente";
+import { getConfiguracionPublica } from "@/lib/data/publico";
 import { siteConfig } from "@/lib/site-config";
 
 // Manier Bold es la fuente de marca real (PLAN.md sección 2), pero no está
@@ -62,55 +63,50 @@ export const metadata: Metadata = {
   },
 };
 
-// Radio de bordes de tarjetas/recuadros, editable desde /admin/configuracion
-// (columna configuracion_sitio.radio_tarjetas) — expuesto como variable CSS
-// para que todos los componentes usen `rounded-[var(--radius-card)]` en vez
-// de clases rounded-md/rounded-lg sueltas e inconsistentes entre sí.
+// Una sola lectura de configuracion_sitio para todo el árbol. De acá salen dos
+// cosas que antes costaban consultas separadas:
 //
-// IMPORTANTE: usa el cliente SIN cookies (createStaticClient) y unstable_cache.
-// El cliente con cookies (lib/supabase/server) llama a next/headers.cookies(),
-// lo que fuerza renderizado dinámico (sin caché) en TODO el árbol que envuelve
-// este layout raíz — es decir, en cada navegación del sitio entero, agregando
-// una consulta a Supabase antes de poder pintar cualquier página. Con el
-// cliente estático + cache de 60s, esto no bloquea la navegación.
-const getRadioTarjetas = unstable_cache(
-  async (): Promise<number> => {
-    try {
-      const supabase = createStaticClient();
-      const { data } = await supabase
-        .from("configuracion_sitio")
-        .select("radio_tarjetas")
-        .eq("id", 1)
-        .single();
-      return data?.radio_tarjetas ?? 16;
-    } catch {
-      return 16;
-    }
-  },
-  ["radio-tarjetas"],
-  { revalidate: 60 }
-);
-
+//   - `radio_tarjetas`, el radio de bordes editable desde /admin/configuracion,
+//     expuesto como variable CSS para que los componentes usen
+//     `rounded-[var(--radius-card)]` en vez de clases sueltas e inconsistentes.
+//   - La config que consumen los componentes cliente (WhatsApp, redes, datos
+//     legales), que antes cada uno pedía por su cuenta desde el navegador — la
+//     misma fila hasta cuatro veces por página. Ver ConfiguracionProvider.
+//
+// IMPORTANTE: getConfiguracionPublica usa el cliente SIN cookies y caché (ver
+// lib/data/publico.ts). El cliente con cookies (lib/supabase/server) llama a
+// next/headers.cookies(), lo que forzaría renderizado dinámico en TODO el árbol
+// que envuelve este layout raíz — o sea, mataría el prerender del sitio entero.
 export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const radioTarjetas = await getRadioTarjetas();
+  const config = await getConfiguracionPublica();
+  const radioTarjetas = config?.radio_tarjetas ?? 16;
 
   return (
     <html lang="es" style={{ "--radius-card": `${radioTarjetas}px` } as React.CSSProperties}>
       <body
         className={`${fontDisplay.variable} ${fontImpact.variable} ${fontBody.variable} flex min-h-screen flex-col antialiased`}
       >
+        {/* Red de seguridad para .scroll-reveal (globals.css): sin JS el
+            observador nunca marca las secciones como visibles y quedarían en
+            opacity:0 para siempre. */}
+        <noscript>
+          <style>{`.scroll-reveal { opacity: 1 !important; transform: none !important; }`}</style>
+        </noscript>
+
         <SplashScreen />
         <AnalyticsScripts />
         <LimpiarParametrosTracking />
         <ConsoleBanner />
 
-        <CartProvider>
-          <SiteChrome>{children}</SiteChrome>
-        </CartProvider>
+        <ConfiguracionProvider configuracion={mapConfiguracionCliente(config)}>
+          <CartProvider>
+            <SiteChrome>{children}</SiteChrome>
+          </CartProvider>
+        </ConfiguracionProvider>
       </body>
     </html>
   );

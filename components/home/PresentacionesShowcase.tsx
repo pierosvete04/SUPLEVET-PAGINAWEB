@@ -3,8 +3,7 @@ import { ProductCard } from "@/components/productos/ProductCard";
 import { ScrollReveal } from "@/components/shared/ScrollReveal";
 import { PresentacionesSlider } from "@/components/home/PresentacionesSlider";
 import { getPresentaciones } from "@/lib/data/productos";
-import { getBannersHome } from "@/lib/banners";
-import { createClient } from "@/lib/supabase/server";
+import { getBannersHomePublicos } from "@/lib/data/publico";
 
 // Foto real ya usada en el Hero (lifestyle-perro.jpg) — fallback cuando aún
 // no se configuraron imágenes del slider desde el panel admin (Banners).
@@ -14,7 +13,7 @@ const HERO_IMG_FALLBACK =
 export async function PresentacionesShowcase() {
   const [{ g150, g250 }, imagenesSlider] = await Promise.all([
     getPresentaciones(),
-    getBannersHome(await createClient()),
+    getBannersHomePublicos(),
   ]);
   const items = [g150, g250].filter((p): p is NonNullable<typeof p> => p !== null);
 

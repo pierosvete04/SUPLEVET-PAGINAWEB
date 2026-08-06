@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { revalidarSitioPublico } from "@/lib/revalidar-publico";
 import { traducirErrorSupabase } from "@/lib/errores-supabase";
 import { createClient } from "@/lib/supabase/client";
 import { Modal } from "@/components/admin/Modal";
@@ -45,6 +46,7 @@ export function FaqForm({ faq, onClose, onSaved }: FaqFormProps) {
       setGuardando(false);
       return;
     }
+    await revalidarSitioPublico();
     toast.success("Pregunta guardada.");
     onSaved();
   }

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { getPublishedPosts } from "@/lib/data/blog";
-import { getProductos } from "@/lib/data/productos";
+import { getPostsPublicos, getProductosPublicos } from "@/lib/data/publico";
 import { BlogCard } from "@/components/blog/BlogCard";
 import { BlogFilters } from "@/components/blog/BlogFilters";
 import { ScrollReveal } from "@/components/shared/ScrollReveal";
@@ -19,9 +18,13 @@ interface BlogPageProps {
   searchParams: Promise<{ producto?: string; orden?: string }>;
 }
 
+// Esta página lee searchParams (?producto=…&orden=…) para los filtros, así que
+// no se puede prerenderizar como las demás: cada combinación de filtros es una
+// respuesta distinta. Lo que sí se cachea son los DATOS, que son los mismos para
+// todas las combinaciones — el filtrado y el orden ocurren acá abajo, en memoria.
 export default async function BlogPage({ searchParams }: BlogPageProps) {
   const { producto, orden } = await searchParams;
-  const [posts, productos] = await Promise.all([getPublishedPosts(), getProductos()]);
+  const [posts, productos] = await Promise.all([getPostsPublicos(), getProductosPublicos()]);
 
   let visibles = producto ? posts.filter((p) => p.producto_slug === producto) : posts;
   visibles = [...visibles].sort((a, b) => {

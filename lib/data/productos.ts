@@ -1,5 +1,11 @@
-import { createClient } from "@/lib/supabase/server";
+import { createStaticClient } from "@/lib/supabase/static";
 import type { MetodoPago, ProductoCombo } from "@/lib/data/productos-shared";
+
+// Cliente SIN cookies a propósito: el catálogo es idéntico para todo visitante
+// (filtra `activo = true` con la clave anónima, las mismas políticas RLS que
+// vería cualquiera). Usar el cliente con cookies obligaba a next/headers, y eso
+// marcaba como dinámica CADA página que renderiza un producto — incluida la
+// home, que monta CombosDestacados y PresentacionesShowcase. Ver lib/data/publico.ts.
 
 interface ProductoWebRow {
   slug: string;
@@ -37,7 +43,7 @@ const FIELDS =
   "slug, nombre, descripcion, categoria, precio, precio_comparacion, imagen, galeria, descuento_porcentaje, videos, shopify_product_id, metodos_pago_permitidos";
 
 export async function getProductos(): Promise<ProductoCombo[]> {
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   const { data } = await supabase
     .from("productos_web")
     .select(FIELDS)
@@ -52,7 +58,7 @@ export async function getCombos(): Promise<ProductoCombo[]> {
 }
 
 export async function getProductoBySlug(slug: string): Promise<ProductoCombo | null> {
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   const { data } = await supabase
     .from("productos_web")
     .select(FIELDS)

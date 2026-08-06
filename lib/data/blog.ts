@@ -1,5 +1,8 @@
-import { createClient } from "@/lib/supabase/server";
+import { createStaticClient } from "@/lib/supabase/static";
 import type { BlogPost } from "@/lib/data/blog-shared";
+
+// Cliente SIN cookies: los posts publicados son contenido público idéntico para
+// todos. Ver el comentario de lib/data/productos.ts — mismo motivo.
 
 export type { BlogPost } from "@/lib/data/blog-shared";
 export { formatFechaPost } from "@/lib/data/blog-shared";
@@ -8,7 +11,7 @@ const LISTADO_FIELDS =
   "id, slug, titulo, fecha_publicacion, resumen, imagen_destacada, producto_slug, estado";
 
 export async function getPublishedPosts(): Promise<BlogPost[]> {
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   const { data } = await supabase
     .from("blog_posts")
     .select(LISTADO_FIELDS)
@@ -18,7 +21,7 @@ export async function getPublishedPosts(): Promise<BlogPost[]> {
 }
 
 export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   const { data } = await supabase
     .from("blog_posts")
     .select("*")
@@ -29,7 +32,7 @@ export async function getPostBySlug(slug: string): Promise<BlogPost | null> {
 }
 
 export async function getRelatedPosts(slugActual: string, productoSlug: string | null) {
-  const supabase = await createClient();
+  const supabase = createStaticClient();
   const { data } = await supabase
     .from("blog_posts")
     .select(LISTADO_FIELDS)

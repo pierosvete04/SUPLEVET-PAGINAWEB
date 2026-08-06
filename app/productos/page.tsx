@@ -2,10 +2,8 @@ import type { Metadata } from "next";
 import { CatalogoGrid } from "@/components/productos/CatalogoGrid";
 import { BannerCarousel } from "@/components/shared/BannerCarousel";
 import { PageBreadcrumbs } from "@/components/shared/PageBreadcrumbs";
-import { getProductos } from "@/lib/data/productos";
-import { getBannersActivos } from "@/lib/banners";
+import { getBannersProductos, getProductosPublicos } from "@/lib/data/publico";
 import { medirImagenes } from "@/lib/image-size";
-import { createClient } from "@/lib/supabase/server";
 import { siteConfig } from "@/lib/site-config";
 
 export const metadata: Metadata = {
@@ -15,9 +13,12 @@ export const metadata: Metadata = {
   alternates: { canonical: `${siteConfig.siteUrl}/productos` },
 };
 
+export const revalidate = 60;
+
 export default async function ProductosPage() {
-  const productos = await getProductos();
-  const banners = await getBannersActivos(await createClient(), "productos");
+  // En paralelo: antes eran dos esperas encadenadas sin motivo (el catálogo no
+  // depende de los banners), o sea dos viajes a Supabase uno detrás del otro.
+  const [productos, banners] = await Promise.all([getProductosPublicos(), getBannersProductos()]);
   const dimensiones = await medirImagenes(banners.flatMap((b) => [b.imagen, b.imagen_mobile]));
 
   return (

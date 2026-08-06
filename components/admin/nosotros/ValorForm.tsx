@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
+import { revalidarSitioPublico } from "@/lib/revalidar-publico";
 import { traducirErrorSupabase } from "@/lib/errores-supabase";
 import { createClient } from "@/lib/supabase/client";
 import { Modal } from "@/components/admin/Modal";
@@ -56,6 +57,7 @@ export function ValorForm({ valor, onClose, onSaved }: ValorFormProps) {
       setGuardando(false);
       return;
     }
+    await revalidarSitioPublico();
     toast.success("Valor guardado.");
     onSaved();
   }
