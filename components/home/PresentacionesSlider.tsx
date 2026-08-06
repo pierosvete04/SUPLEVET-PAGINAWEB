@@ -49,7 +49,9 @@ export function PresentacionesSlider({ imagenes }: PresentacionesSliderProps) {
       ))}
 
       {total > 1 && (
-        <div className="absolute inset-x-0 bottom-4 flex justify-center gap-2">
+        // El punto sigue midiendo 8px, pero el botón que lo envuelve mide
+        // 24px de alto (mínimo de área táctil que audita Lighthouse).
+        <div className="absolute inset-x-0 bottom-3 flex justify-center">
           {imagenes.map((img, i) => (
             <button
               key={img.id}
@@ -59,10 +61,14 @@ export function PresentacionesSlider({ imagenes }: PresentacionesSliderProps) {
                 pausado.current = true;
                 setActivo(i);
               }}
-              className={`h-2 rounded-full transition-all ${
-                i === activo ? "w-6 bg-white" : "w-2 bg-white/50"
-              }`}
-            />
+              className="flex h-6 w-7 items-center justify-center"
+            >
+              <span
+                className={`h-2 rounded-full transition-all ${
+                  i === activo ? "w-6 bg-white" : "w-2 bg-white/50"
+                }`}
+              />
+            </button>
           ))}
         </div>
       )}

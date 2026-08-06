@@ -3,8 +3,19 @@
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
-// Cuánto se mantiene visible antes de empezar a desvanecerse, y duración del fundido (ms).
-const HOLD_MS = 900;
+// Cuánto se mantiene visible antes de empezar a desvanecerse, y duración del
+// fundido (ms).
+//
+// El hold era de 900 ms y con el fundido tapaba la pantalla ~1,2 s completos.
+// Como el splash es `fixed inset-0`, para el navegador ESE celeste es el
+// primer contenido pintado: el hero y el texto real recién cuentan cuando el
+// splash se va. Eso era lo que empujaba el First Contentful Paint a 2,0 s y el
+// LCP a 4,7 s en la medición de PageSpeed en mobile (ago 2026).
+//
+// A 350 ms el gesto de marca se sigue percibiendo (la patita alcanza a hacer
+// su animación de entrada) pero deja de bloquear la métrica. Si se vuelve a
+// subir este número, se paga directo en el puntaje de rendimiento mobile.
+const HOLD_MS = 350;
 const FADE_MS = 300;
 
 // Pantalla de bienvenida tipo "splash" de app nativa: celeste de marca +

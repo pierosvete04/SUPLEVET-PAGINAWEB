@@ -4,6 +4,7 @@ import { BannerCarousel } from "@/components/shared/BannerCarousel";
 import { PageBreadcrumbs } from "@/components/shared/PageBreadcrumbs";
 import { getProductos } from "@/lib/data/productos";
 import { getBannersActivos } from "@/lib/banners";
+import { medirImagenes } from "@/lib/image-size";
 import { createClient } from "@/lib/supabase/server";
 import { siteConfig } from "@/lib/site-config";
 
@@ -17,6 +18,7 @@ export const metadata: Metadata = {
 export default async function ProductosPage() {
   const productos = await getProductos();
   const banners = await getBannersActivos(await createClient(), "productos");
+  const dimensiones = await medirImagenes(banners.flatMap((b) => [b.imagen, b.imagen_mobile]));
 
   return (
     <div className="bg-background pb-section-y">
@@ -24,7 +26,7 @@ export default async function ProductosPage() {
       <div className="mx-auto max-w-container px-mobile-margin text-center md:px-gutter">
         {banners.length > 0 && (
           <div className="mt-6 mb-10 text-left">
-            <BannerCarousel banners={banners} />
+            <BannerCarousel banners={banners} dimensiones={dimensiones} />
           </div>
         )}
         <h1 className="font-display text-4xl font-bold text-secondary md:text-5xl">

@@ -6,6 +6,7 @@ import {
   optimizedHeroSrc,
   resolvePrimaryHeroImages,
 } from "@/lib/hero";
+import { medirImagenes } from "@/lib/image-size";
 import { TrustBar } from "@/components/home/TrustBar";
 import { CombosDestacados } from "@/components/home/CombosDestacados";
 import { BandanaShowcase } from "@/components/home/BandanaShowcase";
@@ -70,6 +71,16 @@ export default async function Home() {
     config?.hero_banner_mobile
   );
 
+  // Tamaño real de cada imagen del hero, para que el <img> pueda declarar
+  // width/height y reservar su espacio antes de descargarse (ver
+  // lib/image-size.ts). Sin esto el banner aparecía de golpe y empujaba toda
+  // la home hacia abajo: el CLS de 0.546 que reportaba PageSpeed en mobile.
+  const dimensionesHero = await medirImagenes([
+    heroPrimario.desktop,
+    heroPrimario.mobile,
+    ...heroBanners.flatMap((b) => [b.imagen, b.imagen_mobile]),
+  ]);
+
   return (
     <>
       <link
@@ -93,6 +104,7 @@ export default async function Home() {
         banners={heroBanners}
         bannerDesktop={config?.hero_banner_desktop}
         bannerMobile={config?.hero_banner_mobile}
+        dimensiones={dimensionesHero}
       />
       <TrustBar textos={trustbarTextos.length > 0 ? trustbarTextos : TRUSTBAR_FALLBACK} />
       <CombosDestacados />

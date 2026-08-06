@@ -3,7 +3,7 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { r2Client, r2PublicUrl, R2_BUCKET } from "@/lib/r2";
+import { r2Client, r2PublicUrl, R2_BUCKET, R2_CACHE_CONTROL } from "@/lib/r2";
 
 // Equivalente a app/api/admin/r2-upload-url pero para clientes del portal
 // (/mi-cuenta): no requiere ser admin, solo sesión activa. Como cualquier
@@ -54,9 +54,21 @@ export async function POST(request: Request) {
 
   const uploadUrl = await getSignedUrl(
     r2Client,
-    new PutObjectCommand({ Bucket: R2_BUCKET, Key: key, ContentType: contentType }),
+    new PutObjectCommand({
+      Bucket: R2_BUCKET,
+      Key: key,
+      ContentType: contentType,
+      // Ver comentario en app/api/admin/r2-upload-url: el navegador debe
+      // reenviar esta misma cabecera en el PUT porque va firmada.
+      CacheControl: R2_CACHE_CONTROL,
+    }),
     { expiresIn: 300 }
   );
 
-  return NextResponse.json({ uploadUrl, publicUrl: r2PublicUrl(key), key });
+  return NextResponse.json({
+    uploadUrl,
+    publicUrl: r2PublicUrl(key),
+    key,
+    cacheControl: R2_CACHE_CONTROL,
+  });
 }

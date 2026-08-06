@@ -8,7 +8,10 @@ interface ResenasCarouselProps {
 
 function Estrellas({ calificacion }: { calificacion: number }) {
   return (
-    <div className="flex items-center gap-0.5" aria-label={`${calificacion} de 5 estrellas`}>
+    // role="img" es obligatorio para que aria-label valga: en un <div> pelado
+    // (rol "generic") ARIA prohíbe aria-label y los lectores de pantalla lo
+    // ignoran — la calificación no se anunciaba en absoluto.
+    <div className="flex items-center gap-0.5" role="img" aria-label={`${calificacion} de 5 estrellas`}>
       {Array.from({ length: 5 }, (_, i) => (
         <Star
           key={i}

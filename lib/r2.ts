@@ -36,6 +36,16 @@ function normalizarBaseUrl(url: string): string {
   return `https://${url.replace(/^\/+/, "")}`;
 }
 
+// Cache-Control con el que se guardan los archivos subidos a R2. Sin esto el
+// bucket los servía sin ninguna cabecera de caché: cada visita volvía a bajar
+// los mismos banners y videos (PageSpeed lo reportaba como "usar tiempos de
+// vida de caché eficientes", 1449 KiB en mobile).
+//
+// `immutable` con un año es seguro porque las claves llevan Date.now() al
+// frente: subir una versión nueva de una imagen genera una URL nueva, nunca
+// se reemplaza el contenido de una clave existente.
+export const R2_CACHE_CONTROL = "public, max-age=31536000, immutable";
+
 export function r2PublicUrl(key: string): string {
   const publicUrl = normalizarBaseUrl(requiredEnv("R2_PUBLIC_URL"));
   return `${publicUrl}/${key}`;

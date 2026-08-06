@@ -3,7 +3,7 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { z } from "zod";
 import { createClient } from "@/lib/supabase/server";
-import { r2Client, r2PublicUrl, R2_BUCKET } from "@/lib/r2";
+import { r2Client, r2PublicUrl, R2_BUCKET, R2_CACHE_CONTROL } from "@/lib/r2";
 
 // Reemplaza la subida directa a Supabase Storage: el navegador no tiene las
 // credenciales de R2 (no hay RLS en R2 como en Supabase), así que esta ruta
@@ -76,11 +76,24 @@ export async function POST(request: Request) {
   const prefix = subPath ? `${folder}/${subPath}` : folder;
   const key = `${prefix}/${Date.now()}-${sanitizarNombre(fileName)}`;
 
+  // CacheControl va firmado, así que el navegador DEBE mandar la cabecera
+  // `Cache-Control` con este mismo valor en el PUT o R2 rechaza la firma —
+  // lo hace lib/uploadToR2.ts con el `cacheControl` que devolvemos acá.
   const uploadUrl = await getSignedUrl(
     r2Client,
-    new PutObjectCommand({ Bucket: R2_BUCKET, Key: key, ContentType: contentType }),
+    new PutObjectCommand({
+      Bucket: R2_BUCKET,
+      Key: key,
+      ContentType: contentType,
+      CacheControl: R2_CACHE_CONTROL,
+    }),
     { expiresIn: 300 }
   );
 
-  return NextResponse.json({ uploadUrl, publicUrl: r2PublicUrl(key), key });
+  return NextResponse.json({
+    uploadUrl,
+    publicUrl: r2PublicUrl(key),
+    key,
+    cacheControl: R2_CACHE_CONTROL,
+  });
 }

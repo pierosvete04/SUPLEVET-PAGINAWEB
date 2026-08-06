@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Banner } from "@/lib/banners";
-import { optimizedImageSrc } from "@/lib/images";
+import { dimensionesImg, optimizedImageSrc, type MapaDimensiones } from "@/lib/images";
 
 const AUTOPLAY_MS = 6000;
 // Mismo criterio de anchos que components/home/Hero.tsx.
@@ -13,9 +13,12 @@ const DESKTOP_OPTIMIZED_WIDTH = 1920;
 
 interface BannerCarouselProps {
   banners: Banner[];
+  /** Tamaño real de cada imagen (URL -> ancho/alto), medido en el servidor con
+   *  lib/image-size.ts, para reservar el alto y no empujar la página (CLS). */
+  dimensiones?: MapaDimensiones;
 }
 
-export function BannerCarousel({ banners }: BannerCarouselProps) {
+export function BannerCarousel({ banners, dimensiones }: BannerCarouselProps) {
   const [activo, setActivo] = useState(0);
 
   useEffect(() => {
@@ -47,13 +50,15 @@ export function BannerCarousel({ banners }: BannerCarouselProps) {
             <>
               <img
                 src={optimizedImageSrc(banner.imagen_mobile ?? banner.imagen, MOBILE_OPTIMIZED_WIDTH)}
+                {...dimensionesImg(dimensiones, banner.imagen_mobile ?? banner.imagen)}
                 alt=""
-                className="block w-full sm:hidden"
+                className="block h-auto w-full sm:hidden"
               />
               <img
                 src={optimizedImageSrc(banner.imagen, DESKTOP_OPTIMIZED_WIDTH)}
+                {...dimensionesImg(dimensiones, banner.imagen)}
                 alt=""
-                className="hidden w-full sm:block"
+                className="hidden h-auto w-full sm:block"
               />
             </>
           );
@@ -83,17 +88,23 @@ export function BannerCarousel({ banners }: BannerCarouselProps) {
           >
             <ChevronRight className="h-5 w-5" />
           </button>
-          <div className="absolute bottom-3 left-1/2 flex -translate-x-1/2 gap-1.5">
+          {/* Botón de 24px de alto alrededor de un punto de 6px: el área
+              táctil mínima que exige Lighthouse sin agrandar el indicador. */}
+          <div className="absolute bottom-1 left-1/2 flex -translate-x-1/2">
             {banners.map((banner, i) => (
               <button
                 key={banner.id}
                 type="button"
                 aria-label={`Ir al banner ${i + 1}`}
                 onClick={() => ir(i)}
-                className={`h-1.5 rounded-full transition-all ${
-                  i === activo ? "w-6 bg-white" : "w-1.5 bg-white/60"
-                }`}
-              />
+                className="flex h-6 w-7 items-center justify-center"
+              >
+                <span
+                  className={`h-1.5 rounded-full transition-all ${
+                    i === activo ? "w-6 bg-white" : "w-1.5 bg-white/60"
+                  }`}
+                />
+              </button>
             ))}
           </div>
         </>

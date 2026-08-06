@@ -75,10 +75,15 @@ export function BandanaShowcaseCard({ diseno }: BandanaShowcaseCardProps) {
         {!talla && secuencia.length > 1 && (
           <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-1">
             {secuencia.map((_, i) => (
+              // El punto activo se resalta animando `opacity` y no
+              // `background-color`: opacity la resuelve el compositor (GPU),
+              // mientras que animar el color obliga a repintar en el hilo
+              // principal — las 11 "animaciones no compuestas" que marcaba
+              // PageSpeed venían de acá (hay una tarjeta por diseño).
               <span
                 key={i}
-                className={`h-1.5 w-1.5 rounded-full transition-colors ${
-                  i === indiceSlider ? "bg-white" : "bg-white/50"
+                className={`h-1.5 w-1.5 rounded-full bg-white transition-opacity ${
+                  i === indiceSlider ? "opacity-100" : "opacity-50"
                 }`}
               />
             ))}

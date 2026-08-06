@@ -10,6 +10,7 @@ import {
   HERO_MOBILE_OPTIMIZED_WIDTH,
   optimizedHeroSrc,
 } from "@/lib/hero";
+import { dimensionesImg, type MapaDimensiones } from "@/lib/images";
 
 const AUTOPLAY_MS = 6000;
 const HERO_ENLACE_FALLBACK = "#combos";
@@ -25,6 +26,10 @@ interface HeroProps {
   banners: Banner[];
   bannerDesktop?: string | null;
   bannerMobile?: string | null;
+  /** Tamaño real de cada imagen (URL original -> ancho/alto), medido en el
+   *  servidor con lib/image-size.ts. Lo que falte simplemente no lleva
+   *  width/height y se comporta como antes. */
+  dimensiones?: MapaDimensiones;
 }
 
 // Portada dentro del mismo margen/gutter que el resto del sitio (no va borde
@@ -46,7 +51,7 @@ interface HeroProps {
 // slider con autoplay y sin controles visibles (ni flechas ni puntitos): si
 // solo hay una imagen, se queda estático. Sin banners configurados, cae al
 // banner único de /admin/configuracion.
-export function Hero({ banners, bannerDesktop, bannerMobile }: HeroProps) {
+export function Hero({ banners, bannerDesktop, bannerMobile, dimensiones }: HeroProps) {
   const slides: HeroSlide[] =
     banners.length > 0
       ? banners.map((b) => ({
@@ -87,8 +92,15 @@ export function Hero({ banners, bannerDesktop, bannerMobile }: HeroProps) {
                 aria-label="Ver combos de Suplevet"
                 className="block w-full shrink-0"
               >
+                {/* width/height llevan el tamaño REAL del archivo (medido en
+                    el servidor, ver lib/image-size.ts). Junto a `w-full h-auto`
+                    el navegador no los usa como píxeles fijos sino como
+                    proporción, y así reserva el alto correcto desde el primer
+                    pintado en vez de empujar la página cuando la imagen llega
+                    — el salto que PageSpeed reportaba como CLS 0.546. */}
                 <img
                   src={optimizedHeroSrc(slide.mobile, HERO_MOBILE_OPTIMIZED_WIDTH)}
+                  {...dimensionesImg(dimensiones, slide.mobile)}
                   alt=""
                   loading="eager"
                   decoding="async"
@@ -97,6 +109,7 @@ export function Hero({ banners, bannerDesktop, bannerMobile }: HeroProps) {
                 />
                 <img
                   src={optimizedHeroSrc(slide.desktop, HERO_DESKTOP_OPTIMIZED_WIDTH)}
+                  {...dimensionesImg(dimensiones, slide.desktop)}
                   alt=""
                   loading="eager"
                   decoding="async"

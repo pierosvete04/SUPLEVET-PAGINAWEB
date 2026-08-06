@@ -180,18 +180,27 @@ export function BlogCoverflowSlider({ posts }: BlogCoverflowSliderProps) {
         </button>
       </div>
 
-      <div className="mt-4 flex justify-center gap-2">
+      {/* El punto visible sigue midiendo 8px de alto, pero el <button> que lo
+          contiene mide 24x24: es el mínimo que exigen las pautas de área
+          táctil (y que Lighthouse audita) para que se pueda tocar sin fallar
+          en un celular. Los botones van pegados (sin gap) porque su propio
+          relleno ya deja la separación visual entre puntos. */}
+      <div className="mt-3 flex justify-center">
         {posts.map((post, i) => (
           <button
             key={post.slug}
             type="button"
             aria-label={`Ir al artículo ${i + 1}`}
             onClick={() => irA(i)}
-            className={cn(
-              "h-2 rounded-full transition-all",
-              i === activo ? "w-6 bg-secondary" : "w-2 bg-secondary/25"
-            )}
-          />
+            className="flex h-6 w-7 items-center justify-center"
+          >
+            <span
+              className={cn(
+                "h-2 rounded-full transition-all",
+                i === activo ? "w-6 bg-secondary" : "w-2 bg-secondary/25"
+              )}
+            />
+          </button>
         ))}
       </div>
     </div>

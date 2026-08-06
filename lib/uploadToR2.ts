@@ -32,14 +32,22 @@ async function subirConUrlFirmada(
     });
     if (!urlRes.ok) return null;
 
-    const { uploadUrl, publicUrl } = (await urlRes.json()) as {
+    const { uploadUrl, publicUrl, cacheControl } = (await urlRes.json()) as {
       uploadUrl: string;
       publicUrl: string;
+      cacheControl?: string;
     };
 
+    // Cache-Control viaja firmado en la URL (ver app/api/admin/r2-upload-url):
+    // si no se reenvía tal cual, R2 responde 403 por firma inválida. Es lo que
+    // hace que los archivos queden guardados con caché de larga duración en vez
+    // de volver a descargarse en cada visita.
     const putRes = await fetch(uploadUrl, {
       method: "PUT",
-      headers: { "Content-Type": file.type },
+      headers: {
+        "Content-Type": file.type,
+        ...(cacheControl ? { "Cache-Control": cacheControl } : {}),
+      },
       body: file,
     });
     if (!putRes.ok) return null;

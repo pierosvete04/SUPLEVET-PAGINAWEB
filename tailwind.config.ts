@@ -147,7 +147,11 @@ const config: Config = {
   			marquee: 'marquee var(--marquee-duration, 25s) linear infinite',
   			'loader-bar': 'loader-bar 1.1s ease-in-out infinite',
   			'loader-pulse': 'loader-pulse 1.6s ease-in-out infinite',
-  			'splash-icon-in': 'splash-icon-in 380ms cubic-bezier(0.16, 1, 0.3, 1) both',
+  			// 280ms para que la patita termine de entrar ANTES de que arranque
+  			// el fundido de salida del splash (HOLD_MS = 350ms en
+  			// components/layout/SplashScreen.tsx) — si dura más, se desvanece a
+  			// mitad de su propia animación de entrada.
+  			'splash-icon-in': 'splash-icon-in 280ms cubic-bezier(0.16, 1, 0.3, 1) both',
   			'fade-in': 'fade-in 0.4s ease-in-out'
   		}
   	}

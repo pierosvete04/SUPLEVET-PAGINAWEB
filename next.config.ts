@@ -12,7 +12,22 @@ const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
   { key: "Permissions-Policy", value: "geolocation=(), camera=(), microphone=()" },
-  { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
+  // `preload` habilita que suplevet.pe pueda inscribirse en la lista de
+  // precarga HSTS de los navegadores (hstspreload.org) — sin la directiva en
+  // el header el sitio ni siquiera es candidato. Inscribirse es un trámite
+  // aparte y voluntario; tener la directiva no cambia nada por sí sola salvo
+  // que Lighthouse deja de marcarlo. Ojo: una vez inscrito, sacar el dominio
+  // de esa lista toma meses, así que el trámite conviene hacerlo recién
+  // cuando todos los subdominios estén servidos por HTTPS.
+  {
+    key: "Strict-Transport-Security",
+    value: "max-age=31536000; includeSubDomains; preload",
+  },
+  // Aísla la ventana del sitio de las que abre (WhatsApp, Mercado Pago) para
+  // que no puedan manipularla. La variante `-allow-popups` es la que hay que
+  // usar acá: el `same-origin` a secas rompería el flujo de pago que abre
+  // Mercado Pago en una pestaña nueva y necesita responderle a esta.
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
 ];
 
 // ---------------------------------------------------------------------------

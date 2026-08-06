@@ -5,14 +5,12 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X, ShoppingCart, User } from "lucide-react";
-import { mainNav, whatsappLink } from "@/lib/site-config";
+import { mainNav, whatsappLink, WHATSAPP_VERDE } from "@/lib/site-config";
 import { useConfiguracionSitio } from "@/hooks/use-configuracion-sitio";
 import { useCart } from "@/lib/cart/CartContext";
 import { CartSheet } from "@/components/cart/CartSheet";
 import { WhatsAppIcon } from "@/components/shared/WhatsAppIcon";
 import { trackEvent } from "@/lib/analytics";
-
-const WHATSAPP_GREEN = "#25D366";
 
 function WhatsappCta({ className = "" }: { className?: string }) {
   const config = useConfiguracionSitio();
@@ -24,7 +22,7 @@ function WhatsappCta({ className = "" }: { className?: string }) {
       )}
       target="_blank"
       rel="noopener noreferrer"
-      style={{ backgroundColor: WHATSAPP_GREEN }}
+      style={{ backgroundColor: WHATSAPP_VERDE }}
       onClick={() => trackEvent("whatsapp_click", { origen: "header_veterinarias" })}
       className={`flex items-center justify-center gap-2 rounded-[17px] px-5 py-2.5 font-body text-sm font-bold text-white transition-opacity hover:opacity-90 ${className}`}
     >
@@ -295,6 +293,12 @@ export function Header() {
       <div
         ref={condensedRef}
         aria-hidden={!showCondensed}
+        // `inert` acompaña siempre a aria-hidden: sin él la barra queda oculta
+        // para el lector de pantalla pero sus enlaces y botones siguen siendo
+        // enfocables con Tab, así que el teclado cae en controles invisibles
+        // (lo que Lighthouse marca como "[aria-hidden] contiene elementos
+        // seleccionables"). inert los saca del foco y de los clics a la vez.
+        inert={!showCondensed}
         className={`fixed inset-x-0 top-0 z-50 bg-gradient-to-br from-secondary to-[#0f1b2e] text-secondary-foreground shadow-[0_4px_20px_rgba(0,0,0,0.25)] ${
           condensedInstant ? "" : "transition-transform duration-300 ease-out"
         } ${showCondensed ? "translate-y-0" : "-translate-y-full"}`}

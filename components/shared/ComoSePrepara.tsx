@@ -1,5 +1,6 @@
 import { HillCurve } from "@/components/ui/HillCurve";
 import { ScrollReveal } from "@/components/shared/ScrollReveal";
+import { VideoEnViewport } from "@/components/shared/VideoEnViewport";
 
 // Referencia visual: bloque "Swap Your Top For A New Look" de PopSockets
 // (PLAN.md sección 5.2). Videos reales por paso (1:1, comprimidos, sin audio)
@@ -64,18 +65,12 @@ export function ComoSePrepara({
               >
                 {/* El video ocupa todo el ancho de la tarjeta y se reproduce en
                     bucle silencioso, sin controles, para que se sienta como un
-                    GIF pero con mucho menor peso. */}
-                <div className="aspect-square w-full overflow-hidden">
-                  <video
-                    src={video}
-                    aria-label={`Paso ${numero}: ${texto}`}
-                    className="h-full w-full object-cover"
-                    autoPlay
-                    loop
-                    muted
-                    playsInline
-                    preload="auto"
-                  />
+                    GIF pero con mucho menor peso. La descarga se difiere hasta
+                    que la tarjeta se acerca a pantalla (ver VideoEnViewport):
+                    son 3,2 MB entre los cuatro y competían con la carga del
+                    hero. El fondo gris reserva el cuadro mientras tanto. */}
+                <div className="aspect-square w-full overflow-hidden bg-soft-gray">
+                  <VideoEnViewport src={video} className="h-full w-full object-cover" />
                 </div>
                 <div className="flex flex-col gap-2 p-5">
                   <span className="font-impact text-sm text-secondary">PASO {numero}</span>
