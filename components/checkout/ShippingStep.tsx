@@ -109,6 +109,10 @@ interface ShippingStepProps {
   value: DireccionEnvio;
   onChange: (direccion: DireccionEnvio) => void;
   onZonaChange: (zona: EnvioZona | undefined, costoEnvio: number | null) => void;
+  /** "cliente": el checkout público. "admin": el mismo formulario cargado por
+   * el equipo en /admin/pedidos/nuevo con los datos que el cliente mandó por
+   * interno — cambian los textos, no los campos ni las reglas. */
+  contexto?: "cliente" | "admin";
 }
 
 const inputClass =
@@ -120,6 +124,13 @@ const inputClass =
 const ERROR_PIN =
   "No pudimos leer la dirección de ese punto — la ubicación del pin sí quedó guardada. Revisa el distrito antes de continuar.";
 
+// En el panel quien escribe la dirección no es el comprador, y lo que importa
+// ahí es que queden las coordenadas para pasárselas al courier.
+const NOTA_DIRECCION_ADMIN = {
+  ubicada: "Ubicación exacta guardada — ya puedes copiar el punto para el courier.",
+  sinUbicar: "Elige la dirección de la lista de Google para que el pedido quede con coordenadas.",
+};
+
 const metodosEnvio: { value: MetodoEnvio; nombre: string; descripcion: string }[] = [
   { value: "motorizado", nombre: "Delivery motorizado", descripcion: "Entrega directa en tu domicilio." },
   { value: "shalom", nombre: "Agencia Shalom", descripcion: "Envío y recojo en la agencia Shalom más cercana." },
@@ -128,7 +139,14 @@ const metodosEnvio: { value: MetodoEnvio; nombre: string; descripcion: string }[
 // Renderiza dirección + método de envío como secciones de un único formulario
 // continuo (no un "paso" aparte) — así el checkout completo vive en una sola
 // página, igual al patrón de Shopify que pediste en vez del wizard por pasos.
-export function ShippingStep({ subtotal, value, onChange, onZonaChange }: ShippingStepProps) {
+export function ShippingStep({
+  subtotal,
+  value,
+  onChange,
+  onZonaChange,
+  contexto = "cliente",
+}: ShippingStepProps) {
+  const esAdmin = contexto === "admin";
   const [zonas, setZonas] = useState<EnvioZona[]>([]);
   const [costosDistrito, setCostosDistrito] = useState<EnvioDistrito[]>([]);
   const [consultandoDoc, setConsultandoDoc] = useState(false);
@@ -313,7 +331,9 @@ export function ShippingStep({ subtotal, value, onChange, onZonaChange }: Shippi
         <div>
           <h2 className="font-display text-xl font-bold text-secondary">Entrega y facturación</h2>
           <p className="font-body text-xs text-muted-foreground">
-            Ya tenemos tu cuenta registrada — confirma o ajusta estos datos para tu envío y comprobante.
+            {esAdmin
+              ? "Los mismos datos que llena el cliente en el checkout — complétalos con lo que te mandó por interno."
+              : "Ya tenemos tu cuenta registrada — confirma o ajusta estos datos para tu envío y comprobante."}
           </p>
         </div>
 
@@ -373,8 +393,9 @@ export function ShippingStep({ subtotal, value, onChange, onZonaChange }: Shippi
             </p>
           ) : (
             <p className="font-body text-xs text-muted-foreground">
-              Opcional, pero lo recomendamos: con tu documento el courier puede verificar tu
-              identidad al entregarte el pedido.
+              {esAdmin
+                ? "Con el DNI/RUC del cliente se completan nombre y apellidos desde RENIEC/SUNAT, tal cual saldrán en el rótulo."
+                : "Opcional, pero lo recomendamos: con tu documento el courier puede verificar tu identidad al entregarte el pedido."}
             </p>
           )}
         </div>
@@ -403,6 +424,7 @@ export function ShippingStep({ subtotal, value, onChange, onZonaChange }: Shippi
           ubicada={tieneCoordenadas(value)}
           cargandoExterno={resolviendoPin}
           className={inputClass}
+          nota={esAdmin ? NOTA_DIRECCION_ADMIN : undefined}
           // Escribir a mano invalida las coordenadas anteriores: si no, el
           // courier recibiría el pin de una dirección que ya no es la del pedido.
           onChange={(direccion) => {

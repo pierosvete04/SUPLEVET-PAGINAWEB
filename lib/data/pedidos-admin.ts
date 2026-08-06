@@ -4,6 +4,9 @@ export interface ItemPedido {
   cantidad: number;
   /** Slug de productos_web — lo escribe el checkout de la web. */
   sku?: string;
+  /** Categoría del producto (ver CategoriaProducto). Gobierna los regalos por
+   * categoría: cada unidad de "combo" desbloquea una bandana. */
+  categoria?: string;
   /** ID de producto de Shopify — solo en pedidos sincronizados desde Shopify,
    * que llegan con `sku` vacío. Sirve para resolver la imagen igual. */
   producto_id?: string;

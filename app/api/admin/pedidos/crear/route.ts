@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
-import { zonaEnvioSlug } from "@/lib/shipping";
 import { notificarPedidoTelegram } from "@/lib/notificaciones/pedido-telegram";
 
 // Pedido creado a mano desde /admin/pedidos/nuevo (venta telefónica, WhatsApp,
@@ -11,6 +10,7 @@ import { notificarPedidoTelegram } from "@/lib/notificaciones/pedido-telegram";
 // solo porque el cliente final no tiene permiso de INSERT).
 const FORMAS_PAGO_VALIDAS = ["tarjeta", "yape_plin", "transferencia", "contra_entrega"] as const;
 const ESTADOS_PAGO_VALIDOS = ["pendiente_verificacion", "pagado"] as const;
+const ZONAS_ENVIO_VALIDAS = ["lima", "costa_sierra", "selva"] as const;
 
 // Yape/Plin y transferencia no tienen procesador que confirme el pago solo
 // (a diferencia de tarjeta vía Mercado Pago) — si el admin ya lo marca como
@@ -25,6 +25,27 @@ interface ItemBody {
   precio: number;
   cantidad: number;
   sku?: string;
+  categoria?: string;
+}
+
+/** Mismo jsonb que guarda el checkout en pedidos.direccion_envio. */
+interface DireccionEnvioBody {
+  direccion: string | null;
+  direccionSecundaria: string | null;
+  distrito: string | null;
+  provincia: string | null;
+  departamento: string | null;
+  codigoPostal: string | null;
+  metodoEnvio: string | null;
+  tipoDocumento: string | null;
+  numeroDocumento: string | null;
+  lat: number | null;
+  lng: number | null;
+}
+
+interface BandanaBody {
+  slug: string;
+  talla: string | null;
 }
 
 function esItemValido(item: unknown): item is ItemBody {
@@ -41,6 +62,47 @@ function esItemValido(item: unknown): item is ItemBody {
   );
 }
 
+function texto(valor: unknown): string | null {
+  return typeof valor === "string" && valor.trim() ? valor.trim() : null;
+}
+
+function coordenada(valor: unknown): number | null {
+  return typeof valor === "number" && Number.isFinite(valor) ? valor : null;
+}
+
+// El formulario del panel es el mismo componente del checkout (ShippingStep),
+// así que llega el objeto completo: dirección + ubigeo + documento + las
+// coordenadas de Google, que son lo que el equipo le pasa al courier.
+function normalizarDireccion(valor: unknown): DireccionEnvioBody | null {
+  if (typeof valor !== "object" || valor === null) return null;
+  const d = valor as Record<string, unknown>;
+  const direccion: DireccionEnvioBody = {
+    direccion: texto(d.direccion),
+    direccionSecundaria: texto(d.direccionSecundaria),
+    distrito: texto(d.distrito),
+    provincia: texto(d.provincia),
+    departamento: texto(d.departamento),
+    codigoPostal: texto(d.codigoPostal),
+    metodoEnvio: texto(d.metodoEnvio),
+    tipoDocumento: texto(d.tipoDocumento),
+    numeroDocumento: texto(d.numeroDocumento),
+    lat: coordenada(d.lat),
+    lng: coordenada(d.lng),
+  };
+  const tieneAlgo = Object.values(direccion).some((v) => v !== null);
+  return tieneAlgo ? direccion : null;
+}
+
+function normalizarBandanas(valor: unknown): BandanaBody[] {
+  if (!Array.isArray(valor)) return [];
+  return valor.flatMap((b) => {
+    if (typeof b !== "object" || b === null) return [];
+    const slug = texto((b as Record<string, unknown>).slug);
+    if (!slug) return [];
+    return [{ slug, talla: texto((b as Record<string, unknown>).talla) }];
+  });
+}
+
 // El cliente elegido por búsqueda ya trae `cliente_id`. Cuando el admin arma
 // uno nuevo desde el formulario ("+ Crear cliente nuevo") no queda como
 // invitado: se le crea una cuenta real (sin password, sin OTP) para que
@@ -50,16 +112,7 @@ function esItemValido(item: unknown): item is ItemBody {
 // mandarle nada desde acá.
 async function resolverClienteId(
   supabase: SupabaseServerClient,
-  params: {
-    clienteId: string | null;
-    email: string;
-    nombre: string;
-    apellido: string;
-    telefono: string | null;
-    departamento: string | null;
-    distrito: string | null;
-    direccion: string | null;
-  }
+  params: { clienteId: string | null; email: string; nombre: string; apellido: string }
 ): Promise<{ id: string } | { error: string }> {
   if (params.clienteId) return { id: params.clienteId };
 
@@ -91,25 +144,50 @@ async function resolverClienteId(
     return { error: createError?.message ?? "No se pudo crear la cuenta del cliente" };
   }
 
-  // El trigger on_auth_user_created ya insertó la fila vacía en
-  // clientes_perfil (ver [[project-suplevet-shared-supabase]]) — acá solo se
-  // completa con los datos que el admin ya tiene a mano.
-  await supabase
+  return { id: creado.user.id };
+}
+
+// Los datos que el cliente mandó por interno se guardan también en su perfil
+// del portal, igual que hace el checkout al confirmar: así su próxima compra
+// (o su visita a /mi-cuenta/perfil) ya los trae cargados y no se los volvemos
+// a pedir. El trigger on_auth_user_created ya dejó la fila creada.
+async function guardarPerfil(
+  supabase: SupabaseServerClient,
+  clienteId: string,
+  datos: {
+    nombre: string;
+    apellido: string;
+    telefono: string | null;
+    direccion: DireccionEnvioBody | null;
+  }
+) {
+  const d = datos.direccion;
+  const { error } = await supabase
     .from("clientes_perfil")
     .update({
-      nombre: params.nombre,
-      apellido: params.apellido,
-      telefono: params.telefono,
-      direccion: params.direccion,
-      distrito: params.distrito,
-      ciudad: params.departamento,
+      nombre: datos.nombre,
+      apellido: datos.apellido,
+      telefono: datos.telefono,
+      direccion: d?.direccion ?? null,
+      distrito: d?.distrito ?? null,
+      provincia: d?.provincia ?? null,
+      ciudad: d?.departamento ?? null,
+      codigo_postal: d?.codigoPostal ?? null,
+      lat: d?.lat ?? null,
+      lng: d?.lng ?? null,
+      tipo_documento: d?.numeroDocumento ? d.tipoDocumento : null,
+      numero_documento: d?.numeroDocumento ?? null,
       perfil_completo: Boolean(
-        params.telefono && params.direccion && params.distrito && params.departamento
+        datos.telefono && d?.direccion && d?.distrito && d?.departamento
       ),
     })
-    .eq("id", creado.user.id);
+    .eq("id", clienteId);
 
-  return { id: creado.user.id };
+  // El perfil es un extra: si falla, el pedido igual tiene todos los datos en
+  // direccion_envio, que es de donde salen el rótulo y el courier.
+  if (error) {
+    console.error("No se pudo actualizar el perfil del cliente del pedido manual:", error);
+  }
 }
 
 export async function POST(request: Request) {
@@ -121,16 +199,16 @@ export async function POST(request: Request) {
   const clienteEmail = typeof body.cliente_email === "string" ? body.cliente_email.trim() : "";
   const clienteNombre = typeof body.cliente_nombre === "string" ? body.cliente_nombre.trim() : "";
   const clienteApellido = typeof body.cliente_apellido === "string" ? body.cliente_apellido.trim() : "";
-  const clienteTelefono = typeof body.cliente_telefono === "string" && body.cliente_telefono.trim() ? body.cliente_telefono.trim() : null;
+  const clienteTelefono = texto(body.cliente_telefono);
   const clienteId = typeof body.cliente_id === "string" ? body.cliente_id : null;
   const productos = Array.isArray(body.productos) ? body.productos : [];
   const costoEnvio = typeof body.costo_envio === "number" && body.costo_envio >= 0 ? body.costo_envio : 0;
-  const departamento = typeof body.departamento === "string" && body.departamento.trim() ? body.departamento.trim() : null;
-  const distrito = typeof body.distrito === "string" && body.distrito.trim() ? body.distrito.trim() : null;
-  const direccion = typeof body.direccion === "string" && body.direccion.trim() ? body.direccion.trim() : null;
+  const direccionEnvio = normalizarDireccion(body.direccion_envio);
+  const zonaEnvio = ZONAS_ENVIO_VALIDAS.includes(body.zona_envio) ? body.zona_envio : null;
+  const bandanas = normalizarBandanas(body.regalo_bandanas);
   const formaPago = FORMAS_PAGO_VALIDAS.includes(body.forma_pago) ? body.forma_pago : null;
   const estadoPago = ESTADOS_PAGO_VALIDOS.includes(body.estado_pago) ? body.estado_pago : "pendiente_verificacion";
-  const capturaPagoUrl = typeof body.captura_pago_url === "string" && body.captura_pago_url.trim() ? body.captura_pago_url.trim() : null;
+  const capturaPagoUrl = texto(body.captura_pago_url);
 
   if (!clienteEmail || !/^\S+@\S+\.\S+$/.test(clienteEmail)) {
     return NextResponse.json({ error: "Email de cliente inválido" }, { status: 400 });
@@ -161,13 +239,34 @@ export async function POST(request: Request) {
     email: clienteEmail,
     nombre: clienteNombre,
     apellido: clienteApellido,
-    telefono: clienteTelefono,
-    departamento,
-    distrito,
-    direccion,
   });
   if ("error" in clienteResuelto) {
     return NextResponse.json({ error: clienteResuelto.error }, { status: 500 });
+  }
+
+  await guardarPerfil(supabase, clienteResuelto.id, {
+    nombre: clienteNombre,
+    apellido: clienteApellido,
+    telefono: clienteTelefono,
+    direccion: direccionEnvio,
+  });
+
+  // Las bandanas se reservan ANTES del insert para que el pedido nazca ya con
+  // el regalo asignado (y el stock descontado). La función devuelve solo las
+  // que quedaron reservadas de verdad; si alguna se agotó recién, se descarta
+  // en silencio igual que en el checkout, sin tumbar la venta.
+  let bandanasAsignadas: BandanaBody[] = [];
+  if (bandanas.length > 0) {
+    const { data: reservadas, error: errorBandanas } = await supabase.rpc("reservar_bandanas_regalo", {
+      p_bandanas: bandanas,
+    });
+    if (errorBandanas) {
+      return NextResponse.json(
+        { error: `No se pudo reservar el regalo: ${errorBandanas.message}` },
+        { status: 500 }
+      );
+    }
+    bandanasAsignadas = (reservadas as BandanaBody[]) ?? [];
   }
 
   const { data: pedido, error } = await supabase
@@ -184,8 +283,10 @@ export async function POST(request: Request) {
       estado_preparacion: "no_preparado",
       forma_pago: formaPago,
       captura_pago_url: capturaPagoUrl,
-      zona_envio: departamento ? zonaEnvioSlug(departamento) : null,
-      direccion_envio: departamento || distrito || direccion ? { departamento, distrito, direccion } : null,
+      zona_envio: zonaEnvio,
+      direccion_envio: direccionEnvio,
+      regalo_bandana: bandanasAsignadas[0]?.slug ?? null,
+      regalo_bandanas: bandanasAsignadas,
     })
     .select("id")
     .single();

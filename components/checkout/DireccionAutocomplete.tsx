@@ -27,7 +27,15 @@ interface DireccionAutocompleteProps {
   /** El padre está resolviendo la dirección por su cuenta (pin del mapa). */
   cargandoExterno?: boolean;
   className?: string;
+  /** Reemplaza el texto de ayuda de abajo (el panel de administración lo
+   * redacta en tercera persona: ahí quien escribe no es el comprador). */
+  nota?: { ubicada: string; sinUbicar: string };
 }
+
+const NOTA_CLIENTE = {
+  ubicada: "Ubicación exacta guardada — el repartidor llegará directo a tu puerta.",
+  sinUbicar: "Escribe y elige tu dirección de la lista para que el repartidor la ubique exacta.",
+};
 
 const MIN_CARACTERES = 4;
 const DEBOUNCE_MS = 350;
@@ -39,6 +47,7 @@ export function DireccionAutocomplete({
   ubicada,
   cargandoExterno = false,
   className,
+  nota = NOTA_CLIENTE,
 }: DireccionAutocompleteProps) {
   const listboxId = useId();
   const [sugerencias, setSugerencias] = useState<Sugerencia[]>([]);
@@ -239,9 +248,7 @@ export function DireccionAutocomplete({
       )}
 
       <p className="mt-1 font-body text-xs text-muted-foreground">
-        {ubicada
-          ? "Ubicación exacta guardada — el repartidor llegará directo a tu puerta."
-          : "Escribe y elige tu dirección de la lista para que el repartidor la ubique exacta."}
+        {ubicada ? nota.ubicada : nota.sinUbicar}
       </p>
     </div>
   );

@@ -18,6 +18,7 @@ interface ProductoBusqueda {
   imagen: string;
   sku: string | null;
   stock: number | null;
+  categoria: string | null;
 }
 
 interface BuscarProductoModalProps {
@@ -37,7 +38,7 @@ export function BuscarProductoModal({ onAgregar, onClose }: BuscarProductoModalP
       setCargando(true);
       let query = createClient()
         .from("productos_web")
-        .select("id, slug, nombre, precio, imagen, sku, stock")
+        .select("id, slug, nombre, precio, imagen, sku, stock, categoria")
         .eq("activo", true)
         .order("nombre", { ascending: true })
         .limit(8);
@@ -62,6 +63,9 @@ export function BuscarProductoModal({ onAgregar, onClose }: BuscarProductoModalP
       precio: producto.precio,
       cantidad: 1,
       sku: producto.sku ?? producto.slug,
+      // La categoría viaja en el item porque de ella depende el regalo: un
+      // "combo" desbloquea una bandana, igual que en el carrito de la web.
+      categoria: producto.categoria ?? "producto",
     });
     onClose();
   }
