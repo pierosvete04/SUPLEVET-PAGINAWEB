@@ -133,6 +133,12 @@ const config: Config = {
   			'splash-icon-in': {
   				'0%': { opacity: '0', transform: 'scale(0.85)' },
   				'100%': { opacity: '1', transform: 'scale(1)' }
+  			},
+  			// Transición entre imágenes del slider automático de bandanas
+  			// (components/home/BandanaShowcaseCard.tsx)
+  			'fade-in': {
+  				'0%': { opacity: '0' },
+  				'100%': { opacity: '1' }
   			}
   		},
   		animation: {
@@ -141,7 +147,8 @@ const config: Config = {
   			marquee: 'marquee var(--marquee-duration, 25s) linear infinite',
   			'loader-bar': 'loader-bar 1.1s ease-in-out infinite',
   			'loader-pulse': 'loader-pulse 1.6s ease-in-out infinite',
-  			'splash-icon-in': 'splash-icon-in 380ms cubic-bezier(0.16, 1, 0.3, 1) both'
+  			'splash-icon-in': 'splash-icon-in 380ms cubic-bezier(0.16, 1, 0.3, 1) both',
+  			'fade-in': 'fade-in 0.4s ease-in-out'
   		}
   	}
   },
