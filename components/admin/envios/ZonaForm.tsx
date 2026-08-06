@@ -23,6 +23,8 @@ const VACIO: Omit<EnvioZona, "id"> = {
   tiempo_estimado: "",
   monto_minimo_gratis: 0,
   costo_envio: 0,
+  costo_shalom: 15,
+  tiempo_shalom: "3 a 4 días hábiles",
   orden: 0,
   activo: true,
 };
@@ -86,40 +88,87 @@ export function ZonaForm({ zona, onClose, onSaved }: ZonaFormProps) {
           />
         </div>
 
-        <div className="grid gap-1.5">
-          <Label htmlFor="z-tiempo">Tiempo estimado</Label>
-          <Input
-            id="z-tiempo"
-            required
-            value={form.tiempo_estimado}
-            onChange={(e) => setForm((f) => ({ ...f, tiempo_estimado: e.target.value }))}
-            placeholder="24–48 horas hábiles"
-          />
-        </div>
+        {/* Cada zona tiene DOS ofertas de envío con precio y plazo propios:
+            el delivery motorizado (Dinsides) y la Agencia Shalom. Fuera de
+            Lima Metropolitana/Callao el checkout solo muestra Shalom, así que
+            ahí los campos de motorizado quedan sin uso. */}
+        <fieldset className="grid gap-4 rounded-md border border-border p-4">
+          <legend className="px-1 font-body text-sm font-bold text-secondary">
+            Delivery motorizado
+          </legend>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-1.5">
+              <Label htmlFor="z-tiempo">Tiempo estimado</Label>
+              <Input
+                id="z-tiempo"
+                required
+                value={form.tiempo_estimado}
+                onChange={(e) => setForm((f) => ({ ...f, tiempo_estimado: e.target.value }))}
+                placeholder="24–48 horas hábiles"
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="z-costo">Costo de envío (S/.)</Label>
+              <Input
+                id="z-costo"
+                required
+                type="number"
+                step="0.01"
+                value={form.costo_envio}
+                onChange={(e) => setForm((f) => ({ ...f, costo_envio: Number(e.target.value) }))}
+              />
+              <p className="font-body text-xs text-muted-foreground">
+                Solo se usa si el distrito no tiene tarifa propia abajo.
+              </p>
+            </div>
+          </div>
+        </fieldset>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="grid gap-1.5">
-            <Label htmlFor="z-costo">Costo de envío (S/.)</Label>
-            <Input
-              id="z-costo"
-              required
-              type="number"
-              step="0.01"
-              value={form.costo_envio}
-              onChange={(e) => setForm((f) => ({ ...f, costo_envio: Number(e.target.value) }))}
-            />
+        <fieldset className="grid gap-4 rounded-md border border-border p-4">
+          <legend className="px-1 font-body text-sm font-bold text-secondary">
+            Agencia Shalom
+          </legend>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-1.5">
+              <Label htmlFor="z-tiempo-shalom">Tiempo estimado</Label>
+              <Input
+                id="z-tiempo-shalom"
+                required
+                value={form.tiempo_shalom}
+                onChange={(e) => setForm((f) => ({ ...f, tiempo_shalom: e.target.value }))}
+                placeholder="3 a 4 días hábiles"
+              />
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="z-costo-shalom">Costo de envío (S/.)</Label>
+              <Input
+                id="z-costo-shalom"
+                required
+                type="number"
+                step="0.01"
+                value={form.costo_shalom}
+                onChange={(e) => setForm((f) => ({ ...f, costo_shalom: Number(e.target.value) }))}
+              />
+              <p className="font-body text-xs text-muted-foreground">
+                Tarifa plana: no depende del distrito.
+              </p>
+            </div>
           </div>
-          <div className="grid gap-1.5">
-            <Label htmlFor="z-gratis">Monto mínimo envío gratis (S/.)</Label>
-            <Input
-              id="z-gratis"
-              required
-              type="number"
-              step="0.01"
-              value={form.monto_minimo_gratis}
-              onChange={(e) => setForm((f) => ({ ...f, monto_minimo_gratis: Number(e.target.value) }))}
-            />
-          </div>
+        </fieldset>
+
+        <div className="grid gap-1.5">
+          <Label htmlFor="z-gratis">Monto mínimo envío gratis (S/.)</Label>
+          <Input
+            id="z-gratis"
+            required
+            type="number"
+            step="0.01"
+            value={form.monto_minimo_gratis}
+            onChange={(e) => setForm((f) => ({ ...f, monto_minimo_gratis: Number(e.target.value) }))}
+          />
+          <p className="font-body text-xs text-muted-foreground">
+            Aplica a los dos métodos de envío de esta zona.
+          </p>
         </div>
 
         <div className="grid gap-1.5">

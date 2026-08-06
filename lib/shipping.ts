@@ -8,12 +8,21 @@ export interface EnvioZona {
   id: string;
   nombre: string;
   departamentos: string[];
+  /** Tiempo del delivery motorizado. */
   tiempo_estimado: string;
   monto_minimo_gratis: number;
+  /** Tarifa del motorizado (Dinsides). En Lima/Callao la pisa envio_distritos. */
   costo_envio: number;
+  /** Tarifa plana de Agencia Shalom para la zona. */
+  costo_shalom: number;
+  /** Tiempo estimado cuando el envío va por Shalom (siempre mayor). */
+  tiempo_shalom: string;
   orden: number;
   activo: boolean;
 }
+
+/** Cómo llega el pedido. Lo elige el cliente en el checkout y cambia la tarifa. */
+export type MetodoEnvio = "motorizado" | "shalom";
 
 // Override de costo_envio por distrito puntual (courier Dinsides) — algunos
 // departamentos como Lima Metropolitana y Callao no tienen un costo plano
@@ -66,12 +75,34 @@ export function encontrarCostoDistrito(
   return distritos.find((d) => d.zona_id === zona.id && d.distrito === distrito)?.costo_envio;
 }
 
+// El precio depende del método elegido, no solo de la zona: Shalom cobra una
+// tarifa plana por zona (más barata, con recojo en agencia y más días) y el
+// motorizado cobra por distrito según la tarifa de Dinsides. El umbral de
+// envío gratis es el mismo para ambos — es una promesa comercial de la zona,
+// no del courier.
 export function calcularCostoEnvio(
   zona: EnvioZona,
   subtotal: number,
-  costoDistrito?: number
+  costoDistrito?: number,
+  metodo: MetodoEnvio = "motorizado"
 ): number {
-  return subtotal >= zona.monto_minimo_gratis ? 0 : costoDistrito ?? zona.costo_envio;
+  if (subtotal >= zona.monto_minimo_gratis) return 0;
+  if (metodo === "shalom") return Number(zona.costo_shalom);
+  return costoDistrito ?? Number(zona.costo_envio);
+}
+
+/** Tarifa y plazo de cada método disponible en la zona, para mostrarlos juntos
+ *  en el checkout y que la persona compare antes de elegir. */
+export function tarifaDeMetodo(
+  zona: EnvioZona,
+  subtotal: number,
+  costoDistrito: number | undefined,
+  metodo: MetodoEnvio
+): { costo: number; tiempo: string } {
+  return {
+    costo: calcularCostoEnvio(zona, subtotal, costoDistrito, metodo),
+    tiempo: metodo === "shalom" ? zona.tiempo_shalom : zona.tiempo_estimado,
+  };
 }
 
 export function montoFaltanteParaGratis(zona: EnvioZona, subtotal: number): number {

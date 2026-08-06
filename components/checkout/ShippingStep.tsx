@@ -11,9 +11,11 @@ import {
   encontrarZonaPorDepartamento,
   encontrarCostoDistrito,
   calcularCostoEnvio,
+  tarifaDeMetodo,
   esDepartamentoProvincia,
   type EnvioZona,
   type EnvioDistrito,
+  type MetodoEnvio,
 } from "@/lib/shipping";
 import { formatPrecio } from "@/lib/data/productos-shared";
 import {
@@ -31,7 +33,10 @@ import {
 } from "@/components/checkout/DireccionAutocomplete";
 import { MapaUbicacion } from "@/components/checkout/MapaUbicacion";
 
-export type MetodoEnvio = "motorizado" | "shalom";
+// El tipo vive en lib/shipping.ts (lo usa también el cálculo de tarifas); se
+// reexporta acá porque media docena de archivos ya lo importaban desde este
+// componente.
+export type { MetodoEnvio };
 
 export interface DireccionEnvio {
   nombre: string;
@@ -161,18 +166,27 @@ export function ShippingStep({ subtotal, value, onChange, onZonaChange }: Shippi
   const zona = value.departamento ? encontrarZonaPorDepartamento(zonas, value.departamento) : undefined;
   const esProvincia = esDepartamentoProvincia(value.departamento);
   const costoDistrito = encontrarCostoDistrito(costosDistrito, zona, value.distrito);
-  // Costo siempre sale de envio_zonas / envio_distritos (100% administrable
-  // desde /admin/envios) — antes las zonas de provincia pisaban el costo_envio
-  // configurado con un flat rate hardcodeado (COSTO_SHALOM_PROVINCIA), lo que
-  // hacía que editar la tarifa de esas zonas en el admin no tuviera efecto.
-  const costoEnvio = !zona ? null : calcularCostoEnvio(zona, subtotal, costoDistrito);
 
-  // Fuera de Lima Metropolitana/Callao el delivery motorizado no llega — solo
-  // se ofrece Agencia Shalom. Dentro de Lima Metropolitana/Callao es al revés:
-  // solo llega el motorizado propio, Shalom no opera ahí.
+  // Fuera de Lima Metropolitana/Callao el delivery motorizado no llega: solo
+  // Agencia Shalom. Dentro de Lima/Callao se ofrecen los DOS, porque no compiten
+  // en lo mismo — el motorizado llega a la puerta en 24–48 h pero cuesta según
+  // el distrito, y Shalom sale más barato y parejo a cambio de más días y de
+  // que la persona recoja en agencia. Que elija.
   const metodosDisponibles = esProvincia
     ? metodosEnvio.filter((m) => m.value === "shalom")
-    : metodosEnvio.filter((m) => m.value === "motorizado");
+    : metodosEnvio;
+
+  // El costo depende del método elegido, así que hasta que la persona no elige
+  // uno no hay un total de envío que mostrar (y `puedeConfirmar` en el checkout
+  // ya exige ambas cosas). Costo y tiempo siempre salen de envio_zonas /
+  // envio_distritos, 100% administrable desde /admin/envios — antes las zonas
+  // de provincia pisaban lo configurado con un flat rate hardcodeado
+  // (COSTO_SHALOM_PROVINCIA) y editar la tarifa en el admin no tenía efecto.
+  const metodoElegido = value.metodoEnvio || null;
+  const costoEnvio =
+    !zona || !metodoElegido
+      ? null
+      : calcularCostoEnvio(zona, subtotal, costoDistrito, metodoElegido);
 
   useEffect(() => {
     onZonaChange(zona, costoEnvio);
@@ -491,10 +505,19 @@ export function ShippingStep({ subtotal, value, onChange, onZonaChange }: Shippi
           <p className="rounded-md bg-soft-gray p-4 font-body text-sm text-muted-foreground">
             Completa tu región para ver las opciones de envío.
           </p>
-        ) : zona && costoEnvio !== null ? (
+        ) : zona ? (
           <div className="flex flex-col gap-2">
             {metodosDisponibles.map((metodo) => {
               const seleccionado = value.metodoEnvio === metodo.value;
+              // Cada opción muestra SU tarifa y SU plazo: son distintos entre
+              // motorizado y Shalom, y verlos lado a lado es justamente lo que
+              // permite decidir entre pagar menos o recibir antes.
+              const { costo, tiempo } = tarifaDeMetodo(
+                zona,
+                subtotal,
+                costoDistrito,
+                metodo.value
+              );
               return (
                 <button
                   key={metodo.value}
@@ -514,13 +537,13 @@ export function ShippingStep({ subtotal, value, onChange, onZonaChange }: Shippi
                     </span>
                     <div>
                       <p className="font-body text-sm font-bold text-secondary">
-                        {metodo.nombre} — {zona.tiempo_estimado}
+                        {metodo.nombre} — {tiempo}
                       </p>
                       <p className="font-body text-xs text-muted-foreground">{metodo.descripcion}</p>
                     </div>
                   </div>
                   <span className="shrink-0 font-body text-sm font-bold text-secondary">
-                    {costoEnvio === 0 ? "GRATIS" : formatPrecio(costoEnvio)}
+                    {costo === 0 ? "GRATIS" : formatPrecio(costo)}
                   </span>
                 </button>
               );

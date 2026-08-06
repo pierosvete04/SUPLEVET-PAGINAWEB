@@ -138,8 +138,16 @@ export default function AdminEnviosPage() {
                 <TableCell className="max-w-xs text-muted-foreground">
                   {z.departamentos.join(", ")}
                 </TableCell>
-                <TableCell>{z.tiempo_estimado}</TableCell>
-                <TableCell>S/.{z.costo_envio.toFixed(2)}</TableCell>
+                {/* Las dos ofertas de la zona en una sola celda: motorizado
+                    arriba, Shalom abajo, cada una con su plazo. */}
+                <TableCell className="whitespace-nowrap text-muted-foreground">
+                  <div>Moto: {z.tiempo_estimado}</div>
+                  <div>Shalom: {z.tiempo_shalom}</div>
+                </TableCell>
+                <TableCell className="whitespace-nowrap">
+                  <div>Moto: S/.{Number(z.costo_envio).toFixed(2)}</div>
+                  <div>Shalom: S/.{Number(z.costo_shalom).toFixed(2)}</div>
+                </TableCell>
                 <TableCell>S/.{z.monto_minimo_gratis.toFixed(2)}</TableCell>
                 <TableCell>
                   <Badge color={z.activo ? "verde" : "gris"}>{z.activo ? "Activa" : "Inactiva"}</Badge>
