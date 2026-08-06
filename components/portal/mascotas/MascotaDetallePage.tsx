@@ -15,6 +15,7 @@ import { CondicionesMedicasCard } from "@/components/portal/mascotas/Condiciones
 import { CondicionMedicaFormDialog } from "@/components/portal/mascotas/CondicionMedicaFormDialog";
 import { BrandedLoader } from "@/components/ui/branded-loader";
 import { FichaDocumentoImprimible } from "@/components/ficha/FichaDocumentoImprimible";
+import { PortalIcon } from "@/components/portal/icons/PortalIcon";
 
 interface TransaccionMini {
   id: string;
@@ -111,7 +112,7 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
         href="/mi-cuenta/mascotas"
         className="mb-4 inline-flex items-center gap-1 text-sm font-semibold text-portal-navy hover:text-portal-teal-mid print:hidden"
       >
-        <span className="material-symbols-rounded text-[18px]">arrow_back</span>
+        <PortalIcon name="arrow_back" className="text-[18px]" />
         Mis Mascotas
       </Link>
 
@@ -180,12 +181,12 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
 
           <div className="flex flex-wrap items-center gap-2">
             <span className="flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--mc-tag)_18%,transparent)] px-3 py-1 text-xs text-[var(--mc-tag)]">
-              <span className="material-symbols-rounded text-[14px]">monitor_weight</span>
+              <PortalIcon name="monitor_weight" className="text-[14px]" />
               {mascota.peso_kg} kg
             </span>
             {mascota.fecha_nacimiento && (
               <span className="flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--mc-tag)_18%,transparent)] px-3 py-1 text-xs text-[var(--mc-tag)]">
-                <span className="material-symbols-rounded text-[14px]">cake</span>
+                <PortalIcon name="cake" className="text-[14px]" />
                 {formatFechaCumple(mascota.fecha_nacimiento)}
               </span>
             )}
@@ -220,7 +221,7 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
           {vacunaVencidaDias !== null && (
             <div className="flex flex-wrap items-center justify-between gap-3 rounded-[17px] border border-portal-error/20 bg-red-50 p-4">
               <div className="flex items-start gap-3">
-                <span className="material-symbols-rounded mt-0.5 text-portal-error">error</span>
+                <PortalIcon name="error" className="mt-0.5 text-portal-error" />
                 <div>
                   <p className="font-bold text-portal-navy">Atención: recordatorio pendiente</p>
                   <p className="text-sm text-portal-muted">
@@ -239,14 +240,14 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
           <div className="rounded-[17px] border border-portal-surface-variant bg-white p-5">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="flex items-center gap-2 font-display text-lg font-semibold text-portal-navy">
-                <span className="material-symbols-rounded text-portal-teal-mid">medical_services</span> Estado de Salud
+                <PortalIcon name="medical_services" className="text-portal-teal-mid" /> Estado de Salud
               </h3>
               <button
                 type="button"
                 onClick={() => abrirNuevoRegistro("vacuna")}
                 className="flex items-center gap-1 text-sm font-semibold text-portal-teal-mid hover:text-portal-teal"
               >
-                <span className="material-symbols-rounded text-[18px]">add_circle</span> Agregar registro
+                <PortalIcon name="add_circle" className="text-[18px]" /> Agregar registro
               </button>
             </div>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -308,7 +309,7 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
           {/* Información general */}
           <div className="rounded-[17px] border border-portal-surface-variant bg-white p-5">
             <h3 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold text-portal-navy">
-              <span className="material-symbols-rounded text-portal-navy">description</span> Información General
+              <PortalIcon name="description" className="text-portal-navy" /> Información General
             </h3>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               <InfoTile
@@ -358,7 +359,7 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
               veterinario, así que no se imprime. */}
           <div className="rounded-[17px] border border-portal-surface-variant bg-white p-5 print:hidden">
             <h3 className="mb-3 flex items-center gap-2 font-display text-base font-semibold text-portal-navy">
-              <span className="material-symbols-rounded text-[18px] text-portal-navy">history</span> Actividad Reciente
+              <PortalIcon name="history" className="text-[18px] text-portal-navy" /> Actividad Reciente
             </h3>
             {cargando ? (
               <BrandedLoader compact />
@@ -382,10 +383,10 @@ export function MascotaDetallePage({ clienteId, mascota }: MascotaDetallePagePro
           </div>
 
           <div className="relative overflow-hidden rounded-[17px] bg-gradient-to-br from-portal-teal-light/30 to-portal-teal-light/10 p-5 print:hidden">
-            <span className="material-symbols-rounded absolute -bottom-3 -right-3 text-[90px] text-portal-teal-mid/10">description</span>
+            <PortalIcon name="description" className="absolute -bottom-3 -right-3 text-[90px] text-portal-teal-mid/10" />
             <div className="relative">
               <span className="mb-2 inline-flex items-center gap-1 rounded-full bg-white px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-portal-teal">
-                <span className="material-symbols-rounded text-[13px]">history_edu</span> Historial clínico completo
+                <PortalIcon name="history_edu" className="text-[13px]" /> Historial clínico completo
               </span>
               <h3 className="mb-1 font-display text-base font-semibold text-portal-navy">
                 Lleva la ficha de {mascota.nombre} a su próxima consulta
@@ -498,7 +499,7 @@ function EventoResumenCard({
         onClick={onAgregar}
         className="flex min-h-[122px] flex-col items-center justify-center gap-1 rounded-[17px] border border-dashed border-portal-surface-variant bg-portal-surface-low/40 p-4 text-center transition-colors hover:border-portal-teal-light hover:bg-portal-surface-low"
       >
-        <span className="material-symbols-rounded text-2xl text-portal-muted">add_circle</span>
+        <PortalIcon name="add_circle" className="text-2xl text-portal-muted" />
         <span className="text-xs text-portal-muted">{vacio}</span>
       </button>
     );
@@ -515,7 +516,7 @@ function EventoResumenCard({
     >
       <div className="mb-2 flex items-center justify-between">
         <span className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${estilo.fondo} ${estilo.texto}`}>
-          <span className={`material-symbols-rounded text-[13px] ${estilo.icono}`}>{icono}</span>
+          <PortalIcon name={icono} className={`text-[13px] ${estilo.icono}`} />
           {titulo}
         </span>
         {total > 1 && (
@@ -529,7 +530,7 @@ function EventoResumenCard({
       <p className="mt-1 text-xs text-portal-muted">Aplicada: {formatFecha(evento.fecha)}</p>
       {detalle.veterinario && (
         <p className="text-xs text-portal-muted">
-          <span className="material-symbols-rounded align-middle text-[13px]">badge</span> {detalle.veterinario}
+          <PortalIcon name="badge" className="align-middle text-[13px]" /> {detalle.veterinario}
         </p>
       )}
       {detalle.proxima_fecha && (
@@ -538,7 +539,7 @@ function EventoResumenCard({
             vencido ? "bg-red-100 text-portal-error" : "bg-portal-teal-light/40 text-portal-teal"
           }`}
         >
-          <span className="material-symbols-rounded text-[12px]">{vencido ? "error" : "event_available"}</span>
+          <PortalIcon name={vencido ? "error" : "event_available"} className="text-[12px]" />
           {vencido ? "Vencido" : "Próximo"}: {formatFecha(detalle.proxima_fecha)}
         </span>
       )}
@@ -550,7 +551,7 @@ function InfoTile({ etiqueta, valor, icono }: { etiqueta: string; valor: string;
   return (
     <div className="rounded-[17px] bg-portal-surface-low p-3 transition-colors hover:bg-portal-teal-light/20">
       <span className="flex h-8 w-8 items-center justify-center rounded-full bg-portal-orange/15">
-        <span className="material-symbols-rounded text-[18px] text-portal-orange-dark">{icono}</span>
+        <PortalIcon name={icono} className="text-[18px] text-portal-orange-dark" />
       </span>
       <p className="mt-2 text-[10px] font-bold uppercase tracking-wide text-portal-muted">{etiqueta}</p>
       <p className="truncate text-sm font-bold text-portal-navy">{valor}</p>
@@ -587,7 +588,7 @@ function RedesYEngranaje({
         aria-label="Editar perfil de la mascota"
         className="flex h-9 w-9 items-center justify-center rounded-full bg-portal-orange text-white transition-colors hover:bg-portal-orange-dark"
       >
-        <span className="material-symbols-rounded text-[18px]">settings</span>
+        <PortalIcon name="settings" className="text-[18px]" />
       </button>
     </>
   );

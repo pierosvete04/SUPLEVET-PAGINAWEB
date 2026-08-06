@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { NOMBRE_NIVEL } from "@/lib/data/portal/logros";
 import { PORTAL_NAV_SECTIONS, esRutaActiva } from "@/lib/portal/nav";
+import { PortalIcon } from "@/components/portal/icons/PortalIcon";
 
 interface PortalSidebarUsuario {
   nombre: string;
@@ -67,7 +68,7 @@ export function PortalSidebar({ usuario }: { usuario: PortalSidebarUsuario }) {
             {NOMBRE_NIVEL[usuario.nivel] ?? usuario.nivel}
           </div>
         </div>
-        <span className="material-symbols-rounded text-[18px] text-white/50">edit</span>
+        <PortalIcon name="edit" className="text-[18px] text-white/50" />
       </Link>
 
       <nav className="flex-1 space-y-1 overflow-y-auto px-3 pb-3 pt-1">
@@ -82,7 +83,7 @@ export function PortalSidebar({ usuario }: { usuario: PortalSidebarUsuario }) {
               const activo = esRutaActiva(pathname, item.url);
               return (
                 <Link key={item.url} href={item.url} className={`portal-nav-item ${activo ? "active" : ""}`}>
-                  <span className="material-symbols-rounded text-[20px]">{item.icon}</span>
+                  <PortalIcon name={item.icon} className="text-[20px]" />
                   <span className="flex-1">{item.title}</span>
                   {item.showSaldo && usuario.saldo > 0 && (
                     <span className="rounded-full bg-gradient-to-br from-portal-orange to-portal-orange-dark px-2 py-0.5 text-[10px] font-bold text-white">
@@ -101,7 +102,7 @@ export function PortalSidebar({ usuario }: { usuario: PortalSidebarUsuario }) {
           href="/"
           className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-white/50 transition-colors hover:bg-white/5 hover:text-white/80"
         >
-          <span className="material-symbols-rounded text-[18px]">arrow_back</span>
+          <PortalIcon name="arrow_back" className="text-[18px]" />
           Regresar a la página web
         </Link>
         <button
@@ -109,7 +110,7 @@ export function PortalSidebar({ usuario }: { usuario: PortalSidebarUsuario }) {
           onClick={handleLogout}
           className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-white/50 transition-colors portal-sidebar-logout"
         >
-          <span className="material-symbols-rounded text-[18px]">logout</span>
+          <PortalIcon name="logout" className="text-[18px]" />
           Cerrar sesión
         </button>
       </div>

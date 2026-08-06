@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { marcarLeccionCompletada, type CursoDetalle, type CursoLeccion } from "@/lib/cursos";
+import { PortalIcon } from "@/components/portal/icons/PortalIcon";
 
 interface CursoDetalleViewProps {
   curso: CursoDetalle;
@@ -74,7 +75,7 @@ export function CursoDetalleView({ curso, leccionesCompletadasIniciales }: Curso
           href="/mi-cuenta/cursos"
           className="flex h-10 w-10 items-center justify-center rounded-full text-portal-navy hover:bg-portal-surface-low"
         >
-          <span className="material-symbols-rounded">arrow_back</span>
+          <PortalIcon name="arrow_back" />
         </Link>
         <div>
           <span className="block text-xs font-bold uppercase tracking-widest text-portal-orange">Curso Actual</span>
@@ -98,7 +99,7 @@ export function CursoDetalleView({ curso, leccionesCompletadasIniciales }: Curso
               )}
               <div className="relative z-10 flex flex-col items-center gap-2 text-white">
                 <span className="flex h-16 w-16 items-center justify-center rounded-full bg-portal-orange shadow-lg transition-transform group-hover:scale-110">
-                  <span className="material-symbols-rounded text-4xl">play_arrow</span>
+                  <PortalIcon name="play_arrow" className="text-4xl" />
                 </span>
                 <span className="text-xs font-bold uppercase tracking-wider text-white/80">
                   Ver en Google Drive
@@ -112,7 +113,7 @@ export function CursoDetalleView({ curso, leccionesCompletadasIniciales }: Curso
                 <img src={curso.thumbnail_url} alt="" className="h-full w-full object-cover opacity-80" />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-white/40">
-                  <span className="material-symbols-rounded text-6xl">play_circle</span>
+                  <PortalIcon name="play_circle" className="text-6xl" />
                 </div>
               )}
             </div>
@@ -192,7 +193,7 @@ export function CursoDetalleView({ curso, leccionesCompletadasIniciales }: Curso
                   {curso.modulos.map((modulo) => (
                     <div key={modulo.id} className="rounded-xl border border-portal-surface-variant">
                       <div className="flex items-center gap-2 border-b border-portal-surface-low bg-portal-surface-low/60 p-3">
-                        <span className="material-symbols-rounded text-portal-navy">folder</span>
+                        <PortalIcon name="folder" className="text-portal-navy" />
                         <p className="font-semibold text-portal-navy">{modulo.titulo}</p>
                       </div>
                       <div className="divide-y divide-portal-surface-low">
@@ -217,9 +218,7 @@ export function CursoDetalleView({ curso, leccionesCompletadasIniciales }: Curso
                                     completada ? "bg-portal-teal-mid" : esActual ? "bg-portal-orange" : "bg-portal-surface-variant text-portal-muted"
                                   }`}
                                 >
-                                  <span className="material-symbols-rounded text-sm">
-                                    {completada ? "check" : desbloqueada ? "play_arrow" : "lock"}
-                                  </span>
+                                  <PortalIcon name={completada ? "check" : desbloqueada ? "play_arrow" : "lock"} className="text-sm" />
                                 </span>
                                 <div>
                                   <p className="font-bold text-portal-navy">{l.titulo}</p>
@@ -229,9 +228,7 @@ export function CursoDetalleView({ curso, leccionesCompletadasIniciales }: Curso
                                   </p>
                                 </div>
                               </div>
-                              <span className="material-symbols-rounded text-portal-muted">
-                                {desbloqueada ? "keyboard_arrow_right" : "lock"}
-                              </span>
+                              <PortalIcon name={desbloqueada ? "keyboard_arrow_right" : "lock"} className="text-portal-muted" />
                             </button>
                           );
                         })}
@@ -255,9 +252,7 @@ export function CursoDetalleView({ curso, leccionesCompletadasIniciales }: Curso
                       className="flex items-center gap-4 rounded-xl bg-portal-surface-low p-4 transition-shadow hover:shadow-md"
                     >
                       <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-white shadow-sm">
-                        <span className={`material-symbols-rounded ${r.tipo === "descargable" ? "text-portal-error" : "text-portal-teal-mid"}`}>
-                          {r.tipo === "descargable" ? "picture_as_pdf" : "fact_check"}
-                        </span>
+                        <PortalIcon name={r.tipo === "descargable" ? "picture_as_pdf" : "fact_check"} className={`${r.tipo === "descargable" ? "text-portal-error" : "text-portal-teal-mid"}`} />
                       </span>
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-bold text-portal-navy">{r.titulo}</p>
@@ -265,9 +260,7 @@ export function CursoDetalleView({ curso, leccionesCompletadasIniciales }: Curso
                           {formatDuracion(r.duracion_min)} · {r.tipo === "descargable" ? "Descargar" : "Leer"}
                         </p>
                       </div>
-                      <span className="material-symbols-rounded text-portal-muted">
-                        {r.tipo === "descargable" ? "download" : "chevron_right"}
-                      </span>
+                      <PortalIcon name={r.tipo === "descargable" ? "download" : "chevron_right"} className="text-portal-muted" />
                     </a>
                   ))}
                 </div>
@@ -280,9 +273,7 @@ export function CursoDetalleView({ curso, leccionesCompletadasIniciales }: Curso
         <div className="space-y-4 lg:col-span-4">
           {siguiente && (
             <div className="relative overflow-hidden rounded-[18px] bg-portal-navy p-6 text-white">
-              <span className="material-symbols-rounded pointer-events-none absolute -bottom-8 -right-8 rotate-[-12deg] text-[140px] text-white/10">
-                restaurant
-              </span>
+              <PortalIcon name="restaurant" className="pointer-events-none absolute -bottom-8 -right-8 rotate-[-12deg] text-[140px] text-white/10" />
               <div className="relative z-10">
                 <div className="mb-4 flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-portal-orange" />
@@ -298,7 +289,7 @@ export function CursoDetalleView({ curso, leccionesCompletadasIniciales }: Curso
                   }}
                   className="flex w-full items-center justify-center gap-2 rounded-xl bg-portal-orange py-3 text-sm font-semibold text-white hover:bg-portal-orange-dark"
                 >
-                  REPRODUCIR <span className="material-symbols-rounded">play_circle</span>
+                  REPRODUCIR <PortalIcon name="play_circle" />
                 </button>
               </div>
             </div>
@@ -363,7 +354,7 @@ export function CursoDetalleView({ curso, leccionesCompletadasIniciales }: Curso
 function InfoTile({ icono, etiqueta, valor }: { icono: string; etiqueta: string; valor: string }) {
   return (
     <div className="flex items-center gap-3 rounded-xl bg-portal-surface-low p-4">
-      <span className="material-symbols-rounded text-portal-orange">{icono}</span>
+      <PortalIcon name={icono} className="text-portal-orange" />
       <div>
         <p className="text-[10px] font-bold uppercase text-portal-muted">{etiqueta}</p>
         <p className="font-bold text-portal-navy">{valor}</p>

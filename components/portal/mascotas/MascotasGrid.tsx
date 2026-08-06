@@ -7,6 +7,7 @@ import { Cat, Dog, PawPrint, Star } from "lucide-react";
 import { calcularEdad } from "@/lib/portal/formato";
 import type { Mascota } from "@/lib/data/portal/mascotas";
 import { MascotaFormDialog } from "@/components/portal/mascotas/MascotaFormDialog";
+import { PortalIcon } from "@/components/portal/icons/PortalIcon";
 
 interface MascotasGridProps {
   clienteId: string;
@@ -52,7 +53,7 @@ export function MascotasGrid({ clienteId, mascotasIniciales, vacunaPendienteInic
             aria-label="Cerrar aviso"
             className="shrink-0 text-portal-muted hover:text-portal-navy"
           >
-            <span className="material-symbols-rounded text-[18px]">close</span>
+            <PortalIcon name="close" className="text-[18px]" />
           </button>
         </div>
       )}
@@ -72,7 +73,7 @@ export function MascotasGrid({ clienteId, mascotasIniciales, vacunaPendienteInic
           }}
           className="flex items-center gap-2 self-start rounded-[17px] bg-portal-navy-dark px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-portal-navy md:mt-9"
         >
-          <span className="material-symbols-rounded text-[20px]">add</span> Añadir mascota
+          <PortalIcon name="add" className="text-[20px]" /> Añadir mascota
         </button>
       </div>
 
@@ -103,7 +104,7 @@ export function MascotasGrid({ clienteId, mascotasIniciales, vacunaPendienteInic
                   className="flex items-start gap-3 rounded-[10px] bg-portal-surface-low/60 p-3"
                 >
                   <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white text-portal-orange shadow-sm">
-                    <span className="material-symbols-rounded text-[18px]">{beneficio.icono}</span>
+                    <PortalIcon name={beneficio.icono} className="text-[18px]" />
                   </span>
                   <span className="text-sm text-portal-navy">{beneficio.texto}</span>
                 </li>
@@ -118,7 +119,7 @@ export function MascotasGrid({ clienteId, mascotasIniciales, vacunaPendienteInic
               }}
               className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-[17px] bg-portal-navy-dark px-6 py-3 text-sm font-semibold text-white transition-colors hover:bg-portal-navy sm:w-auto"
             >
-              <span className="material-symbols-rounded text-[20px]">add</span>
+              <PortalIcon name="add" className="text-[20px]" />
               Registrar primera mascota
             </button>
           </div>
@@ -148,7 +149,7 @@ export function MascotasGrid({ clienteId, mascotasIniciales, vacunaPendienteInic
                   )}
                   {pendiente && (
                     <div className="portal-health-indicator" title="Vacuna pendiente">
-                      <span className="material-symbols-rounded text-[12px] text-white">vaccines</span>
+                      <PortalIcon name="vaccines" className="text-[12px] text-white" />
                     </div>
                   )}
                 </div>
@@ -159,12 +160,12 @@ export function MascotasGrid({ clienteId, mascotasIniciales, vacunaPendienteInic
                   </p>
                   {pendiente ? (
                     <div className="flex w-full items-center justify-center gap-1 rounded-lg bg-portal-surface-low py-1.5 text-xs font-semibold text-portal-navy">
-                      <span className="material-symbols-rounded text-[14px] text-portal-error">warning</span>
+                      <PortalIcon name="warning" className="text-[14px] text-portal-error" />
                       Vacuna pendiente
                     </div>
                   ) : (
                     <div className="flex w-full items-center justify-center gap-1 rounded-lg bg-portal-teal-light/20 py-1.5 text-xs font-semibold text-portal-teal-mid">
-                      <span className="material-symbols-rounded text-[14px]">check_circle</span>
+                      <PortalIcon name="check_circle" className="text-[14px]" />
                       Al día
                     </div>
                   )}
@@ -182,7 +183,7 @@ export function MascotasGrid({ clienteId, mascotasIniciales, vacunaPendienteInic
             className="portal-pet-card flex min-h-[200px] cursor-pointer flex-col items-center justify-center border-2 border-dashed border-portal-surface-variant bg-portal-surface-low/40 hover:bg-portal-surface-low"
           >
             <div className="mb-3 flex h-14 w-14 items-center justify-center rounded-full bg-portal-surface-variant">
-              <span className="material-symbols-rounded text-2xl text-portal-muted">add</span>
+              <PortalIcon name="add" className="text-2xl text-portal-muted" />
             </div>
             <span className="text-sm font-semibold text-portal-navy">Añadir mascota</span>
           </button>

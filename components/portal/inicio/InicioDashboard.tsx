@@ -6,13 +6,13 @@ import Image from "next/image";
 import type { User } from "@supabase/supabase-js";
 import { Cat, Dog, Gem } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { gsap } from "@/lib/gsap";
 import { calcularEdad, formatFecha } from "@/lib/portal/formato";
 import type { ClientePerfil } from "@/lib/data/portal/cliente";
 import type { SuplepuntosCliente } from "@/lib/data/portal/puntos";
 import { crearNotificacion } from "@/lib/data/portal/notificaciones";
 import { NOMBRE_NIVEL, SIGUIENTE_NIVEL, UMBRAL_NIVEL, type LogroConfig } from "@/lib/data/portal/logros";
 import { TiendaSheet } from "@/components/portal/inicio/TiendaSheet";
+import { PortalIcon } from "@/components/portal/icons/PortalIcon";
 
 interface Mascota {
   id: string;
@@ -94,20 +94,6 @@ export function InicioDashboard({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user.id]);
 
-  useEffect(() => {
-    if (!puntos) return;
-    const contador = { v: 0 };
-    gsap.to(contador, {
-      v: puntos.saldo_actual,
-      duration: 1.4,
-      ease: "power2.out",
-      onUpdate: () => {
-        const el = document.getElementById("inicio-pts");
-        if (el) el.textContent = Math.round(contador.v).toLocaleString();
-      },
-    });
-  }, [puntos]);
-
   const hora = new Date().getHours();
   const saludo = hora < 12 ? "Buenos días" : hora < 18 ? "Buenas tardes" : "Buenas noches";
   const primerNombre = perfil?.nombre?.trim().split(/\s+/)[0] || user.email?.split("@")[0] || "";
@@ -143,12 +129,17 @@ export function InicioDashboard({
                   Tu Balance
                 </div>
                 <div className="flex items-baseline gap-2 font-display text-5xl font-semibold leading-none md:text-6xl">
-                  <span id="inicio-pts">0</span>
+                  {/* El saldo se pinta ya con su valor final: antes una
+                      animación de conteo lo llevaba de 0 al total en cada
+                      montaje, así que cualquier navegación de vuelta al inicio
+                      (incluido el clic en una notificación) parecía un reseteo
+                      del balance. */}
+                  <span>{(puntos?.saldo_actual ?? 0).toLocaleString()}</span>
                   <span className="font-body text-lg font-medium text-white/60">SuplePoints</span>
                 </div>
               </div>
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 backdrop-blur-sm transition-transform group-hover:scale-110">
-                <span className="material-symbols-rounded text-3xl text-portal-orange">star</span>
+                <PortalIcon name="star" className="text-3xl text-portal-orange" />
               </div>
             </div>
             <div className="relative z-10">
@@ -170,7 +161,7 @@ export function InicioDashboard({
                   )}
                 </div>
                 <div className="flex items-center gap-1 text-xs font-bold text-portal-orange transition-transform group-hover:translate-x-1">
-                  Ver recompensas <span className="material-symbols-rounded text-[14px]">arrow_forward</span>
+                  Ver recompensas <PortalIcon name="arrow_forward" className="text-[14px]" />
                 </div>
               </div>
             </div>
@@ -179,7 +170,7 @@ export function InicioDashboard({
 
         <div className="flex flex-col items-center justify-center rounded-[18px] border border-portal-surface-variant bg-white p-6 text-center">
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-portal-teal-light/20">
-            <span className="material-symbols-rounded text-3xl text-portal-teal-mid">shopping_basket</span>
+            <PortalIcon name="shopping_basket" className="text-3xl text-portal-teal-mid" />
           </div>
           <h3 className="mb-2 font-display text-lg font-semibold text-portal-navy">¿Necesitas suplevet?</h3>
           <p className="mb-4 text-sm text-portal-muted">Compra tu próxima bolsa de Suplevet y sigue sumando SuplePoints.</p>
@@ -203,7 +194,7 @@ export function InicioDashboard({
             href="/mi-cuenta/mascotas"
             className="flex items-center gap-1 text-sm font-semibold text-portal-orange hover:text-portal-orange-dark"
           >
-            Ver todas <span className="material-symbols-rounded text-[18px]">arrow_forward</span>
+            Ver todas <PortalIcon name="arrow_forward" className="text-[18px]" />
           </Link>
         </div>
         {mascotas.length === 0 ? (
@@ -211,7 +202,7 @@ export function InicioDashboard({
             href="/mi-cuenta/mascotas"
             className="portal-pet-card flex min-h-[180px] cursor-pointer items-center justify-center gap-2 text-sm text-portal-muted"
           >
-            <span className="material-symbols-rounded">pets</span>
+            <PortalIcon name="pets" />
             Registra tu primera mascota →
           </Link>
         ) : (
@@ -243,7 +234,7 @@ export function InicioDashboard({
                         className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full border-2 border-white bg-portal-error shadow-sm"
                         title="Vacuna pendiente"
                       >
-                        <span className="material-symbols-rounded text-[12px] text-white">vaccines</span>
+                        <PortalIcon name="vaccines" className="text-[12px] text-white" />
                       </div>
                     )}
                   </div>
@@ -255,12 +246,12 @@ export function InicioDashboard({
                     <div className="mt-3">
                       {pendiente ? (
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-portal-surface-low px-4 py-1.5 text-xs font-semibold text-portal-navy">
-                          <span className="material-symbols-rounded text-[16px] text-portal-error">warning</span>
+                          <PortalIcon name="warning" className="text-[16px] text-portal-error" />
                           Vacuna pendiente
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1.5 rounded-full bg-portal-teal-light/25 px-4 py-1.5 text-xs font-semibold text-portal-teal-mid">
-                          <span className="material-symbols-rounded text-[16px]">check_circle</span>
+                          <PortalIcon name="check_circle" className="text-[16px]" />
                           Al día
                         </span>
                       )}
@@ -275,7 +266,9 @@ export function InicioDashboard({
 
       {/* Achievements & Activity */}
       <div className="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
-        <div className="rounded-[18px] border border-portal-surface-variant bg-white p-6">
+        {/* id + scroll-mt: destino del enlace de las notificaciones de logro
+            ("/mi-cuenta#logros"), que es el único lugar donde se muestran. */}
+        <div id="logros" className="scroll-mt-6 rounded-[18px] border border-portal-surface-variant bg-white p-6">
           <div className="mb-6 flex items-center justify-between">
             <h2 className="font-display text-xl font-semibold text-portal-navy">Logros Recientes</h2>
             <span className="rounded-full bg-portal-surface-low px-3 py-1 text-sm font-medium text-portal-muted">
@@ -291,11 +284,7 @@ export function InicioDashboard({
                   title={`${l.nombre}${ganado ? "" : " — bloqueado"}`}
                   className={`portal-achievement-badge ${ganado ? "unlocked" : ""}`}
                 >
-                  <span
-                    className={`material-symbols-rounded mb-1 text-3xl ${ganado ? "text-portal-orange" : "text-portal-muted/40"}`}
-                  >
-                    {l.icon || "military_tech"}
-                  </span>
+                  <PortalIcon name={l.icon || "military_tech"} className={`mb-1 text-3xl ${ganado ? "text-portal-orange" : "text-portal-muted/40"}`} />
                   <span
                     className={`text-center text-[10px] font-bold leading-tight ${ganado ? "text-portal-navy" : "text-portal-muted/60"}`}
                   >
@@ -324,9 +313,7 @@ export function InicioDashboard({
                 return (
                   <div key={t.id} className="portal-timeline-item">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-portal-teal-light/30">
-                      <span className="material-symbols-rounded text-portal-teal">
-                        {ICONO_ACCION[t.accion] ?? "star"}
-                      </span>
+                      <PortalIcon name={ICONO_ACCION[t.accion] ?? "star"} className="text-portal-teal" />
                     </div>
                     <div>
                       <p className="text-sm font-medium text-portal-navy">{t.descripcion || t.accion}</p>
@@ -398,7 +385,7 @@ async function verificarLogrosNuevos(
           "logro",
           "¡Nuevo logro desbloqueado!",
           logro.nombre,
-          "/mi-cuenta"
+          "/mi-cuenta#logros"
         );
       }
     }

@@ -25,6 +25,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PortalIcon } from "@/components/portal/icons/PortalIcon";
 
 interface MascotaFormDialogProps {
   clienteId: string;
@@ -153,9 +154,7 @@ function BotonColorPersonalizado({
       title={label}
       className="relative flex h-7 w-7 shrink-0 cursor-pointer items-center justify-center rounded-full border-2 border-dashed border-portal-surface-variant text-portal-muted transition-colors hover:border-portal-teal-mid hover:text-portal-teal-mid"
     >
-      <span className="material-symbols-rounded text-[16px]" aria-hidden="true">
-        add
-      </span>
+      <PortalIcon name="add" className="text-[16px]" />
       <input
         type="color"
         aria-label={label}
@@ -400,7 +399,7 @@ export function MascotaFormDialog({
               onClick={() => setConfirmandoEliminar(true)}
               className="absolute left-4 top-4 flex items-center gap-1 rounded-full bg-white/80 px-2.5 py-1 text-xs font-semibold text-portal-error/80 backdrop-blur-sm hover:bg-white hover:text-portal-error"
             >
-              <span className="material-symbols-rounded text-[15px]">delete</span>
+              <PortalIcon name="delete" className="text-[15px]" />
               Eliminar
             </button>
           )}
@@ -422,7 +421,7 @@ export function MascotaFormDialog({
                 )}
               </div>
               <label className="absolute bottom-0 right-0 flex h-8 w-8 cursor-pointer items-center justify-center rounded-full bg-portal-orange text-white shadow-md hover:bg-portal-orange-dark">
-                <span className="material-symbols-rounded text-[16px]">photo_camera</span>
+                <PortalIcon name="photo_camera" className="text-[16px]" />
                 <input
                   type="file"
                   accept="image/*"
@@ -601,7 +600,7 @@ export function MascotaFormDialog({
                         aria-label="Quitar familiar"
                         className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-portal-muted hover:bg-red-50 hover:text-portal-error"
                       >
-                        <span className="material-symbols-rounded text-[18px]">close</span>
+                        <PortalIcon name="close" className="text-[18px]" />
                       </button>
                     </div>
                     {valorSelect === "Otro" && (
@@ -625,7 +624,7 @@ export function MascotaFormDialog({
                 onClick={() => setForm((f) => ({ ...f, familiares: [...f.familiares, { relacion: "", nombre: "" }] }))}
                 className={`flex items-center justify-center gap-1 rounded-2xl bg-portal-surface-low/60 py-2 text-xs font-semibold text-portal-muted transition-colors ${SOMBRA_CAJA} hover:text-portal-teal-mid`}
               >
-                <span className="material-symbols-rounded text-[16px]">add</span> Agregar familiar
+                <PortalIcon name="add" className="text-[16px]" /> Agregar familiar
               </button>
             </div>
           </div>
@@ -676,7 +675,7 @@ export function MascotaFormDialog({
                   onClick={() => setAgregandoRasgo(true)}
                   className={`flex items-center gap-1 rounded-full bg-portal-surface-low/60 px-3.5 py-2 text-xs font-semibold text-portal-muted transition-colors ${SOMBRA_CAJA} hover:text-portal-teal-mid`}
                 >
-                  <span className="material-symbols-rounded text-[16px]">add</span> Agregar más
+                  <PortalIcon name="add" className="text-[16px]" /> Agregar más
                 </button>
               )}
             </div>

@@ -25,6 +25,7 @@ import { NOMBRE_NIVEL, SIGUIENTE_NIVEL, UMBRAL_NIVEL } from "@/lib/data/portal/l
 import { gsap } from "@/lib/gsap";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { PortalIcon } from "@/components/portal/icons/PortalIcon";
 
 export interface CanjeConNombre {
   id: string;
@@ -279,7 +280,7 @@ export function PuntosDashboard({
               <span className="text-xs text-white/60">{siguienteNivel ? NOMBRE_NIVEL[siguienteNivel] : "Máximo"}</span>
             </div>
             <div className="mb-1 flex items-center gap-1 text-[10px] uppercase tracking-wider text-white/40">
-              <span className="material-symbols-rounded text-[13px]">military_tech</span>
+              <PortalIcon name="military_tech" className="text-[13px]" />
               Puntos histórico — no bajan al canjear
             </div>
             <div className="mb-2 h-2 overflow-hidden rounded-full bg-white/10">
@@ -313,7 +314,7 @@ export function PuntosDashboard({
 
         <div className="flex flex-col justify-center rounded-2xl portal-glass-card p-6 lg:col-span-2">
           <div className="mb-6 flex items-center gap-2 font-display text-xl tracking-wide text-portal-navy">
-            <span className="material-symbols-rounded text-portal-orange">route</span> Tu Camino
+            <PortalIcon name="route" className="text-portal-orange" /> Tu Camino
           </div>
           <div className="relative space-y-6 before:absolute before:inset-y-5 before:left-7 before:w-0.5 before:bg-portal-surface-variant">
             {NIVELES_CAMINO.map((n, i) => {
@@ -331,7 +332,7 @@ export function PuntosDashboard({
                         : `portal-level-${n.clave}`
                     } ${esActual ? "shadow-md ring-4 ring-yellow-400/20" : ""}`}
                   >
-                    <span className="material-symbols-rounded text-2xl text-portal-navy/70">{n.icono}</span>
+                    <PortalIcon name={n.icono} className="text-2xl text-portal-navy/70" />
                   </div>
                   <div className="pt-1.5">
                     <div className="flex items-center gap-2 text-base font-bold text-portal-navy">
@@ -356,7 +357,7 @@ export function PuntosDashboard({
       {/* Cómo ganar */}
       <div className="mb-10">
         <h3 className="mb-4 flex items-center gap-2 font-display text-2xl tracking-wide text-portal-navy">
-          <span className="material-symbols-rounded text-portal-orange">add_circle</span> Cómo ganar más puntos
+          <PortalIcon name="add_circle" className="text-portal-orange" /> Cómo ganar más puntos
         </h3>
         {formasGanar.length === 0 ? (
           <p className="rounded-xl portal-glass-card p-6 text-center text-sm text-portal-muted">
@@ -393,7 +394,7 @@ export function PuntosDashboard({
       <div className="mb-10">
         <div className="mb-4 flex items-end justify-between">
           <h3 className="flex items-center gap-2 font-display text-2xl tracking-wide text-portal-navy">
-            <span className="material-symbols-rounded text-portal-orange">redeem</span> Catálogo de Recompensas
+            <PortalIcon name="redeem" className="text-portal-orange" /> Catálogo de Recompensas
           </h3>
           <span className="text-sm font-medium text-portal-muted">
             Tu saldo: <strong className="text-lg text-portal-orange">{puntos.saldo_actual.toLocaleString()} pts</strong>
@@ -463,7 +464,7 @@ export function PuntosDashboard({
       {/* Tus códigos de descuento (canjes) */}
       <div className="mb-10 overflow-hidden rounded-2xl portal-glass-card">
         <div className="flex items-center gap-2 border-b border-portal-surface-variant/50 bg-portal-surface-low/50 p-5">
-          <span className="material-symbols-rounded text-portal-orange">confirmation_number</span>
+          <PortalIcon name="confirmation_number" className="text-portal-orange" />
           <h3 className="font-display text-xl tracking-wide text-portal-navy">Tus códigos de descuento</h3>
         </div>
         {misCodigos.length === 0 ? (
@@ -513,7 +514,7 @@ export function PuntosDashboard({
       {/* Historial */}
       <div className="overflow-hidden rounded-2xl portal-glass-card">
         <div className="flex items-center gap-2 border-b border-portal-surface-variant/50 bg-portal-surface-low/50 p-5">
-          <span className="material-symbols-rounded text-portal-orange">history</span>
+          <PortalIcon name="history" className="text-portal-orange" />
           <h3 className="font-display text-xl tracking-wide text-portal-navy">Historial de Movimientos</h3>
         </div>
         {historial.length === 0 ? (
@@ -529,7 +530,7 @@ export function PuntosDashboard({
                       positivo ? "bg-portal-teal-mid/10 text-portal-teal" : "bg-portal-orange/10 text-portal-orange"
                     }`}
                   >
-                    <span className="material-symbols-rounded text-lg">{ICONOS_HISTORIAL[t.accion] ?? "star"}</span>
+                    <PortalIcon name={ICONOS_HISTORIAL[t.accion] ?? "star"} className="text-lg" />
                   </div>
                   <div className="flex-1">
                     <div className="text-sm font-bold text-portal-navy">{t.descripcion || t.accion}</div>
@@ -554,7 +555,7 @@ export function PuntosDashboard({
           {canjeSeleccionado && (
             <div className="flex flex-col gap-3 text-center">
               <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-portal-orange/10 text-portal-orange">
-                <span className="material-symbols-rounded text-3xl">redeem</span>
+                <PortalIcon name="redeem" className="text-3xl" />
               </div>
               <p className="font-display text-lg font-bold text-portal-navy">{canjeSeleccionado.nombre}</p>
               <p className="font-body text-sm text-portal-muted">
@@ -565,7 +566,7 @@ export function PuntosDashboard({
                   Cancelar
                 </Button>
                 <Button className="flex-1" disabled={procesando} onClick={confirmarCanje}>
-                  <span className="material-symbols-rounded text-[16px]">redeem</span>{" "}
+                  <PortalIcon name="redeem" className="text-[16px]" />{" "}
                   {procesando ? "Procesando…" : "Confirmar"}
                 </Button>
               </div>

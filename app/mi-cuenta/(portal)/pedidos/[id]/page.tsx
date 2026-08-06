@@ -9,6 +9,7 @@ import { getProductos } from "@/lib/data/productos";
 import { getVariantesPorSlugs, MEDIDA_TALLA_BANDANA, type TallaBandana } from "@/lib/regalo-variantes";
 import { etiquetaCorta } from "@/lib/documento";
 import { nombreCourier } from "@/lib/couriers";
+import { PortalIcon } from "@/components/portal/icons/PortalIcon";
 
 interface DireccionEnvio {
   departamento?: string;
@@ -150,7 +151,7 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
         href="/mi-cuenta/pedidos"
         className="inline-flex w-fit items-center gap-1 text-sm font-semibold text-portal-navy hover:text-portal-teal-mid"
       >
-        <span className="material-symbols-rounded text-[18px]">arrow_back</span>
+        <PortalIcon name="arrow_back" className="text-[18px]" />
         Mis Pedidos
       </Link>
 
@@ -176,7 +177,7 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
         {enCurso && entregaPorTexto && (
           <div className="mt-4 flex items-center gap-3 rounded-2xl bg-portal-surface-low p-3">
             <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-portal-teal-light/40">
-              <span className="material-symbols-rounded text-portal-teal">local_shipping</span>
+              <PortalIcon name="local_shipping" className="text-portal-teal" />
             </div>
             <div className="min-w-0">
               <p className="text-[11px] font-bold uppercase tracking-wide text-portal-muted">Entrega por</p>
@@ -204,7 +205,7 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
                         <Image src={imagen} alt={nombreProducto} fill className="object-cover" sizes="56px" />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center text-portal-muted">
-                          <span className="material-symbols-rounded">inventory_2</span>
+                          <PortalIcon name="inventory_2" />
                         </div>
                       )}
                     </div>
@@ -235,7 +236,7 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
                 </div>
                 <div>
                   <p className="flex items-center gap-1.5 text-sm text-portal-navy">
-                    <span className="material-symbols-rounded text-[18px] text-portal-orange">redeem</span>
+                    <PortalIcon name="redeem" className="text-[18px] text-portal-orange" />
                     Regalo: <strong>Bandana {bandana.nombre} — Talla {bandana.talla}</strong>
                   </p>
                   {bandana.talla && MEDIDA_TALLA_BANDANA[bandana.talla as TallaBandana] && (
@@ -251,14 +252,14 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div className="rounded-[18px] border border-portal-surface-variant bg-white p-6">
               <h2 className="mb-2 flex items-center gap-1.5 text-sm font-bold text-portal-navy">
-                <span className="material-symbols-rounded text-[18px]">credit_card</span> Método de pago
+                <PortalIcon name="credit_card" className="text-[18px]" /> Método de pago
               </h2>
               <p className="text-sm text-portal-muted">{FORMA_PAGO_LABEL[p.forma_pago ?? ""] ?? "No especificado"}</p>
             </div>
 
             <div className="rounded-[18px] border border-portal-surface-variant bg-white p-6">
               <h2 className="mb-2 flex items-center gap-1.5 text-sm font-bold text-portal-navy">
-                <span className="material-symbols-rounded text-[18px]">location_on</span> Dirección de envío
+                <PortalIcon name="location_on" className="text-[18px]" /> Dirección de envío
               </h2>
               <p className="text-sm text-portal-muted">
                 {direccionTexto || (p.zona_envio ? `Zona: ${p.zona_envio}` : "Sin dirección registrada")}
@@ -283,7 +284,7 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
           {!!p.puntos_acreditados && p.puntos_acreditados > 0 && (
             <div className="flex flex-wrap gap-4 rounded-[18px] border border-portal-surface-variant bg-white p-6">
               <span className="flex items-center gap-1 text-xs font-bold text-portal-navy">
-                <span className="material-symbols-rounded text-[16px] text-portal-orange">star</span>
+                <PortalIcon name="star" className="text-[16px] text-portal-orange" />
                 {p.puntos_acreditados} SuplePoints acreditados
               </span>
             </div>
@@ -309,7 +310,7 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
                       : "border-2 border-portal-surface-variant bg-white text-transparent"
                   }`}
                 >
-                  <span className="material-symbols-rounded text-[16px]">check</span>
+                  <PortalIcon name="check" className="text-[16px]" />
                 </span>
                 <div className="min-w-0 pt-0.5">
                   <p className={`text-sm font-semibold ${paso.completado ? "text-portal-navy" : "text-portal-muted"}`}>

@@ -1,5 +1,6 @@
 import { TIPOS_CONDICION_MEDICA, type CondicionMedica } from "@/lib/data/portal/mascotas";
 import { formatFecha } from "@/lib/portal/formato";
+import { PortalIcon } from "@/components/portal/icons/PortalIcon";
 
 const ICONO_TIPO: Record<CondicionMedica["tipo"], string> = {
   alergia: "warning",
@@ -28,7 +29,7 @@ export function CondicionesMedicasCard({ condiciones, onAgregar, onEditar }: Con
     <div className="mt-4 rounded-[17px] border border-portal-error/20 bg-red-50 p-4">
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2 text-sm font-bold text-portal-navy">
-          <span className="material-symbols-rounded text-[16px] text-portal-error">healing</span>
+          <PortalIcon name="healing" className="text-[16px] text-portal-error" />
           Condiciones médicas
         </div>
         {onAgregar && (
@@ -37,7 +38,7 @@ export function CondicionesMedicasCard({ condiciones, onAgregar, onEditar }: Con
             onClick={onAgregar}
             className="flex items-center gap-1 text-xs font-bold text-portal-error hover:text-portal-error/80"
           >
-            <span className="material-symbols-rounded text-[16px]">add_circle</span> Agregar
+            <PortalIcon name="add_circle" className="text-[16px]" /> Agregar
           </button>
         )}
       </div>
@@ -57,9 +58,7 @@ export function CondicionesMedicasCard({ condiciones, onAgregar, onEditar }: Con
                   onEditar ? "transition-colors hover:bg-white" : ""
                 }`}
               >
-                <span className="material-symbols-rounded mt-0.5 text-[16px] text-portal-error/80">
-                  {ICONO_TIPO[c.tipo] ?? "healing"}
-                </span>
+                <PortalIcon name={ICONO_TIPO[c.tipo] ?? "healing"} className="mt-0.5 text-[16px] text-portal-error/80" />
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="rounded-full bg-portal-error/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-portal-error">

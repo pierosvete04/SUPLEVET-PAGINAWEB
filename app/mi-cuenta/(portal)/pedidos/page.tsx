@@ -7,6 +7,7 @@ import { estadoBadgePedido } from "@/lib/data/portal/pedido-timeline";
 import { getProductos } from "@/lib/data/productos";
 import { PedidoProductoDialog } from "@/components/portal/pedidos/PedidoProductoDialog";
 import type { EstadoResena } from "@/lib/resenas";
+import { PortalIcon } from "@/components/portal/icons/PortalIcon";
 
 interface ResenaExistente {
   estado: EstadoResena;
@@ -78,7 +79,7 @@ export default async function PortalPedidosPage() {
   if (todos.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center gap-2 rounded-[18px] border border-portal-surface-variant bg-white p-10 text-center">
-        <span className="material-symbols-rounded text-4xl text-portal-muted">shopping_bag</span>
+        <PortalIcon name="shopping_bag" className="text-4xl text-portal-muted" />
         <p className="text-sm text-portal-muted">Aún no tienes pedidos</p>
       </div>
     );
@@ -165,7 +166,7 @@ export default async function PortalPedidosPage() {
               <div className="pointer-events-none relative mt-3 flex flex-wrap gap-4">
                 {!!p.puntos_acreditados && p.puntos_acreditados > 0 && (
                   <span className="flex items-center gap-1 text-xs font-bold text-portal-navy">
-                    <span className="material-symbols-rounded text-[16px] text-portal-orange">star</span>
+                    <PortalIcon name="star" className="text-[16px] text-portal-orange" />
                     {p.puntos_acreditados} SuplePoints acreditados
                   </span>
                 )}
@@ -196,7 +197,7 @@ export default async function PortalPedidosPage() {
             </div>
             {!!p.puntos_acreditados && p.puntos_acreditados > 0 && (
               <span className="mt-2 flex items-center gap-1 text-xs font-bold text-portal-navy">
-                <span className="material-symbols-rounded text-[16px] text-portal-orange">star</span>
+                <PortalIcon name="star" className="text-[16px] text-portal-orange" />
                 {p.puntos_acreditados} SuplePoints acreditados
               </span>
             )}

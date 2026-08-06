@@ -7,6 +7,7 @@ import { parseDetalleEventoSalud, type CondicionMedica, type Familiar, type Tipo
 import { FichaPrintButton } from "@/components/ficha/FichaPrintButton";
 import { FichaDocumentoImprimible } from "@/components/ficha/FichaDocumentoImprimible";
 import { CondicionesMedicasCard } from "@/components/portal/mascotas/CondicionesMedicasCard";
+import { PortalIcon } from "@/components/portal/icons/PortalIcon";
 import "@/app/mi-cuenta/(portal)/portal-theme.css";
 
 // Página pública, sin sesión — cualquiera con el enlace puede verla. Por eso
@@ -113,12 +114,12 @@ export default async function FichaPublicaPage({ params }: { params: Promise<{ i
               </p>
               <div className="mt-2 flex flex-wrap gap-2">
                 <span className="flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--mc-tag)_18%,transparent)] px-3 py-1 text-xs text-[var(--mc-tag)]">
-                  <span className="material-symbols-rounded text-[14px]">monitor_weight</span>
+                  <PortalIcon name="monitor_weight" className="text-[14px]" />
                   {mascota.peso_kg} kg
                 </span>
                 {mascota.fecha_nacimiento && (
                   <span className="flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--mc-tag)_18%,transparent)] px-3 py-1 text-xs text-[var(--mc-tag)]">
-                    <span className="material-symbols-rounded text-[14px]">cake</span>
+                    <PortalIcon name="cake" className="text-[14px]" />
                     {formatFechaCumple(mascota.fecha_nacimiento)}
                   </span>
                 )}
@@ -134,7 +135,7 @@ export default async function FichaPublicaPage({ params }: { params: Promise<{ i
         {/* Estado de salud */}
         <div className="mt-4 rounded-[17px] border border-portal-surface-variant bg-white p-5 print:hidden">
           <h3 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold text-portal-navy">
-            <span className="material-symbols-rounded text-portal-teal-mid">medical_services</span> Estado de Salud
+            <PortalIcon name="medical_services" className="text-portal-teal-mid" /> Estado de Salud
           </h3>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <EventoTile titulo="Vacuna" evento={porTipo("vacuna")} vacio="Sin vacunas registradas" />
@@ -147,7 +148,7 @@ export default async function FichaPublicaPage({ params }: { params: Promise<{ i
         {/* Información general */}
         <div className="mt-4 rounded-[17px] border border-portal-surface-variant bg-white p-5 print:hidden">
           <h3 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold text-portal-navy">
-            <span className="material-symbols-rounded text-portal-navy">description</span> Información General
+            <PortalIcon name="description" className="text-portal-navy" /> Información General
           </h3>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <InfoTile
@@ -213,7 +214,7 @@ function EventoTile({ titulo, evento, vacio }: { titulo: string; evento?: Evento
 function InfoTile({ etiqueta, valor, icono }: { etiqueta: string; valor: string; icono: string }) {
   return (
     <div className="rounded-[17px] bg-portal-surface-low p-3">
-      <span className="material-symbols-rounded text-[18px] text-portal-orange">{icono}</span>
+      <PortalIcon name={icono} className="text-[18px] text-portal-orange" />
       <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-portal-muted">{etiqueta}</p>
       <p className="truncate text-sm font-bold text-portal-navy">{valor}</p>
     </div>

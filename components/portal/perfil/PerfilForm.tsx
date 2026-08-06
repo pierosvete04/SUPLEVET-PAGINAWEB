@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CampoLabel } from "@/components/portal/CampoLabel";
 import { SOMBRA_TARJETA, inputBase } from "@/lib/portal/formTokens";
+import { PortalIcon } from "@/components/portal/icons/PortalIcon";
 
 interface PerfilFormProps {
   user: User;
@@ -164,7 +165,7 @@ export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTiene
               (se perdía contra el navy del fondo) — usa sombra para
               despegarse en su lugar. */}
           <label className="absolute bottom-0 right-0 z-10 flex h-7 w-7 cursor-pointer items-center justify-center rounded-full bg-portal-orange shadow-[0_1px_4px_rgba(0,0,0,0.4)]">
-            <span className="material-symbols-rounded text-base leading-none text-white">photo_camera</span>
+            <PortalIcon name="photo_camera" className="text-base leading-none text-white" />
             <input
               type="file"
               accept="image/*"
@@ -187,7 +188,7 @@ export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTiene
         <div className="space-y-6 lg:col-span-2">
           <form onSubmit={handleGuardar} className={`rounded-2xl border-0 bg-white p-6 ${SOMBRA_TARJETA}`}>
             <h3 className="mb-4 flex items-center gap-2 font-display text-lg font-semibold text-portal-navy">
-              <span className="material-symbols-rounded text-portal-navy">person</span> Datos Personales
+              <PortalIcon name="person" className="text-portal-navy" /> Datos Personales
             </h3>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="grid gap-1.5">
@@ -273,7 +274,7 @@ export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTiene
 
         <div className="space-y-6">
           <div className="rounded-2xl bg-gradient-to-br from-portal-orange to-portal-orange-dark p-6 text-white">
-            <span className="material-symbols-rounded">redeem</span>
+            <PortalIcon name="redeem" />
             <h3 className="mt-2 font-display text-lg font-semibold">¡Gana 100 pts!</h3>
             <p className="mt-1 text-sm text-white/85">
               Comparte tu código. Cuando un amigo haga su primera compra, ambos ganan puntos.
@@ -285,7 +286,7 @@ export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTiene
                 onClick={copiarCodigo}
                 className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white/20 hover:bg-white/30"
               >
-                <span className="material-symbols-rounded text-[16px]">{copiado ? "check" : "content_copy"}</span>
+                <PortalIcon name={copiado ? "check" : "content_copy"} className="text-[16px]" />
               </button>
             </div>
           </div>
@@ -293,7 +294,7 @@ export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTiene
           {!referidoAplicado ? (
             <div className={`rounded-2xl border-0 bg-white p-5 ${SOMBRA_TARJETA}`}>
               <h3 className="flex items-center gap-2 font-display text-base font-semibold text-portal-navy">
-                <span className="material-symbols-rounded text-[18px]">group_add</span> ¿Te invitó un amigo?
+                <PortalIcon name="group_add" className="text-[18px]" /> ¿Te invitó un amigo?
               </h3>
               <p className="mt-1 text-xs text-portal-muted">
                 Ingresa su código y ambos ganarán 100 SuplePoints con tu primera compra.
@@ -328,13 +329,13 @@ export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTiene
             className={`flex items-center justify-between rounded-2xl border-0 bg-white p-5 hover:bg-portal-surface-low ${SOMBRA_TARJETA}`}
           >
             <div className="flex items-center gap-2">
-              <span className="material-symbols-rounded text-portal-navy">menu_book</span>
+              <PortalIcon name="menu_book" className="text-portal-navy" />
               <div>
                 <p className="text-sm font-bold text-portal-navy">Libro de Reclamaciones</p>
                 <p className="text-xs text-portal-muted">Atención al consumidor.</p>
               </div>
             </div>
-            <span className="material-symbols-rounded text-portal-muted">chevron_right</span>
+            <PortalIcon name="chevron_right" className="text-portal-muted" />
           </Link>
         </div>
       </div>

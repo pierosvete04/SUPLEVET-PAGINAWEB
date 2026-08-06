@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { PORTAL_NAV_SECTIONS, esRutaActiva } from "@/lib/portal/nav";
+import { PortalIcon } from "@/components/portal/icons/PortalIcon";
 
 // Misma fuente que el sidebar de escritorio (lib/portal/nav.ts) — evita que
 // un ítem tenga un nombre en escritorio y otro distinto en móvil por
@@ -35,7 +36,7 @@ export function PortalMobileNav() {
           const activo = esRutaActiva(pathname, item.url);
           return (
             <Link key={item.url} href={item.url} className={`portal-nav-item ${activo ? "active" : ""}`}>
-              <span className="material-symbols-rounded text-[22px]">{item.icon}</span>
+              <PortalIcon name={item.icon} className="text-[22px]" />
               <span>{item.mobileTitle ?? item.title}</span>
             </Link>
           );
@@ -45,7 +46,7 @@ export function PortalMobileNav() {
           onClick={() => setMenuAbierto(true)}
           className={`portal-nav-item ${masActivo ? "active" : ""}`}
         >
-          <span className="material-symbols-rounded text-[22px]">more_horiz</span>
+          <PortalIcon name="more_horiz" className="text-[22px]" />
           <span>Más</span>
         </button>
       </nav>
@@ -72,7 +73,7 @@ export function PortalMobileNav() {
                       activo ? "bg-portal-orange font-semibold" : "bg-white/5"
                     }`}
                   >
-                    <span className="material-symbols-rounded text-[20px]">{item.icon}</span>
+                    <PortalIcon name={item.icon} className="text-[20px]" />
                     <span className="text-sm">{item.title}</span>
                   </Link>
                 );
@@ -83,7 +84,7 @@ export function PortalMobileNav() {
               onClick={() => setMenuAbierto(false)}
               className="mt-2 flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm text-white/60"
             >
-              <span className="material-symbols-rounded text-[20px]">arrow_back</span>
+              <PortalIcon name="arrow_back" className="text-[20px]" />
               Regresar a la página web
             </Link>
             <button
@@ -91,7 +92,7 @@ export function PortalMobileNav() {
               onClick={handleLogout}
               className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-sm text-white/60"
             >
-              <span className="material-symbols-rounded text-[20px]">logout</span>
+              <PortalIcon name="logout" className="text-[20px]" />
               Cerrar sesión
             </button>
           </div>

@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/client";
 import type { Curso } from "@/lib/cursos";
+import { PortalIcon } from "@/components/portal/icons/PortalIcon";
 
 interface CursosGridProps {
   cursos: Curso[];
@@ -83,9 +84,7 @@ export function CursosGrid({ cursos }: CursosGridProps) {
     <div>
       {/* Hero */}
       <div className="relative mb-8 overflow-hidden rounded-2xl bg-portal-navy p-8 text-white">
-        <span className="material-symbols-rounded pointer-events-none absolute -right-6 top-1/2 -translate-y-1/2 text-[180px] text-white/5">
-          school
-        </span>
+        <PortalIcon name="school" className="pointer-events-none absolute -right-6 top-1/2 -translate-y-1/2 text-[180px] text-white/5" />
         <span className="mb-1 block text-xs font-bold uppercase tracking-[0.2em] text-portal-orange">
           Aprendizaje Continuo
         </span>
@@ -127,7 +126,7 @@ export function CursosGrid({ cursos }: CursosGridProps) {
 
       {cursos.length === 0 ? (
         <div className="flex flex-col items-center rounded-2xl border border-portal-surface-variant bg-white py-16 text-center">
-          <span className="material-symbols-rounded text-5xl text-portal-muted">school</span>
+          <PortalIcon name="school" className="text-5xl text-portal-muted" />
           <h3 className="mt-3 font-display text-xl font-semibold text-portal-navy">Aún no hay cursos disponibles</h3>
           <p className="mt-1 text-sm text-portal-muted">Muy pronto publicaremos contenido de la Academia Suplevet.</p>
         </div>
@@ -136,7 +135,7 @@ export function CursosGrid({ cursos }: CursosGridProps) {
           {cursoDestacadoEnProgreso && cursoEnProgreso && (
             <div className="mb-8">
               <div className="mb-3 flex items-center gap-2 font-display text-lg font-semibold text-portal-navy">
-                <span className="material-symbols-rounded text-portal-orange">bookmark</span> Cursos en Progreso
+                <PortalIcon name="bookmark" className="text-portal-orange" /> Cursos en Progreso
               </div>
               <Link
                 href={`/mi-cuenta/cursos/${cursoDestacadoEnProgreso.id}`}
@@ -198,9 +197,7 @@ export function CursosGrid({ cursos }: CursosGridProps) {
                     />
                   ) : (
                     <span className="flex h-full w-full items-center justify-center text-portal-muted">
-                      <span className="material-symbols-rounded text-4xl">
-                        {c.tipo === "video" ? "play_circle" : "article"}
-                      </span>
+                      <PortalIcon name={c.tipo === "video" ? "play_circle" : "article"} className="text-4xl" />
                     </span>
                   )}
                   {c.es_gratis && (
@@ -219,7 +216,7 @@ export function CursosGrid({ cursos }: CursosGridProps) {
                   <div className="mt-3 flex items-center gap-4 text-xs text-portal-muted">
                     {c.duracion_min && (
                       <span className="flex items-center gap-1">
-                        <span className="material-symbols-rounded text-[14px]">schedule</span>
+                        <PortalIcon name="schedule" className="text-[14px]" />
                         {c.duracion_min >= 60
                           ? `${Math.floor(c.duracion_min / 60)}h ${c.duracion_min % 60}m`
                           : `${c.duracion_min}m`}
@@ -236,7 +233,7 @@ export function CursosGrid({ cursos }: CursosGridProps) {
 
           <div className="mt-10 flex flex-col items-center gap-4 rounded-2xl bg-portal-surface-low p-8 text-center sm:flex-row sm:text-left">
             <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-portal-navy text-white">
-              <span className="material-symbols-rounded text-2xl">workspace_premium</span>
+              <PortalIcon name="workspace_premium" className="text-2xl" />
             </div>
             <div className="flex-1">
               <h3 className="font-display text-lg font-semibold text-portal-navy">Obtén tu Certificado Suplevet</h3>

@@ -18,6 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { ICONOS_PORTAL, PortalIcon } from "@/components/portal/icons/PortalIcon";
 
 interface LogroConfigFormProps {
   logro: LogroConfig | null;
@@ -111,24 +112,25 @@ export function LogroConfigForm({ logro, onClose, onSaved }: LogroConfigFormProp
         </div>
 
         <div className="grid gap-1.5">
-          <Label htmlFor="l-icon">
-            Ícono (nombre de{" "}
-            <a
-              href="https://fonts.google.com/icons?icon.style=Rounded"
-              target="_blank"
-              rel="noreferrer"
-              className="underline"
-            >
-              Material Symbols Rounded
-            </a>
-            )
-          </Label>
-          <Input
-            id="l-icon"
-            value={form.icon}
-            onChange={(e) => setForm((f) => ({ ...f, icon: e.target.value }))}
-            placeholder="ej: pets"
-          />
+          <Label htmlFor="l-icon">Ícono</Label>
+          {/* Lista cerrada a propósito: el portal dibuja los íconos con SVG del
+              bundle (components/portal/icons/PortalIcon.tsx), así que un nombre
+              fuera del mapa se vería como estrella. */}
+          <Select value={form.icon} onValueChange={(v) => setForm((f) => ({ ...f, icon: v }))}>
+            <SelectTrigger id="l-icon">
+              <SelectValue placeholder="Selecciona…" />
+            </SelectTrigger>
+            <SelectContent>
+              {ICONOS_PORTAL.map((nombre) => (
+                <SelectItem key={nombre} value={nombre}>
+                  <span className="flex items-center gap-2">
+                    <PortalIcon name={nombre} className="text-[16px]" />
+                    {nombre}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div className="grid grid-cols-2 gap-4">

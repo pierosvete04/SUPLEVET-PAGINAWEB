@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import {
@@ -12,6 +12,7 @@ import {
   type Notificacion,
 } from "@/lib/data/portal/notificaciones";
 import { formatFechaRelativa } from "@/lib/portal/formato";
+import { PortalIcon } from "@/components/portal/icons/PortalIcon";
 
 interface NotificationCenterProps {
   userId: string;
@@ -24,6 +25,7 @@ interface NotificationCenterProps {
 // ambos necesitan el mismo canal realtime y el mismo contador de no leídas.
 export function NotificationCenter({ userId, noLeidasIniciales }: NotificationCenterProps) {
   const router = useRouter();
+  const pathname = usePathname() ?? "";
   const [noLeidas, setNoLeidas] = useState(noLeidasIniciales);
   const [abierto, setAbierto] = useState(false);
   const [notificaciones, setNotificaciones] = useState<Notificacion[] | null>(null);
@@ -40,7 +42,7 @@ export function NotificationCenter({ userId, noLeidasIniciales }: NotificationCe
         ({ new: fila }: { new: Notificacion }) => {
           toast(fila.titulo, {
             description: fila.mensaje,
-            icon: <span className="material-symbols-rounded text-[20px]">{fila.icon}</span>,
+            icon: <PortalIcon name={fila.icon} className="text-[20px]" />,
           });
           setNoLeidas((n) => n + 1);
           setNotificaciones((prev) => (prev ? [fila, ...prev] : prev));
@@ -81,7 +83,17 @@ export function NotificationCenter({ userId, noLeidasIniciales }: NotificationCe
       setNotificaciones((prev) => prev?.map((x) => (x.id === n.id ? { ...x, leido: true } : x)) ?? prev);
       setNoLeidas((v) => Math.max(0, v - 1));
     }
-    if (n.link) router.push(n.link);
+    if (!n.link) return;
+
+    // Si la notificación apunta a la página en la que ya estamos, navegar sería
+    // un re-render inútil (y visualmente parece que la pantalla "se reinicia").
+    // En ese caso solo se lleva al usuario a la sección correspondiente.
+    const [ruta, ancla] = n.link.split("#");
+    if (ruta === pathname) {
+      if (ancla) document.getElementById(ancla)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    router.push(n.link);
   }
 
   async function handleMarcarTodas() {
@@ -99,7 +111,7 @@ export function NotificationCenter({ userId, noLeidasIniciales }: NotificationCe
         aria-label="Notificaciones"
         className="relative flex h-11 w-11 items-center justify-center rounded-[10px] border border-white/10 bg-portal-navy-dark text-white shadow-lg transition-colors hover:bg-portal-navy"
       >
-        <span className="material-symbols-rounded text-[22px]">notifications</span>
+        <PortalIcon name="notifications" className="text-[22px]" />
         {noLeidas > 0 && (
           <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-portal-orange px-1 text-[10px] font-bold text-white">
             {noLeidas > 9 ? "9+" : noLeidas}
@@ -133,7 +145,7 @@ export function NotificationCenter({ userId, noLeidasIniciales }: NotificationCe
                   }`}
                 >
                   <span className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-portal-surface-low text-portal-orange">
-                    <span className="material-symbols-rounded text-[16px]">{n.icon}</span>
+                    <PortalIcon name={n.icon} className="text-[16px]" />
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-semibold text-portal-navy">{n.titulo}</span>
