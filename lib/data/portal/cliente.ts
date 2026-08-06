@@ -1,4 +1,4 @@
-import type { SupabaseClient, User } from "@supabase/supabase-js";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 export interface ClientePerfil {
   id: string;
@@ -14,75 +14,44 @@ export interface ClientePerfil {
   perfil_completo: boolean | null;
 }
 
-function generarCodigoReferido(userId: string): string {
-  return `SUPLE-${userId.replace(/-/g, "").slice(0, 6).toUpperCase()}`;
+export interface SesionCliente {
+  /** vendedor/admin: comparte auth.users con los clientes, no es del portal. */
+  esInterna: boolean;
+  /** Se acaba de crear su fila de SuplePuntos (primer login de verdad). */
+  esNuevo: boolean;
+  perfilCompleto: boolean;
 }
 
-// vendedores y admins comparten el mismo auth.users que los clientes del
-// ecommerce (mismo proyecto Supabase que el CRM interno de ventas). Sin este
-// chequeo, cualquier vendedor/admin que entre a /mi-cuenta queda inscrito
-// como cliente en clientes_perfil y contamina el panel admin de "Clientes".
-export async function esCuentaInterna(supabase: SupabaseClient, userId: string): Promise<boolean> {
-  const [{ data: vendedor }, { data: admin }] = await Promise.all([
-    supabase.from("vendedores").select("id").eq("id", userId).maybeSingle(),
-    supabase.from("admins").select("id").eq("id", userId).maybeSingle(),
-  ]);
-  return Boolean(vendedor || admin);
-}
+// Un solo round-trip para todo el arranque de sesión del portal: chequea si es
+// cuenta interna (vendedor/admin), crea clientes_perfil y suplepuntos_clientes
+// si faltan, vincula pedidos previos de Shopify con el mismo correo y devuelve
+// perfil_completo. Antes esto eran 5-8 llamadas encadenadas a Supabase (una
+// por SELECT/INSERT) y era la causa principal de la demora del login — ver
+// migración `inicializar_sesion_cliente_rpc`.
+//
+// Es idempotente y barato, así que puede correr en CADA carga del layout del
+// portal (app/mi-cuenta/(portal)/layout.tsx) sin importar cómo se estableció la
+// sesión (login del portal, OTP del checkout, enlace de /auth/confirm).
+export async function inicializarSesionCliente(
+  supabase: SupabaseClient
+): Promise<SesionCliente> {
+  const { data, error } = await supabase.rpc("inicializar_sesion_cliente");
 
-// Crea las filas base (clientes_perfil, suplepuntos_clientes) si no existen —
-// idempotente y barato (dos upserts "ignora si ya existe"), pensado para
-// correr en CADA carga del layout del portal (app/mi-cuenta/(portal)/layout.tsx)
-// sin importar cómo se estableció la sesión (login del portal, OTP del
-// checkout, etc.) — así nunca falta la fila aunque el login no haya pasado por
-// LoginPanel.tsx. No llama a vincular_pedidos_shopify (eso solo corre una vez
-// en el login real, ver abajo) para no repetir esa RPC en cada navegación.
-export async function asegurarFilasCliente(
-  supabase: SupabaseClient,
-  userId: string
-): Promise<{ esNuevo: boolean }> {
-  if (await esCuentaInterna(supabase, userId)) {
-    return { esNuevo: false };
+  if (error || !data) {
+    // Nunca bloqueamos el acceso por esto: el peor caso es que el layout
+    // mande a completar perfil, que es idempotente.
+    return { esInterna: false, esNuevo: false, perfilCompleto: false };
   }
 
-  const { data: perfil } = await supabase
-    .from("clientes_perfil")
-    .select("id")
-    .eq("id", userId)
-    .maybeSingle();
-  if (!perfil) {
-    await supabase.from("clientes_perfil").insert({ id: userId, perfil_completo: false });
-  }
+  const resultado = data as {
+    es_interna?: boolean;
+    es_nuevo?: boolean;
+    perfil_completo?: boolean;
+  };
 
-  const { data: puntos } = await supabase
-    .from("suplepuntos_clientes")
-    .select("cliente_id")
-    .eq("cliente_id", userId)
-    .maybeSingle();
-
-  let esNuevo = false;
-  if (!puntos) {
-    await supabase.from("suplepuntos_clientes").insert({
-      cliente_id: userId,
-      codigo_referido: generarCodigoReferido(userId),
-      saldo_actual: 0,
-      puntos_historicos: 0,
-      nivel: "basico",
-    });
-    esNuevo = true;
-  }
-
-  return { esNuevo };
-}
-
-// Se ejecuta justo después de un login exitoso (OTP, Google OAuth) — además de
-// asegurar las filas, vincula pedidos de Shopify ya realizados con este correo
-// (RPC vincular_pedidos_shopify). Puerto de auth.js del portal viejo.
-export async function asegurarClienteInicializado(
-  supabase: SupabaseClient,
-  user: User
-): Promise<{ esNuevo: boolean }> {
-  const resultado = await asegurarFilasCliente(supabase, user.id);
-  await supabase.rpc("vincular_pedidos_shopify");
-  return resultado;
+  return {
+    esInterna: Boolean(resultado.es_interna),
+    esNuevo: Boolean(resultado.es_nuevo),
+    perfilCompleto: Boolean(resultado.perfil_completo),
+  };
 }

@@ -1,6 +1,6 @@
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { NextResponse } from "next/server";
-import { asegurarClienteInicializado } from "@/lib/data/portal/cliente";
+import { inicializarSesionCliente } from "@/lib/data/portal/cliente";
 import { createClient } from "@/lib/supabase/server";
 
 // Confirma los enlaces de recuperación de contraseña y cambio de correo que
@@ -16,7 +16,7 @@ export async function GET(request: Request) {
     const { data, error } = await supabase.auth.verifyOtp({ type, token_hash: tokenHash });
 
     if (!error && data.user) {
-      const { esNuevo } = await asegurarClienteInicializado(supabase, data.user);
+      const { esNuevo } = await inicializarSesionCliente(supabase);
       const destino = esNuevo ? "/mi-cuenta/bienvenida" : next;
       return NextResponse.redirect(`${origin}${destino}`);
     }

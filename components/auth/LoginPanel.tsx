@@ -1,11 +1,12 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
-import { asegurarClienteInicializado } from "@/lib/data/portal/cliente";
+import { inicializarSesionCliente } from "@/lib/data/portal/cliente";
+import { CodigoOtpInput } from "@/components/auth/CodigoOtpInput";
 import { cn } from "@/lib/utils";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -28,10 +29,12 @@ export function LoginPanel({ className, next = "/mi-cuenta", onAuthenticated }: 
   const router = useRouter();
   const [paso, setPaso] = useState<"email" | "codigo">("email");
   const [email, setEmail] = useState("");
-  const [codigo, setCodigo] = useState(["", "", "", "", "", ""]);
+  const [codigo, setCodigo] = useState("");
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
+  // Evita que el auto-envío (al llegar al sexto dígito) dispare dos veces:
+  // el estado `cargando` no se actualiza a tiempo dentro del mismo render.
+  const verificandoRef = useRef(false);
 
   async function handleEnviarCodigo(e: React.FormEvent) {
     e.preventDefault();
@@ -53,7 +56,6 @@ export function LoginPanel({ className, next = "/mi-cuenta", onAuthenticated }: 
         return;
       }
       setPaso("codigo");
-      setTimeout(() => inputsRef.current[0]?.focus(), 100);
     } catch {
       setError("Error de conexión, intenta de nuevo");
     } finally {
@@ -61,65 +63,74 @@ export function LoginPanel({ className, next = "/mi-cuenta", onAuthenticated }: 
     }
   }
 
-  async function handleVerificarCodigo(e: React.FormEvent) {
-    e.preventDefault();
-    setError(null);
-    const token = codigo.join("");
-    if (token.length < 6) {
-      setError("Ingresa el código completo");
-      return;
-    }
-    setCargando(true);
-    try {
-      const r = await fetch(`${SUPABASE_URL}/auth/v1/verify`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", apikey: SUPABASE_KEY },
-        body: JSON.stringify({ email, token, type: "magiclink" }),
-      });
-      const data = await r.json();
-      if (!r.ok || !data.access_token) {
-        setError(data.error_description || data.msg || "Código incorrecto");
+  const verificarCodigo = useCallback(
+    async (token: string) => {
+      if (verificandoRef.current) return;
+      setError(null);
+      if (token.length < 6) {
+        setError("Ingresa el código completo");
         return;
       }
-      const supabase = createClient();
-      await supabase.auth.setSession({
-        access_token: data.access_token,
-        refresh_token: data.refresh_token,
-      });
-      const { esNuevo } = await asegurarClienteInicializado(supabase, data.user);
-      if (onAuthenticated) {
-        onAuthenticated(data.user);
-        return;
+      verificandoRef.current = true;
+      setCargando(true);
+      try {
+        const supabase = createClient();
+        // verifyOtp deja la sesión (y las cookies) puesta en una sola llamada.
+        // Antes era fetch a /auth/v1/verify + setSession, y setSession vuelve a
+        // pegarle a /auth/v1/user: dos viajes de ida y vuelta para lo mismo.
+        const { data, error: errorOtp } = await supabase.auth.verifyOtp({
+          email,
+          token,
+          type: "email",
+        });
+        if (errorOtp || !data.user) {
+          // Supabase responde en inglés ("Token has expired or is invalid").
+          setError(
+            /expired|invalid/i.test(errorOtp?.message ?? "")
+              ? "El código es incorrecto o ya venció. Pide uno nuevo."
+              : "No pudimos verificar el código, intenta de nuevo"
+          );
+          setCodigo("");
+          return;
+        }
+
+        // Un solo round-trip: crea las filas del cliente, vincula pedidos
+        // previos de Shopify y nos dice a dónde mandarlo.
+        const sesion = await inicializarSesionCliente(supabase);
+
+        if (onAuthenticated) {
+          onAuthenticated(data.user);
+          return;
+        }
+
+        const destino = sesion.esInterna
+          ? "/admin"
+          : sesion.esNuevo
+            ? "/mi-cuenta/bienvenida"
+            : !sesion.perfilCompleto
+              ? "/mi-cuenta/completar-perfil"
+              : next;
+        // replace (no push): el login no debe quedar en el historial. Vamos
+        // directo al destino final para ahorrarnos el rebote que hacía el
+        // layout del portal cuando el perfil aún estaba incompleto.
+        router.replace(destino);
+      } catch {
+        setError("Error de conexión, intenta de nuevo");
+      } finally {
+        verificandoRef.current = false;
+        setCargando(false);
       }
-      router.push(esNuevo ? "/mi-cuenta/bienvenida" : next);
-      router.refresh();
-    } catch {
-      setError("Error de conexión, intenta de nuevo");
-    } finally {
-      setCargando(false);
+    },
+    [email, next, onAuthenticated, router]
+  );
+
+  // Al completar los 6 dígitos (escritos, pegados o autocompletados) se envía
+  // solo — un clic menos y ningún código a medias.
+  useEffect(() => {
+    if (paso === "codigo" && codigo.length === 6) {
+      void verificarCodigo(codigo);
     }
-  }
-
-  function handleDigitoChange(i: number, valor: string) {
-    if (!/^\d?$/.test(valor)) return;
-    const nuevo = [...codigo];
-    nuevo[i] = valor;
-    setCodigo(nuevo);
-    if (valor && i < 5) inputsRef.current[i + 1]?.focus();
-  }
-
-  function handlePasteCodigo(e: React.ClipboardEvent<HTMLInputElement>) {
-    const pegado = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
-    if (!pegado) return;
-    e.preventDefault();
-    const nuevo = [...codigo];
-    pegado.split("").forEach((digito, idx) => {
-      nuevo[idx] = digito;
-    });
-    setCodigo(nuevo);
-    const siguiente = Math.min(pegado.length, 5);
-    inputsRef.current[siguiente]?.focus();
-  }
+  }, [codigo, paso, verificarCodigo]);
 
   return (
     <div
@@ -176,7 +187,13 @@ export function LoginPanel({ className, next = "/mi-cuenta", onAuthenticated }: 
             </p>
           </form>
         ) : (
-          <form onSubmit={handleVerificarCodigo} className="flex flex-col gap-5">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              void verificarCodigo(codigo);
+            }}
+            className="flex flex-col gap-5"
+          >
             <div className="flex flex-col items-center gap-1 text-center">
               <h1 className="font-display text-2xl font-bold text-secondary">Revisa tu correo</h1>
               <p className="text-balance font-body text-sm text-muted-foreground">
@@ -184,29 +201,17 @@ export function LoginPanel({ className, next = "/mi-cuenta", onAuthenticated }: 
               </p>
             </div>
 
-            <div className="flex justify-center gap-2">
-              {codigo.map((d, i) => (
-                <input
-                  key={i}
-                  ref={(el) => {
-                    inputsRef.current[i] = el;
-                  }}
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={1}
-                  value={d}
-                  onChange={(e) => handleDigitoChange(i, e.target.value)}
-                  onPaste={handlePasteCodigo}
-                  className="h-12 w-10 rounded-lg border border-border text-center font-body text-lg font-bold text-secondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                />
-              ))}
-            </div>
+            <CodigoOtpInput value={codigo} onChange={setCodigo} disabled={cargando} />
+
+            <p className="text-center font-body text-xs text-muted-foreground">
+              Puedes copiar el código del correo y pegarlo aquí completo.
+            </p>
 
             {error && <p className="text-center font-body text-sm text-destructive">{error}</p>}
 
             <button
               type="submit"
-              disabled={cargando}
+              disabled={cargando || codigo.length < 6}
               className="rounded-[17px] bg-primary px-6 py-3 font-body font-bold text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
             >
               {cargando ? "Verificando…" : "Confirmar"}
@@ -214,7 +219,11 @@ export function LoginPanel({ className, next = "/mi-cuenta", onAuthenticated }: 
 
             <button
               type="button"
-              onClick={() => setPaso("email")}
+              onClick={() => {
+                setPaso("email");
+                setCodigo("");
+                setError(null);
+              }}
               className="text-center font-body text-xs text-muted-foreground underline underline-offset-4"
             >
               Usar otro correo
