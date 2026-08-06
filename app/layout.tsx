@@ -3,6 +3,7 @@ import { unstable_cache } from "next/cache";
 import { Bebas_Neue, DM_Sans, Fraunces } from "next/font/google";
 import "./globals.css";
 import { AnalyticsScripts } from "@/components/analytics/AnalyticsScripts";
+import { LimpiarParametrosTracking } from "@/components/analytics/LimpiarParametrosTracking";
 import { ConsoleBanner } from "@/components/branding/ConsoleBanner";
 import { SiteChrome } from "@/components/layout/SiteChrome";
 import { SplashScreen } from "@/components/layout/SplashScreen";
@@ -104,6 +105,7 @@ export default async function RootLayout({
       >
         <SplashScreen />
         <AnalyticsScripts />
+        <LimpiarParametrosTracking />
         <ConsoleBanner />
 
         <CartProvider>
