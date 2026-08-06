@@ -320,7 +320,9 @@ export default function CheckoutPage() {
         metodo: metodoPago,
         total: data.total,
         nombre: `${direccion.nombre} ${direccion.apellidos}`.trim(),
+        email: usuario.email,
         telefono: direccion.telefono,
+        zonaEnvio: zona ? zonaEnvioSlug(zona.nombre) : null,
         direccionTexto: [
           direccion.direccion,
           direccion.distrito,

@@ -12,6 +12,12 @@ import { WhatsAppIcon } from "@/components/shared/WhatsAppIcon";
 import { LinkQrCode } from "@/components/shared/LinkQrCode";
 import { createClient } from "@/lib/supabase/client";
 import { getVariantesPorSlugs, type RegaloVariante } from "@/lib/regalo-variantes";
+import { fechaEntregaEstimada, fechaComoInput } from "@/lib/rotulo";
+import { GoogleReviewsOptIn } from "@/components/shared/GoogleReviewsOptIn";
+
+// Google Merchant Center — mismo merchant_id usado en el feed de productos
+// (ver project_catalogo_feed_google_meta_tiktok en memoria).
+const GOOGLE_MERCHANT_ID = 5564945302;
 
 type EstadoPago = "pagado" | "pendiente_verificacion" | "rechazado" | "cancelado";
 
@@ -20,9 +26,13 @@ interface PedidoSimulado {
   metodo: "tarjeta" | "yape_plin" | "transferencia" | "contra_entrega";
   total: number;
   nombre?: string;
+  email?: string;
   telefono?: string;
   direccionTexto?: string;
   metodoEnvio?: string;
+  // Slug de zona (lima | costa_sierra | selva) — mismo valor que usa el
+  // rótulo de envío para estimar la fecha de entrega (lib/rotulo.ts).
+  zonaEnvio?: string | null;
   productos?: { nombre: string; cantidad: number }[];
   regaloBandanas?: string[] | null;
   // Solo se llena para el pedido leído en vivo de la BD (flujo de tarjeta) —
@@ -134,7 +144,7 @@ function CheckoutExitoContent() {
       supabase
         .from("pedidos")
         .select(
-          "shopify_order_number, total, estado_pago, productos, direccion_envio, zona_envio, regalo_bandana, regalo_bandanas, cliente_nombre, cliente_telefono"
+          "shopify_order_number, total, estado_pago, productos, direccion_envio, zona_envio, regalo_bandana, regalo_bandanas, cliente_nombre, cliente_telefono, cliente_email"
         )
         .eq("id", pedidoIdMp)
         .maybeSingle()
@@ -150,9 +160,11 @@ function CheckoutExitoContent() {
             metodo: "tarjeta",
             total: Number(data.total),
             nombre: data.cliente_nombre ?? undefined,
+            email: data.cliente_email ?? undefined,
             telefono: data.cliente_telefono ?? undefined,
             direccionTexto: direccionEnvioATexto(data.direccion_envio),
             metodoEnvio: metodoEnvioATexto(data.direccion_envio),
+            zonaEnvio: data.zona_envio ?? null,
             productos: Array.isArray(data.productos)
               ? (data.productos as { nombre: string; cantidad: number }[]).map((p) => ({
                   nombre: p.nombre,
@@ -199,6 +211,16 @@ function CheckoutExitoContent() {
   const pagoFallido = pagoTarjetaResuelto === "rechazado" || pagoTarjetaResuelto === "cancelado";
 
   return (
+    <>
+      {pedido && pedido.email && !pagoFallido && (
+        <GoogleReviewsOptIn
+          merchantId={GOOGLE_MERCHANT_ID}
+          orderId={pedido.numero}
+          email={pedido.email}
+          deliveryCountry="PE"
+          estimatedDeliveryDate={fechaComoInput(fechaEntregaEstimada(pedido.zonaEnvio ?? null))}
+        />
+      )}
     <div className="mx-auto flex max-w-lg flex-col items-center gap-4 px-mobile-margin py-section-y text-center">
       {pagoFallido ? (
         <XCircle className="h-16 w-16 text-destructive" strokeWidth={1.5} />
@@ -325,6 +347,7 @@ function CheckoutExitoContent() {
         </Link>
       </div>
     </div>
+    </>
   );
 }
 
