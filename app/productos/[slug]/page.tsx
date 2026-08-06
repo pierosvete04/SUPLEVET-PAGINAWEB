@@ -16,6 +16,8 @@ import { getResenasDeProducto } from "@/lib/resenas";
 import { getIngredientesActivos } from "@/lib/ingredientes";
 import { getComparativaActiva } from "@/lib/comparativa";
 import { getFaqsActivas } from "@/lib/faqs";
+import { getZonasEnvioActivas, getDistritosEnvioActivos } from "@/lib/shipping";
+import { detallesEnvioSchema, politicaDevolucionesSchema } from "@/lib/schema-producto";
 import { createClient } from "@/lib/supabase/server";
 import { createStaticClient } from "@/lib/supabase/static";
 import { siteConfig } from "@/lib/site-config";
@@ -23,6 +25,11 @@ import { siteConfig } from "@/lib/site-config";
 interface ProductoPageProps {
   params: Promise<{ slug: string }>;
 }
+
+// Cuántas reseñas se incrustan en el JSON-LD de la ficha. Google solo usa unas
+// pocas para armar el snippet; mandarlas todas engorda el HTML de la página
+// sin ningún beneficio en buscadores.
+const MAX_RESENAS_JSON_LD = 5;
 
 export async function generateStaticParams() {
   const { data } = await createStaticClient()
@@ -68,13 +75,18 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
   }
 
   const supabase = await createClient();
-  const [regalos, resenas, ingredientes, comparativa, faqs] = await Promise.all([
-    getRegalosAplicables(supabase, producto.slug, producto.categoria),
-    getResenasDeProducto(supabase, producto.shopifyProductId ?? producto.slug),
-    getIngredientesActivos(supabase),
-    getComparativaActiva(supabase),
-    getFaqsActivas(supabase),
-  ]);
+  const [regalos, resenas, ingredientes, comparativa, faqs, zonasEnvio, distritosEnvio] =
+    await Promise.all([
+      getRegalosAplicables(supabase, producto.slug, producto.categoria),
+      getResenasDeProducto(supabase, producto.shopifyProductId ?? producto.slug),
+      getIngredientesActivos(supabase),
+      getComparativaActiva(supabase),
+      getFaqsActivas(supabase),
+      // Solo alimentan el JSON-LD de abajo (costo de envío por zona en el
+      // snippet de Google); la ficha en sí no muestra tarifas.
+      getZonasEnvioActivas(supabase),
+      getDistritosEnvioActivos(supabase),
+    ]);
 
   // JSON-LD (schema.org Product) — habilita precio/disponibilidad/estrellas
   // directamente en el snippet de resultados de Google. aggregateRating solo
@@ -84,6 +96,23 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
     resenas.length > 0
       ? resenas.reduce((suma, r) => suma + r.calificacion, 0) / resenas.length
       : null;
+
+  // Además del promedio, Google pide reseñas individuales: sin ellas marca el
+  // aviso "Falta el campo review" en Search Console y el snippet sale sin las
+  // opiniones. Se mandan solo las más recientes — el objetivo es alimentar el
+  // resultado de búsqueda, no volcar la base entera en el HTML.
+  const resenasEstructuradas = resenas.slice(0, MAX_RESENAS_JSON_LD).map((r) => ({
+    "@type": "Review",
+    author: { "@type": "Person", name: r.cliente_nombre || "Cliente verificado" },
+    datePublished: r.created_at?.slice(0, 10),
+    reviewBody: r.texto,
+    reviewRating: {
+      "@type": "Rating",
+      ratingValue: r.calificacion,
+      bestRating: 5,
+      worstRating: 1,
+    },
+  }));
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
@@ -98,13 +127,18 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
       priceCurrency: "PEN",
       price: producto.precio,
       availability: "https://schema.org/InStock",
+      shippingDetails: detallesEnvioSchema(zonasEnvio, distritosEnvio),
+      hasMerchantReturnPolicy: politicaDevolucionesSchema,
     },
     ...(promedioCalificacion !== null && {
       aggregateRating: {
         "@type": "AggregateRating",
         ratingValue: Number(promedioCalificacion.toFixed(1)),
         reviewCount: resenas.length,
+        bestRating: 5,
+        worstRating: 1,
       },
+      review: resenasEstructuradas,
     }),
   };
 
