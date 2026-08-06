@@ -33,7 +33,14 @@ export function Faq({ preguntas, paddingSuperiorReducido = false }: FaqProps) {
   }
 
   return (
-    <section className={`bg-soft-gray pb-section-y ${paddingSuperiorReducido ? "pt-7" : "pt-section-y"}`}>
+    // El id permite enlazar a las preguntas frecuentes desde fuera de la
+    // página (ej. /#faq, destino de las URLs /pages/faq de la tienda anterior
+    // redirigidas en next.config.ts). scroll-mt evita que el header fijo tape
+    // el título al llegar.
+    <section
+      id="faq"
+      className={`scroll-mt-24 bg-soft-gray pb-section-y ${paddingSuperiorReducido ? "pt-7" : "pt-section-y"}`}
+    >
       <div className="mx-auto max-w-container px-mobile-margin md:px-gutter">
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-secondary to-[#0f1b2e]">
           <div className="pointer-events-none absolute -right-24 -top-24 h-72 w-72 rounded-full bg-white/5 blur-3xl" />
