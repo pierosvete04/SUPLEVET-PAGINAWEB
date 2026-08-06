@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Check, CheckCircle2, Loader2, Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { whatsappLink } from "@/lib/site-config";
+import { whatsappLink, WHATSAPP_VERDE } from "@/lib/site-config";
 import { useConfiguracionSitio } from "@/hooks/use-configuracion-sitio";
 import { WhatsAppIcon } from "@/components/shared/WhatsAppIcon";
 import { trackEvent } from "@/lib/analytics";
@@ -175,7 +175,7 @@ export function FormularioDistribuidor() {
           href={link}
           target="_blank"
           rel="noopener noreferrer"
-          style={{ backgroundColor: "#25D366" }}
+          style={{ backgroundColor: WHATSAPP_VERDE }}
           className="flex items-center justify-center gap-2 rounded-[17px] px-6 py-3 font-body font-bold text-white transition-opacity hover:opacity-90"
         >
           <WhatsAppIcon className="h-5 w-5" />
@@ -329,8 +329,8 @@ export function FormularioDistribuidor() {
       <button
         type="submit"
         disabled={!formValido || enviando}
-        style={{ backgroundColor: "#25D366" }}
-        className="mt-1 flex items-center justify-center gap-2 rounded-[17px] px-6 py-3.5 font-body text-base font-bold text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#25D366] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+        style={{ backgroundColor: WHATSAPP_VERDE }}
+        className="mt-1 flex items-center justify-center gap-2 rounded-[17px] px-6 py-3.5 font-body text-base font-bold text-white transition-opacity hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#138439] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
       >
         {enviando ? (
           <Loader2 className="h-5 w-5 animate-spin" />

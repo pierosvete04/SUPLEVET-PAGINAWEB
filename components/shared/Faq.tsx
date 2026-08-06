@@ -115,7 +115,7 @@ export function Faq({ preguntas, paddingSuperiorReducido = false }: FaqProps) {
                     href={whatsappLink(config.whatsappB2C, "Hola, tengo una consulta sobre Suplevet")}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-2 rounded-sm bg-[#25D366] px-6 py-3 font-body font-bold text-white transition-opacity hover:opacity-90"
+                    className="flex items-center gap-2 rounded-sm bg-[#138439] px-6 py-3 font-body font-bold text-white transition-opacity hover:opacity-90"
                   >
                     <WhatsAppIcon className="h-5 w-5 shrink-0" />
                     WhatsApp

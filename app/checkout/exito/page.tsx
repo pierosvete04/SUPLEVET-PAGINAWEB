@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { CheckCircle2, Gift, XCircle } from "lucide-react";
 import { formatPrecio } from "@/lib/data/productos-shared";
-import { whatsappLink } from "@/lib/site-config";
+import { whatsappLink, WHATSAPP_VERDE } from "@/lib/site-config";
 import { useConfiguracionSitio } from "@/hooks/use-configuracion-sitio";
 import { WhatsAppIcon } from "@/components/shared/WhatsAppIcon";
 import { LinkQrCode } from "@/components/shared/LinkQrCode";
@@ -308,7 +308,7 @@ function CheckoutExitoContent() {
               href={linkWhatsapp}
               target="_blank"
               rel="noopener noreferrer"
-              style={{ backgroundColor: "#25D366" }}
+              style={{ backgroundColor: WHATSAPP_VERDE }}
               className="flex w-full items-center justify-center gap-2 rounded-[17px] px-5 py-3 font-body text-sm font-bold text-white hover:opacity-90 sm:flex-1"
             >
               <WhatsAppIcon className="h-4 w-4" />

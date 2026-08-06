@@ -25,6 +25,15 @@ export const siteConfig = {
   horarioAtencion: "Lunes a viernes, 9:00 AM – 6:00 PM",
 } as const;
 
+// Verde de WhatsApp para botones con texto blanco encima. NO es el #25D366 de
+// la marca: ese contra blanco da una relación de contraste de 2,0:1, por
+// debajo del 4,5:1 que exige WCAG AA — es el error de contraste que reportó
+// PageSpeed. Este tono es el mismo verde apenas oscurecido (4,8:1), sigue
+// leyéndose como "WhatsApp" pero el texto encima se distingue de verdad.
+// Para superficies con texto oscuro (o el ícono suelto) se puede seguir
+// usando el #25D366 original.
+export const WHATSAPP_VERDE = "#138439";
+
 export function whatsappLink(numero: string, mensaje?: string) {
   const base = `https://wa.me/${numero}`;
   return mensaje ? `${base}?text=${encodeURIComponent(mensaje)}` : base;

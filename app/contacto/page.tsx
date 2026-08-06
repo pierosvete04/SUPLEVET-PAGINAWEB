@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Mail, Clock } from "lucide-react";
-import { whatsappLink } from "@/lib/site-config";
+import { whatsappLink, WHATSAPP_VERDE } from "@/lib/site-config";
 import { useConfiguracionSitio } from "@/hooks/use-configuracion-sitio";
 import { WhatsAppIcon } from "@/components/shared/WhatsAppIcon";
 import { LinkQrCode } from "@/components/shared/LinkQrCode";
@@ -119,7 +119,7 @@ export default function ContactoPage() {
               onClick={handleEnviarWhatsapp}
               disabled={!linkWhatsappFormulario}
               title={!linkWhatsappFormulario ? "Completa nombre, correo y mensaje primero" : undefined}
-              style={{ backgroundColor: "#25D366" }}
+              style={{ backgroundColor: WHATSAPP_VERDE }}
               className="flex flex-1 items-center justify-center gap-2 rounded-[17px] px-6 py-3 font-body font-bold text-white hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <WhatsAppIcon className="h-4 w-4" />
