@@ -153,7 +153,10 @@ export function InfiniteCarousel({ items, ariaLabel, className, autoScroll = fal
         role="region"
         aria-label={ariaLabel}
         className={cn(
-          "no-scrollbar flex cursor-grab gap-4 overflow-x-auto active:cursor-grabbing",
+          // items-stretch + wrapper flex: todas las tarjetas quedan a la altura
+          // de la más alta. Sin esto, la de más texto sobresalía y las demás se
+          // veían "pisadas" contra la de al lado.
+          "no-scrollbar flex cursor-grab items-stretch gap-4 overflow-x-auto active:cursor-grabbing",
           // El snap obligatorio pelea con el avance sub-pixel del auto-scroll:
           // el navegador reencaja cada frame y el carrusel se queda quieto.
           autoScroll ? "snap-none" : "snap-x snap-mandatory"
@@ -168,7 +171,7 @@ export function InfiniteCarousel({ items, ariaLabel, className, autoScroll = fal
         onClickCapture={alHacerClickCapturado}
       >
         {extendidos.map(({ item, key }) => (
-          <div key={key} data-carousel-item className="snap-center">
+          <div key={key} data-carousel-item className="flex snap-center">
             {item}
           </div>
         ))}

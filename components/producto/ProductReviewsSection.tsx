@@ -21,7 +21,7 @@ function ResenaProductoCard({ r }: { r: ResenaProducto }) {
         ))}
       </div>
       <p className="mt-3 font-body text-sm text-secondary">{r.texto}</p>
-      <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
+      <div className="mt-auto flex items-center justify-between border-t border-border pt-3">
         <div>
           <p className="font-body text-xs font-bold text-secondary">
             {r.cliente_nombre || "Cliente Suplevet"}
