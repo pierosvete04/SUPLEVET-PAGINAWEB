@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getUsuarioSesion } from "@/lib/supabase/usuario";
 import { inicializarSesionCliente } from "@/lib/data/portal/cliente";
 import { PortalSidebar } from "@/components/portal/PortalSidebar";
 import { PortalMobileNav } from "@/components/portal/PortalMobileNav";
@@ -10,9 +11,7 @@ import "./portal-theme.css";
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUsuarioSesion();
 
   if (!user) redirect("/mi-cuenta/login");
 

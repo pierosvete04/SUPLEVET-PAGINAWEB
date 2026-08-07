@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { getUsuarioSesion } from "@/lib/supabase/usuario";
 import { formatFecha } from "@/lib/portal/formato";
 import { formatPrecio } from "@/lib/data/productos-shared";
 import { ESTADO_PEDIDO, type Pedido, type PedidoVet } from "@/lib/data/portal/pedidos";
@@ -17,9 +18,7 @@ interface ResenaExistente {
 
 export default async function PortalPedidosPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUsuarioSesion();
   if (!user) return null;
 
   const [{ data: pedidos }, { data: pedidosVet }, { data: resenas }, catalogo] = await Promise.all([

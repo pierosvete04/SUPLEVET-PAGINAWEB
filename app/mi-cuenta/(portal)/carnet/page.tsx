@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getUsuarioSesion } from "@/lib/supabase/usuario";
 import { formatFecha } from "@/lib/portal/formato";
 import { formatPrecio } from "@/lib/data/productos-shared";
 import { NOMBRE_NIVEL } from "@/lib/data/portal/logros";
@@ -7,9 +8,7 @@ import type { ClientePerfil } from "@/lib/data/portal/cliente";
 
 export default async function PortalCarnetPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUsuarioSesion();
   if (!user) return null;
 
   const [{ data: perfil }, { data: puntos }, { data: comprasVet }] = await Promise.all([

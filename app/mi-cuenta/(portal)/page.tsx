@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getUsuarioSesion } from "@/lib/supabase/usuario";
 import { InicioDashboard } from "@/components/portal/inicio/InicioDashboard";
 import type { ClientePerfil } from "@/lib/data/portal/cliente";
 import { mapaVacunaPendiente } from "@/lib/data/portal/mascotas";
@@ -11,13 +12,23 @@ import { mapaVacunaPendiente } from "@/lib/data/portal/mascotas";
 // una lectura) se queda en el cliente — ver InicioDashboard.tsx.
 export default async function PortalInicioPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUsuarioSesion();
   if (!user) return null;
 
-  const [{ data: perfil }, { data: puntos }, { data: mascotas }, { data: transacciones }, { data: logros }, { data: logrosGanados }] =
-    await Promise.all([
+  // Los eventos de vacuna entran en este mismo Promise.all filtrando por
+  // cliente_id: antes iban en una consulta APARTE y POSTERIOR, porque filtraban
+  // por `mascota_id IN (ids)` y necesitaban el resultado de la de mascotas. Eso
+  // convertía la página en dos viajes en fila a us-west-2 (~500 ms el segundo)
+  // para un dato que se puede pedir a la vez que todo lo demás.
+  const [
+    { data: perfil },
+    { data: puntos },
+    { data: mascotas },
+    { data: transacciones },
+    { data: logros },
+    { data: logrosGanados },
+    { data: eventosVacuna },
+  ] = await Promise.all([
       supabase.from("clientes_perfil").select("*").eq("id", user.id).maybeSingle<ClientePerfil>(),
       supabase.from("suplepuntos_clientes").select("*").eq("cliente_id", user.id).maybeSingle(),
       supabase
@@ -34,21 +45,15 @@ export default async function PortalInicioPage() {
         .limit(5),
       supabase.from("logros_config").select("*").eq("activo", true).order("orden", { ascending: true }),
       supabase.from("cliente_logros").select("logro_clave").eq("cliente_id", user.id),
+      supabase
+        .from("mascota_eventos")
+        .select("mascota_id, detalle")
+        .eq("cliente_id", user.id)
+        .eq("tipo", "vacuna")
+        .order("fecha", { ascending: false }),
     ]);
 
-  let vacunaPendiente: Record<string, boolean> = {};
-  if (mascotas && mascotas.length > 0) {
-    const { data: eventos } = await supabase
-      .from("mascota_eventos")
-      .select("mascota_id, detalle")
-      .in(
-        "mascota_id",
-        mascotas.map((m) => m.id)
-      )
-      .eq("tipo", "vacuna")
-      .order("fecha", { ascending: false });
-    vacunaPendiente = mapaVacunaPendiente(eventos ?? []);
-  }
+  const vacunaPendiente = mapaVacunaPendiente(eventosVacuna ?? []);
 
   return (
     <InicioDashboard

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import type { User } from "@supabase/supabase-js";
+import type { UsuarioSesion } from "@/lib/supabase/usuario";
 import { ArrowLeft, Check, Loader2, Search, UserRound } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { ClientePerfil } from "@/lib/data/portal/cliente";
@@ -11,7 +11,7 @@ import { consultarDocumento, esConsultable, largoEsperado, TIPOS_DOCUMENTO, type
 import { MaskedTextReveal } from "@/components/shared/MaskedTextReveal";
 
 interface CompletarPerfilFormProps {
-  user: User;
+  user: UsuarioSesion;
   perfilInicial: ClientePerfil | null;
 }
 

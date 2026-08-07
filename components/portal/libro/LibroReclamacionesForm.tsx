@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import type { User } from "@supabase/supabase-js";
+import type { UsuarioSesion } from "@/lib/supabase/usuario";
 import { CheckCircle2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import type { ClientePerfil } from "@/lib/data/portal/cliente";
@@ -20,7 +20,7 @@ const PROVEEDOR = {
 };
 
 interface LibroReclamacionesFormProps {
-  user: User | null;
+  user: UsuarioSesion | null;
   perfil: ClientePerfil | null;
 }
 

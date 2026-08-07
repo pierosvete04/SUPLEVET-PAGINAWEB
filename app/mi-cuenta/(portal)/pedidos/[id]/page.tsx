@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getUsuarioSesion } from "@/lib/supabase/usuario";
 import { formatFecha } from "@/lib/portal/formato";
 import { formatPrecio } from "@/lib/data/productos-shared";
 import { construirTimeline, estadoBadgePedido, type PedidoHistorialRow } from "@/lib/data/portal/pedido-timeline";
@@ -76,9 +77,7 @@ const FORMA_PAGO_LABEL: Record<string, string> = {
 export default async function PortalPedidoDetalleRoute({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUsuarioSesion();
   if (!user) return null;
 
   const [{ data: pedido }, { data: historial }, catalogo] = await Promise.all([

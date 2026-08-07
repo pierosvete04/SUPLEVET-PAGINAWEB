@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
+import { getUsuarioSesion } from "@/lib/supabase/usuario";
 import { NOMBRE_NIVEL } from "@/lib/data/portal/logros";
 
 interface FilaRanking {
@@ -17,9 +18,7 @@ const MEDALLAS: Record<number, string> = { 1: "🥇", 2: "🥈", 3: "🥉" };
 
 export default async function PortalRankingPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUsuarioSesion();
   if (!user) return null;
 
   const { data } = await supabase

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import type { User } from "@supabase/supabase-js";
+import type { UsuarioSesion } from "@/lib/supabase/usuario";
 import { Cat, Dog, Gem } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { calcularEdad, formatFecha } from "@/lib/portal/formato";
@@ -44,7 +44,7 @@ const ICONO_ACCION: Record<string, string> = {
 };
 
 interface InicioDashboardProps {
-  user: User;
+  user: UsuarioSesion;
   perfil: ClientePerfil | null;
   puntosInicial: SuplepuntosCliente | null;
   mascotasIniciales: Mascota[];
@@ -341,7 +341,7 @@ export function InicioDashboard({
 // en el admin con un condicion_tipo existente se desbloquea automáticamente.
 async function verificarLogrosNuevos(
   supabase: ReturnType<typeof createClient>,
-  user: User,
+  user: UsuarioSesion,
   puntos: SuplepuntosCliente,
   perfil: ClientePerfil | null,
   logros: LogroConfig[],
@@ -353,8 +353,12 @@ async function verificarLogrosNuevos(
     supabase.from("pedidos").select("id").eq("cliente_id", user.id),
     supabase.from("referidos").select("id", { count: "exact", head: true }).eq("cliente_referidor_id", user.id),
   ]);
-  const mesesActivo = user.created_at
-    ? Math.floor((Date.now() - new Date(user.created_at).getTime()) / (30 * 24 * 3600 * 1000))
+  // Antigüedad tomada de clientes_perfil.created_at y ya no de user.created_at:
+  // la sesión ahora se resuelve leyendo los claims del JWT (ver
+  // lib/supabase/usuario.ts) y ahí no viaja la fecha de alta de la cuenta. Es la
+  // misma fecha en la práctica — la fila del perfil se crea en el primer login.
+  const mesesActivo = perfil?.created_at
+    ? Math.floor((Date.now() - new Date(perfil.created_at).getTime()) / (30 * 24 * 3600 * 1000))
     : 0;
 
   const valoresPorCondicion: Record<string, number> = {

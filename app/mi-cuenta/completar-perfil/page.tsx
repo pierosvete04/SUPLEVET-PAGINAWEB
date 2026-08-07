@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getUsuarioSesion } from "@/lib/supabase/usuario";
 import { inicializarSesionCliente, type ClientePerfil } from "@/lib/data/portal/cliente";
 import { CompletarPerfilForm } from "@/components/portal/onboarding/CompletarPerfilForm";
 
@@ -11,9 +12,7 @@ import { CompletarPerfilForm } from "@/components/portal/onboarding/CompletarPer
 // sea false.
 export default async function CompletarPerfilPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUsuarioSesion();
 
   if (!user) redirect("/mi-cuenta/login");
 

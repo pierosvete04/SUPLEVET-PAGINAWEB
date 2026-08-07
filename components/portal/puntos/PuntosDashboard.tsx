@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { User } from "@supabase/supabase-js";
+import type { UsuarioSesion } from "@/lib/supabase/usuario";
 import {
   Cake,
   Check,
@@ -77,7 +77,7 @@ const NIVELES_CAMINO = [
 const CIRCUNFERENCIA_ANILLO = 2 * Math.PI * 98;
 
 interface PuntosDashboardProps {
-  user: User;
+  user: UsuarioSesion;
   puntosInicial: SuplepuntosCliente | null;
   canjesIniciales: SuplepuntosConfig[];
   formasGanarIniciales: SuplepuntosConfig[];

@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getUsuarioSesion } from "@/lib/supabase/usuario";
 import { PuntosDashboard, type CanjeConNombre } from "@/components/portal/puntos/PuntosDashboard";
 
 // Las 5 consultas que antes vivían en el useEffect de PuntosDashboard se
@@ -7,9 +8,7 @@ import { PuntosDashboard, type CanjeConNombre } from "@/components/portal/puntos
 // cada visita mientras esperaba ese mismo round-trip desde el cliente.
 export default async function PortalPuntosPage() {
   const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const user = await getUsuarioSesion();
   if (!user) return null;
 
   const [{ data: puntos }, { data: canjes }, { data: formasGanar }, { data: historial }, { data: misCodigos }] =

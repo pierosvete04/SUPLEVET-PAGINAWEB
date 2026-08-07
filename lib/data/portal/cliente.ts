@@ -12,6 +12,9 @@ export interface ClientePerfil {
   tipo_documento: string | null;
   numero_documento: string | null;
   perfil_completo: boolean | null;
+  /** Alta en el portal. Sustituye a user.created_at para el logro de
+   *  antigüedad: la sesión ya no trae el objeto User completo. */
+  created_at: string | null;
 }
 
 export interface SesionCliente {

@@ -5,7 +5,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check, CheckCircle2 } from "lucide-react";
-import type { User } from "@supabase/supabase-js";
+import type { UsuarioSesion } from "@/lib/supabase/usuario";
 import { createClient } from "@/lib/supabase/client";
 import { uploadPortalFileToR2 } from "@/lib/uploadToR2";
 import { acreditarPuntos } from "@/lib/data/portal/puntos";
@@ -19,14 +19,23 @@ import { SOMBRA_TARJETA, inputBase } from "@/lib/portal/formTokens";
 import { PortalIcon } from "@/components/portal/icons/PortalIcon";
 
 interface PerfilFormProps {
-  user: User;
+  user: UsuarioSesion;
   perfilInicial: ClientePerfil | null;
   codigoReferido: string;
   nivel: string;
   yaTieneReferido: boolean;
+  /** Ya tiene al menos una compra acreditada — el bono de referido ya no aplica. */
+  yaCompro: boolean;
 }
 
-export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTieneReferido }: PerfilFormProps) {
+export function PerfilForm({
+  user,
+  perfilInicial,
+  codigoReferido,
+  nivel,
+  yaTieneReferido,
+  yaCompro,
+}: PerfilFormProps) {
   const router = useRouter();
   const [form, setForm] = useState({
     nombre: perfilInicial?.nombre ?? "",
@@ -48,6 +57,13 @@ export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTiene
   const [referidoAplicando, setReferidoAplicando] = useState(false);
   const [referidoMsg, setReferidoMsg] = useState<string | null>(null);
   const [referidoAplicado, setReferidoAplicado] = useState(yaTieneReferido);
+
+  // Solo tiene sentido pedir el código de quien te invitó si el cliente
+  // todavía puede ganar el bono: acreditar_puntos_pedido_web lo paga
+  // únicamente cuando el referido hace su PRIMERA compra. Con una compra ya
+  // acreditada el recuadro desaparece sin reemplazo — no hay nada que el
+  // cliente pueda hacer al respecto, así que un aviso solo sería ruido.
+  const mostrarInputReferido = !referidoAplicado && !yaCompro;
 
   const nombreCompleto = [form.nombre, form.apellido].filter(Boolean).join(" ") || user.email?.split("@")[0] || "";
   const inicial = nombreCompleto.charAt(0).toUpperCase();
@@ -133,6 +149,7 @@ export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTiene
         invalid_format: "Formato inválido. Ej: SUPLE-A1B2C3",
         own_code: "No puedes usar tu propio código",
         already_referred: "Ya tienes un código de referido aplicado",
+        already_purchased: "El bono de referido solo aplica antes de tu primera compra",
         code_not_found: "Código no encontrado. Verifica que esté bien escrito",
       };
       setReferidoMsg(mensajes[data?.error] || "Error al aplicar el código");
@@ -291,7 +308,7 @@ export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTiene
             </div>
           </div>
 
-          {!referidoAplicado ? (
+          {mostrarInputReferido ? (
             <div className={`rounded-2xl border-0 bg-white p-5 ${SOMBRA_TARJETA}`}>
               <h3 className="flex items-center gap-2 font-display text-base font-semibold text-portal-navy">
                 <PortalIcon name="group_add" className="text-[18px]" /> ¿Te invitó un amigo?
@@ -317,12 +334,12 @@ export function PerfilForm({ user, perfilInicial, codigoReferido, nivel, yaTiene
               </div>
               {referidoMsg && <p className="mt-2 text-xs text-portal-muted">{referidoMsg}</p>}
             </div>
-          ) : (
+          ) : referidoAplicado ? (
             <div className={`flex items-center gap-2 rounded-2xl border-0 bg-white p-5 text-sm text-portal-muted ${SOMBRA_TARJETA}`}>
               <CheckCircle2 className="h-4 w-4 shrink-0 text-portal-teal-mid" strokeWidth={1.75} />
               Ya tienes un código de referido aplicado.
             </div>
-          )}
+          ) : null}
 
           <Link
             href="/mi-cuenta/libro-reclamaciones"

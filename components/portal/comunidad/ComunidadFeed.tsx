@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import type { User } from "@supabase/supabase-js";
+import type { UsuarioSesion } from "@/lib/supabase/usuario";
 import { Heart, PawPrint, Send } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { uploadPortalFileToR2 } from "@/lib/uploadToR2";
@@ -17,7 +17,7 @@ interface PostConAutor extends Post {
 }
 
 interface ComunidadFeedProps {
-  user: User;
+  user: UsuarioSesion;
 }
 
 export function ComunidadFeed({ user }: ComunidadFeedProps) {

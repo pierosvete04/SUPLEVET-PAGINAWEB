@@ -29,6 +29,7 @@ export default function BienvenidaPage() {
         invalid_format: "Formato inválido. Usa el código de 12 caracteres.",
         own_code: "No puedes usar tu propio código.",
         already_referred: "Ya tienes un código aplicado.",
+        already_purchased: "El bono de referido solo aplica antes de tu primera compra.",
         code_not_found: "Código no encontrado, verifica que esté bien escrito.",
       };
       setError(mensajes[data?.error] ?? "Error al aplicar el código.");
