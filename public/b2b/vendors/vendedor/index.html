@@ -1,0 +1,874 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<!-- Ver index.html (login) para la explicación: fija la base de resolución
+     de los href/src relativos de este panel a su carpeta real dentro del
+     sitio principal. -->
+<base href="/b2b/vendors/vendedor/"/>
+<link rel="icon" type="image/png" href="../assets/img/icon-192.png"/>
+<meta name="robots" content="noindex, nofollow"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<title>Suplevet — Portal de Vendedores</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@400;500;600;700&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet"/>
+
+<link rel="stylesheet" href="../assets/css/tokens.css?v=20260803-uxfix">
+<link rel="stylesheet" href="../assets/css/registrar-visita.css?v=20260803-uxfix">
+<link rel="stylesheet" href="assets/css/app.css?v=20260803-uxfix">
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Suplevet"/>
+<!-- Mismo azul que el login y el admin. Estaba en naranja, así que la
+     barra de estado cambiaba de color al entrar desde el login. -->
+<meta name="theme-color" content="#253C61"/>
+<link rel="apple-touch-icon" href="../assets/img/icon-192.png"/>
+<link rel="manifest" href="../manifest.json"/>
+</head>
+<body>
+<!-- ═══════════════════════════════════════════════════════════
+     SPRITE DE ICONOS
+     ───────────────────────────────────────────────────────────
+     Antes toda la iconografía eran emoji (📊 💰 🗺️ …). Problemas:
+     · Cada sistema los dibuja distinto — el 🏥 de Android no se
+       parece al de Windows, y en el portátil de oficina salían
+       en blanco y negro.
+     · No heredan el color del texto: en el menú activo, con
+       fondo celeste, seguían siendo del color de la fuente
+       emoji del sistema.
+     · Un lector de pantalla los lee ("hospital", "gráfico de
+       barras") duplicando la etiqueta que ya está al lado.
+
+     Trazos de 1.75px sobre rejilla de 24, geometría tipo Lucide
+     (ISC). Usan currentColor, así que siguen al texto en el menú,
+     en la barra inferior y en los estados activos.
+     El sprite va inline en el HTML: cero peticiones y cero
+     parpadeo inicial.
+     ═══════════════════════════════════════════════════════════ -->
+<svg class="sv-sprite" aria-hidden="true" focusable="false" width="0" height="0" style="position:absolute">
+<defs>
+<g id="i-panel" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1"/><rect x="14" y="3" width="7" height="5" rx="1"/><rect x="14" y="12" width="7" height="9" rx="1"/><rect x="3" y="16" width="7" height="5" rx="1"/></g>
+<g id="i-grafico" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></g>
+<g id="i-tendencia" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 7 13.5 15.5 8.5 10.5 2 17"/><polyline points="16 7 22 7 22 13"/></g>
+<g id="i-editar" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.4 2.6a2.1 2.1 0 1 1 3 3L12 15l-4 1 1-4Z"/></g>
+<g id="i-calendario" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2v4"/><path d="M16 2v4"/><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M3 10h18"/></g>
+<g id="i-mapa" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4 3 6.5v13L9 17l6 2.5 6-2.5v-13L15 7Z"/><path d="M9 4v13"/><path d="M15 7v12.5"/></g>
+<g id="i-brujula" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m16.2 7.8-1.8 5.4a2 2 0 0 1-1.3 1.3L7.8 16.2l1.8-5.4a2 2 0 0 1 1.3-1.3z"/></g>
+<g id="i-pin" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-5.5 10.2-7.4 11.8a1 1 0 0 1-1.2 0C9.5 20.2 4 15 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></g>
+<g id="i-billete" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01"/><path d="M18 12h.01"/></g>
+<g id="i-monedas" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="6"/><path d="M18.1 10.4A6 6 0 1 1 10.4 18.1"/><path d="M8 7h1v4"/></g>
+<g id="i-tarjeta" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/></g>
+<g id="i-lista" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><path d="M12 11h4"/><path d="M12 16h4"/><path d="M8 11h.01"/><path d="M8 16h.01"/></g>
+<g id="i-caja" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m7.5 4.3 9 5.1"/><path d="M21 8a2 2 0 0 0-1-1.7l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.7l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z"/><path d="m3.3 7 8.7 5 8.7-5"/><path d="M12 22V12"/></g>
+<g id="i-clinica" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M6 22V4a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v18Z"/><path d="M6 12H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2"/><path d="M18 9h2a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2h-2"/><path d="M12 6v5"/><path d="M9.5 8.5h5"/><path d="M10 15h4"/><path d="M10 18.5h4"/></g>
+<g id="i-equipo" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.9"/><path d="M16 3.1a4 4 0 0 1 0 7.8"/></g>
+<g id="i-persona" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></g>
+<g id="i-globo" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></g>
+<g id="i-alerta" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m21.7 18-8-14a2 2 0 0 0-3.5 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.7-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></g>
+<g id="i-documento" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/><path d="M10 9H8"/><path d="M16 13H8"/><path d="M16 17H8"/></g>
+<g id="i-clip" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21.4 11.1l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.9l8.5-8.5"/></g>
+<g id="i-camion" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.6a1 1 0 0 0-.2-.7l-3.5-4.3a1 1 0 0 0-.8-.4H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></g>
+<g id="i-carpeta" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.7-.9L9.6 3.9A2 2 0 0 0 7.9 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></g>
+<g id="i-casa" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"/><path d="M3 10a2 2 0 0 1 .7-1.5l7-6a2 2 0 0 1 2.6 0l7 6A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></g>
+<g id="i-menu" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h16"/></g>
+<g id="i-salir" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><path d="M21 12H9"/></g>
+<g id="i-bandeja" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12"/><path d="M5.5 5.1 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.5-6.9A2 2 0 0 0 16.8 4H7.2a2 2 0 0 0-1.7 1.1z"/></g>
+<g id="i-ok" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></g>
+<g id="i-reloj" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></g>
+<g id="i-guardar" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M15.2 3a2 2 0 0 1 1.4.6l3.8 3.8a2 2 0 0 1 .6 1.4V19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z"/><path d="M17 21v-7a1 1 0 0 0-1-1H8a1 1 0 0 0-1 1v7"/><path d="M7 3v4a1 1 0 0 0 1 1h7"/></g>
+<g id="i-pata" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="16" r="4"/><circle cx="5.5" cy="10.5" r="2"/><circle cx="9.5" cy="6" r="2"/><circle cx="14.5" cy="6" r="2"/><circle cx="18.5" cy="10.5" r="2"/></g>
+<g id="i-devolver" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 5.5 5.5v0a5.5 5.5 0 0 1-5.5 5.5H11"/></g>
+<g id="i-maletin" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/><path d="M2 13h20"/></g>
+<g id="i-chevron-abajo" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></g>
+<g id="i-check" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></g>
+</defs>
+</svg>
+<!-- Primer elemento enfocable de la página: con 9 items de menú por delante,
+     llegar al contenido a base de Tab son 12 pulsaciones en cada carga. -->
+<a class="skip-link" href="#contenido">Ir al contenido</a>
+<div class="app-boot" id="app-boot">
+  <img src="../assets/img/icon-192.png" alt=""/>
+  <div class="app-boot-spinner" role="status" aria-label="Cargando el panel"></div>
+  <p>Cargando tu panel&hellip;</p>
+</div>
+<aside class="sidebar">
+  <div class="sb-logo"><div class="sb-logo-row"><div class="sb-ic"><img src="../assets/img/icon-192.png" alt=""/></div><div><div class="sb-nm">Suplevet</div><div class="sb-sb">Portal Vendedores</div></div></div></div>
+  <div class="sb-user"><div class="sb-user-name" id="sb-name">---</div><div class="sb-user-role" id="sb-role">Vendedor</div></div>
+  <nav class="nav-sec" aria-label="Secciones del portal"><div class="nav-lbl">Mi espacio</div>
+    <div class="nav-item" data-page="dashboard" onclick="goTo('dashboard')"><span class="ni"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-panel"/></svg></span> Mi Dashboard</div>
+    <div class="nav-item" data-page="registrar" onclick="goTo('registrar')"><span class="ni"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-editar"/></svg></span> Registrar Visita</div>
+    <div class="nav-item" data-page="plan" onclick="goTo('plan')"><span class="ni"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-calendario"/></svg></span> Plan Semanal</div>
+    <div class="nav-item" data-page="ruta" onclick="goTo('ruta')"><span class="ni"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-mapa"/></svg></span> Mi Ruta</div>
+    <div class="nav-item" data-page="ventas" onclick="goTo('ventas')"><span class="ni"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-billete"/></svg></span> Mis Ventas</div>
+    <div class="nav-item" data-page="creditos" onclick="goTo('creditos')"><span class="ni"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-tarjeta"/></svg></span> Créditos pendientes <span id="nav-cred-badge" class="nav-badge" style="display:none;">0</span></div>
+    <div class="nav-item" data-page="mercaderia" onclick="goTo('mercaderia')"><span class="ni"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-caja"/></svg></span> Mi mercadería</div>
+    <div class="nav-item" data-page="clientes" onclick="goTo('clientes')"><span class="ni"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-clinica"/></svg></span> Mis Clientes</div>
+    <div class="nav-item" data-page="historial" onclick="goTo('historial')"><span class="ni"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-lista"/></svg></span> Mi Historial</div>
+  </nav>
+  <div class="sb-foot"><button class="logout-btn" onclick="doLogout()"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-salir"/></svg> Cerrar sesión</button><p>Suplevet &copy; 2025</p></div>
+</aside>
+<main class="main" id="contenido" tabindex="-1">
+<!-- role/aria-live: aqui aterrizan "Plan guardado", los errores de guardado
+     y los spinners. Sin region viva, un lector de pantalla no anuncia nada
+     y el usuario no sabe si su accion funciono. -->
+<div id="st-global" role="status" aria-live="polite" aria-atomic="true"></div>
+<div id="page-dashboard" class="page active">
+  <div class="ph">
+    <div class="ph-l">
+      <div class="kicker">Mi espacio</div>
+      <h1 class="pt" id="dash-title">Mi Dashboard</h1>
+      <div class="ps" id="dash-fecha"></div>
+    </div>
+    <button class="btn btn-p" onclick="goTo('registrar')">+ Registrar Visita</button>
+  </div>
+  <div class="nivel-widget" id="nivel-widget-new" style="display:none;"></div>
+  <div id="dash-alert-cred"></div>
+  <div class="kpi-grid" id="dash-kpis" style="display:none;"></div>
+  <div style="margin-bottom:1.4rem;">
+    <div class="ops-grid" id="dash-ops"></div>
+  </div>
+  <div id="dash-prods" style="margin-bottom:1.4rem;"></div>
+  <div class="card" id="dash-merch" style="display:none;"></div>
+</div>
+<div id="page-registrar" class="page">
+  <div class="ph">
+    <div class="ph-l">
+      <div class="kicker">Flujo rápido · 3 pasos</div>
+      <h1 class="pt">Registrar Visita</h1>
+      <div class="ps">Agrega la clínica, los movimientos y guarda — todo desde una pantalla.</div>
+    </div>
+  </div>
+  <!-- Estado inicial neutro: antes el paso 1 nacía marcado "done" y el 2
+       "active" aunque el formulario estuviera vacío — mvActualizarStepper()
+       (registro-visita.js) los actualiza según los datos reales apenas
+       carga la página y en cada cambio relevante. -->
+  <div class="flow-steps" id="mv-flow-steps">
+    <div class="flow-step" id="fwz1"><div class="fsn">1</div><span>Datos de la visita</span></div>
+    <div class="flow-step" id="fwz2"><div class="fsn">2</div><span>Movimientos</span></div>
+    <div class="flow-step" id="fwz3"><div class="fsn">3</div><span>Revisar y guardar</span></div>
+  </div>
+  <div class="visit-layout">
+    <div>
+      <div class="card" style="margin-bottom:14px;">
+        <div class="ch"><h2 class="ct">Datos de la visita</h2></div>
+        <div class="cb">
+          <div class="fg" style="gap:10px;">
+            <div class="fgr"><label>Fecha<span class="req">*</span></label><input type="date" id="mv-fecha" onchange="if(typeof mvUpdateSummary==='function')mvUpdateSummary()" oninput="if(typeof mvUpdateSummary==='function')mvUpdateSummary()"/></div>
+            <div class="fgr"><label>Hora</label><input type="time" id="mv-hora" onchange="if(typeof mvUpdateSummary==='function')mvUpdateSummary()" oninput="if(typeof mvUpdateSummary==='function')mvUpdateSummary()"/></div>
+            <div class="fgr full">
+              <label>Veterinaria / Clínica</label>
+              <div class="u-rel">
+                <input type="text" id="mv-vete" placeholder="Escribe para buscar..." autocomplete="off"
+                  oninput="mvShowVetes(this.value);if(typeof mvUpdateSummary==='function')mvUpdateSummary()"
+                  onfocus="mvShowVetes(this.value)"
+                  onblur="setTimeout(function(){var d=gel('mv-vete-list');if(d)d.style.display='none';},200)"/>
+                <div id="mv-vete-list" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--wh);border:1.5px solid var(--sky);border-top:none;border-radius:0 0 var(--r) var(--r);max-height:160px;overflow-y:auto;z-index:50;box-shadow:var(--sh2);"></div>
+              </div>
+            </div>
+            <!-- Antes decía "(opcional si hay doctor/a)" solo junto al campo
+                 de veterinaria, a 10px — fácil de no ver, y no explicaba la
+                 regla completa (que basta con uno de los dos). Una sola nota
+                 que abarca ambos campos, en vez de un asterisco engañoso en
+                 uno solo (ninguno de los dos es obligatorio por sí solo). -->
+            <p class="full" style="font-size:11px;color:var(--tl);margin:-6px 0 2px;">Completa al menos uno de los dos: veterinaria o doctor/a.</p>
+            <div class="fgr">
+              <label>Doctora / Médico</label>
+              <div class="u-rel">
+                <input type="text" id="mv-doctora" placeholder="Nombre" autocomplete="off"
+                  oninput="mvShowDoctoras(this.value);if(typeof mvUpdateSummary==='function')mvUpdateSummary();if(_mvTipoActual==='Cobro de credito')mvCargarCreditosVete(val('mv-vete'),this.value.trim())"
+                  onfocus="mvShowDoctoras(this.value)"
+                  onblur="setTimeout(function(){var d=gel('mv-doctora-list');if(d)d.style.display='none';},200)"/>
+                <div id="mv-doctora-list" style="display:none;position:absolute;top:100%;left:0;right:0;background:var(--wh);border:1.5px solid var(--sky);border-top:none;border-radius:0 0 var(--r) var(--r);max-height:160px;overflow-y:auto;z-index:50;box-shadow:var(--sh2);"></div>
+              </div>
+            </div>
+            <div class="fgr"><label>Celular</label><input type="tel" id="mv-celular" placeholder="9XXXXXXXX"/></div>
+            <div class="fgr"><label>RUC <span style="font-size:10px;color:var(--tl);font-weight:500;">(opcional)</span></label><input type="text" id="mv-ruc" placeholder="20XXXXXXXXX" maxlength="11" oninput="this.value=this.value.replace(/\D/g,'')"/></div>
+            <div class="fgr full"><label>Zona<span class="req">*</span></label><select id="mv-zona" onchange="if(typeof mvUpdateSummary==='function')mvUpdateSummary()"><option value="">— Seleccionar zona —</option></select></div>
+            <div class="fgr full" id="mv-cat-wrap" style="display:none;"><label>Categoría del cliente <span style="font-size:10px;color:var(--tl);font-weight:400;">(¿qué tipo de establecimiento es?)</span></label><select id="mv-cat"><option value="">— Sin categoría —</option></select></div>
+            <div class="fgr full"><label>Notas</label><textarea id="mv-notas" placeholder="Observaciones de la visita..." rows="2"></textarea></div>
+          </div>
+          <div style="border-top:1px solid var(--bd);margin-top:.7rem;padding-top:.7rem;">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+              <div style="display:flex;align-items:center;gap:5px;font-size:11px;font-weight:700;text-transform:uppercase;color:var(--tl);letter-spacing:.5px;"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24" style="width:13px;height:13px;"><use href="#i-documento"/></svg> Documentos</div>
+              <button type="button" class="btn btn-s btn-sm" onclick="docsAgregar('mv')" style="font-size:11px;padding:.3rem .6rem;">+ Agregar otro</button>
+            </div>
+            <div class="u-col-8" id="mv-docs-list"></div>
+          </div>
+        </div>
+      </div>
+      <div id="mv-lista" style="display:none;margin-bottom:12px;"></div>
+      <div class="card" style="margin-bottom:14px;">
+        <div class="ch"><h2 class="ct">Agregar movimiento</h2><span class="cs">Puedes agregar varios</span></div>
+        <div class="cb">
+          <!-- Seis opciones únicas y excluyentes = un grupo de radio buttons.
+               El clic y las flechas del teclado los maneja SVUI.radiogroup()
+               (registro-visita.js la inicializa una sola vez al cargar el
+               script); ya no llevan onclick propio. -->
+          <div class="tipo-grid" id="mv-tipo-grid" role="radiogroup" aria-label="Tipo de movimiento">
+            <div class="tipo-btn" id="tbtc-Visita" data-tipo="Visita" role="radio" aria-checked="false"><span class="ti"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-pata"/></svg></span>Sólo visita</div>
+            <div class="tipo-btn" id="tbtc-Venta al contado" data-tipo="Venta al contado" role="radio" aria-checked="false"><span class="ti"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-billete"/></svg></span>Contado</div>
+            <div class="tipo-btn" id="tbtc-Venta delivery" data-tipo="Venta delivery" role="radio" aria-checked="false"><span class="ti"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-camion"/></svg></span>Delivery</div>
+            <div class="tipo-btn" id="tbtc-Credito a 15 dias" data-tipo="Credito a 15 dias" role="radio" aria-checked="false"><span class="ti"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-reloj"/></svg></span>Crédito 15d</div>
+            <div class="tipo-btn" id="tbtc-Cobro de credito" data-tipo="Cobro de credito" role="radio" aria-checked="false"><span class="ti"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-monedas"/></svg></span>Cobro crédito</div>
+            <div class="tipo-btn" id="tbtc-Devolucion" data-tipo="Devolucion" role="radio" aria-checked="false"><span class="ti"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-devolver"/></svg></span>Devolución</div>
+          </div>
+          <p class="campo-error" id="mv-tipo-error" role="alert" hidden></p>
+          <div id="mv-metodo-pago-wrap" class="mp-selector" style="display:none;">
+            <label class="mp-label">Método de pago<span class="req">*</span></label>
+            <div id="mv-mp-btn" class="mp-btn" role="button" onclick="mvToggleMPDrop(event)">
+              <span id="mv-mp-sel-logo" style="flex-shrink:0;display:flex;"><div class="mp-logo-ph">—</div></span>
+              <span id="mv-mp-sel-name" class="mp-sel-name">— Seleccionar método —</span>
+              <span class="mp-chevron" id="mv-mp-chevron"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24" style="width:14px;height:14px;"><use href="#i-chevron-abajo"/></svg></span>
+            </div>
+            <div id="mv-mp-drop" class="mp-drop"></div>
+            <input type="hidden" id="mv-metodo-pago" value="">
+          </div>
+          <div id="mv-receptor-efectivo-wrap" class="receptor-wrap" style="display:none;">
+            <label class="receptor-label">&#128200; ¿A quién se entregó el efectivo?<span class="req">*</span></label>
+            <select id="mv-receptor-efectivo" class="receptor-select">
+              <option value="">— Seleccionar receptor —</option>
+              <option value="Piero">Piero</option>
+              <option value="Benito">Benito</option>
+              <option value="Nelly">Nelly</option>
+            </select>
+          </div>
+          <div id="mv-img-doc-wrap" style="display:none;margin-bottom:.8rem;">
+            <label style="font-size:11px;font-weight:700;color:var(--brand);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:.4rem;">Imagen de pago <span class="req" id="mv-img-req">*</span> <span id="mv-img-counter" style="font-size:10px;color:var(--tl);font-weight:500;text-transform:none;letter-spacing:0;">(0/4)</span></label>
+            <input type="file" id="mv-img-doc" accept="image/*,.pdf" multiple style="display:none;"/>
+            <div id="mv-img-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;"></div>
+            <div style="font-size:11px;color:var(--tl);margin-top:4px;">Obligatorio para ventas al contado, delivery y cobros de crédito · Hasta 4 imágenes</div>
+          </div>
+          <div id="mv-campos" style="display:none;">
+            <div id="mv-prod-fields">
+              <div class="fg" style="gap:10px;margin-bottom:10px;">
+                <div class="fgr full"><label>Producto<span class="req">*</span></label><select id="mv-prod" onchange="mvAutoPrecio()" ><option value="">— Seleccionar —</option></select></div>
+                <div class="fgr"><label>Cantidad<span class="req">*</span></label><input type="number" id="mv-cant" min="1" placeholder="0" oninput="mvCalcTotal()"/></div>
+                <div class="fgr"><label>Precio unit.<span class="req">*</span></label><input type="number" id="mv-precio" min="0" step="0.01" placeholder="0.00" oninput="mvCalcTotal()"/></div>
+                <div class="fgr full">
+                  <label>Total</label>
+                  <div style="background:var(--sky4);border:1.5px solid var(--sky);border-radius:var(--r);padding:.6rem .85rem;font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--brand);" id="mv-total-disp">S/ 0.00</div>
+                </div>
+              </div>
+              <div id="mv-cobro-wrap" style="display:none;margin-bottom:10px;">
+                <div style="background:var(--sky4);border:1px solid var(--sky);border-radius:var(--r);padding:.65rem .85rem;display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--brand);">
+                  <svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24" style="width:17px;height:17px;flex-shrink:0;"><use href="#i-reloj"/></svg>
+                  <span>El crédito se cobra <strong>en 15 días</strong> (fecha estimada: <strong id="mv-cobro-info">—</strong>)</span>
+                </div>
+              </div>
+            </div>
+            <div id="mv-cred-wrap" style="display:none;margin-bottom:10px;">
+              <div id="mv-cred-body"></div>
+            </div>
+            <button class="btn btn-cta" id="btn-mv-agregar" style="width:100%;padding:.7rem;font-size:14px;" onclick="mvAgregarMovimiento()">Agregar a la visita</button>
+          </div>
+        </div>
+      </div>
+      <!-- "Agrega al menos un movimiento" no tiene un input al que anclarse:
+           es el estado de la lista, no un campo. Vive aquí, junto a los
+           botones, en vez de solo en la barra global de arriba — que en
+           esta página tan larga puede quedar fuera de la vista cuando el
+           vendedor recién hizo clic en Guardar. -->
+      <!-- En móvil este bloque (aviso + acciones) se mueve dentro del
+           acordeón de la barra inferior, junto al resumen: ver
+           _mvSheetMontar() en registro-visita.js. -->
+      <span id="mv-anchor-acciones" hidden></span>
+      <div id="mv-acciones">
+        <p class="campo-error" id="mv-sin-mov-error" role="alert" hidden style="margin-bottom:.6rem;text-align:center;"></p>
+        <div class="u-row-8">
+          <button class="btn btn-s u-grow" onclick="mvLimpiar()">Limpiar todo</button>
+          <button class="btn btn-cta" id="btn-mv-guardar" onclick="mvGuardarVisita()" style="flex:2;padding:.7rem;font-size:14px;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-guardar"/></svg>
+            <span id="btn-mv-guardar-txt">Guardar visita</span>
+          </button>
+        </div>
+      </div>
+    </div>
+    <span id="mv-anchor-resumen" hidden></span>
+    <div class="visit-summary" id="visit-summary-panel">
+      <div class="vsm-kicker">Resumen de la visita</div>
+      <div class="vsm-title" id="vsm-nombre">—</div>
+      <div class="vsm-meta" id="vsm-meta"></div>
+      <div id="vsm-items">
+        <div class="vsm-empty"><div class="ei"><svg class="ic ic-vacio" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-bandeja"/></svg></div>Agrega movimientos para ver el resumen aquí.</div>
+      </div>
+      <div class="vsm-total-row" id="vsm-total-row" style="display:none;">
+        <div><div class="vsm-total-lbl">Total</div><div style="font-size:11px;color:rgba(153,211,218,.6);" id="vsm-total-sub"></div></div>
+        <div class="vsm-total-val" id="vsm-total-val">S/ 0</div>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="page-plan" class="page">
+  <div class="ph">
+    <div class="ph-l"><div class="kicker">Planificación</div><h1 class="pt">Plan Semanal</h1><div class="ps">Toca una celda, escribe la visita y pulsa Guardar plan.</div></div>
+    <div class="plan-actions">
+      <button class="btn btn-s btn-sm" onclick="cambiarSemana(-1)" aria-label="Ver la semana anterior">← Anterior</button>
+      <button class="btn btn-s btn-sm" onclick="cambiarSemana(1)" aria-label="Ver la semana siguiente">Siguiente →</button>
+      <button class="btn btn-cta btn-sm plan-save-btn" onclick="guardarPlan()">💾 Guardar plan</button>
+    </div>
+  </div>
+  <div class="card">
+    <div class="plan-weekbar"><span id="plan-label">Cargando la semana…</span></div>
+    <div class="plan-daybar" id="plan-daybar" role="tablist" aria-label="Elegir el día que quieres ver"></div>
+    <div class="plan-cal-wrap">
+      <div class="plan-cal" id="plan-cal">
+        <div class="plan-cal-header" id="plan-cal-header"></div>
+        <div id="plan-body"></div>
+      </div>
+    </div>
+    <div class="plan-foot">
+      <button class="btn-sk btn-sm plan-add-btn" onclick="addPlanRow()">+ Agregar hora</button>
+      <p class="plan-hint">El color de cada visita se asigna solo, según lo que escribas.</p>
+      <div class="plan-legend">
+        <span title="Escribe cualquier texto"><span class="plan-leg-dot" style="background:#bae6fd;border-radius:3px;"></span>Visita regular</span>
+        <span title="Escribe «cobro» o «delivery»"><span class="plan-leg-dot" style="background:var(--sky);border-radius:3px;"></span>Cobro / delivery</span>
+        <span title="Escribe «nuevo» o «nueva»"><span class="plan-leg-dot" style="background:#a5d6a7;border-radius:3px;"></span>Cliente nuevo</span>
+      </div>
+    </div>
+  </div>
+</div>
+<div id="page-ruta" class="page">
+  <div class="ph">
+    <div class="ph-l"><div class="kicker">Navegación</div><h1 class="pt">Mi Ruta</h1><div class="ps">Elige a qué veterinarias vas y genera tu recorrido óptimo del día.</div></div>
+  </div>
+  <div id="ruta-root"></div>
+</div>
+<div id="page-creditos" class="page">
+  <div class="ph">
+    <div class="ph-l"><div class="kicker">Cobranzas</div><h1 class="pt">Créditos pendientes</h1><div class="ps">Ventas a crédito que aún no has cobrado</div></div>
+    <div class="u-row-6">
+      <button class="btn btn-p btn-sm" onclick="generarPDFCreditos()">&#128196; Reporte PDF</button>
+    </div>
+  </div>
+  <div class="sg u-mb">
+    <div class="sc"><div class="sl">TOTAL PENDIENTE</div><div class="sv sv-r" id="c-total">S/ 0.00</div></div>
+    <div class="sc"><div class="sl">VENCIDOS</div><div class="sv sv-r" id="c-venc">0</div></div>
+    <div class="sc"><div class="sl">POR VENCER</div><div class="sv sv-w" id="c-pv">0</div><div class="ss">prox. 15 dias</div></div>
+  </div>
+  <div class="sb2 u-mb"><input type="text" id="srch-cred" placeholder="Buscar por veterinaria, doctor/a, zona, producto..." oninput="rCreditos()"/></div>
+  <div id="lista-cred"></div>
+  <div class="card" id="lista-devol" style="margin-top:1rem;display:none;"></div>
+</div>
+<div id="page-ventas" class="page">
+  <div class="ph">
+    <div class="ph-l"><div class="kicker">Ingresos</div><h1 class="pt">Mis Ventas</h1><div class="ps">Ventas al contado, delivery y cobros del mes</div></div>
+    <div class="u-row-6">
+      <button class="btn btn-p btn-sm" onclick="generarPDFVentas()">&#128196; Reporte PDF</button>
+    </div>
+  </div>
+  <div class="sg u-mb">
+    <div class="sc"><div class="sl" id="vt-l1">TOTAL VENTAS</div><div class="sv sv-b" id="vt-v1">S/ 0.00</div></div>
+    <div class="sc"><div class="sl" id="vt-l2">CONTADO + DELIVERY</div><div class="sv sv-b" id="vt-v2">S/ 0.00</div></div>
+    <div class="sc"><div class="sl" id="vt-l3">COBROS DE CRÉDITO</div><div class="sv sv-b" id="vt-v3">S/ 0.00</div></div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" onclick="fVentas('todos',this)">Todos</button>
+    <button class="tab" onclick="fVentas('Venta al contado',this)">Contado</button>
+    <button class="tab" onclick="fVentas('Venta delivery',this)">Delivery</button>
+    <button class="tab" onclick="fVentas('Cobro de credito',this)">Cobros</button>
+  </div>
+  <div class="sb2">
+    <input type="text" id="srch-vt" placeholder="Buscar por veterinaria, doctor/a, zona, producto..." oninput="rVentas()"/>
+    <select id="fil-mes-vt" onchange="rVentas()" style="width:160px;"><option value="">Todos los meses</option></select>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;padding:.5rem 0;flex-wrap:wrap;">
+    <span style="font-size:11px;font-weight:600;color:var(--tm);">FILTRAR POR DÍA:</span>
+    <input type="date" id="fil-vt-desde" onchange="rVentas()" style="width:150px;font-size:12px;padding:.3rem .6rem;"/>
+    <span class="u-meta-2">hasta</span>
+    <input type="date" id="fil-vt-hasta" onchange="rVentas()" style="width:150px;font-size:12px;padding:.3rem .6rem;"/>
+    <button onclick="limpiarFiltroFechasVt()" style="font-size:11px;background:none;border:none;color:var(--brand);cursor:pointer;font-weight:600;padding:.3rem .5rem;">✕ Limpiar fechas</button>
+  </div>
+  <div class="card"><div class="u-p-0"><div class="tw" id="tbl-ventas"></div></div></div>
+</div>
+<div id="page-mercaderia" class="page">
+  <div class="ph">
+    <div class="ph-l"><div class="kicker">Inventario</div><h1 class="pt">Mi Mercadería</h1><div class="ps" id="merch-updated">Stock asignado por Suplevet</div></div>
+    <button class="btn btn-s" onclick="rMercaderiaNueva()">📦 Actualizar</button>
+  </div>
+  <div id="merch-alerts-new"></div>
+  <div class="merch-grid-new" id="merch-cards-new">
+    <div style="grid-column:1/-1;" class="es"><div class="ei"><svg class="ic ic-vacio" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-bandeja"/></svg></div>Cargando inventario...</div>
+  </div>
+  <div class="card" id="merch-mov-table" style="display:none;">
+    <div class="ch"><h2 class="ct">Movimientos recientes de stock</h2><span class="cs">Últimos 30 días</span></div>
+    <div class="cb" id="merch-mov-body"></div>
+  </div>
+</div>
+<div id="page-clientes" class="page">
+  <div class="ph">
+    <div class="ph-l"><div class="kicker">Cartera</div><h1 class="pt">Mis Clientes</h1><div class="ps">Veterinarias y doctores que has visitado</div></div>
+    <div class="u-row-6">
+      <button class="btn btn-cta btn-sm" onclick="abrirNuevoCliente()">+ Añadir cliente</button>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;margin-bottom:1rem;">
+    <button class="tab cli-tab active" onclick="setCliTab('vet',this)">Clinicas / Veterinarias</button>
+    <button class="tab cli-tab" onclick="setCliTab('doc',this)">Doctores / Doctoras</button>
+  </div>
+  <div class="sb2"><input type="text" id="srch-cli" placeholder="Buscar por nombre, zona..." oninput="rClientes()"/></div>
+  <div id="lista-clientes"></div>
+</div>
+
+<!-- Modal: añadir nueva veterinaria SIN registrar visita.
+     Va a clientes_vet (tabla dedicada) — no infla ventas/visitas con filas falsas. -->
+<div id="page-historial" class="page">
+  <div class="ph">
+    <div class="ph-l"><div class="kicker">Registro</div><h1 class="pt">Mi Historial</h1><div class="ps">Todas mis visitas y ventas</div></div>
+    <div class="u-row-6">
+      <button class="btn btn-p btn-sm" onclick="generarPDFHistorial()">&#128196; Reporte PDF</button>
+    </div>
+  </div>
+  <div id="hist-kpis" class="sg u-mb"></div>
+  <div class="tabs">
+    <button class="tab active" onclick="fHist('todos',this)">Todos</button>
+    <button class="tab" onclick="fHist('Venta al contado',this)">Contado</button>
+    <button class="tab" onclick="fHist('Venta delivery',this)">Delivery</button>
+    <button class="tab" onclick="fHist('Credito a 15 dias',this)">Crédito</button>
+    <button class="tab" onclick="fHist('Devolucion',this)">Devoluciones</button>
+    <button class="tab" onclick="fHist('Visita',this)">Visitas</button>
+    <button class="tab" onclick="fHist('Cobro de credito',this)">Cobros</button>
+  </div>
+  <div class="sb2">
+    <input type="text" id="srch-h" placeholder="Buscar por veterinaria, doctor/a, zona, producto..." oninput="rHist()"/>
+    <select id="fil-mes" onchange="filMesCambio()" style="width:145px"><option value="">Todos los meses</option></select>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;padding:.4rem 0;flex-wrap:wrap;">
+    <select id="fil-h-prod" onchange="rHist()" style="font-size:12px;padding:.3rem .6rem;border:1.5px solid var(--bd);border-radius:var(--r);min-width:160px;"><option value="">Todos los productos</option></select>
+    <select id="fil-h-zona" onchange="rHist()" style="font-size:12px;padding:.3rem .6rem;border:1.5px solid var(--bd);border-radius:var(--r);min-width:140px;"><option value="">Todas las zonas</option></select>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px;padding:.5rem 0;flex-wrap:wrap;">
+    <span style="font-size:11px;font-weight:600;color:var(--tm);">FILTRAR POR DÍA:</span>
+    <input type="date" id="fil-desde" onchange="rHist()" style="width:150px;font-size:12px;padding:.3rem .6rem;"/>
+    <span class="u-meta-2">hasta</span>
+    <input type="date" id="fil-hasta" onchange="rHist()" style="width:150px;font-size:12px;padding:.3rem .6rem;"/>
+    <button onclick="limpiarFiltroFechas()" style="font-size:11px;background:none;border:none;color:var(--brand);cursor:pointer;font-weight:600;padding:.3rem .5rem;">✕ Limpiar fechas</button>
+  </div>
+  <div class="card"><div class="u-p-0"><div class="tw" id="tbl-hist"></div></div></div>
+<div id="page-pdf" class="page">
+  <div class="ph">
+    <div class="ph-l"><div class="kicker">Exportar</div><h1 class="pt">Reporte Mensual</h1><div class="ps">Resumen de actividad para imprimir</div></div>
+  </div>
+  <div class="card">
+    <div class="cb">
+      <div class="u-mb">
+        <label style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--tl);letter-spacing:.5px;display:block;margin-bottom:6px;">Mes del reporte</label>
+        <input type="month" id="pdf-mes" style="width:180px;" />
+      </div>
+      <div style="background:var(--sky4);border:1px solid var(--sky);border-radius:var(--r);padding:.85rem;margin-bottom:1rem;">
+        <div style="font-size:12px;font-weight:700;color:var(--brand);margin-bottom:6px;">El reporte incluye:</div>
+        <div style="font-size:12px;color:var(--tl);display:flex;flex-direction:column;gap:3px;">
+          <div>&#x2705; Visitas realizadas</div>
+          <div>&#x2705; Ventas al contado y delivery</div>
+          <div>&#x2705; Cr&#233;ditos (cobrados y pendientes)</div>
+          <div>&#x2705; Cobros de cr&#233;dito parciales y totales</div>
+          <div>&#x2705; Devoluciones</div>
+          <div>&#x2705; Total cobrado vs pendiente</div>
+        </div>
+      </div>
+      <button class="btn btn-p" onclick="generarPDF()" style="width:100%;padding:.85rem;font-size:15px;">&#128196; Generar PDF</button>
+      <div style="font-size:11px;color:var(--tl);text-align:center;margin-top:8px;">Se abre en nueva pesta&#241;a. Imprime o guarda como PDF.</div>
+    </div>
+  </div>
+</div>
+</div>
+</main>
+<!-- modal-nuevo-cliente: hijo directo de <body>. Dentro de <main>, a11y.js le ponia inert al ancestro y el modal quedaba congelado (sin clics, sin foco, sin scroll). -->
+<div class="mo" id="modal-nuevo-cliente">
+  <div class="md" style="max-width:480px;">
+    <div class="mh">
+      <h3 style="margin:0;">+ Añadir veterinaria</h3>
+      <button class="mc" onclick="cerrarNuevoCliente()">&times;</button>
+    </div>
+    <div class="mb">
+      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:var(--r);padding:.7rem;margin-bottom:1rem;font-size:12px;color:#1e40af;">
+        ℹ️ Esta veterinaria queda en tu cartera sin registrar visita. Aparecerá en <strong>Mi Ruta</strong> apenas tenga ubicación.
+      </div>
+      <div class="fg" style="gap:10px;">
+        <div class="fgr full">
+          <label>Nombre de la veterinaria<span class="req">*</span></label>
+          <input type="text" id="nc-nombre" placeholder="Ej: Clínica Veterinaria San Borja" autocomplete="off"/>
+        </div>
+        <div class="fgr full">
+          <label>Zona<span class="req">*</span></label>
+          <select id="nc-zona"><option value="">— Seleccionar zona —</option></select>
+        </div>
+        <div class="fgr full">
+          <label>Doctor/a principal <span style="opacity:.6;">(opcional)</span></label>
+          <input type="text" id="nc-doctor" placeholder="Ej: Dr. Juan Pérez"/>
+        </div>
+        <div class="fgr full">
+          <label>Celular <span style="opacity:.6;">(opcional)</span></label>
+          <input type="tel" id="nc-celular" placeholder="9XXXXXXXX"/>
+        </div>
+        <div class="fgr full">
+          <label>RUC <span style="opacity:.6;">(opcional)</span></label>
+          <input type="text" id="nc-ruc" placeholder="20XXXXXXXXX" maxlength="11"/>
+        </div>
+        <div class="fgr full">
+          <label style="display:block;margin-bottom:6px;">📍 Ubicación <span style="opacity:.6;">(opcional, recomendado)</span></label>
+          <input type="text" id="nc-calle" placeholder="Calle / número" style="margin-bottom:6px;"/>
+          <input type="text" id="nc-distrito" placeholder="Distrito" style="margin-bottom:6px;"/>
+          <input type="text" id="nc-maps" placeholder="🗺️ URL de Google Maps (recomendado)"/>
+          <div style="font-size:11px;color:var(--tl);margin-top:4px;line-height:1.35;">Sin ubicación la vet queda en tu cartera pero no podrá aparecer en Mi Ruta hasta que la agregues.</div>
+        </div>
+      </div>
+      <div id="nc-msg" style="font-size:12px;margin-top:.6rem;color:var(--tl);"></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:1rem;">
+        <button class="btn" onclick="cerrarNuevoCliente()" style="background:var(--bd);color:var(--td);">Cancelar</button>
+        <button class="btn btn-cta" id="btn-nc-save" onclick="guardarNuevoCliente()">💾 Guardar cliente</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Barra de resumen fija + acordeón (solo móvil, solo en Registrar Visita).
+     En pantallas angostas el panel de resumen (.visit-summary) caía al final
+     de una página de más de 2000px: el vendedor agregaba movimientos sin
+     ver el total acumulado hasta hacer scroll hasta abajo, y "Guardar visita"
+     quedaba igual de lejos. Ahora la barra ES el resumen: al tocarla se
+     despliega con los movimientos, el total y el botón de guardar dentro.
+     Vive fuera de <main> (no la afecta la animación de transición entre
+     páginas, que aplica transform a .page) y queda pegada sobre la barra de
+     navegación inferior. mvActualizarBarraMovil() (registro-visita.js) la
+     mantiene sincronizada con el mismo estado que ya alimenta el resumen y
+     el stepper. -->
+<button type="button" class="rv-sheet-backdrop" id="mv-sheet-backdrop" aria-label="Cerrar el resumen de la visita" onclick="mvSheetCerrar()"></button>
+<div class="rv-sheet" id="mv-sheet" role="region" aria-label="Resumen de la visita">
+  <div class="rv-sheet-body" id="mv-sheet-body"></div>
+</div>
+<button type="button" class="rv-mobile-bar" id="mv-mobile-bar" aria-expanded="false" aria-controls="mv-sheet" onclick="mvSheetToggle()">
+  <span class="rv-mobile-bar-info">
+    <svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-lista"/></svg>
+    <span id="mv-mobile-bar-count">Sin movimientos</span>
+  </span>
+  <span class="rv-mobile-bar-total" id="mv-mobile-bar-total">S/ 0.00</span>
+  <svg class="ic rv-mobile-bar-chevron" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-chevron-abajo"/></svg>
+</button>
+<div class="bn-overlay" id="bn-ov" onclick="closeBnMore()"></div>
+<div class="bn-more-menu" id="bn-mm">
+  <div class="bn-more-grid">
+    <button class="bn-more-item" data-page="ruta" onclick="goTo('ruta');closeBnMore()"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-mapa"/></svg> Mi Ruta</button>
+    <button class="bn-more-item" data-page="ventas" onclick="goTo('ventas');closeBnMore()"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-billete"/></svg> Ventas</button>
+    <button class="bn-more-item" data-page="creditos" onclick="goTo('creditos');closeBnMore()"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-tarjeta"/></svg> Créditos</button>
+    <button class="bn-more-item" data-page="mercaderia" onclick="goTo('mercaderia');closeBnMore()"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-caja"/></svg> Mercadería</button>
+    <button class="bn-more-item" data-page="clientes" onclick="goTo('clientes');closeBnMore()"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-clinica"/></svg> Clientes</button>
+    <button class="bn-more-item" data-page="historial" onclick="goTo('historial');closeBnMore()"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-lista"/></svg> Historial</button>
+    <button class="bn-more-item" data-page="pdf" onclick="goTo('pdf');closeBnMore()"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-documento"/></svg> Reporte PDF</button>
+  </div>
+  <button onclick="doLogout()" style="margin-top:.9rem;width:100%;padding:.7rem;border:none;border-radius:10px;background:#fee2e2;color:#dc2626;font-size:13px;font-weight:700;cursor:pointer;letter-spacing:.2px;"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-salir"/></svg> Cerrar sesión</button>
+</div>
+<nav class="bottom-nav" aria-label="Navegación principal">
+  <div class="bottom-nav-inner">
+    <button class="bn-item active" id="bn-d" data-page="dashboard" onclick="goTo('dashboard')"><span class="bn-icon"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-panel"/></svg></span><span>Inicio</span></button>
+    <button class="bn-item" id="bn-r" data-page="registrar" onclick="goTo('registrar')"><span class="bn-icon"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-editar"/></svg></span><span>Registrar</span></button>
+    <button class="bn-item" id="bn-p" data-page="plan" onclick="goTo('plan')"><span class="bn-icon"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-calendario"/></svg></span><span>Plan</span></button>
+    <button class="bn-item" id="bn-m" onclick="toggleBnMore()"><span class="bn-icon"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-menu"/></svg></span><span>Más</span></button>
+  </div>
+</nav>
+<div class="mo" id="modal-detalle" style="z-index:500;">
+  <div class="md" style="width:600px;max-width:96vw;">
+    <div class="mh">
+      <h2 class="mt2" id="detalle-titulo">Detalle</h2>
+      <button class="mc" onclick="cerrarDetalle()">&times;</button>
+    </div>
+    <div class="mb" id="detalle-body"></div>
+  </div>
+</div>
+
+<div class="mo" id="modal-cliente">
+  <div class="md" style="width:900px;max-width:96vw;">
+    <div class="mh" style="flex-wrap:wrap;gap:8px;">
+      <div class="u-grow">
+        <h2 class="mt2" id="cli-nombre">---</h2>
+        <div class="tm2" id="cli-meta"></div>
+      </div>
+      <select id="modal-mes" onchange="filtrarModalMes()" style="width:160px;font-size:12px;padding:.35rem .6rem;">
+        <option value="">Todos los meses</option>
+      </select>
+      <button class="btn btn-s btn-sm" id="btn-edit-cli" onclick="abrirEditCliente()" style="padding:.4rem .7rem;font-size:12px;">✏️ Editar</button>
+      <button class="mc" onclick="cerrarCliente()">&times;</button>
+    </div>
+    <div class="mb">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:1rem;">
+        <div class="sc"><div class="sl">TOTAL COMPRADO</div><div class="sv sv-b" id="cli-total">S/ 0.00</div></div>
+        <div class="sc"><div class="sl">TRANSACCIONES</div><div class="sv sv-b" id="cli-transacc">0</div></div>
+        <div class="sc"><div class="sl">PENDIENTE COBRO</div><div class="sv sv-r" id="cli-pendiente">S/ 0.00</div></div>
+      </div>
+      <div id="cli-prod-cards" style="margin-bottom:.6rem;"></div>
+      <div class="tw" id="cli-historial"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal editar cliente -->
+<div class="mo" id="modal-edit-cliente" style="z-index:600;">
+  <div class="md" style="width:520px;max-width:96vw;">
+    <div class="mh">
+      <h2 class="mt2">Editar datos del cliente</h2>
+      <button class="mc" onclick="cerrarEditCliente()">&times;</button>
+    </div>
+    <div class="mb">
+      <div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:var(--r);padding:.7rem;margin-bottom:1rem;font-size:12px;color:#92400e;">
+        ⚠️ Estos cambios se aplicarán a <strong>todas las transacciones</strong> de este cliente.
+      </div>
+      <div class="fg" style="gap:10px;">
+        <div class="fgr full">
+          <label>Nombre<span class="req">*</span></label>
+          <input type="text" id="edit-cli-nombre" placeholder="Nombre del cliente"/>
+        </div>
+        <div class="fgr full">
+          <label>Zona</label>
+          <select id="edit-cli-zona"><option value="">— Sin cambio —</option></select>
+        </div>
+        <div class="fgr full">
+          <label>Celular</label>
+          <input type="tel" id="edit-cli-celular" placeholder="9XXXXXXXX"/>
+        </div>
+        <div class="fgr full">
+          <label>RUC</label>
+          <input type="text" id="edit-cli-ruc" placeholder="20XXXXXXXXX" maxlength="11"/>
+        </div>
+      </div>
+      <!-- Relaciones (doctores de la vet, o vets del doctor) -->
+      <div id="edit-cli-rels-wrap" style="margin-top:.85rem;border-top:1px solid var(--bd);padding-top:.85rem;">
+        <label style="font-size:12px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:6px;" id="edit-cli-rels-lbl">
+          Relaciones
+        </label>
+        <div id="edit-cli-rels-list" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px;"></div>
+        <div style="display:flex;gap:6px;">
+          <input type="text" id="edit-cli-rel-new" placeholder="Agregar..." style="flex:1;font-size:13px;padding:.4rem .65rem;"/>
+          <button class="btn btn-s btn-sm" onclick="addEditCliRel()" style="white-space:nowrap;">+ Agregar</button>
+        </div>
+        <div style="font-size:10.5px;color:var(--tl);margin-top:6px;" id="edit-cli-rels-help">
+          
+        </div>
+      </div>
+      <!-- Ubicación (solo veterinarias): permite geocodificar la dirección para que aparezca en "Mi Ruta" -->
+      <div id="edit-cli-ubicacion-wrap" style="margin-top:.85rem;border-top:1px solid var(--bd);padding-top:.85rem;display:none;">
+        <label style="font-size:12px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.4px;display:block;margin-bottom:6px;">
+          📍 Ubicación
+        </label>
+        <div id="edit-cli-ubic-status" style="font-size:12px;color:var(--tl);margin-bottom:8px;"></div>
+        <div class="fg" style="gap:10px;">
+          <div class="fgr full">
+            <input type="text" id="edit-cli-ubic-calle" placeholder="Calle / número" style="width:100%;box-sizing:border-box;font-size:13px;padding:.5rem;border:1px solid var(--bd);border-radius:6px;"/>
+          </div>
+          <div class="fgr full">
+            <input type="text" id="edit-cli-ubic-distrito" placeholder="Distrito" style="width:100%;box-sizing:border-box;font-size:13px;padding:.5rem;border:1px solid var(--bd);border-radius:6px;"/>
+          </div>
+          <div class="fgr full">
+            <input type="text" id="edit-cli-ubic-maps" placeholder="🗺️ URL de Google Maps (recomendado para mayor precisión)" style="width:100%;box-sizing:border-box;font-size:13px;padding:.5rem;border:1px solid var(--bd);border-radius:6px;"/>
+            <div style="font-size:11px;color:var(--tl);margin-top:4px;line-height:1.35;">Abre la veterinaria en Google Maps, pulsa <strong>Compartir → Copiar enlace</strong> y pega la URL aquí. Si no se detecta la dirección, esta URL la fija con coordenadas exactas.</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:8px;flex-wrap:wrap;">
+          <button class="btn btn-s btn-sm" type="button" onclick="guardarUbicacionDesdeEditCliente()">📍 Guardar ubicación</button>
+          <button class="btn btn-d btn-sm" type="button" id="btn-edit-cli-ubic-quitar" onclick="quitarUbicacionDesdeEditCliente()" style="display:none;">🗑️ Quitar ubicación</button>
+          <div id="edit-cli-ubic-msg" style="font-size:12px;"></div>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:1rem;">
+        <button class="btn" onclick="cerrarEditCliente()" style="background:var(--bd);color:var(--td);">Cancelar</button>
+        <button class="btn btn-cta" id="btn-edit-cli-save" onclick="guardarEditCliente()">💾 Guardar cambios</button>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Modal confirmación anular -->
+<div class="mo" id="modal-confirm-anular" style="z-index:9999;">
+  <div class="md" style="width:360px;max-width:92vw;">
+    <div class="mh">
+      <h2 class="mt2" id="confirm-anular-title" style="color:#e74c3c;">Anular transacción</h2>
+      <button class="mc" onclick="cerrarConfirmAnular()">&times;</button>
+    </div>
+    <div class="mb">
+      <p id="confirm-anular-msg" style="font-size:14px;color:var(--td);margin:0 0 1.2rem;">¿Seguro que quieres anular esta transacción? Esta acción no se puede deshacer.</p>
+      <div style="display:flex;justify-content:flex-end;gap:8px;">
+        <button class="btn" onclick="cerrarConfirmAnular()" style="background:var(--bd);color:var(--td);">Cancelar</button>
+        <button class="btn btn-d" id="confirm-anular-btn" onclick="_confirmarAnular()">Sí, anular</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mo" id="modal-cobro-parcial">
+  <div class="md" style="width:440px;max-width:96vw;">
+    <div class="mh">
+      <h2 class="mt2">&#128176; Registrar cobro</h2>
+      <button class="mc" onclick="cerrarModalCP()">&times;</button>
+    </div>
+    <div class="mb">
+      <input type="hidden" id="cp-id"/>
+      <div style="background:var(--sky4);border:1px solid var(--sky);border-radius:var(--r);padding:.85rem;margin-bottom:1rem;">
+        <div style="font-size:11px;font-weight:700;color:var(--tl);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;">Cr&#233;dito</div>
+        <div style="font-size:14px;font-weight:700;color:var(--brand);" id="cp-vete">---</div>
+        <div class="u-meta-2" id="cp-desc">---</div>
+      </div>
+      <div class="fg" style="gap:10px;margin-bottom:1rem;">
+        <div class="fgr full">
+          <label id="cp-modo-lbl">¿Cómo te pagaron? <span class="req">*</span></label>
+          <div class="cp-modo" role="group" aria-labelledby="cp-modo-lbl">
+            <button type="button" class="cp-modo-btn is-on" id="cp-modo-uds" onclick="cpSetModo('uds')" aria-pressed="true">En productos</button>
+            <button type="button" class="cp-modo-btn" id="cp-modo-monto" onclick="cpSetModo('monto')" aria-pressed="false">En dinero</button>
+          </div>
+        </div>
+        <div class="fgr full" id="cp-wrap-uds">
+          <label for="cp-cant">¿Cuántas unidades te pagaron? <span class="req">*</span></label>
+          <div class="cp-ayuda">
+            El crédito es de <strong id="cp-max">0</strong> unidades. Si te pagaron todo, escribe ese mismo número.
+          </div>
+          <input type="number" id="cp-cant" placeholder="Ej: 3" min="1" inputmode="numeric"
+            style="font-size:20px;text-align:center;font-weight:700;"
+            oninput="cpPreview()"
+            onkeydown="if(event.key==='Enter')confirmarCobroParcial()"/>
+        </div>
+        <div class="fgr full" id="cp-wrap-monto" hidden>
+          <label for="cp-monto">¿Cuánto dinero te pagaron? <span class="req">*</span></label>
+          <div class="cp-ayuda">
+            La deuda es de <strong id="cp-max-monto">S/ 0.00</strong>. Si te pagaron todo, escribe ese mismo importe.
+          </div>
+          <input type="number" id="cp-monto" placeholder="Ej: 500.00" min="0.01" step="0.01" inputmode="decimal"
+            style="font-size:20px;text-align:center;font-weight:700;"
+            oninput="cpPreview()"
+            onkeydown="if(event.key==='Enter')confirmarCobroParcial()"/>
+        </div>
+        <div class="cp-resumen" id="cp-resumen" role="status" hidden></div>
+        <div class="fgr full">
+          <label>Fecha del cobro <span class="req">*</span></label>
+          <input type="date" id="cp-fecha" style="font-size:14px;"/>
+        </div>
+      </div>
+      <!-- Método de pago -->
+      <div style="position:relative;margin-bottom:.8rem;">
+        <label style="font-size:11px;font-weight:700;color:var(--brand);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:.4rem;">Método de pago <span class="req">*</span></label>
+        <div id="cp-mp-btn" onclick="_cobToggleMPDrop('cp',event)" style="display:flex;align-items:center;gap:10px;padding:.45rem .75rem;border:1.5px solid var(--bd);border-radius:var(--r);background:#fff;cursor:pointer;user-select:none;" onmouseover="this.style.borderColor='var(--brand)'" onmouseout="this.style.borderColor='var(--bd)'">
+          <span id="cp-mp-logo" style="flex-shrink:0;display:flex;"><div style="width:32px;height:32px;border-radius:6px;background:#e2e8f0;display:flex;align-items:center;justify-content:center;color:#718096;font-size:12px;">—</div></span>
+          <span id="cp-mp-name" style="flex:1;font-size:13px;color:var(--tl);">— Seleccionar método —</span>
+          <span class="u-meta" id="cp-mp-chev">▾</span>
+        </div>
+        <div id="cp-mp-drop" style="display:none;position:absolute;left:0;right:0;top:calc(100% + 3px);background:#fff;border:1.5px solid var(--bd);border-radius:var(--r);z-index:50;box-shadow:0 4px 18px rgba(37,60,97,.14);overflow:hidden;"></div>
+        <input type="hidden" id="cp-metodo-pago" value=""/>
+      </div>
+      <!-- Receptor efectivo -->
+      <div id="cp-receptor-wrap" style="display:none;margin-bottom:.8rem;">
+        <label style="font-size:11px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:.4rem;">&#128200; ¿A quién se entregó el efectivo? <span class="req">*</span></label>
+        <select id="cp-receptor" style="width:100%;padding:.46rem .7rem;border:1.5px solid #16a34a;border-radius:var(--r);font-size:13px;background:#f0fdf4;color:#166534;">
+          <option value="">— Seleccionar receptor —</option>
+          <option value="Piero">Piero</option>
+          <option value="Benito">Benito</option>
+          <option value="Nelly">Nelly</option>
+        </select>
+      </div>
+      <!-- Imágenes de pago -->
+      <div class="u-mb-sm">
+        <label style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--tl);letter-spacing:.5px;">Imagen de pago <span class="req" id="cp-img-req">*</span> <span id="cp-img-counter" style="font-size:10px;font-weight:500;text-transform:none;letter-spacing:0;">(0/4)</span></label>
+        <input type="file" id="cp-img-doc" accept="image/*,.pdf" multiple style="display:none;"/>
+        <div id="cp-img-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px;margin-top:6px;"></div>
+        <div style="font-size:10px;color:var(--tl);margin-top:4px;">Hasta 4 imágenes · JPG, PNG o PDF</div>
+      </div>
+      <!-- Documentos (multi-par tipo + nº) -->
+      <div style="border-top:1px solid var(--bd);margin-top:.4rem;padding-top:.7rem;margin-bottom:1rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--tl);letter-spacing:.5px;">📄 Documentos</div>
+          <button type="button" class="btn btn-s btn-sm" onclick="docsAgregar('cp')" style="font-size:11px;padding:.3rem .6rem;">+ Agregar otro</button>
+        </div>
+        <div class="u-col-8" id="cp-docs-list"></div>
+      </div>
+      <div class="u-row-8">
+        <button class="btn btn-s u-grow" onclick="cerrarModalCP()">Cancelar</button>
+        <button class="btn btn-p u-grow-2" id="btn-cp-ok" onclick="confirmarCobroParcial()">Confirmar cobro</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mo" id="modal-marcar-pagado">
+  <div class="md" style="width:380px;max-width:96vw;">
+    <div class="mh">
+      <h2 class="mt2">&#x2705; Registrar cobro total</h2>
+      <button class="mc" onclick="gel('modal-marcar-pagado').classList.remove('open')">&times;</button>
+    </div>
+    <div class="mb">
+      <input type="hidden" id="mp-id"/>
+      <div style="background:var(--ok-bg);border:1px solid var(--ok-b);border-radius:var(--r);padding:.85rem;margin-bottom:1rem;font-size:13px;color:var(--ok);">
+        Se marcar&#225; este cr&#233;dito como <strong>cobrado en su totalidad</strong>.
+      </div>
+      <div class="fgr u-mb-sm">
+        <label>&#x1F4C5; &#191;En qu&#233; fecha cobraste? <span class="req">*</span></label>
+        <input type="date" id="mp-fecha" style="font-size:15px;"/>
+      </div>
+      <!-- Método de pago -->
+      <div style="position:relative;margin-bottom:.8rem;">
+        <label style="font-size:11px;font-weight:700;color:var(--brand);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:.4rem;">Método de pago <span class="req">*</span></label>
+        <div id="mp-mp-btn" onclick="_cobToggleMPDrop('mp',event)" style="display:flex;align-items:center;gap:10px;padding:.45rem .75rem;border:1.5px solid var(--bd);border-radius:var(--r);background:#fff;cursor:pointer;user-select:none;" onmouseover="this.style.borderColor='var(--brand)'" onmouseout="this.style.borderColor='var(--bd)'">
+          <span id="mp-mp-logo" style="flex-shrink:0;display:flex;"><div style="width:32px;height:32px;border-radius:6px;background:#e2e8f0;display:flex;align-items:center;justify-content:center;color:#718096;font-size:12px;">—</div></span>
+          <span id="mp-mp-name" style="flex:1;font-size:13px;color:var(--tl);">— Seleccionar método —</span>
+          <span class="u-meta" id="mp-mp-chev">▾</span>
+        </div>
+        <div id="mp-mp-drop" style="display:none;position:absolute;left:0;right:0;top:calc(100% + 3px);background:#fff;border:1.5px solid var(--bd);border-radius:var(--r);z-index:50;box-shadow:0 4px 18px rgba(37,60,97,.14);overflow:hidden;"></div>
+        <input type="hidden" id="mp-metodo-pago" value=""/>
+      </div>
+      <!-- Receptor efectivo -->
+      <div id="mp-receptor-wrap" style="display:none;margin-bottom:.8rem;">
+        <label style="font-size:11px;font-weight:700;color:#16a34a;text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:.4rem;">&#128200; ¿A quién se entregó el efectivo? <span class="req">*</span></label>
+        <select id="mp-receptor" style="width:100%;padding:.46rem .7rem;border:1.5px solid #16a34a;border-radius:var(--r);font-size:13px;background:#f0fdf4;color:#166534;">
+          <option value="">— Seleccionar receptor —</option>
+          <option value="Piero">Piero</option>
+          <option value="Benito">Benito</option>
+          <option value="Nelly">Nelly</option>
+        </select>
+      </div>
+      <!-- Imágenes de pago -->
+      <div class="u-mb-sm">
+        <label style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--tl);letter-spacing:.5px;">Imagen de pago <span class="req" id="mp-img-req">*</span> <span id="mp-img-counter" style="font-size:10px;font-weight:500;text-transform:none;letter-spacing:0;">(0/4)</span></label>
+        <input type="file" id="mp-img-doc" accept="image/*,.pdf" multiple style="display:none;"/>
+        <div id="mp-img-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:6px;margin-top:6px;"></div>
+        <div style="font-size:10px;color:var(--tl);margin-top:4px;">Hasta 4 imágenes · JPG, PNG o PDF</div>
+      </div>
+      <!-- Documentos (multi-par tipo + nº) -->
+      <div style="border-top:1px solid var(--bd);margin-top:.4rem;padding-top:.7rem;margin-bottom:1rem;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div style="font-size:11px;font-weight:700;text-transform:uppercase;color:var(--tl);letter-spacing:.5px;">📄 Documentos</div>
+          <button type="button" class="btn btn-s btn-sm" onclick="docsAgregar('mp')" style="font-size:11px;padding:.3rem .6rem;">+ Agregar otro</button>
+        </div>
+        <div class="u-col-8" id="mp-docs-list"></div>
+      </div>
+      <div class="u-row-8">
+        <button class="btn btn-s u-grow" onclick="gel('modal-marcar-pagado').classList.remove('open')">Cancelar</button>
+        <button class="btn btn-ok u-grow-2" id="btn-mp-ok" onclick="confirmarMarcarPagado()">Confirmar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PWA Install Banner -->
+<div id="install-banner" style="display:none;position:fixed;bottom:20px;left:12px;right:12px;background:#EA8C43;color:#fff;border-radius:12px;padding:.9rem 1rem;align-items:center;gap:10px;z-index:9999;box-shadow:0 4px 20px rgba(0,0,0,.25);">
+  <img src="../assets/img/icon-192.png" alt="" style="width:36px;height:36px;border-radius:8px;flex-shrink:0;"/>
+  <div class="u-grow">
+    <div style="font-weight:700;font-size:13px;">Suplevet Reportes</div>
+    <div style="font-size:11px;opacity:.85;">Instalar como app</div>
+  </div>
+  <button onclick="installPWA()" style="background:#fff;color:#EA8C43;border:none;border-radius:8px;padding:.4rem .8rem;font-weight:700;font-size:13px;cursor:pointer;">Instalar</button>
+  <button onclick="document.getElementById('install-banner').style.display='none'" style="background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:0 4px;">&times;</button>
+</div>
+
+<script src="../assets/js/session.js?v=20260803-uxfix"></script>
+<script src="../assets/js/a11y.js?v=20260803-uxfix"></script>
+<script src="../assets/js/ui-dialogos.js?v=20260803-uxfix"></script>
+<script src="../assets/js/cobros.js?v=20260806-cobros"></script>
+<script src="assets/js/config.js?v=20260803-uxfix"></script>
+<script src="assets/js/auth.js?v=20260803-uxfix"></script>
+<script src="assets/js/app.js?v=20260803-uxfix"></script>
+<script src="assets/js/dashboard.js?v=20260803-uxfix"></script>
+<script src="assets/js/ventas.js?v=20260803-uxfix"></script>
+<script src="assets/js/historial.js?v=20260803-uxfix"></script>
+<script src="assets/js/creditos.js?v=20260803-uxfix"></script>
+<script src="assets/js/clientes.js?v=20260803-uxfix"></script>
+<script src="assets/js/detalle.js?v=20260803-uxfix"></script>
+<script src="assets/js/pdf.js?v=20260803-uxfix"></script>
+<script src="assets/js/registro-visita.js?v=20260803-uxfix"></script>
+<script src="assets/js/plan.js?v=20260803-uxfix"></script>
+<script src="assets/js/ruta.js?v=20260803-uxfix"></script>
+<script src="assets/js/pwa.js?v=20260803-uxfix"></script>
+</body>
+</html>

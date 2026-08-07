@@ -1,0 +1,186 @@
+/* ═══════════════════════════════════════════════════════════
+   REGISTRAR VISITA — componentes compartidos
+   ───────────────────────────────────────────────────────────
+   El vendedor y el admin usan la MISMA pantalla (el admin
+   registra a nombre de cualquier vendedor): mismo stepper,
+   mismos selectores de tipo, mismo resumen. Antes el admin
+   reimplementaba cada uno a mano con estilos inline — un
+   stepper de "píldoras" con white-space:nowrap que se salía de
+   la pantalla en móvil (454px de ancho contra 375px de viewport,
+   sin scroll porque el body tiene overflow-x:hidden: el paso 3
+   "Revisar y guardar" desaparecía sin aviso).
+
+   Esta hoja es el origen único de esos componentes. Los dos
+   paneles la enlazan después de tokens.css. Un cambio aquí
+   actualiza los dos a la vez.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Stepper de 3 pasos ──────────────────────────────────────
+   flex:1 en cada paso reparte el ancho disponible entre los tres:
+   nunca puede desbordar, a diferencia de una fila de píldoras de
+   ancho fijo. El texto envuelve en vez de recortarse. */
+.flow-steps{display:flex;gap:8px;margin-bottom:20px;}
+.flow-step{flex:1;padding:10px 12px;background:var(--sky4);border:1px solid var(--bd);border-radius:12px;display:flex;align-items:center;gap:10px;font-size:12px;color:var(--tl);transition:background .15s,border-color .15s,color .15s;}
+.flow-step .fsn{width:22px;height:22px;border-radius:50%;background:var(--sky4);color:var(--tl);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:11px;flex-shrink:0;border:2px solid var(--sky);}
+.flow-step.done{background:#e8f7ee;border-color:#27ae60;color:#1e8449;}
+.flow-step.done .fsn{background:#27ae60;color:#fff;border-color:#27ae60;}
+.flow-step.active{background:var(--brand);color:#fff;border-color:var(--brand);}
+.flow-step.active .fsn{background:var(--sky);color:var(--brand);border-color:var(--sky);}
+
+@media (max-width:480px){
+  /* A este ancho hasta el texto envuelto en dos líneas aprieta.
+     Se reduce el padding y el tamaño de la letra sin tocar la
+     estructura: sigue siendo flex:1, sigue sin poder desbordar. */
+  .flow-step{padding:8px 6px;font-size:10.5px;gap:6px;}
+  .flow-step .fsn{width:18px;height:18px;font-size:10px;}
+}
+
+@media (prefers-reduced-motion: reduce){
+  .flow-step{transition:none;}
+}
+
+/* ── Barra de resumen fija (solo móvil) ──────────────────────
+   Vive fuera de <main>, así que la animación de transición entre
+   páginas (transform en .page) no la desplaza ni la hace
+   "contenedora" del position:fixed. JS le suma/quita .show al
+   entrar y salir de Registrar Visita, y el bottom se recalcula
+   contra la altura real de .bottom-nav (measurada, no adivinada:
+   varía por dispositivo con el safe-area-inset). */
+.rv-mobile-bar{
+  display:none;
+  position:fixed;left:0;right:0;
+  z-index:145;   /* justo debajo de .bottom-nav (150) */
+  background:var(--brand);color:#fff;
+  border:none;border-top:1px solid rgba(255,255,255,.15);
+  padding:.7rem 1rem;
+  align-items:center;gap:10px;
+  font-family:"DM Sans",system-ui,sans-serif;
+  cursor:pointer;
+  box-shadow:0 -4px 16px rgba(0,0,0,.12);
+}
+.rv-mobile-bar:active{background:var(--brand3);}
+.rv-mobile-bar-info{display:flex;align-items:center;gap:8px;flex:1;min-width:0;font-size:12.5px;font-weight:600;color:rgba(255,255,255,.85);}
+.rv-mobile-bar-info .ic{width:17px;height:17px;flex-shrink:0;color:var(--sky);}
+.rv-mobile-bar-total{font-family:"Bebas Neue",sans-serif;font-size:19px;letter-spacing:.3px;color:#fff;white-space:nowrap;}
+.rv-mobile-bar-chevron{width:16px;height:16px;flex-shrink:0;color:rgba(255,255,255,.5);transform:rotate(180deg);transition:transform .18s ease;}
+.rv-mobile-bar.open .rv-mobile-bar-chevron{transform:rotate(0deg);}
+
+@media (max-width:768px){
+  .rv-mobile-bar.show{display:flex;}
+}
+
+/* ── Acordeón de resumen (solo móvil) ────────────────────────
+   La barra ya no es un atajo que hace scroll hasta el final de la
+   página: ES el resumen. Al tocarla se despliega esta hoja, y el
+   panel de resumen + el botón de guardar se MUEVEN aquí dentro
+   (no se duplican: un solo nodo, un solo id, un solo listener —
+   duplicar el markup significaría dos "Guardar visita" y dos
+   listas que mantener sincronizadas).
+
+   En escritorio el resumen vuelve a su columna sticky de siempre;
+   el traslado lo decide _mvSheetMontar()/_rvSheetMontar() según el
+   ancho real de la ventana, y se revierte al pasar a escritorio. */
+.rv-sheet{
+  display:none;
+  position:fixed;left:0;right:0;
+  z-index:144;   /* bajo la barra (145), sobre el backdrop (143) */
+  background:var(--brand);
+  border-top:1px solid rgba(255,255,255,.15);
+  box-shadow:0 -10px 30px rgba(0,0,0,.28);
+  max-height:min(68vh,540px);
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+}
+.rv-sheet-body{padding:14px 16px 18px;}
+.rv-sheet-backdrop{
+  display:none;
+  position:fixed;inset:0;z-index:143;
+  background:rgba(11,22,40,.5);
+  border:none;padding:0;margin:0;width:100%;height:100%;
+  cursor:pointer;
+}
+
+/* El resumen deja de ser una tarjeta flotante: dentro de la hoja ya
+   está sobre el fondo azul, así que sobran el sticky, el radio y la
+   sombra propia. */
+.rv-sheet .visit-summary{position:static;border-radius:0;padding:0;}
+.rv-sheet .card{margin:0;border:none;border-radius:0;box-shadow:none;}
+.rv-sheet .card .ch{padding-left:0;padding-right:0;}
+.rv-sheet .card .cb{padding-left:0;padding-right:0;}
+.rv-sheet .card > div:last-child{padding-left:0 !important;padding-right:0 !important;}
+
+/* .btn-cta es azul marino sobre azul marino aquí: invisible.
+   Se invierte al mismo par que ya usa el admin (sky sobre brand). */
+.rv-sheet .btn-cta{background:var(--sky) !important;color:var(--brand) !important;border-color:var(--sky) !important;}
+
+@media (max-width:768px){
+  .rv-sheet.show{display:block;}
+  .rv-sheet-backdrop.show{display:block;}
+}
+
+@media (prefers-reduced-motion: reduce){
+  .rv-mobile-bar-chevron{transition:none;}
+}
+
+/* ── Selector de tipo de movimiento ──────────────────────────
+   Seis opciones únicas y excluyentes: es, por definición, un grupo de
+   radio buttons. Antes eran <div onclick> con role="button" (el rol
+   genérico que les daba a11y.js) — un lector de pantalla los anunciaba
+   como seis botones sueltos, sin decir que eran un grupo ni cuál estaba
+   activo. Ahora son role="radio" dentro de role="radiogroup", con
+   aria-checked y tabindex reactivo (roving tabindex: solo la opción
+   activa es alcanzable con Tab; las flechas mueven Y seleccionan, igual
+   que un <input type=radio> nativo). SVUI.radiogroup() en ui-dialogos.js
+   pone el teclado; mvSelTipo()/rvSetTipo() ponen aria-checked al cambiar.
+
+   El admin reimplementaba esto mismo como .rv-tipo-card con ~15 estilos
+   inline por tarjeta (color de borde y fondo fijados a mano según cuál
+   fuera la seleccionada). Ahora usa estas mismas clases. */
+.tipo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
+.tipo-btn{padding:14px 10px;background:var(--sky4);border:1.5px solid var(--sky);border-radius:12px;display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;font-weight:600;color:var(--brand);transition:all .15s;cursor:pointer;text-align:center;}
+.tipo-btn .ti,.tipo-btn .ic{font-size:22px;width:22px;height:22px;}
+.tipo-btn:hover{border-color:var(--brand);background:rgba(37,60,97,.1);}
+.tipo-btn.sel{border-color:var(--brand);background:var(--brand);color:#fff;}
+.tipo-btn:focus-visible{outline:3px solid var(--sky);outline-offset:2px;}
+.tipo-btn.sel:focus-visible{outline-color:var(--brand);box-shadow:0 0 0 2px #fff;}
+
+@media (max-width:480px){
+  .tipo-btn{padding:10px 6px;font-size:11px;gap:4px;}
+  .tipo-btn .ti,.tipo-btn .ic{font-size:19px;width:19px;height:19px;}
+}
+
+/* ── Selector de método de pago ───────────────────────────────
+   Dropdown propio (no <select> nativo, porque cada método lleva un
+   logo). Vendedor y admin lo tenían duplicado casi carácter por
+   carácter — 8 declaraciones inline repetidas en cada uno, y el
+   admin agregaba una transición que el vendedor no tenía. Una sola
+   definición; el hover pasa de onmouseover/onmouseout en línea a
+   :hover, que de paso ya cubre el foco por teclado (el botón recibe
+   role=button + su contorno de foco por la regla genérica de a11y). */
+.mp-selector{position:relative;margin-bottom:.8rem;}
+.mp-label{font-size:11px;font-weight:700;color:var(--brand);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:.4rem;}
+.mp-btn{display:flex;align-items:center;gap:10px;padding:.45rem .75rem;border:1.5px solid var(--bd);border-radius:var(--r);background:var(--wh);cursor:pointer;user-select:none;transition:border-color .15s;}
+.mp-btn:hover{border-color:var(--brand);}
+.mp-logo-ph{width:32px;height:32px;border-radius:6px;background:#e2e8f0;display:flex;align-items:center;justify-content:center;color:#718096;font-size:12px;flex-shrink:0;}
+.mp-sel-name{flex:1;font-size:13px;color:var(--tl);}
+.mp-chevron{color:var(--tl);font-size:11px;transition:transform .15s;}
+.mp-drop{display:none;position:absolute;left:0;right:0;top:calc(100% + 3px);background:var(--wh);border:1.5px solid var(--bd);border-radius:var(--r);z-index:50;box-shadow:0 4px 18px rgba(37,60,97,.14);overflow:hidden;}
+
+/* ── ¿A quién se entregó el efectivo? ─────────────────────────
+   Solo aparece cuando el método elegido es EFECTIVO. Mismo patrón:
+   duplicado idéntico en los dos paneles salvo por el id del <select>. */
+.receptor-wrap{margin-bottom:.8rem;}
+.receptor-label{font-size:11px;font-weight:700;color:var(--ok);text-transform:uppercase;letter-spacing:.5px;display:block;margin-bottom:.4rem;}
+.receptor-select{width:100%;padding:.46rem .7rem;border:1.5px solid var(--ok);border-radius:var(--r);font-size:13px;background:var(--ok-bg);color:var(--ok);}
+
+/* ── .campo-error sobre fondo azul marino ────────────────────
+   El panel de resumen del admin es una tarjeta con fondo --brand.
+   El rojo normal de .campo-error (pensado para fondo claro) da
+   apenas ~2.5:1 ahí — el mismo problema que ya se resolvió una vez
+   para .logout-btn. Reutiliza ese mismo token: 5.45:1. */
+.campo-error.on-brand{color:var(--danger-on-brand);}
+/* Dentro del acordeón todo está sobre ese mismo azul, incluidos los avisos
+   que en escritorio caen sobre fondo claro. */
+.rv-sheet .campo-error{color:var(--danger-on-brand);}
+

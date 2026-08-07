@@ -1,0 +1,111 @@
+/* ═══════════════════════════════════════════════════════════
+   TOKENS DE DISEÑO — ORIGEN ÚNICO
+   ───────────────────────────────────────────────────────────
+   Antes esta tabla estaba copiada a mano en tres archivos
+   (login.css, vendedor/app.css, admin/app.css) con un comentario
+   que pedía sincronizarlos. No se sincronizaron: --gry tenía dos
+   valores, --bg solo existía en admin, --tl era más claro en el
+   login y los radios no coincidían.
+
+   Ahora los tres importan este archivo y nadie redeclara :root.
+   Si un panel necesita algo propio, define un token nuevo con
+   prefijo (--adm-*, --vnd-*), no pisa uno de aquí.
+
+   Todos los pares texto/fondo de esta tabla están medidos:
+   ninguno baja de 4.5:1 en el tamaño en que se usa.
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+  /* ── Marca ─────────────────────────────────────────────── */
+  --brand:  #253C61;
+  --brand2: #1a2d4a;
+  --brand3: #344f7a;
+
+  --sky:  #99D3DA;
+  --sky2: #b8e2e7;
+  --sky3: #d6f0f3;
+  --sky4: #eaf7f9;
+
+  --orange:   #EA8C43;
+  --orange2:  #f5a568;
+  --orange3:  #fde8d4;
+  /* Único naranja legible sobre fondo claro: 4.63:1 sobre --orange3.
+     El admin usaba #c0641e (3.48:1) para lo mismo. */
+  --orange-d: #a55214;
+
+  /* ── Paleta cálida ─────────────────────────────────────── */
+  --cream: #FBF5EC;
+  --sand:  #F5EBD9;
+  --peach: #FFD8B8;
+  --leaf:   #4B8B6B;
+  --leaf-l: #dff0e4;
+  --rose:   #D95B6A;
+  --rose-l: #fde0e3;
+
+  /* ── Superficies ───────────────────────────────────────── */
+  --wh: #ffffff;
+  /* Fondo de página. Antes compartía token con los botones (--gry) y
+     el crema saturado se comía toda la pantalla. */
+  --bg:  #FDFBF7;
+  /* Gris de relleno para botones secundarios y esqueletos de carga.
+     En el panel de vendedores valía lo mismo que --cream, así que el
+     esqueleto de carga era invisible sobre la tarjeta. */
+  --gry: #F3EEE6;
+
+  /* Campos de formulario. El panel de vendedores los forzaba a celeste
+     con !important y el admin los dejaba blancos. Se unifica al celeste
+     (decisión más reciente) pero el foco pasa a blanco: al escribir,
+     lo que importa es leer el texto, no el color del campo. */
+  --input-bg:       #eaf7f9;
+  --input-bg-focus: #ffffff;
+
+  /* ── Texto ─────────────────────────────────────────────── */
+  --td: #1a2535;  /* 15.4:1 sobre blanco */
+  --tm: #4a5568;  /*  7.5:1 */
+  --tl: #5f6b7d;  /*  5.4:1 — el login usaba #718096 (4.02:1, no pasa AA) */
+
+  /* ── Bordes ────────────────────────────────────────────── */
+  --bd:  #e6e1d7;
+  --bd2: #d4cec5;
+
+  /* ── Estados ───────────────────────────────────────────── */
+  --ok:    #2d7a3a; --ok-bg:    #e8f5ea; --ok-b:    #a3d9a8;
+  --er:    #c0392b; --er-bg:    #fdf0ef; --er-b:    #f5b7b1;
+  --warn:  #92400e; --warn-bg:  #fffbeb; --warn-b:  #fcd34d;
+  /* Estado neutro (anulado, devuelto). Era #9ca3af sobre #f3f4f6:
+     2.31:1, el peor contraste del portal. */
+  --neutral: #5b6470; --neutral-bg: #f3f4f6; --neutral-b: #d1d5db;
+
+  /* Rojo legible sobre el azul del menú lateral. El admin usaba
+     rgba(255,100,100,.8) = 3.83:1. Este da 5.45:1. */
+  --danger-on-brand: #ff9a9a;
+
+  /* Celeste atenuado para las etiquetas secundarias del menú lateral.
+     Estaban en rgba(153,211,218,.40–.55): compuestas sobre el azul daban
+     entre 2.3:1 y 3.1:1. Estos dos valores son opacos y están medidos. */
+  --sky-on-brand:     #8dc9d1;  /* 5.8:1 sobre --brand */
+  --sky-on-brand-dim: #7fb6bf;  /* 4.7:1 sobre --brand */
+
+  /* ── Radios ────────────────────────────────────────────── */
+  --r:   10px;
+  --rl:  14px;
+  --rxl: 20px;
+
+  /* ── Sombras ───────────────────────────────────────────── */
+  --sh:  0 1px 3px rgba(37,60,97,.07), 0 1px 2px rgba(37,60,97,.05);
+  --sh2: 0 8px 28px rgba(37,60,97,.12), 0 2px 6px rgba(37,60,97,.06);
+  --sh3: 0 20px 50px rgba(37,60,97,.18);
+
+  /* ── Área táctil mínima ────────────────────────────────── */
+  --tap: 44px;
+
+  /* ── Escala de espaciado ───────────────────────────────── */
+  /* El HTML tenía margin-bottom en .8rem, .9rem y 1rem para el mismo
+     tipo de separación, elegidos a ojo uno por uno. Tres valores
+     para la misma intención es lo que hace que nada acabe alineado.
+     Estos cuatro escalones cubren todo lo que había. */
+  --sp-xs: .5rem;
+  --sp-sm: .9rem;
+  --sp-md: 1.2rem;
+  --sp-lg: 1.8rem;
+}

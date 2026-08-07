@@ -126,6 +126,22 @@ const nextConfig: NextConfig = {
       { source: "/account/:path*", destination: "/mi-cuenta", permanent: true },
     ];
   },
+  // Portal B2B (vendedores/admin de campo) — vive como HTML estático en
+  // public/b2b/vendors/ porque Hostinger solo admite una app y no permite
+  // subdominios; todo se sirve junto bajo suplevet.pe. Next.js sirve el
+  // contenido de public/ tal cual, pero NO resuelve "carpeta/" → "carpeta/
+  // index.html" como haría Apache, así que hacen falta estas reglas para que
+  // las URLs limpias (suplevet.pe/b2b/vendors, sin ".../index.html") funcionen.
+  // Cada HTML del portal trae su propio <base href> apuntando a su carpeta
+  // real, así que estas rutas no necesitan la barra final para que sus
+  // CSS/JS relativos carguen bien.
+  async rewrites() {
+    return [
+      { source: "/b2b/vendors", destination: "/b2b/vendors/index.html" },
+      { source: "/b2b/vendors/admin", destination: "/b2b/vendors/admin/index.html" },
+      { source: "/b2b/vendors/vendedor", destination: "/b2b/vendors/vendedor/index.html" },
+    ];
+  },
   images: {
     remotePatterns: [
       {
@@ -148,6 +164,15 @@ const nextConfig: NextConfig = {
       {
         source: "/:path*",
         headers: securityHeaders,
+      },
+      // El portal B2B es privado (login de vendedores/admin de campo): cada
+      // HTML ya trae <meta name="robots" content="noindex, nofollow">, pero
+      // esa etiqueta no cubre los assets (CSS/JS/manifest) ni protege si
+      // algún HTML se edita a mano y se olvida el meta. La cabecera cubre
+      // todo el árbol sin depender de que nadie se acuerde.
+      {
+        source: "/b2b/:path*",
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow, noarchive, nosnippet" }],
       },
     ];
   },

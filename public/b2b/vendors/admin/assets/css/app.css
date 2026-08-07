@@ -1,0 +1,850 @@
+
+/* ═══════════════════════════════════════════════════════════
+   PANEL ADMINISTRABLE
+   Los tokens ya no se declaran aquí. Viven en
+   assets/css/tokens.css, que también cargan el login y el panel
+   de vendedores. Esta hoja solo define componentes.
+
+   tokens.css se enlaza desde el <head> ANTES que esta hoja. No se
+   usa @import: encadena una petición extra que bloquea el render.
+   ═══════════════════════════════════════════════════════════ */
+
+/* El admin escalaba la raíz a 115% (18.4px) mientras el panel de
+   vendedores usaba 15px. Casi todo está en px absolutos, así que el
+   115% solo afectaba a lo que no tenía tamaño propio — y desalineaba
+   los dos paneles sin que se notara dónde. Se iguala a 15px. */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{font-size:15px;line-height:1.45;overflow-x:hidden;}body{font-family:"DM Sans",sans-serif;background:var(--bg);background-image:linear-gradient(180deg,#fff 0%,var(--bg) 38%);background-attachment:fixed;color:var(--td);min-height:100vh;overflow-x:hidden;max-width:100%;}
+.login-screen{position:fixed;inset:0;background:var(--brand);display:flex;align-items:center;justify-content:center;z-index:9999;padding:1rem;}
+.login-card{background:#fff;border-radius:20px;padding:2.5rem 2rem;width:100%;max-width:360px;text-align:center;box-shadow:0 8px 40px rgba(0,0,0,.25);}
+.login-logo{width:72px;height:72px;border-radius:14px;object-fit:contain;margin:0 auto 1.1rem;display:block;}
+.login-title{font-family:"Bebas Neue",sans-serif;font-size:26px;letter-spacing:1px;color:var(--brand);margin-bottom:2px;}
+.login-sub{font-size:12px;color:var(--tl);margin-bottom:1.6rem;}
+.login-field{display:flex;flex-direction:column;gap:4px;text-align:left;margin-bottom:.9rem;}
+.login-field label{font-size:11.5px;font-weight:600;color:var(--tm);}
+.login-field input{padding:.6rem .8rem;border:1.5px solid var(--bd);border-radius:var(--r);font-size:14px;font-family:"DM Sans",sans-serif;outline:none;transition:border-color .15s;width:100%;}
+.login-field input:focus{border-color:var(--sky);box-shadow:0 0 0 3px rgba(153,211,218,.22);}
+.login-btn{width:100%;padding:.72rem;background:var(--brand);color:#fff;border:none;border-radius:var(--r);font-size:14px;font-weight:700;font-family:"DM Sans",sans-serif;cursor:pointer;transition:filter .15s;margin-top:.4rem;}
+.login-btn:hover{filter:brightness(1.15);}
+.login-error{background:var(--er-bg);color:var(--er);border:1px solid var(--er-b);border-radius:var(--r);padding:.55rem .8rem;font-size:12px;margin-top:.7rem;display:none;}
+.login-error.show{display:block;}
+.login-info{background:var(--sky4);border:1px solid var(--sky);border-radius:var(--r);padding:.55rem .8rem;font-size:12px;color:#1e6e77;margin-top:.7rem;display:none;}
+.login-info.show{display:block;}
+.login-remember{display:flex;align-items:center;gap:8px;margin-top:.7rem;font-size:12px;color:var(--tm);cursor:pointer;justify-content:center;}
+.login-remember input{width:auto;}
+.login-footer{margin-top:1.4rem;font-size:11px;color:var(--tl);}
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:225px;background:var(--brand);display:flex;flex-direction:column;z-index:100;}
+.sb-logo{padding:1.1rem 1rem .9rem;border-bottom:1px solid rgba(255,255,255,.12);}
+.sb-logo-row{display:flex;align-items:center;gap:10px;}
+.sb-ic img{width:36px;height:36px;object-fit:contain;border-radius:8px;display:block;}
+.sb-nm{font-family:"Bebas Neue",sans-serif;font-size:22px;color:#fff;letter-spacing:1px;line-height:1;}
+.sb-sb{font-size:10px;color:var(--sky);margin-top:1px;}
+.sb-user{padding:.7rem 1rem;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.05);}
+.sb-user-name{font-size:13px;font-weight:600;color:#fff;}
+.sb-user-role{font-size:10px;color:var(--sky);margin-top:1px;}
+.nav-sec{padding:.8rem .65rem .15rem;}
+.nav-lbl{font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:var(--sky-on-brand);font-weight:700;padding:0 .45rem;margin-bottom:3px;}
+.nav-item{display:flex;align-items:center;gap:8px;padding:.5rem .65rem;border-radius:var(--r);cursor:pointer;color:rgba(255,255,255,.68);font-size:13px;font-weight:500;margin-bottom:1px;transition:all .15s;}
+.nav-item:hover{background:rgba(255,255,255,.08);color:#fff;}
+.nav-item.active{background:var(--sky);color:var(--brand);}
+.ni{font-size:15px;width:18px;text-align:center;flex-shrink:0;}
+.sb-foot{padding:.8rem 1rem;border-top:1px solid rgba(255,255,255,.1);flex-shrink:0;}
+.sb-nav-wrap{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.15) transparent;}
+.sb-nav-wrap::-webkit-scrollbar{width:4px;}.sb-nav-wrap::-webkit-scrollbar-thumb{background:rgba(255,255,255,.18);border-radius:4px;}
+.sb-foot p{color:var(--sky-on-brand-dim);font-size:10px;}
+/* Era rgba(255,100,100,.8) = 3.83:1 sobre el azul del menú. El token
+   --danger-on-brand es opaco y da 5.45:1. */
+.logout-btn{display:flex;align-items:center;gap:7px;padding:.45rem .65rem;border-radius:var(--r);cursor:pointer;color:var(--danger-on-brand);font-size:12.5px;font-weight:500;margin-bottom:6px;transition:all .15s;background:none;border:none;width:100%;font-family:"DM Sans",sans-serif;}
+.logout-btn:hover{background:rgba(255,154,154,.14);color:#ffc2c2;}
+.main{margin-left:225px;padding:1.3rem 1.7rem;min-height:100vh;}
+.ph{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.3rem;flex-wrap:wrap;gap:10px;}
+.pt{font-family:"Bebas Neue",sans-serif;font-size:26px;letter-spacing:.5px;color:var(--brand);}
+.ps{font-size:12px;color:var(--tl);margin-top:1px;}
+.page{display:none;}.page.active{display:block;}
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px;margin-bottom:1.2rem;}
+.sc{background:var(--wh);border-radius:var(--rl);border:1px solid var(--bd);padding:.85rem 1rem;box-shadow:var(--sh);}
+.sl{font-size:10px;color:var(--tl);font-weight:600;margin-bottom:4px;letter-spacing:.4px;text-transform:uppercase;}
+.sv{font-size:24px;font-weight:700;font-family:"Bebas Neue",sans-serif;letter-spacing:.5px;}
+.ss{font-size:10.5px;color:var(--tl);margin-top:1px;}
+.sv-b{color:var(--brand);}.sv-s{color:#1e8a94;}.sv-o{color:var(--orange);}.sv-g{color:var(--ok);}.sv-r{color:var(--er);}.sv-w{color:#d97706;}
+.card{background:var(--wh);border-radius:var(--rl);border:1px solid var(--bd);box-shadow:var(--sh);margin-bottom:1.1rem;}
+.ch{display:flex;align-items:center;justify-content:space-between;padding:.85rem 1.1rem;border-bottom:1px solid var(--bd);}
+.ct{font-size:14px;font-weight:600;color:var(--brand);}
+.cb{padding:1.1rem;}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:.44rem .95rem;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;font-family:"DM Sans",sans-serif;}
+.btn:active{transform:scale(.97);}.btn:disabled{opacity:.5;cursor:not-allowed;}
+.btn-p{background:var(--brand);color:#fff;}.btn-p:hover:not(:disabled){background:var(--brand3);}
+.btn-sk{background:var(--sky);color:var(--brand);}.btn-sk:hover:not(:disabled){background:var(--sky2);}
+.btn-s{background:var(--gry);color:var(--td);border:1px solid var(--bd2);}.btn-s:hover:not(:disabled){background:var(--bd);}
+.btn-d{background:var(--er-bg);color:var(--er);border:1px solid var(--er-b);}
+.btn-ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-b);}
+.btn-sm{padding:.26rem .62rem;font-size:11.5px;}
+.row{display:flex;gap:7px;align-items:center;flex-wrap:wrap;}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:10px;}.fg .full{grid-column:1/-1;}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;}.fg3 .full{grid-column:1/-1;}
+.fgr{display:flex;flex-direction:column;gap:4px;}
+label{font-size:11.5px;font-weight:600;color:var(--tm);}
+input,select,textarea{padding:.46rem .7rem;border:1.5px solid var(--bd);border-radius:var(--r);font-size:13px;font-family:"DM Sans",sans-serif;color:var(--td);background:var(--input-bg);outline:none;transition:border-color .15s,background .15s;width:100%;}
+/* Excluir checkboxes/radios del reset global de inputs — sin esto heredan width:100% y padding,
+   y se ven enormes (bug reportado en el modal "Transferir cartera"). */
+input[type=checkbox],input[type=radio]{width:auto;padding:0;border-width:1px;}
+input:focus,select:focus,textarea:focus{border-color:var(--sky);background:var(--input-bg-focus);box-shadow:0 0 0 3px rgba(153,211,218,.22);}
+textarea{resize:vertical;min-height:50px;}
+.req{color:var(--orange);margin-left:1px;}
+.tw{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12.5px;}
+thead th{text-align:left;padding:.52rem .7rem;background:#f8fafc;color:var(--tm);font-weight:600;font-size:10.5px;letter-spacing:.5px;text-transform:uppercase;border-bottom:1.5px solid var(--bd);}
+tbody tr{border-bottom:1px solid var(--bd);}tbody td{padding:.6rem .7rem;vertical-align:middle;}tbody tr:hover{background:#fafcff;}
+.b{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;}
+.b-pagado{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-b);}.b-pendiente{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-b);}
+.b-vencido{background:var(--er-bg);color:var(--er);border:1px solid var(--er-b);}.b-devuelto{background:var(--neutral-bg);color:#374151;border:1px solid var(--neutral-b);}
+.b-contado{background:var(--sky4);color:#1e6e77;border:1px solid var(--sky);}/* Era #c0641e: 3.48:1. --orange-d da 4.63:1 y es el mismo que ya usaba
+   el panel de vendedores para esta insignia. */
+.b-credito{background:var(--orange3);color:var(--orange-d);border:1px solid var(--orange2);}
+.b-delivery{background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd;}.b-devolucion{background:#f3f4f6;color:#374151;border:1px solid #d1d5db;}
+.alert{padding:.65rem .9rem;border-radius:var(--r);font-size:12px;margin-bottom:.6rem;display:flex;align-items:center;gap:8px;}
+.ai{background:var(--sky4);color:#1e6e77;border:1px solid var(--sky);}
+.st-bar{display:flex;align-items:center;gap:8px;padding:.45rem .8rem;border-radius:var(--r);font-size:12px;font-weight:500;margin-bottom:.8rem;}
+.ops-grid{display:flex;flex-direction:column;gap:10px;margin-bottom:1rem;}
+.ops-sub-grid{display:grid;grid-template-columns:repeat(5,1fr);grid-auto-rows:1fr;gap:10px;align-items:stretch;}
+.ops-card{background:var(--wh);border:1px solid var(--bd);border-radius:var(--rl);padding:1rem 1.1rem;box-shadow:var(--sh);cursor:pointer;position:relative;transition:box-shadow .15s,transform .1s;display:flex;flex-direction:column;justify-content:flex-start;height:100%;min-height:0;box-sizing:border-box;}
+.ops-sub-grid>.ops-card{align-self:stretch;}
+.ops-sub-grid .ops-icon{height:28px;line-height:28px;display:block;}
+.ops-sub-grid .ops-lbl{min-height:14px;}
+.ops-sub-grid .ops-val{min-height:30px;display:flex;align-items:flex-end;}
+.ops-sub-grid .ops-sub{min-height:15px;}
+.ops-card:hover{box-shadow:0 4px 16px rgba(37,60,97,.13);transform:translateY(-2px);}
+.ops-arrow{position:absolute;top:.65rem;right:.7rem;font-size:16px;font-weight:300;color:var(--tl);}
+.ops-icon{font-size:20px;margin-bottom:5px;}
+.ops-lbl{font-size:10px;font-weight:700;color:var(--tl);text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;}
+.ops-val{font-family:"Bebas Neue",sans-serif;font-size:24px;color:var(--brand);line-height:1.1;}
+.ops-sub{font-size:10.5px;color:var(--tl);margin-top:3px;}
+.ops-c-total{background:linear-gradient(135deg,var(--brand) 0%,#1e4a7a 100%);color:#fff;}
+.ops-c-total .ops-lbl,.ops-c-total .ops-sub,.ops-c-total .ops-arrow{color:rgba(255,255,255,.7);}
+.ops-c-total .ops-val{color:#fff;font-size:32px;}
+.ops-c-contado::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:#2d7a3a;border-radius:var(--rl) var(--rl) 0 0;}
+.ops-c-credito::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:#d97706;border-radius:var(--rl) var(--rl) 0 0;}
+.ops-c-cobros::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:#0891b2;border-radius:var(--rl) var(--rl) 0 0;}
+.ops-c-delivery::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:#3b82f6;border-radius:var(--rl) var(--rl) 0 0;}
+.ops-c-devol::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:var(--er);border-radius:var(--rl) var(--rl) 0 0;}
+.an-kpi{background:var(--wh);border-radius:var(--rl);border:1px solid var(--bd);padding:.85rem 1rem;box-shadow:var(--sh);}
+.an-kpi-lbl{font-size:10px;color:var(--tl);font-weight:600;letter-spacing:.4px;text-transform:uppercase;margin-bottom:4px;}
+.an-kpi-val{font-size:22px;font-weight:700;font-family:"Bebas Neue",sans-serif;letter-spacing:.5px;}
+.an-kpi-sub{font-size:10.5px;color:var(--tl);margin-top:2px;}
+.an-delta{display:inline-flex;align-items:center;gap:3px;font-size:11px;font-weight:700;padding:2px 7px;border-radius:12px;margin-top:4px;}
+.an-delta-up{background:#dcfce7;color:#16a34a;}
+.an-delta-down{background:#fee2e2;color:#dc2626;}
+.an-delta-flat{background:var(--neutral-bg);color:var(--neutral);}
+.an-vend-row{display:flex;align-items:center;gap:10px;padding:.6rem 0;border-bottom:1px solid var(--bd);}
+.an-vend-avatar{width:34px;height:34px;border-radius:50%;background:var(--sky4);border:2px solid var(--sky);display:flex;align-items:center;justify-content:center;font-family:"Bebas Neue",sans-serif;font-size:16px;color:var(--brand);flex-shrink:0;}
+.an-bar-wrap{flex:1;margin:0 6px;}
+.an-bar-bg{background:var(--bd);border-radius:4px;height:6px;overflow:hidden;}
+.an-bar-fill{height:6px;border-radius:4px;transition:width .5s;}
+.forecast-row{display:flex;align-items:center;gap:12px;padding:.55rem 0;border-bottom:1px solid var(--bd);}
+.st-er{background:var(--er-bg);color:var(--er);border:1px solid var(--er-b);}
+.st-ld{background:var(--sky4);color:#1e6e77;border:1px solid var(--sky);}
+.spin{display:inline-block;width:15px;height:15px;border:2.5px solid var(--bd);border-top-color:var(--sky);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:4px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1;}50%{opacity:.6;}}
+.nav-badge{display:inline-block;background:#dc2626;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;min-width:18px;text-align:center;line-height:1.3;animation:pulse 2s ease-in-out infinite;}
+.alert-cred-banner{background:linear-gradient(135deg,#dc2626 0%,#b91c1c 100%);color:#fff;border-radius:var(--rl);padding:.8rem 1rem;margin-bottom:.85rem;box-shadow:0 4px 12px rgba(220,38,38,.25);cursor:pointer;display:flex;align-items:center;gap:12px;transition:transform .15s,box-shadow .2s;}
+.alert-cred-banner:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(220,38,38,.35);}
+.alert-cred-banner.warning{background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);box-shadow:0 4px 12px rgba(245,158,11,.25);}
+.alert-cred-banner.warning:hover{box-shadow:0 6px 16px rgba(245,158,11,.35);}
+.alert-cred-icon{font-size:26px;flex-shrink:0;}
+.alert-cred-content{flex:1;min-width:0;}
+.alert-cred-title{font-size:13px;font-weight:700;margin-bottom:2px;}
+.alert-cred-sub{font-size:11.5px;opacity:.95;line-height:1.3;}
+.alert-cred-arrow{font-size:22px;opacity:.85;flex-shrink:0;}
+.tabs{display:flex;gap:4px;margin-bottom:1rem;flex-wrap:wrap;}
+.tab{padding:.38rem .85rem;border-radius:var(--r);font-size:12.5px;font-weight:600;cursor:pointer;border:1.5px solid var(--bd);background:var(--wh);color:var(--tm);transition:all .15s;}
+.tab.active{background:var(--brand);color:#fff;border-color:var(--brand);}
+.sb2{display:flex;gap:8px;margin-bottom:.9rem;align-items:center;}.sb2 input{flex:1;}
+.es{text-align:center;padding:2rem 1rem;color:var(--tl);font-size:13px;}.ei{font-size:26px;margin-bottom:7px;}
+.tm2{color:var(--tl);font-size:11.5px;}
+.exp{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--brand);cursor:pointer;padding:.26rem .58rem;border-radius:var(--r);border:1.5px solid var(--sky);background:var(--sky4);font-family:"DM Sans",sans-serif;font-weight:600;}
+.exp:hover{background:var(--sky3);}
+.plan-wrap{overflow-x:auto;}
+.plan-table{width:100%;border-collapse:collapse;font-size:12px;min-width:750px;}
+.plan-table th{padding:.52rem .6rem;background:var(--brand);color:#fff;font-weight:600;font-size:11px;text-align:left;white-space:nowrap;}
+.plan-table th.opt{background:#344f7a;color:rgba(255,255,255,.75);font-style:italic;}
+.plan-table th:first-child{width:100px;}
+.plan-table td{padding:.3rem .35rem;border:1px solid var(--bd);vertical-align:top;}
+.plan-table td:first-child{background:#f8fafc;font-weight:600;font-size:11.5px;color:var(--tm);white-space:nowrap;min-width:90px;}
+.plan-table input{border:none;background:transparent;padding:.25rem .3rem;font-size:12px;outline:none;width:100%;min-width:100px;}
+.plan-table input:focus{background:var(--sky4);border-radius:4px;}
+.plan-add-row{display:flex;align-items:center;gap:8px;padding:.55rem .7rem;border-top:2px dashed var(--bd);}
+.plan-week-nav{display:flex;align-items:center;gap:10px;padding:.85rem 1.1rem;border-bottom:1px solid var(--bd);}
+.plan-week-label{font-size:13px;font-weight:600;color:var(--brand);flex:1;text-align:center;}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.2rem;}
+.kpi-card{background:var(--wh);border-radius:var(--rl);border:1px solid var(--bd);padding:1rem 1.1rem;box-shadow:var(--sh);position:relative;overflow:hidden;}
+.kpi-card::before{content:"";position:absolute;top:0;left:0;right:0;height:3px;}
+.kpi-blue::before{background:var(--brand);}.kpi-green::before{background:var(--ok);}.kpi-orange::before{background:var(--orange);}.kpi-sky::before{background:var(--sky);}
+.kpi-icon{font-size:22px;margin-bottom:6px;}
+.kpi-val{font-family:"Bebas Neue",sans-serif;font-size:26px;letter-spacing:.5px;color:var(--brand);line-height:1;}
+.kpi-lbl{font-size:10.5px;color:var(--tl);font-weight:600;margin-top:3px;letter-spacing:.3px;text-transform:uppercase;}
+.kpi-sub{font-size:11px;color:var(--tm);margin-top:4px;}
+.cred-item{background:var(--wh);border:1px solid var(--bd);border-radius:var(--rl);padding:.9rem 1rem;margin-bottom:.7rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap;}
+.cred-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.cred-dot.venc{background:var(--er);}.cred-dot.pend{background:#d97706;}
+.merch-card{background:var(--sky4);border:1px solid var(--sky);border-radius:var(--rl);padding:.9rem 1.1rem;margin-bottom:.7rem;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+.b-visita{background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd;}
+/* Era #9ca3af sobre #f3f4f6: 2.31:1, el peor contraste del portal.
+   Ahora 5.45:1 con el token neutro compartido. */
+.b-anulado{background:var(--neutral-bg);color:var(--neutral);border:1px solid var(--neutral-b);}
+.vdd-item{padding:.55rem .85rem;cursor:pointer;border-bottom:0.5px solid var(--bd);transition:background .1s;}
+.vdd-item:hover{background:var(--sky4);}
+.vdd-item:last-child{border-bottom:none;}
+@media(max-width:768px){.sidebar{display:none;}.main{margin-left:0;padding:.8rem .9rem;padding-bottom:80px;}.sg{grid-template-columns:1fr 1fr;}.fg,.fg3{grid-template-columns:1fr;}.kpi-grid{grid-template-columns:1fr 1fr;}.ops-sub-grid{grid-template-columns:1fr 1fr;gap:8px;}.ops-val{font-size:20px;}.ops-c-total .ops-val{font-size:26px;}.rv-grid{grid-template-columns:1fr!important;}.an-3col{grid-template-columns:1fr!important;}.an-2col{grid-template-columns:1fr!important;}}
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--brand);border-top:1px solid rgba(255,255,255,.15);z-index:150;padding-bottom:env(safe-area-inset-bottom,0px);}
+.bottom-nav-inner{display:flex;justify-content:space-around;}
+.bn-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:.55rem .2rem .45rem;cursor:pointer;color:rgba(255,255,255,.6);font-size:9.5px;font-weight:600;gap:3px;border:none;background:none;font-family:"DM Sans",sans-serif;}
+.bn-icon{font-size:20px;line-height:1;}.bn-item.active{color:var(--sky);}
+.bn-more-menu{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--brand2);border-top:1px solid rgba(255,255,255,.15);z-index:160;padding:1rem;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 70px);}
+.bn-more-menu.open{display:block;}
+.bn-more-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+.bn-more-item{display:flex;align-items:center;gap:10px;padding:.65rem .9rem;border-radius:var(--r);cursor:pointer;color:rgba(255,255,255,.8);font-size:13px;font-weight:500;background:rgba(255,255,255,.08);border:none;font-family:"DM Sans",sans-serif;width:100%;}
+.bn-overlay{display:none;position:fixed;inset:0;z-index:155;background:rgba(0,0,0,.3);}
+.bn-overlay.open{display:block;}
+@media(max-width:768px){.bottom-nav{display:block;}}
+@media(max-width:600px){.md{width:100%!important;max-width:100%!important;border-radius:var(--rxl) var(--rxl) 0 0!important;margin-top:auto;max-height:95vh;}}
+/* ── GSAP-animated page transitions ── */
+.page{opacity:1;}
+/* ── Toast notifications ── */
+.app-toast{position:fixed;bottom:24px;right:24px;background:#fff;border-radius:10px;border-left:4px solid var(--brand);box-shadow:0 8px 28px rgba(37,60,97,.18);padding:.75rem 1.1rem;display:flex;align-items:center;gap:10px;font-size:13px;font-weight:500;color:var(--td);z-index:9999;max-width:320px;pointer-events:none;}
+.toast-icon{font-size:16px;font-weight:700;flex-shrink:0;}
+/* ── Richer card hover ── */
+.card{transition:box-shadow .2s,transform .18s;}
+.card:hover{box-shadow:var(--sh2);transform:translateY(-1px);}
+.kpi-card{transition:box-shadow .2s,transform .18s;cursor:pointer;}
+.kpi-card:hover{box-shadow:0 6px 20px rgba(37,60,97,.14);transform:translateY(-2px);}
+/* ── Button improvements ── */
+.btn{transition:all .18s;}
+.btn-p:hover:not(:disabled){box-shadow:0 4px 14px rgba(37,60,97,.28);}
+.btn-sk:hover:not(:disabled){box-shadow:0 4px 14px rgba(153,211,218,.40);}
+/* ── Nav item smooth active state ── */
+.nav-item{transition:background .18s,color .18s;}
+.bn-item{transition:color .18s,background .18s;}
+/* ── Skeleton loader ── */
+.skel{background:linear-gradient(90deg,var(--gry) 25%,var(--bd) 50%,var(--gry) 75%);background-size:200% 100%;animation:skel-shine 1.4s ease-in-out infinite;border-radius:6px;}
+@keyframes skel-shine{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+.skel-kpi{height:88px;border-radius:var(--rl);}
+/* ── Ops/summary card hover ── */
+.ops-card{transition:box-shadow .2s,transform .18s;}
+.ops-card:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(37,60,97,.14);}
+/* ── Alert banner micro-interaction ── */
+.alert-cred-banner{transition:transform .18s,box-shadow .2s;}
+.alert-cred-banner:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(220,38,38,.32);}
+
+.b-visita{background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd;}
+.vdd-item{padding:.55rem .85rem;cursor:pointer;border-bottom:0.5px solid var(--bd);transition:background .1s;}
+.vdd-item:hover{background:var(--sky4);}
+.vdd-item:last-child{border-bottom:none;}
+.cli-tab{cursor:pointer;}
+
+
+.mo{display:none;position:fixed;inset:0;background:rgba(26,45,74,.45);z-index:200;align-items:center;justify-content:center;}
+.mo.open{display:flex;}
+.md{background:var(--wh);border-radius:var(--rxl);width:540px;max-width:96vw;max-height:92vh;overflow-y:auto;overscroll-behavior:contain;box-shadow:var(--sh2);}
+.mh{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1.2rem;border-bottom:1px solid var(--bd);position:sticky;top:0;background:var(--wh);z-index:1;}
+.mt2{font-family:"Bebas Neue",sans-serif;font-size:20px;letter-spacing:.5px;color:var(--brand);}
+.mc{background:none;border:none;cursor:pointer;font-size:18px;color:var(--tl);line-height:1;padding:3px;}
+.mb{padding:1.2rem;}
+.mf{padding:.75rem 1.2rem;border-top:1px solid var(--bd);display:flex;gap:8px;justify-content:flex-end;background:var(--wh);position:sticky;bottom:0;}
+
+
+.rank-item{display:flex;align-items:center;gap:12px;padding:.75rem 1rem;border-bottom:0.5px solid var(--bd);cursor:pointer;transition:background .15s;}
+.rank-item:hover{background:var(--sky4);}
+.rank-item:last-child{border-bottom:none;}
+.rank-num{width:24px;height:24px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+.b-visita{background:#f0f9ff;color:#0369a1;border:1px solid #bae6fd;}
+.vdd-item{padding:.55rem .85rem;cursor:pointer;border-bottom:0.5px solid var(--bd);transition:background .1s;}
+.vdd-item:hover{background:var(--sky4);}
+.cli-tab{cursor:pointer;}
+
+/* ── INVENTARIO MODULE ── */
+:root{--navy:var(--brand);}
+.b-in{background:#dcfce7;color:#166534;border:1px solid #86efac;}
+.b-out{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;}
+.b-sk{background:#e0f2fe;color:#0369a1;border:1px solid #7dd3fc;}
+.b-or{background:#fff7ed;color:#c2410c;border:1px solid #fdba74;}
+.b-ok{background:#dcfce7;color:#166534;border:1px solid #86efac;}
+.b-low{background:#fee2e2;color:#991b1b;border:1px solid #fca5a5;}
+.b-dk{background:#e2e8f0;color:#334155;border:1px solid #cbd5e1;}
+.btn-or{background:var(--orange);color:#fff;}.btn-or:hover:not(:disabled){background:var(--orange2);}
+.ptag{display:inline-flex;align-items:center;gap:4px;background:var(--sky4);color:var(--brand);border:1px solid var(--sky);border-radius:var(--r);padding:2px 7px;font-size:11.5px;font-weight:600;}
+.dest{margin-top:10px;padding-top:10px;border-top:1px solid var(--bd);}
+.dest-t{font-size:11.5px;font-weight:700;color:var(--tm);letter-spacing:.3px;margin-bottom:8px;text-transform:uppercase;}
+.msec{margin-bottom:8px;}
+.msec-t{font-size:11px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;padding-bottom:4px;border-bottom:1px solid var(--bd);}
+.stkbar{height:5px;background:var(--bd);border-radius:4px;margin-top:4px;}
+.stkbar-f{height:5px;border-radius:4px;}
+.vav{width:40px;height:40px;border-radius:50%;background:var(--brand);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:14px;flex-shrink:0;}
+.sb3{margin:.5rem 0;}.sb3 input{max-width:340px;}
+
+/* ══════════════════════════════════════════════════
+   RESPONSIVE ENHANCEMENTS
+══════════════════════════════════════════════════ */
+
+/* Touch optimizations — remove tap delay, highlight */
+button,.btn,.nav-item,.bn-item,.tab,.ops-card,.rank-item,.vdd-item,.cred-item,.kpi-card,.sc,.alert-cred-banner{touch-action:manipulation;-webkit-tap-highlight-color:transparent;}
+html{-webkit-text-size-adjust:100%;}
+
+/* Smooth momentum scrolling on iOS */
+.tw,.sb-nav-wrap,.main,.md{-webkit-overflow-scrolling:touch;}
+
+/* ── Tablet: 769px – 1024px ── */
+@media(min-width:769px) and (max-width:1024px){
+  .sidebar{width:195px;}
+  .main{margin-left:195px;padding:1rem 1.1rem;}
+  .ops-sub-grid{grid-template-columns:repeat(3,1fr);}
+  .kpi-grid{grid-template-columns:repeat(2,1fr);}
+  .sg{grid-template-columns:repeat(3,1fr);}
+}
+
+/* ── Mobile improvements: ≤768px (override/extend existing) ── */
+@media(max-width:768px){
+  html{font-size:108%;}
+  .app-toast{bottom:80px;right:12px;left:12px;max-width:100%;font-size:12.5px;}
+  .ch{flex-wrap:wrap;gap:6px;}
+  .row{flex-wrap:wrap;}
+  .sb2{flex-wrap:wrap;}
+  .sb2 input{min-width:0;}
+  /* Make table cells wrap nicely inside scrollable container */
+  .tw{border-radius:var(--r);overflow-x:auto;}
+  table{font-size:12px;}
+  thead th{font-size:10px;padding:.45rem .55rem;white-space:nowrap;}
+  tbody td{padding:.5rem .55rem;}
+  /* Tighter card spacing */
+  .cb{padding:.85rem;}
+  .mb{padding:1rem;}
+  .mf{padding:.65rem 1rem;}
+  /* Ops cards single text wrap */
+  .ops-lbl{white-space:normal;}
+  /* Plan table horizontal scroll */
+  .plan-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  /* Bottom nav badge */
+  .nav-badge{font-size:9px;padding:1px 5px;}
+}
+
+/* ── Small phones: ≤480px ── */
+@media(max-width:480px){
+  html{font-size:103%;}
+  .main{padding:.65rem .7rem;padding-bottom:80px;}
+  .ph{margin-bottom:.9rem;}
+  .pt{font-size:22px;}
+  .sg{grid-template-columns:1fr 1fr;}
+  .kpi-grid{grid-template-columns:1fr 1fr;}
+  .ops-sub-grid{grid-template-columns:1fr 1fr;gap:7px;}
+  .ops-val{font-size:18px;}
+  .ops-c-total .ops-val{font-size:22px;}
+  .sc{padding:.7rem .85rem;}
+  .sv{font-size:20px;}
+  .tabs{gap:2px;}
+  .tab{padding:.28rem .52rem;font-size:11px;}
+  .btn{padding:.4rem .75rem;font-size:12.5px;}
+  .btn-sm{padding:.22rem .5rem;font-size:11px;}
+  /* Card header wraps to column */
+  .ch{flex-direction:column;align-items:flex-start;padding:.7rem .85rem;gap:6px;}
+  .cb{padding:.75rem;}
+  /* Forms: full-width */
+  .fg{grid-template-columns:1fr;}
+  .fg3{grid-template-columns:1fr;}
+  /* Modals */
+  .mb{padding:.85rem;}
+  .mf{padding:.6rem .85rem;gap:6px;}
+  /* KPI analytics */
+  .kpi-card{padding:.8rem .9rem;}
+  .kpi-val{font-size:22px;}
+  /* Alert banners */
+  .alert-cred-banner{padding:.65rem .85rem;}
+  .alert-cred-icon{font-size:20px;}
+  /* Cred items */
+  .cred-item{padding:.7rem .85rem;gap:8px;}
+  /* Rank items */
+  .rank-item{padding:.6rem .75rem;}
+}
+
+/* ── Very small phones: ≤360px ── */
+@media(max-width:360px){
+  .main{padding:.5rem .55rem;padding-bottom:80px;}
+  .ops-sub-grid{grid-template-columns:1fr 1fr;}
+  .kpi-grid{grid-template-columns:1fr 1fr;}
+  .sg{grid-template-columns:1fr 1fr;}
+  .sv{font-size:18px;}
+  .kpi-val{font-size:20px;}
+}
+
+/* ── Dashboard ranking/transacciones: colapsa en mobile ── */
+@media(max-width:900px){
+  .dash-rank-grid{grid-template-columns:1fr!important;}
+}
+
+/* ── Bottom nav tap target improvement ── */
+.bn-item{min-height:52px;}
+.bn-more-menu{max-height:75vh;overflow-y:auto;-webkit-overflow-scrolling:touch;}
+
+/* ── Modal full-screen on very small phones ── */
+@media(max-width:480px){
+  .md{width:100%!important;max-width:100%!important;border-radius:var(--rxl) var(--rxl) 0 0!important;margin-top:auto;max-height:92vh;}
+  .mo{align-items:flex-end;}
+}
+
+/* ── Better scrollable search bars on mobile ── */
+@media(max-width:768px){
+  .sb2{gap:6px;}
+  input,select{font-size:16px!important;} /* prevents iOS zoom on focus */
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   PANTALLA DE ARRANQUE
+   Cubre la app mientras el guard de sesión decide si dejar pasar.
+   Sin esto se ve medio segundo de panel vacío antes del redirect.
+   ═══════════════════════════════════════════════════════════ */
+.app-boot{
+  position:fixed;inset:0;z-index:10000;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;
+  background:var(--brand,#253C61);color:#fff;
+}
+.app-boot[hidden]{display:none;}
+.app-boot img{width:64px;height:64px;border-radius:14px;object-fit:contain;}
+.app-boot p{font-size:13.5px;opacity:.85;margin:0;font-family:"DM Sans",system-ui,sans-serif;}
+.app-boot-spinner{
+  width:26px;height:26px;border-radius:50%;
+  border:3px solid rgba(255,255,255,.25);
+  border-top-color:var(--sky,#99D3DA);
+  animation:app-boot-spin .7s linear infinite;
+}
+@keyframes app-boot-spin{to{transform:rotate(360deg);}}
+@media (prefers-reduced-motion: reduce){
+  .app-boot-spinner{animation-duration:2s;}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FOCO VISIBLE
+   Antes solo los inputs mostraban foco. Botones, items de menú y
+   enlaces no daban ninguna señal, así que navegar con teclado era
+   moverse a ciegas. :focus-visible solo se activa con teclado, por
+   lo que el clic con ratón sigue viéndose igual que siempre.
+   ═══════════════════════════════════════════════════════════ */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+.nav-item:focus-visible,
+.bn-item:focus-visible,
+.bn-more-item:focus-visible,
+.tab:focus-visible,
+summary:focus-visible{
+  outline:3px solid var(--sky,#99D3DA);
+  outline-offset:2px;
+  border-radius:6px;
+}
+
+/* Sobre el sidebar (fondo azul marino) el celeste se pierde: allí el
+   contorno va en blanco para que se distinga. */
+.sidebar .nav-item:focus-visible,
+.sidebar button:focus-visible{
+  outline-color:#fff;
+}
+
+/* Los items de menú son divs con onclick. Sin tabindex el teclado ni
+   siquiera llega a ellos, así que se les da rol y foco desde el CSS
+   no es posible: se marca aquí para que el JS los haga enfocables. */
+.nav-item{cursor:pointer;}
+
+/* ── Legibilidad del texto más pequeño ──
+   Había etiquetas a 9 y 9.5px. Por debajo de 10.5px el texto deja de
+   ser cómodo en móvil, sobre todo para quien usa el panel en la calle. */
+.sl,.ss,.cs,.ps{font-size:11px;}
+.nav-lbl{font-size:10.5px;}
+
+/* Respetar el ajuste de tamaño de fuente del sistema en móvil. */
+@media (max-width:768px){
+  .sl,.ss,.cs{font-size:11.5px;}
+}
+
+/* Etiquetas de las tarjetas KPI: estaban a 9-10px, ilegibles en movil. */
+.kpi-lbl,.ops-lbl{font-size:11px;}
+.ops-sub{font-size:11px;}
+@media (max-width:768px){.kpi-lbl,.ops-lbl,.ops-sub{font-size:11.5px;}}
+
+/* ═══════════════════════════════════════════════════════════
+   COBRO PARCIAL — selector de forma de pago
+   ═══════════════════════════════════════════════════════════ */
+.cp-modo{
+  display:grid;grid-template-columns:1fr 1fr;gap:6px;
+  background:var(--gry,#f2f2f2);padding:4px;border-radius:var(--rl,12px);
+}
+.cp-modo-btn{
+  padding:.55rem .5rem;border:none;border-radius:var(--r,10px);
+  background:transparent;color:var(--tm,#4a5568);
+  font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;
+  transition:background .15s,color .15s,box-shadow .15s;
+}
+.cp-modo-btn:hover:not(.is-on){background:rgba(255,255,255,.6);}
+.cp-modo-btn.is-on{
+  background:var(--wh,#fff);color:var(--brand,#253C61);font-weight:700;
+  box-shadow:0 1px 4px rgba(37,60,97,.14);
+}
+
+.cp-ayuda{font-size:12px;color:var(--tl,#5f6b7d);margin-bottom:6px;line-height:1.45;}
+
+.cp-resumen{
+  background:var(--sky4,#eaf7f9);border:1px solid var(--sky,#99D3DA);
+  border-radius:var(--r,10px);padding:.7rem .85rem;margin-bottom:.9rem;
+  font-size:13px;line-height:1.5;color:var(--td,#1a2535);
+}
+.cp-resumen[hidden]{display:none;}
+.cp-resumen.is-full{
+  background:var(--ok-bg,#e8f5ea);border-color:var(--ok-b,#a3d9a8);color:var(--ok,#2d7a3a);
+  font-weight:600;
+}
+.cp-nota{
+  display:block;margin-top:.45rem;padding-top:.45rem;
+  border-top:1px solid rgba(37,60,97,.12);
+  font-size:11.5px;color:var(--tm,#4a5568);
+}
+/* ═══════════════════════════════════════════════════════════
+   GRUPOS PLEGABLES DEL MENÚ
+   Inteligencia e Inventario agrupan varias secciones. Antes
+   estaban todas sueltas y la barra lateral no cabía en pantalla.
+   ═══════════════════════════════════════════════════════════ */
+.nav-group{
+  display:flex;align-items:center;gap:9px;width:100%;
+  padding:.5rem .95rem;border:none;background:transparent;
+  color:rgba(255,255,255,.82);
+  font-family:inherit;font-size:13.5px;font-weight:600;text-align:left;
+  cursor:pointer;border-left:3px solid transparent;
+  transition:background .15s,color .15s;
+}
+.nav-group:hover{background:rgba(255,255,255,.07);color:#fff;}
+.nav-group.open{color:#fff;}
+.nav-group .ni{font-size:15px;line-height:1;}
+
+.nav-group-chev{
+  margin-left:auto;font-size:11px;opacity:.6;
+  transition:transform .2s ease;
+}
+.nav-group.open .nav-group-chev{transform:rotate(180deg);opacity:.9;}
+
+/* Plegado con display. Se probaron antes grid-template-rows:0fr (solo colapsa
+   la primera fila, y aquí hay varios hijos directos) y max-height con
+   transición (daba lecturas inconsistentes). display es el que no falla:
+   el submenú o está o no está, sin estados intermedios. */
+.nav-sub{display:none;}
+.nav-sub.open{display:block;animation:nav-sub-in .18s ease-out;}
+@keyframes nav-sub-in{
+  from{opacity:0;transform:translateY(-4px);}
+  to{opacity:1;transform:none;}
+}
+.nav-sub .nav-item{
+  padding-left:2.3rem;font-size:13px;
+  opacity:.9;
+}
+.nav-sub .nav-item:first-child{padding-top:.34rem;}
+.nav-sub .nav-item:last-child{padding-bottom:.5rem;}
+
+/* Guía vertical que ata visualmente los hijos a su grupo. */
+.nav-sub{position:relative;}
+.nav-sub.open::before{
+  content:"";position:absolute;left:1.35rem;top:.15rem;bottom:.4rem;
+  width:1.5px;background:rgba(255,255,255,.16);border-radius:1px;
+}
+
+/* Acceso directo destacado: lo que más se usa a diario. */
+.nav-item-destacado{
+  background:rgba(153,211,218,.14);
+  border-left-color:var(--sky) !important;
+  font-weight:700;color:#fff;
+}
+.nav-item-destacado:hover{background:rgba(153,211,218,.22);}
+
+@media (prefers-reduced-motion: reduce){
+  .nav-sub,.nav-group-chev{transition:none;}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ÁREA TÁCTIL MÍNIMA
+   ───────────────────────────────────────────────────────────
+   Medido antes de este bloque, a 375px de ancho:
+     .btn-sm  20px   .exp  23px   .btn  29px
+     .tab     32px   input 34px   .b    24px
+   Ninguno llegaba a los 44px que necesita un dedo. El vendedor
+   usa esto en la calle, de pie y con una mano; "Anular" a 22px
+   pegado a "Cobrar" es un error de cobro esperando a pasar.
+
+   Se condiciona a (pointer:coarse) y no a un ancho de pantalla:
+   lo que decide el tamaño es si se apunta con el dedo o con un
+   ratón, no si la ventana es estrecha. Así el escritorio conserva
+   su densidad — que en el admin hace falta — y el móvil y la
+   tablet ganan el área que les corresponde.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Con ratón, el mínimo sigue siendo generoso: 20px era pequeño
+   incluso para un cursor. */
+.btn-sm{min-height:28px;}
+.exp{min-height:28px;}
+
+@media (pointer: coarse){
+  .btn,
+  .btn-sm,
+  .tab,
+  .exp,
+  .logout-btn,
+  .nav-item,
+  .bn-more-item,
+  .cp-modo-btn,
+  .cli-tab,
+  .vdd-item,
+  select,
+  textarea,
+  input:not([type=checkbox]):not([type=radio]):not([type=hidden]){
+    min-height:var(--tap);
+  }
+
+  /* El texto también sube: un botón de 44px con letra de 11.5px se ve
+     vacío y sigue costando leerlo bajo el sol. */
+  .btn-sm{padding:.55rem .9rem;font-size:13px;}
+  .exp{padding:.55rem .9rem;font-size:12.5px;}
+  .tab{padding:.6rem 1.1rem;}
+
+  /* Botones que solo llevan un icono (cerrar modal, quitar fila):
+     cuadrados de 44, no rectángulos de 44×20. */
+  .icon-btn{min-width:var(--tap);min-height:var(--tap);
+    display:inline-flex;align-items:center;justify-content:center;}
+
+  /* Separación entre controles contiguos. Pegados, el dedo acierta
+     el de al lado — y aquí el de al lado suele ser "Anular". */
+  .row{gap:10px;}
+  .tabs{gap:8px;}
+  .mf{gap:10px;}
+
+  /* Casillas y radios: no crecen en alto, crecen en área pulsable
+     a través de su etiqueta. */
+  input[type=checkbox],
+  input[type=radio]{width:20px;height:20px;}
+  label:has(> input[type=checkbox]),
+  label:has(> input[type=radio]){min-height:var(--tap);display:flex;align-items:center;gap:9px;}
+
+  /* Excepciones: la rejilla del plan semanal son celdas de tabla que se
+     editan en línea. A 44px cada una, la semana no cabe en la pantalla. */
+  .plan-table input{min-height:34px;}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ENCABEZADOS Y ENLACE DE SALTO
+   ───────────────────────────────────────────────────────────
+   Los títulos eran <div class="pt"> y <span class="ct">. Para
+   un lector de pantalla el documento no tenía ni un encabezado:
+   no se podía saltar de sección en sección ni hacerse una idea
+   de la estructura. Ahora son <h1> y <h2> reales.
+
+   Las clases .pt/.ct/.mt2 siguen fijando tipografía y tamaño, y
+   una clase gana a un selector de etiqueta, así que el aspecto
+   no cambia. Esta regla solo evita que un <h1> o <h2> sin clase
+   herede el tamaño y el peso enormes del navegador.
+   ═══════════════════════════════════════════════════════════ */
+h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit;line-height:inherit;}
+
+/* Fuera de pantalla hasta que recibe el foco con Tab. */
+.skip-link{
+  position:absolute;left:8px;top:-64px;z-index:10001;
+  padding:.7rem 1.1rem;border-radius:0 0 var(--r) var(--r);
+  background:var(--brand);color:#fff;
+  font-family:"DM Sans",system-ui,sans-serif;font-size:14px;font-weight:700;
+  text-decoration:none;
+  transition:top .16s ease;
+}
+.skip-link:focus{top:0;}
+.skip-link:focus-visible{outline:3px solid var(--sky);outline-offset:2px;}
+
+/* El <main> recibe el foco al saltar (tabindex="-1") pero no debe
+   dibujar un contorno alrededor de toda la página al hacerlo. */
+main:focus{outline:none;}
+
+@media (prefers-reduced-motion: reduce){
+  .skip-link{transition:none;}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DIÁLOGOS SVUI (ui-dialogos.js)
+   Sustituyen a alert/confirm/prompt. Reutilizan .mo/.md/.mh/.mb/.mf,
+   así que aquí solo va lo propio del contenido.
+   ═══════════════════════════════════════════════════════════ */
+.svui-msg{
+  font-size:14px;line-height:1.55;color:var(--tm);
+  margin:0;white-space:pre-line;   /* respeta los saltos de línea del mensaje */
+}
+.svui-campo{margin-top:1rem;}
+.svui-ayuda{
+  font-size:11.5px;color:var(--tl);margin-top:2px;
+  font-weight:400;text-transform:none;letter-spacing:0;
+}
+.svui-error{
+  margin-top:6px;padding:.5rem .7rem;border-radius:var(--r);
+  background:var(--er-bg);border:1px solid var(--er-b);color:var(--er);
+  font-size:12.5px;line-height:1.45;
+}
+.svui-error[hidden]{display:none;}
+
+/* En móvil el diálogo sube desde abajo, como el resto de modales. */
+@media (max-width:600px){
+  .mo[id^="svui-"] .md{
+    width:100%!important;max-width:100%!important;
+    border-radius:var(--rxl) var(--rxl) 0 0!important;
+    margin-top:auto;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   VALIDACIÓN EN LÍNEA DE FORMULARIOS
+   El error va pegado al campo que falla, no en una alerta que
+   tapa el formulario y obliga a recordar qué decía.
+   ═══════════════════════════════════════════════════════════ */
+.campo-error{
+  display:block;margin-top:4px;
+  font-size:12px;line-height:1.4;color:var(--er);font-weight:600;
+  text-transform:none;letter-spacing:0;
+}
+.campo-error[hidden]{display:none;}
+
+input[aria-invalid="true"],
+select[aria-invalid="true"],
+textarea[aria-invalid="true"]{
+  border-color:var(--er-b);
+  background:var(--er-bg);
+}
+input[aria-invalid="true"]:focus,
+select[aria-invalid="true"]:focus,
+textarea[aria-invalid="true"]:focus{
+  border-color:var(--er);
+  box-shadow:0 0 0 3px rgba(192,57,43,.18);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ICONOS SVG
+   ───────────────────────────────────────────────────────────
+   Sustituyen a los emoji del menú, la barra inferior y el menú
+   "Más". Se dimensionan en em, no en px: así crecen con el
+   texto si el usuario agranda la fuente del sistema, cosa que
+   los emoji tampoco hacían de forma fiable.
+   currentColor hace que sigan al texto — incluido el estado
+   activo del menú, donde el fondo cambia y antes el emoji se
+   quedaba con su color de siempre.
+   ═══════════════════════════════════════════════════════════ */
+.ic{
+  width:1.25em;height:1.25em;
+  flex-shrink:0;
+  vertical-align:-0.22em;
+  color:currentColor;
+  /* Los trazos no se deforman aunque el contenedor sea flex. */
+  overflow:visible;
+}
+
+/* El contenedor del icono del menú ya reservaba 18px para el emoji. */
+.ni{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:1.25em;height:1.25em;
+  opacity:1;              /* el emoji iba a .9 para atenuarlo; el SVG ya
+                             hereda el color atenuado del propio item */
+}
+.ni .ic{width:100%;height:100%;vertical-align:0;}
+
+/* Barra inferior: el icono manda sobre la etiqueta, que va a 9.5px. */
+.bn-icon{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:22px;height:22px;line-height:1;
+}
+.bn-icon .ic{width:22px;height:22px;vertical-align:0;}
+
+/* Menú "Más": icono y texto alineados. */
+.bn-more-item{gap:10px;}
+.bn-more-item .ic{width:19px;height:19px;vertical-align:0;}
+
+/* Cerrar sesión. */
+.logout-btn .ic{width:17px;height:17px;vertical-align:0;}
+
+/* Cabeceras de grupo plegables del menú del admin. */
+.nav-group .ni .ic{width:100%;height:100%;}
+
+/* En el item activo del admin el fondo pasa a celeste y el texto a azul
+   marino: el trazo del icono va con él, sin regla extra. */
+
+/* Icono del estado vacio: un simbolo grande y atenuado, no un emoji
+   a 32px que cada sistema dibuja distinto. */
+.ei{line-height:1;margin-bottom:10px;color:var(--bd2);}
+.ic-vacio{width:40px;height:40px;vertical-align:0;stroke-width:1.4;}
+.es strong{display:block;color:var(--td);font-weight:700;font-size:14px;margin-bottom:3px;}
+.es{line-height:1.5;max-width:42ch;margin-inline:auto;}
+
+/* ═══════════════════════════════════════════════════════════
+   UTILIDADES
+   ───────────────────────────────────────────────────────────
+   Entre los dos paneles había 541 atributos style="" con 244
+   declaraciones distintas. Muchas eran la misma idea escrita de
+   formas ligeramente diferentes: tres márgenes inferiores para
+   la misma separación, cuatro maneras de escribir "fila con
+   hueco de 8px". Con eso, un cambio de marca obliga a buscar y
+   reemplazar por todo el HTML.
+
+   Estas clases cubren los patrones que más se repetían. No
+   pretenden ser un framework: solo sacar del HTML lo que ya
+   estaba duplicado.
+
+   NO se tocó style="display:none": ahí no hay estilo, hay
+   estado. El JS lo conmuta con el.style.display='block' y
+   convertirlo en clase rompería media aplicación.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Espaciado — apoyado en la escala de tokens.css */
+.u-mb-0 { margin-bottom: 0 !important; }
+.u-mb-sm{ margin-bottom: var(--sp-sm); }
+.u-mb   { margin-bottom: var(--sp-md); }
+.u-mb-lg{ margin-bottom: var(--sp-lg); }
+.u-mt-sm{ margin-top: var(--sp-sm); }
+.u-p-0  { padding: 0 !important; }
+.u-p-sm { padding: var(--sp-sm); }
+
+/* Composición */
+.u-flex   { display: flex; }
+.u-row    { display: flex; align-items: center; }
+.u-row-6  { display: flex; align-items: center; gap: 6px; }
+.u-row-8  { display: flex; gap: 8px; }
+.u-row-10 { display: flex; gap: 10px; }
+.u-col-8  { display: flex; flex-direction: column; gap: 8px; }
+.u-between{ display: flex; align-items: center; justify-content: space-between; }
+.u-grow   { flex: 1; }
+.u-grow-2 { flex: 2; }
+.u-fixed  { flex-shrink: 0; }
+.u-w-full { width: 100%; }
+.u-rel    { position: relative; }
+
+/* Texto secundario. Ya existía como .tm2 en los dos paneles, pero
+   la mitad de los sitios repetía la declaración a mano. */
+.u-meta   { font-size: 11px; color: var(--tl); }
+.u-meta-2 { font-size: 12px; color: var(--tl); }
+
+/* Etiqueta de sección: versaditas, muy espaciada. */
+.u-label{
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .4px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BARRA INFERIOR — legibilidad
+   ───────────────────────────────────────────────────────────
+   Las etiquetas estaban a 9.5px con blanco al 55%: 4.56:1, que
+   pasa AA por los pelos, y un tamaño por debajo de lo cómodo.
+   Es la navegación principal en móvil — la que el vendedor usa
+   de pie, en la calle y con el sol de frente.
+
+   11px y blanco al 72% dan 6.6:1. La altura del botón no cambia
+   (sigue en 53px), así que el área táctil se mantiene.
+   ═══════════════════════════════════════════════════════════ */
+.bn-item{font-size:11px;color:rgba(255,255,255,.72);}
+.bn-item.active{color:var(--sky);font-weight:700;}
+
+/* Subtitulo de marca, rol y pie del menu: estaban a 10px. 11px es el
+   minimo que se lee comodo, y aqui no cuesta nada. */
+.sb-sb,.sb-user-role,.sb-foot p{font-size:11px;}

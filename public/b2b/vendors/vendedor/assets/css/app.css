@@ -1,0 +1,882 @@
+/* ═══════════════════════════════════════════════════════════
+   PANEL DE VENDEDORES
+   Los tokens ya no se declaran aquí. Viven en
+   assets/css/tokens.css, que también cargan el login y el admin.
+   Esta hoja solo define componentes.
+
+   tokens.css se enlaza desde el <head> ANTES que esta hoja. No se usa
+   @import: encadena una segunda petición que bloquea el render, y en
+   la calle con 3G eso se nota.
+   ═══════════════════════════════════════════════════════════ */
+
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html{font-size:15px;line-height:1.45;}
+body{font-family:"DM Sans",system-ui,sans-serif;color:var(--td);min-height:100vh;
+  background:var(--cream);
+  background-image:linear-gradient(160deg,#ffffff 0%,#ffffff 30%,#d6eef1 70%,#99D3DA 100%);
+  background-attachment:fixed;}
+h1,h2,h3,.display{font-family:"Bebas Neue",sans-serif;letter-spacing:.5px;font-weight:400;}
+.serif{font-family:"Instrument Serif",serif;font-style:italic;font-weight:400;letter-spacing:-.01em;}
+
+/* ===== LOGIN ===== */
+.login-screen{position:fixed;inset:0;background:linear-gradient(135deg,var(--brand) 0%,var(--brand3) 60%,#1e6e77 100%);display:flex;align-items:center;justify-content:center;z-index:9999;padding:1rem;}
+.login-card{background:rgba(255,255,255,.97);backdrop-filter:blur(12px);border-radius:24px;padding:2.8rem 2.2rem;width:100%;max-width:370px;text-align:center;box-shadow:var(--sh3);}
+.login-logo{width:74px;height:74px;border-radius:16px;object-fit:contain;margin:0 auto 1.2rem;display:block;}
+.login-title{font-family:"Bebas Neue",sans-serif;font-size:30px;letter-spacing:1.5px;color:var(--brand);margin-bottom:2px;}
+.login-sub{font-size:12px;color:var(--tl);margin-bottom:1.8rem;font-family:"Instrument Serif",serif;font-style:italic;}
+.login-field{display:flex;flex-direction:column;gap:5px;text-align:left;margin-bottom:1rem;}
+.login-field label{font-size:11px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.5px;}
+.login-field input{padding:.65rem .9rem;border:2px solid var(--bd);border-radius:var(--r);font-size:14px;font-family:"DM Sans",sans-serif;outline:none;transition:all .18s;width:100%;background:var(--cream);}
+.login-field input:focus{border-color:var(--sky);box-shadow:0 0 0 4px rgba(153,211,218,.2);background:#fff;}
+.login-btn{width:100%;padding:.78rem;background:var(--brand);color:#fff;border:none;border-radius:var(--r);font-size:14px;font-weight:700;font-family:"DM Sans",sans-serif;cursor:pointer;transition:all .15s;margin-top:.5rem;letter-spacing:.3px;}
+.login-btn:hover{background:var(--brand3);transform:translateY(-1px);box-shadow:0 4px 14px rgba(37,60,97,.35);}
+.login-error{background:var(--er-bg);color:var(--er);border:1px solid var(--er-b);border-radius:var(--r);padding:.55rem .85rem;font-size:12px;margin-top:.75rem;display:none;}
+.login-error.show{display:block;}
+.login-info{background:var(--sky4);border:1px solid var(--sky);border-radius:var(--r);padding:.55rem .85rem;font-size:12px;color:#1e6e77;margin-top:.75rem;display:none;}
+.login-info.show{display:block;}
+.login-remember{display:flex;align-items:center;gap:8px;margin-top:.8rem;font-size:12px;color:var(--tm);cursor:pointer;justify-content:center;}
+.login-remember input{width:auto;}
+.login-footer{margin-top:1.5rem;font-size:11px;color:var(--tl);}
+
+/* ===== SIDEBAR ===== */
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:232px;background:var(--brand);display:flex;flex-direction:column;z-index:100;box-shadow:4px 0 24px rgba(26,45,74,.2);}
+.sb-logo{padding:1.3rem 1.1rem 1rem;border-bottom:1px solid rgba(255,255,255,.1);}
+.sb-logo-row{display:flex;align-items:center;gap:11px;}
+.sb-ic img{width:38px;height:38px;object-fit:contain;border-radius:9px;display:block;}
+.sb-nm{font-family:"Bebas Neue",sans-serif;font-size:23px;color:#fff;letter-spacing:1.5px;line-height:1;}
+.sb-sb{font-size:10px;color:var(--sky);margin-top:2px;letter-spacing:.5px;}
+.sb-user{padding:.8rem 1.1rem;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.05);}
+.sb-user-name{font-size:13px;font-weight:700;color:#fff;}
+.sb-user-role{font-size:10px;color:var(--sky);margin-top:2px;font-family:"Instrument Serif",serif;font-style:italic;}
+.nav-sec{padding:.9rem .75rem .2rem;flex:1;overflow-y:auto;}
+.nav-lbl{font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--sky-on-brand);font-weight:700;padding:0 .5rem;margin-bottom:4px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:.52rem .75rem;border-radius:var(--r);cursor:pointer;color:rgba(255,255,255,.65);font-size:13px;font-weight:500;margin-bottom:2px;transition:all .15s;position:relative;}
+.nav-item:hover{background:rgba(255,255,255,.07);color:#fff;}
+.nav-item.active{background:rgba(153,211,218,.14);color:#fff;}
+.nav-item.active::before{content:"";position:absolute;left:-12px;top:8px;bottom:8px;width:3px;background:var(--orange);border-radius:0 3px 3px 0;}
+.ni{font-size:15px;width:18px;text-align:center;flex-shrink:0;opacity:.9;}
+.sb-foot{padding:.9rem 1.1rem;border-top:1px solid rgba(255,255,255,.08);}
+.sb-foot p{color:var(--sky-on-brand-dim);font-size:10px;}
+/* Color opaco en vez de rgba con alfa: el mismo token que el admin,
+   5.45:1 sobre el azul del menú. */
+.logout-btn{display:flex;align-items:center;gap:8px;padding:.48rem .75rem;border-radius:var(--r);cursor:pointer;color:var(--danger-on-brand);font-size:12.5px;font-weight:500;margin-bottom:7px;transition:all .15s;background:none;border:none;width:100%;font-family:"DM Sans",sans-serif;}
+.logout-btn:hover{background:rgba(255,154,154,.14);color:#ffc2c2;}
+
+/* ===== MAIN CONTENT ===== */
+.main{margin-left:232px;padding:1.6rem 2rem;min-height:100vh;}
+
+/* ===== PAGE HEADER ===== */
+.page{display:none;animation:fadeIn .3s ease;}.page.active{display:block;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(5px);}to{opacity:1;transform:translateY(0);}}
+.ph{display:flex;align-items:flex-end;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:12px;}
+.ph-l .kicker{font-size:11px;color:var(--orange-d);font-weight:700;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
+.pt{font-family:"Bebas Neue",sans-serif;font-size:38px;letter-spacing:.5px;color:var(--brand);line-height:1;}
+.ps{font-size:13px;color:var(--tl);margin-top:4px;}
+.ps em{font-style:normal;color:var(--brand);font-weight:600;}
+
+/* ===== STAT CARDS (small) ===== */
+.sg{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:1.3rem;}
+.sc{background:var(--wh);border-radius:var(--rl);border:1px solid rgba(230,225,215,.8);padding:.95rem 1.1rem;box-shadow:var(--sh);position:relative;overflow:hidden;}
+.sc::after{content:"";position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--sky),var(--brand3));}
+.sl{font-size:10px;color:var(--tl);font-weight:700;margin-bottom:5px;letter-spacing:.6px;text-transform:uppercase;}
+.sv{font-size:26px;font-weight:700;font-family:"Bebas Neue",sans-serif;letter-spacing:.5px;}
+.ss{font-size:11px;color:var(--tl);margin-top:2px;}
+.sv-b{color:var(--brand);}.sv-s{color:#1e8a94;}.sv-o{color:var(--orange);}.sv-g{color:var(--ok);}.sv-r{color:var(--er);}.sv-w{color:#d97706;}
+
+/* ===== CARDS ===== */
+.card{background:var(--wh);border-radius:var(--rl);border:1px solid rgba(230,225,215,.8);box-shadow:var(--sh);margin-bottom:1.2rem;}
+.ch{display:flex;align-items:center;justify-content:space-between;padding:.95rem 1.2rem;border-bottom:1px solid var(--bd);}
+.ct{font-family:"Bebas Neue",sans-serif;font-size:17px;letter-spacing:.5px;color:var(--brand);}
+.cs{font-size:12px;color:var(--tl);}
+.cb{padding:1.2rem;}
+
+/* ===== BUTTONS ===== */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:.48rem 1rem;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;font-family:"DM Sans",sans-serif;letter-spacing:.1px;}
+.btn:active{transform:scale(.97);}.btn:disabled{opacity:.5;cursor:not-allowed;}
+.btn-p{background:var(--brand);color:#fff;}.btn-p:hover:not(:disabled){background:var(--brand3);box-shadow:0 3px 12px rgba(37,60,97,.3);}
+.btn-sk{background:var(--sky);color:var(--brand);font-weight:700;}.btn-sk:hover:not(:disabled){background:var(--sky2);}
+.btn-s{background:var(--cream);color:var(--td);border:1.5px solid var(--bd2);}.btn-s:hover:not(:disabled){background:var(--sand);}
+.btn-d{background:var(--er-bg);color:var(--er);border:1px solid var(--er-b);}
+.btn-ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-b);}
+.btn-sm{padding:.28rem .65rem;font-size:11.5px;}
+
+/* ===== FORMS ===== */
+.row{display:flex;gap:7px;align-items:center;flex-wrap:wrap;}
+.fg{display:grid;grid-template-columns:1fr 1fr;gap:11px;}.fg .full{grid-column:1/-1;}
+.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px;}.fg3 .full{grid-column:1/-1;}
+.fgr{display:flex;flex-direction:column;gap:5px;}
+label{font-size:11px;font-weight:700;color:var(--tm);text-transform:uppercase;letter-spacing:.4px;}
+input,select,textarea{padding:.5rem .8rem;border:2px solid var(--bd);border-radius:var(--r);font-size:13px;font-family:"DM Sans",sans-serif;color:var(--td);background:var(--input-bg);outline:none;transition:border-color .15s,box-shadow .15s,background .15s;width:100%;}
+input:focus,select:focus,textarea:focus{border-color:var(--sky);box-shadow:0 0 0 4px rgba(153,211,218,.18);background:var(--input-bg-focus);}
+/* Sin esto, las casillas y los radios heredan width:100% y padding del
+   reset de arriba y se ven enormes. El admin ya lo tenía; aquí faltaba. */
+input[type=checkbox],input[type=radio]{width:auto;padding:0;border-width:1px;}
+textarea{resize:vertical;min-height:52px;}
+.req{color:var(--orange);margin-left:1px;}
+
+/* ===== TABLES ===== */
+.tw{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;font-size:12.5px;}
+thead th{text-align:left;padding:.55rem .8rem;background:var(--cream);color:var(--tm);font-weight:700;font-size:10px;letter-spacing:.8px;text-transform:uppercase;border-bottom:2px solid var(--bd);}
+tbody tr{border-bottom:1px solid var(--bd);}tbody td{padding:.65rem .8rem;vertical-align:middle;}
+tbody tr:hover{background:rgba(153,211,218,.06);}
+
+/* ===== BADGES ===== */
+.b{display:inline-block;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:600;}
+.b-pagado{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-b);}
+.b-pendiente{background:var(--warn-bg);color:var(--warn);border:1px solid var(--warn-b);}
+.b-vencido{background:var(--er-bg);color:var(--er);border:1px solid var(--er-b);}
+.b-devuelto{background:var(--neutral-bg);color:#374151;border:1px solid var(--neutral-b);}
+.b-contado{background:var(--sky4);color:#1e6e77;border:1px solid var(--sky);}
+.b-credito{background:var(--orange3);color:var(--orange-d);border:1px solid var(--orange2);}
+.b-delivery{background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd;}
+.b-devolucion{background:#f3f4f6;color:#374151;border:1px solid #d1d5db;}
+.b-cobro{background:#dcfce7;color:#166534;border:1px solid #86efac;}
+.b-visita{background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;}
+/* Era #9ca3af sobre #f3f4f6: 2.31:1, el peor contraste del portal.
+   Ahora 5.45:1 con el token neutro compartido. */
+.b-anulado{background:var(--neutral-bg);color:var(--neutral);border:1px solid var(--neutral-b);}
+
+/* ===== ALERTS / STATUS ===== */
+.alert{padding:.7rem 1rem;border-radius:var(--r);font-size:12px;margin-bottom:.7rem;display:flex;align-items:center;gap:8px;}
+.ai{background:var(--sky4);color:#1e6e77;border:1px solid var(--sky);}
+.st-bar{display:flex;align-items:center;gap:8px;padding:.48rem .9rem;border-radius:var(--r);font-size:12px;font-weight:500;margin-bottom:.9rem;}
+.st-ok{background:var(--ok-bg);color:var(--ok);border:1px solid var(--ok-b);}
+.st-er{background:var(--er-bg);color:var(--er);border:1px solid var(--er-b);}
+.st-ld{background:var(--sky4);color:#1e6e77;border:1px solid var(--sky);}
+.spin{display:inline-block;width:15px;height:15px;border:2.5px solid var(--bd);border-top-color:var(--sky);border-radius:50%;animation:spin .7s linear infinite;vertical-align:middle;margin-right:4px;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ===== TABS ===== */
+.tabs{display:flex;gap:5px;margin-bottom:1rem;flex-wrap:wrap;}
+.tab{padding:.38rem .9rem;border-radius:999px;font-size:12.5px;font-weight:600;cursor:pointer;border:1.5px solid var(--bd);background:var(--cream);color:var(--tm);transition:all .15s;}
+.tab:hover{background:var(--sand);}
+.tab.active{background:var(--brand);color:#fff;border-color:var(--brand);}
+.sb2{display:flex;gap:8px;margin-bottom:1rem;align-items:center;}.sb2 input{flex:1;}
+.es{text-align:center;padding:2.5rem 1rem;color:var(--tl);font-size:13px;}.ei{font-size:32px;margin-bottom:8px;}
+.tm2{color:var(--tl);font-size:11.5px;}
+.exp{display:inline-flex;align-items:center;gap:5px;font-size:11.5px;color:var(--brand);cursor:pointer;padding:.3rem .65rem;border-radius:var(--r);border:1.5px solid var(--sky);background:var(--sky4);font-family:"DM Sans",sans-serif;font-weight:700;}
+.exp:hover{background:var(--sky3);}
+
+/* ===== PLAN TABLE ===== */
+.plan-wrap{overflow-x:auto;}
+.plan-table{width:100%;border-collapse:collapse;font-size:12px;min-width:750px;}
+.plan-table th{padding:.54rem .65rem;background:var(--brand);color:#fff;font-weight:600;font-size:11px;text-align:left;white-space:nowrap;}
+.plan-table th.opt{background:#344f7a;color:rgba(255,255,255,.7);font-style:italic;}
+.plan-table th:first-child{width:100px;}
+.plan-table td{padding:.3rem .35rem;border:1px solid var(--bd);vertical-align:top;}
+.plan-table td:first-child{background:var(--cream);font-weight:600;font-size:11.5px;color:var(--tm);white-space:nowrap;min-width:90px;}
+.plan-table input{border:none;background:transparent;padding:.25rem .3rem;font-size:12px;outline:none;width:100%;min-width:100px;}
+.plan-table input:focus{background:var(--sky4);border-radius:4px;}
+.plan-add-row{display:flex;align-items:center;gap:8px;padding:.58rem .75rem;border-top:2px dashed var(--bd);}
+.plan-week-nav{display:flex;align-items:center;gap:10px;padding:.9rem 1.2rem;border-bottom:1px solid var(--bd);}
+.plan-week-label{font-family:"Bebas Neue",sans-serif;font-size:18px;color:var(--brand);flex:1;text-align:center;letter-spacing:.5px;}
+
+/* ===== KPI CARDS ===== */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:14px;margin-bottom:1.4rem;}
+.kpi-card{background:var(--wh);border-radius:var(--rl);border:1px solid rgba(230,225,215,.9);padding:1.1rem 1.2rem;box-shadow:var(--sh);position:relative;overflow:hidden;transition:box-shadow .2s;}
+.kpi-card:hover{box-shadow:var(--sh2);}
+.kpi-card::before{content:"";position:absolute;top:0;left:0;right:0;height:4px;}
+.kpi-blue::before{background:linear-gradient(90deg,var(--brand),var(--brand3));}
+.kpi-green::before{background:linear-gradient(90deg,var(--ok),var(--leaf));}
+.kpi-orange::before{background:linear-gradient(90deg,var(--orange),var(--orange2));}
+.kpi-sky::before{background:linear-gradient(90deg,var(--sky),#5ecad2);}
+.kpi-icon{font-size:24px;margin-bottom:7px;}
+.kpi-val{font-family:"Bebas Neue",sans-serif;font-size:28px;letter-spacing:.5px;color:var(--brand);line-height:1;}
+.kpi-lbl{font-size:10px;color:var(--tl);font-weight:700;margin-top:4px;letter-spacing:.5px;text-transform:uppercase;}
+.kpi-sub{font-size:11px;color:var(--tm);margin-top:5px;}
+
+/* ===== OPS CARDS (Dashboard) ===== */
+.ops-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;}
+.ops-card{background:var(--wh);border-radius:var(--rl);border:1px solid rgba(230,225,215,.9);padding:.75rem .9rem;box-shadow:var(--sh);cursor:pointer;transition:transform .15s ease,box-shadow .2s;position:relative;overflow:hidden;}
+.ops-card:hover{box-shadow:var(--sh2);transform:translateY(-2px);}
+.ops-card:active{transform:translateY(0);}
+.ops-card::before{content:"";position:absolute;top:0;left:0;bottom:0;width:4px;}
+
+/* ===== PRODUCTOS VENDIDOS GRID (Dashboard) - Responsive ===== */
+.prod-vendido-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;}
+.prod-vendido-card{transition:transform .15s ease,box-shadow .2s;}
+.prod-vendido-card:hover{transform:translateY(-2px);box-shadow:var(--sh2);}
+@media (max-width:768px){
+  .prod-vendido-grid{grid-template-columns:repeat(2,1fr);gap:8px;}
+  .prod-vendido-card{padding:.7rem .5rem !important;}
+  .prod-vendido-card > div:nth-child(2){font-size:28px !important;}
+}
+@media (max-width:380px){
+  .prod-vendido-grid{grid-template-columns:repeat(2,1fr);gap:6px;}
+}
+.ops-c-contado::before{background:#16a34a;}
+.ops-c-total::before{background:linear-gradient(180deg,var(--brand),var(--brand3));}
+.ops-c-total{border-color:var(--brand);}
+.ops-icon{font-size:18px;margin-bottom:3px;}
+.ops-lbl{font-size:9.5px;color:var(--tl);font-weight:700;letter-spacing:.4px;text-transform:uppercase;margin-bottom:2px;}
+.ops-val{font-family:"Bebas Neue",sans-serif;font-size:22px;letter-spacing:.5px;color:var(--brand);line-height:1;}
+.ops-sub{font-size:10px;color:var(--tm);margin-top:3px;}
+.ops-arrow{position:absolute;top:.55rem;right:.65rem;color:var(--tl);font-size:16px;font-weight:300;}
+
+/* Sidebar badge */
+.nav-badge{display:inline-block;background:#dc2626;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;margin-left:6px;min-width:18px;text-align:center;line-height:1.3;animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.5);}50%{box-shadow:0 0 0 6px rgba(220,38,38,0);}}
+
+/* Alert banner para créditos vencidos */
+.alert-cred-banner{background:linear-gradient(135deg,#dc2626 0%,#b91c1c 100%);color:#fff;border-radius:var(--rl);padding:.8rem 1rem;margin-bottom:.85rem;box-shadow:0 4px 12px rgba(220,38,38,.25);cursor:pointer;display:flex;align-items:center;gap:12px;transition:transform .15s,box-shadow .2s;}
+.alert-cred-banner:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(220,38,38,.35);}
+.alert-cred-banner.warning{background:linear-gradient(135deg,#f59e0b 0%,#d97706 100%);box-shadow:0 4px 12px rgba(245,158,11,.25);}
+.alert-cred-banner.warning:hover{box-shadow:0 6px 16px rgba(245,158,11,.35);}
+.alert-cred-icon{font-size:26px;flex-shrink:0;}
+.alert-cred-content{flex:1;min-width:0;}
+.alert-cred-title{font-size:13px;font-weight:700;margin-bottom:2px;letter-spacing:.2px;}
+.alert-cred-sub{font-size:11.5px;opacity:.95;line-height:1.3;}
+.alert-cred-arrow{font-size:22px;font-weight:300;opacity:.85;flex-shrink:0;}
+
+/* ===== RESPONSIVE: MOBILE ===== */
+@media (max-width: 768px){
+  .ops-grid{grid-template-columns:repeat(2,1fr);gap:8px;}
+  .ops-card{padding:.65rem .7rem;}
+  .ops-val{font-size:19px;}
+  .ops-icon{font-size:16px;margin-bottom:2px;}
+  .ops-lbl{font-size:9px;}
+  .ops-sub{font-size:9.5px;}
+  .ops-arrow{display:none;}
+  /* Total card spans both columns */
+  .ops-card.ops-c-total{grid-column:1/-1;}
+  .ops-c-total .ops-val{font-size:26px !important;}
+  /* Alert banners stack content tighter */
+  .alert-cred-banner{padding:.7rem .85rem;gap:10px;margin-bottom:.7rem;}
+  .alert-cred-icon{font-size:22px;}
+  .alert-cred-title{font-size:12.5px;}
+  .alert-cred-sub{font-size:11px;}
+  .alert-cred-arrow{display:none;}
+}
+@media (max-width: 480px){
+  .ops-grid{grid-template-columns:repeat(2,1fr);}
+}
+.ops-c-delivery::before{background:#3b82f6;}
+.ops-c-credito::before{background:#d97706;}
+.ops-c-cobros::before{background:#0891b2;}
+.ops-c-devol::before{background:#dc2626;}
+
+/* ===== CREDIT / MERCH ITEMS ===== */
+.cred-item{background:var(--wh);border:1px solid rgba(230,225,215,.8);border-radius:var(--rl);padding:.95rem 1.1rem;margin-bottom:.75rem;display:flex;align-items:center;gap:12px;flex-wrap:wrap;box-shadow:var(--sh);}
+.cred-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.cred-dot.venc{background:var(--er);}.cred-dot.pend{background:#d97706;}
+.merch-card{background:linear-gradient(135deg,var(--sky4),#fff);border:1px solid var(--sky);border-radius:var(--rl);padding:.95rem 1.2rem;margin-bottom:.75rem;display:flex;align-items:center;justify-content:space-between;gap:12px;box-shadow:var(--sh);}
+
+/* ===== VDD ITEMS ===== */
+.vdd-item{padding:.58rem .9rem;cursor:pointer;border-bottom:1px solid var(--bd);transition:background .12s;}
+.vdd-item:hover{background:rgba(153,211,218,.08);}
+.vdd-item:last-child{border-bottom:none;}
+.cli-tab{cursor:pointer;}
+
+/* ===== MODALS ===== */
+.mo{display:none;position:fixed;inset:0;background:rgba(26,45,74,.5);backdrop-filter:blur(3px);z-index:200;align-items:center;justify-content:center;}
+.mo.open{display:flex;}
+.md{background:var(--wh);border-radius:var(--rxl);width:540px;max-width:96vw;max-height:92vh;overflow-y:auto;overscroll-behavior:contain;box-shadow:var(--sh3);}
+.mh{display:flex;align-items:center;justify-content:space-between;padding:1rem 1.3rem;border-bottom:1px solid var(--bd);position:sticky;top:0;background:var(--wh);z-index:1;border-radius:var(--rxl) var(--rxl) 0 0;}
+.mt2{font-family:"Bebas Neue",sans-serif;font-size:21px;letter-spacing:.5px;color:var(--brand);}
+.mc{background:rgba(37,60,97,.06);border:none;cursor:pointer;font-size:16px;color:var(--tl);line-height:1;padding:5px 8px;border-radius:8px;transition:background .12s;}
+.mc:hover{background:rgba(37,60,97,.12);}
+.mb{padding:1.3rem;}
+.mf{padding:.8rem 1.3rem;border-top:1px solid var(--bd);display:flex;gap:8px;justify-content:flex-end;background:var(--cream);position:sticky;bottom:0;}
+
+/* ===== RESPONSIVE ===== */
+@media(max-width:768px){
+  .sidebar{display:none;}
+  .main{margin-left:0;padding:.9rem 1rem;padding-bottom:85px;overflow-x:hidden;max-width:100vw;box-sizing:border-box;}
+  .sg{grid-template-columns:1fr 1fr;}
+  .fg,.fg3{grid-template-columns:1fr;}
+  .kpi-grid{grid-template-columns:1fr 1fr;}
+  .ch{flex-wrap:wrap;gap:5px;}
+  .ch .cs{font-size:11.5px;color:var(--tl);width:100%;}
+  table{font-size:12px;}
+  .nivel-widget{padding:14px 16px;}
+  .nw-nivel{font-size:24px;}
+  .nw-stats{gap:8px;}
+  /* .tipo-btn en móvil ya lo cubre registrar-visita.css (compartido con
+     el admin) — no repetirlo aquí con otro punto de quiebre distinto. */
+  .ph{margin-bottom:.8rem;}
+  .visit-layout{grid-template-columns:1fr;}
+}
+@media(max-width:400px){
+  .kpi-grid{grid-template-columns:1fr;}
+}
+
+/* ===== BOTTOM NAV ===== */
+.bottom-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--brand);border-top:1px solid rgba(255,255,255,.12);z-index:150;padding-bottom:env(safe-area-inset-bottom,0px);}
+.bottom-nav-inner{display:flex;justify-content:space-around;}
+.bn-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:.58rem .2rem .48rem;cursor:pointer;color:rgba(255,255,255,.55);font-size:9.5px;font-weight:600;gap:3px;border:none;background:none;font-family:"DM Sans",sans-serif;transition:color .12s;}
+.bn-icon{font-size:21px;line-height:1;}
+.bn-item.active{color:var(--sky);}
+.bn-more-menu{display:none;position:fixed;bottom:0;left:0;right:0;background:var(--brand2);border-top:1px solid rgba(255,255,255,.12);z-index:160;padding:1.1rem;padding-bottom:calc(env(safe-area-inset-bottom,0px) + 72px);border-radius:20px 20px 0 0;}
+.bn-more-menu.open{display:block;}
+.bn-more-grid{display:grid;grid-template-columns:1fr 1fr;gap:9px;}
+.bn-more-item{display:flex;align-items:center;gap:10px;padding:.7rem 1rem;border-radius:var(--r);cursor:pointer;color:rgba(255,255,255,.85);font-size:13px;font-weight:500;background:rgba(255,255,255,.09);border:none;font-family:"DM Sans",sans-serif;width:100%;transition:background .12s;}
+.bn-more-item:hover{background:rgba(153,211,218,.2);}
+.bn-overlay{display:none;position:fixed;inset:0;z-index:155;background:rgba(0,0,0,.35);}
+.bn-overlay.open{display:block;}
+@media(max-width:768px){.bottom-nav{display:block;}}
+@media(max-width:600px){.md{width:100%!important;max-width:100%!important;border-radius:var(--rxl) var(--rxl) 0 0!important;margin-top:auto;max-height:95vh;}}
+
+/* ===== WIZARD STEPS ===== */
+/* .flow-steps / .flow-step / .fsn viven en assets/css/registrar-visita.css,
+   compartidos con el admin: son el mismo componente en las dos pantallas. */
+
+/* ===== VISIT 2-COL LAYOUT ===== */
+.visit-layout{display:grid;grid-template-columns:1.3fr 1fr;gap:20px;align-items:start;}
+@media(max-width:900px){.visit-layout{grid-template-columns:1fr;}}
+
+/* ===== TIPO CARDS ===== */
+/* .tipo-grid / .tipo-btn viven en assets/css/registrar-visita.css,
+   compartidos con el admin: son el mismo selector de tipo de movimiento
+   en las dos pantallas (antes el admin lo reimplementaba con ~15 estilos
+   inline por tarjeta bajo el nombre .rv-tipo-card). */
+
+/* ===== SUMMARY PANEL ===== */
+.visit-summary{background:var(--brand);color:#fff;border-radius:16px;padding:22px;position:sticky;top:20px;}
+.vsm-kicker{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--sky);margin-bottom:10px;}
+.vsm-title{font-family:'Bebas Neue',sans-serif;font-size:22px;color:#fff;margin-bottom:4px;min-height:26px;}
+.vsm-meta{font-size:11px;color:rgba(153,211,218,.7);margin-bottom:14px;min-height:14px;}
+.vsm-empty{display:flex;flex-direction:column;align-items:center;padding:20px;color:rgba(255,255,255,.4);font-size:12px;text-align:center;gap:8px;}
+.vsm-empty .ei{font-size:26px;}
+.vsm-item{display:flex;justify-content:space-between;align-items:flex-start;padding:9px 0;border-bottom:1px solid rgba(255,255,255,.12);gap:8px;}
+.vsm-item:last-of-type{border-bottom:none;}
+.vsm-tipo{font-size:12px;font-weight:600;color:#fff;}
+.vsm-det{font-size:11px;color:rgba(255,255,255,.6);margin-top:2px;}
+.vsm-amt{font-family:'Bebas Neue',sans-serif;font-size:17px;color:var(--sky);white-space:nowrap;}
+.vsm-total-row{padding-top:12px;margin-top:4px;border-top:2px solid rgba(255,255,255,.2);display:flex;justify-content:space-between;align-items:baseline;}
+.vsm-total-lbl{font-size:11px;color:var(--sky);text-transform:uppercase;letter-spacing:1px;}
+.vsm-total-val{font-family:'Bebas Neue',sans-serif;font-size:38px;color:#fff;}
+
+/* ===== PLAN SEMANAL ===== */
+.plan-cal-wrap{overflow-x:auto;}
+/* 640px = 56px de la columna HORA + 7 dias de ~83px. Por debajo de ese
+   ancho las celdas dejan de ser usables, asi que el movil pasa a la
+   vista de un solo dia (ver bloque responsive mas abajo). */
+.plan-cal{min-width:640px;}
+.plan-cal-header{display:grid;grid-template-columns:56px repeat(7,1fr);background:var(--brand);border-radius:10px 10px 0 0;}
+.plan-cal-header-cell{padding:10px 6px;font-size:11px;font-weight:700;color:rgba(255,255,255,.8);text-transform:uppercase;letter-spacing:.5px;text-align:center;}
+.plan-cal-header-cell.weekend{color:var(--sky);}
+/* La columna HORA queda fija al desplazar en horizontal: sin ella se
+   pierde la referencia de a que hora corresponde cada celda. */
+.plan-cal-header-cell:first-child{position:sticky;left:0;z-index:2;background:var(--brand);}
+.plan-cal-row{display:grid;grid-template-columns:56px repeat(7,1fr);border-bottom:1px solid var(--bd);}
+.plan-time-cell{position:sticky;left:0;z-index:2;padding:10px 6px;font-size:11px;color:var(--tl);font-weight:700;background:var(--wh);border-right:2px solid var(--sky4);display:flex;align-items:flex-start;justify-content:flex-end;}
+.plan-hora-input{background:transparent;border:none;outline:none;width:100%;min-width:0;font-size:11px;font-weight:700;color:var(--tl);text-align:right;font-family:"DM Sans",sans-serif;}
+.plan-day-cell{min-height:52px;padding:4px;background:var(--wh);min-width:0;}
+.plan-day-cell.weekend{background:var(--sky4);}
+.plan-event-visita{background:#bae6fd;border-radius:6px;padding:5px 7px;font-size:11px;font-weight:600;color:#0c4a6e;cursor:pointer;margin:2px;}
+.plan-event-cobro{background:var(--sky);border-radius:6px;padding:5px 7px;font-size:11px;font-weight:600;color:var(--brand);cursor:pointer;margin:2px;}
+.plan-event-nuevo{background:#a5d6a7;border-radius:6px;padding:5px 7px;font-size:11px;font-weight:600;color:#1b5e20;cursor:pointer;margin:2px;}
+.plan-event-delivery{background:#c5cae9;border-radius:6px;padding:5px 7px;font-size:11px;font-weight:600;color:#283593;cursor:pointer;margin:2px;}
+.ev-name{font-size:11px;font-weight:600;word-break:break-word;}
+.ev-tipo{font-size:10px;opacity:.75;margin-top:1px;}
+.plan-event-ruta{background:#fde68a;border-radius:6px;padding:5px 7px;margin:2px;}
+.ev-ruta-stop{font-size:10px;font-weight:600;color:#78350f;line-height:1.35;white-space:normal;word-break:break-word;}
+.ev-ruta-stop+.ev-ruta-stop{margin-top:3px;padding-top:3px;border-top:1px solid rgba(120,53,15,.18);}
+.plan-input-event{width:100%;background:transparent;border:none;outline:none;font-size:11px;padding:5px 6px;color:var(--tl);min-height:30px;}
+.plan-leg-dot{display:inline-block;width:10px;height:10px;margin-right:4px;flex-shrink:0;}
+.plan-legend{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:11px;color:var(--tl);}
+.plan-legend > span{display:inline-flex;align-items:center;white-space:nowrap;}
+.btn-sk{background:transparent;border:1.5px solid var(--bd);color:var(--tl);padding:.5rem 1rem;border-radius:var(--r);font-size:12px;cursor:pointer;white-space:nowrap;font-family:"DM Sans",sans-serif;}
+.btn-sk:hover{border-color:var(--sky);color:var(--brand);}
+
+/* Cabecera de la semana + acciones */
+.plan-weekbar{padding:.8rem 1.2rem;border-bottom:1px solid var(--bd);font-family:"Bebas Neue",sans-serif;font-size:15px;letter-spacing:.5px;color:var(--brand);}
+.plan-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.plan-actions .btn{white-space:nowrap;}
+/* Selector de dia: solo existe en la vista movil de un dia */
+.plan-daybar{display:none;}
+.plan-foot{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:.65rem 1rem;border-top:1px solid var(--bd);}
+/* Sin opacity: --tl al 80% baja a 3.5:1 sobre blanco y no llega al
+   minimo AA de 4.5:1. A opacidad plena queda en 5.4:1. */
+.plan-hint{flex:1 1 190px;min-width:0;margin:0;font-size:11px;color:var(--tl);line-height:1.4;}
+
+/* ── PLAN SEMANAL: MOVIL ──
+   Una rejilla de 7 dias no cabe en un telefono: antes se resolvia con
+   scroll horizontal, que choca con el gesto de volver atras y deja el
+   pie de tabla (boton "Agregar hora" + leyenda) aplastado en tres
+   columnas ilegibles. En movil se muestra un dia a la vez; las siete
+   celdas siguen en el DOM, asi que guardarPlan() sigue leyendolas todas. */
+@media (max-width:768px){
+  .plan-actions{width:100%;gap:6px;}
+  .plan-actions .btn{flex:1 1 0;min-width:0;min-height:44px;justify-content:center;padding:.5rem .35rem;font-size:12px;}
+  .plan-actions .plan-save-btn{flex:1 1 100%;order:3;}
+  .plan-weekbar{padding:.7rem 1rem;text-align:center;}
+
+  .plan-daybar{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;padding:.5rem .4rem;background:var(--sky4);border-bottom:1px solid var(--bd);}
+  .plan-day-chip{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-height:46px;padding:3px 1px;border:1.5px solid transparent;border-radius:10px;background:transparent;color:var(--tl);font-family:"DM Sans",sans-serif;cursor:pointer;transition:background .15s,color .15s;}
+  .plan-day-chip .pdc-d{font-size:9.5px;font-weight:700;letter-spacing:.3px;text-transform:uppercase;}
+  .plan-day-chip .pdc-n{font-size:15px;font-weight:700;line-height:1;color:var(--brand);}
+  .plan-day-chip .pdc-dot{width:5px;height:5px;border-radius:50%;background:transparent;}
+  .plan-day-chip.has-ev .pdc-dot{background:var(--brand);}
+  .plan-day-chip.is-on{background:var(--brand);border-color:var(--brand);color:rgba(255,255,255,.85);}
+  .plan-day-chip.is-on .pdc-n{color:#fff;}
+  .plan-day-chip.is-on.has-ev .pdc-dot{background:var(--sky);}
+
+  .plan-cal-wrap{overflow-x:visible;}
+  .plan-cal{min-width:0;}
+  .plan-cal-header{display:none;}
+  .plan-cal-row{grid-template-columns:52px minmax(0,1fr);}
+  .plan-time-cell{position:static;padding:7px 4px;align-items:center;}
+  .plan-hora-input{min-height:44px;font-size:12px;}
+  .plan-day-cell{min-height:58px;padding:5px;}
+  .plan-cal[data-day="0"] .plan-day-cell:not([data-di="0"]),
+  .plan-cal[data-day="1"] .plan-day-cell:not([data-di="1"]),
+  .plan-cal[data-day="2"] .plan-day-cell:not([data-di="2"]),
+  .plan-cal[data-day="3"] .plan-day-cell:not([data-di="3"]),
+  .plan-cal[data-day="4"] .plan-day-cell:not([data-di="4"]),
+  .plan-cal[data-day="5"] .plan-day-cell:not([data-di="5"]),
+  .plan-cal[data-day="6"] .plan-day-cell:not([data-di="6"]){display:none;}
+
+  /* Objetivos tactiles de 44px: se rellena el plan de pie, en la calle. */
+  .plan-input-event{min-height:44px;font-size:13px;padding:6px 8px;}
+  .plan-event-visita,.plan-event-cobro,.plan-event-nuevo,.plan-event-delivery,.plan-event-ruta{display:flex;flex-direction:column;justify-content:center;min-height:44px;padding:9px 11px;}
+  .ev-name{font-size:13px;}
+  .ev-tipo{font-size:11px;}
+  .ev-ruta-stop{font-size:12px;}
+
+  .plan-foot{flex-direction:column;align-items:stretch;gap:10px;padding:.75rem 1rem;}
+  .plan-add-btn{order:1;width:100%;min-height:44px;font-size:13px;}
+  .plan-legend{order:2;gap:8px 14px;}
+  .plan-hint{order:3;flex:none;}
+}
+
+/* ===== MERCH CARDS ===== */
+.merch-grid-new{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px;margin-bottom:20px;}
+.merch-card-new{background:var(--wh);border:1.5px solid var(--bd);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:10px;position:relative;overflow:hidden;}
+.merch-card-new .mc-bag{width:64px;height:64px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0;}
+.mc-bag.blue{background:#e8f4fd;}
+.mc-bag.pink{background:#fce4ec;}
+.mc-bag.yellow{background:var(--sky4);}
+.mc-name{font-size:13px;font-weight:700;color:var(--brand);}
+.mc-type{font-size:10px;color:var(--tl);text-transform:uppercase;letter-spacing:.5px;}
+.mc-qty-big{font-family:'Bebas Neue',sans-serif;font-size:42px;color:var(--brand);line-height:1;}
+.mc-qty-zero{font-family:'Bebas Neue',sans-serif;font-size:42px;color:#e74c3c;line-height:1;}
+.mc-unit{font-size:11px;color:var(--tl);text-transform:uppercase;letter-spacing:.8px;}
+.mc-bar-wrap{height:6px;background:var(--sky4);border-radius:99px;overflow:hidden;}
+.mc-bar-fill{height:100%;border-radius:99px;transition:width .4s;}
+.mc-bar-green{background:#27ae60;}
+.mc-bar-sky{background:var(--sky);}
+.mc-bar-red{background:#e74c3c;}
+.mc-bar-lbl{font-size:10px;color:var(--tl);}
+.mc-badge-low{position:absolute;top:10px;right:10px;background:#e74c3c;color:#fff;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;padding:3px 8px;border-radius:99px;}
+.merch-alert-new{background:#fff8e1;border:1.5px solid var(--sky);border-radius:12px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px;}
+.merch-alert-new .ma-txt{font-size:13px;font-weight:600;color:var(--brand);}
+.merch-alert-new .ma-sub{font-size:11px;color:var(--tl);margin-top:2px;}
+
+/* ===== NIVEL WIDGET ===== */
+.nivel-widget{background:var(--brand);color:#fff;border-radius:16px;padding:20px 22px;margin-bottom:20px;}
+.nw-kicker{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--sky);margin-bottom:8px;}
+.nw-hello{font-family:'Bebas Neue',sans-serif;font-size:18px;color:rgba(255,255,255,.8);}
+.nw-nivel{font-family:'Bebas Neue',sans-serif;font-size:30px;color:var(--sky);letter-spacing:1px;margin-bottom:4px;}
+.nw-ventas{font-size:12px;color:rgba(255,255,255,.65);margin-bottom:14px;}
+.nw-bar-wrap{height:8px;background:rgba(255,255,255,.15);border-radius:99px;overflow:hidden;margin-bottom:5px;}
+.nw-bar-fill{height:100%;background:var(--sky);border-radius:99px;transition:width .5s;}
+.nw-bar-labels{display:flex;justify-content:space-between;font-size:10px;color:rgba(153,211,218,.6);margin-bottom:4px;}
+.nw-prog-msg{font-size:11px;color:rgba(153,211,218,.7);margin-bottom:14px;}
+.nw-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding-top:12px;border-top:1px solid rgba(255,255,255,.15);}
+.nw-stat-val{font-family:'Bebas Neue',sans-serif;font-size:20px;color:#fff;}
+.nw-stat-lbl{font-size:10px;color:rgba(153,211,218,.6);text-transform:uppercase;letter-spacing:.5px;}
+
+/* Override orange buttons - use sky/brand instead */
+.btn-cta{background:var(--brand) !important;color:#fff !important;border-color:var(--brand) !important;}
+.btn-cta:hover{background:var(--sky) !important;color:var(--brand) !important;border-color:var(--sky) !important;}
+/* Los campos celestes ya son la regla base (--input-bg en tokens.css).
+   Aquí había un bloque con !important que repetía el color a mano y,
+   al enfocar, oscurecía el campo (#d6f0f3): justo al revés de lo que
+   conviene — al escribir lo que importa es leer lo escrito. */
+
+
+/* ═══════════════════════════════════════════════════════════
+   PANTALLA DE ARRANQUE
+   Cubre la app mientras el guard de sesión decide si dejar pasar.
+   Sin esto se ve medio segundo de panel vacío antes del redirect.
+   ═══════════════════════════════════════════════════════════ */
+.app-boot{
+  position:fixed;inset:0;z-index:10000;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;
+  background:var(--brand,#253C61);color:#fff;
+}
+.app-boot[hidden]{display:none;}
+.app-boot img{width:64px;height:64px;border-radius:14px;object-fit:contain;}
+.app-boot p{font-size:13.5px;opacity:.85;margin:0;font-family:"DM Sans",system-ui,sans-serif;}
+.app-boot-spinner{
+  width:26px;height:26px;border-radius:50%;
+  border:3px solid rgba(255,255,255,.25);
+  border-top-color:var(--sky,#99D3DA);
+  animation:app-boot-spin .7s linear infinite;
+}
+@keyframes app-boot-spin{to{transform:rotate(360deg);}}
+@media (prefers-reduced-motion: reduce){
+  .app-boot-spinner{animation-duration:2s;}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   FOCO VISIBLE
+   Antes solo los inputs mostraban foco. Botones, items de menú y
+   enlaces no daban ninguna señal, así que navegar con teclado era
+   moverse a ciegas. :focus-visible solo se activa con teclado, por
+   lo que el clic con ratón sigue viéndose igual que siempre.
+   ═══════════════════════════════════════════════════════════ */
+button:focus-visible,
+a:focus-visible,
+[role="button"]:focus-visible,
+.nav-item:focus-visible,
+.bn-item:focus-visible,
+.bn-more-item:focus-visible,
+.tab:focus-visible,
+summary:focus-visible{
+  outline:3px solid var(--sky,#99D3DA);
+  outline-offset:2px;
+  border-radius:6px;
+}
+
+/* Sobre el sidebar (fondo azul marino) el celeste se pierde: allí el
+   contorno va en blanco para que se distinga. */
+.sidebar .nav-item:focus-visible,
+.sidebar button:focus-visible{
+  outline-color:#fff;
+}
+
+/* Los items de menú son divs con onclick. Sin tabindex el teclado ni
+   siquiera llega a ellos, así que se les da rol y foco desde el CSS
+   no es posible: se marca aquí para que el JS los haga enfocables. */
+.nav-item{cursor:pointer;}
+
+/* ── Legibilidad del texto más pequeño ──
+   Había etiquetas a 9 y 9.5px. Por debajo de 10.5px el texto deja de
+   ser cómodo en móvil, sobre todo para quien usa el panel en la calle. */
+.sl,.ss,.cs,.ps{font-size:11px;}
+.nav-lbl{font-size:10.5px;}
+
+/* Respetar el ajuste de tamaño de fuente del sistema en móvil. */
+@media (max-width:768px){
+  .sl,.ss,.cs{font-size:11.5px;}
+}
+
+/* Etiquetas de las tarjetas KPI: estaban a 9-10px, ilegibles en movil. */
+.kpi-lbl,.ops-lbl{font-size:11px;}
+.ops-sub{font-size:11px;}
+@media (max-width:768px){.kpi-lbl,.ops-lbl,.ops-sub{font-size:11.5px;}}
+
+/* ═══════════════════════════════════════════════════════════
+   COBRO PARCIAL — selector de forma de pago
+   ═══════════════════════════════════════════════════════════ */
+.cp-modo{
+  display:grid;grid-template-columns:1fr 1fr;gap:6px;
+  background:var(--gry,#f2f2f2);padding:4px;border-radius:var(--rl,12px);
+}
+.cp-modo-btn{
+  padding:.55rem .5rem;border:none;border-radius:var(--r,10px);
+  background:transparent;color:var(--tm,#4a5568);
+  font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;
+  transition:background .15s,color .15s,box-shadow .15s;
+}
+.cp-modo-btn:hover:not(.is-on){background:rgba(255,255,255,.6);}
+.cp-modo-btn.is-on{
+  background:var(--wh,#fff);color:var(--brand,#253C61);font-weight:700;
+  box-shadow:0 1px 4px rgba(37,60,97,.14);
+}
+
+.cp-ayuda{font-size:12px;color:var(--tl,#5f6b7d);margin-bottom:6px;line-height:1.45;}
+
+.cp-resumen{
+  background:var(--sky4,#eaf7f9);border:1px solid var(--sky,#99D3DA);
+  border-radius:var(--r,10px);padding:.7rem .85rem;margin-bottom:.9rem;
+  font-size:13px;line-height:1.5;color:var(--td,#1a2535);
+}
+.cp-resumen[hidden]{display:none;}
+.cp-resumen.is-full{
+  background:var(--ok-bg,#e8f5ea);border-color:var(--ok-b,#a3d9a8);color:var(--ok,#2d7a3a);
+  font-weight:600;
+}
+.cp-nota{
+  display:block;margin-top:.45rem;padding-top:.45rem;
+  border-top:1px solid rgba(37,60,97,.12);
+  font-size:11.5px;color:var(--tm,#4a5568);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ÁREA TÁCTIL MÍNIMA
+   ───────────────────────────────────────────────────────────
+   Medido antes de este bloque, a 375px de ancho:
+     .btn-sm  20px   .exp  23px   .btn  29px
+     .tab     32px   input 34px   .b    24px
+   Ninguno llegaba a los 44px que necesita un dedo. El vendedor
+   usa esto en la calle, de pie y con una mano; "Anular" a 22px
+   pegado a "Cobrar" es un error de cobro esperando a pasar.
+
+   Se condiciona a (pointer:coarse) y no a un ancho de pantalla:
+   lo que decide el tamaño es si se apunta con el dedo o con un
+   ratón, no si la ventana es estrecha. Así el escritorio conserva
+   su densidad — que en el admin hace falta — y el móvil y la
+   tablet ganan el área que les corresponde.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Con ratón, el mínimo sigue siendo generoso: 20px era pequeño
+   incluso para un cursor. */
+.btn-sm{min-height:28px;}
+.exp{min-height:28px;}
+
+@media (pointer: coarse){
+  .btn,
+  .btn-sm,
+  .tab,
+  .exp,
+  .logout-btn,
+  .nav-item,
+  .bn-more-item,
+  .cp-modo-btn,
+  .cli-tab,
+  .vdd-item,
+  select,
+  textarea,
+  input:not([type=checkbox]):not([type=radio]):not([type=hidden]){
+    min-height:var(--tap);
+  }
+
+  /* El texto también sube: un botón de 44px con letra de 11.5px se ve
+     vacío y sigue costando leerlo bajo el sol. */
+  .btn-sm{padding:.55rem .9rem;font-size:13px;}
+  .exp{padding:.55rem .9rem;font-size:12.5px;}
+  .tab{padding:.6rem 1.1rem;}
+
+  /* Botones que solo llevan un icono (cerrar modal, quitar fila):
+     cuadrados de 44, no rectángulos de 44×20. */
+  .icon-btn{min-width:var(--tap);min-height:var(--tap);
+    display:inline-flex;align-items:center;justify-content:center;}
+
+  /* Separación entre controles contiguos. Pegados, el dedo acierta
+     el de al lado — y aquí el de al lado suele ser "Anular". */
+  .row{gap:10px;}
+  .tabs{gap:8px;}
+  .mf{gap:10px;}
+
+  /* Casillas y radios: no crecen en alto, crecen en área pulsable
+     a través de su etiqueta. */
+  input[type=checkbox],
+  input[type=radio]{width:20px;height:20px;}
+  label:has(> input[type=checkbox]),
+  label:has(> input[type=radio]){min-height:var(--tap);display:flex;align-items:center;gap:9px;}
+
+  /* Excepciones: la rejilla del plan semanal son celdas de tabla que se
+     editan en línea. A 44px cada una, la semana no cabe en la pantalla. */
+  .plan-table input{min-height:34px;}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ENCABEZADOS Y ENLACE DE SALTO
+   ───────────────────────────────────────────────────────────
+   Los títulos eran <div class="pt"> y <span class="ct">. Para
+   un lector de pantalla el documento no tenía ni un encabezado:
+   no se podía saltar de sección en sección ni hacerse una idea
+   de la estructura. Ahora son <h1> y <h2> reales.
+
+   Las clases .pt/.ct/.mt2 siguen fijando tipografía y tamaño, y
+   una clase gana a un selector de etiqueta, así que el aspecto
+   no cambia. Esta regla solo evita que un <h1> o <h2> sin clase
+   herede el tamaño y el peso enormes del navegador.
+   ═══════════════════════════════════════════════════════════ */
+h1,h2,h3,h4,h5,h6{font-size:inherit;font-weight:inherit;line-height:inherit;}
+
+/* Fuera de pantalla hasta que recibe el foco con Tab. */
+.skip-link{
+  position:absolute;left:8px;top:-64px;z-index:10001;
+  padding:.7rem 1.1rem;border-radius:0 0 var(--r) var(--r);
+  background:var(--brand);color:#fff;
+  font-family:"DM Sans",system-ui,sans-serif;font-size:14px;font-weight:700;
+  text-decoration:none;
+  transition:top .16s ease;
+}
+.skip-link:focus{top:0;}
+.skip-link:focus-visible{outline:3px solid var(--sky);outline-offset:2px;}
+
+/* El <main> recibe el foco al saltar (tabindex="-1") pero no debe
+   dibujar un contorno alrededor de toda la página al hacerlo. */
+main:focus{outline:none;}
+
+@media (prefers-reduced-motion: reduce){
+  .skip-link{transition:none;}
+}
+
+/* ═══════════════════════════════════════════════════════════
+   DIÁLOGOS SVUI (ui-dialogos.js)
+   Sustituyen a alert/confirm/prompt. Reutilizan .mo/.md/.mh/.mb/.mf,
+   así que aquí solo va lo propio del contenido.
+   ═══════════════════════════════════════════════════════════ */
+.svui-msg{
+  font-size:14px;line-height:1.55;color:var(--tm);
+  margin:0;white-space:pre-line;   /* respeta los saltos de línea del mensaje */
+}
+.svui-campo{margin-top:1rem;}
+.svui-ayuda{
+  font-size:11.5px;color:var(--tl);margin-top:2px;
+  font-weight:400;text-transform:none;letter-spacing:0;
+}
+.svui-error{
+  margin-top:6px;padding:.5rem .7rem;border-radius:var(--r);
+  background:var(--er-bg);border:1px solid var(--er-b);color:var(--er);
+  font-size:12.5px;line-height:1.45;
+}
+.svui-error[hidden]{display:none;}
+
+/* En móvil el diálogo sube desde abajo, como el resto de modales. */
+@media (max-width:600px){
+  .mo[id^="svui-"] .md{
+    width:100%!important;max-width:100%!important;
+    border-radius:var(--rxl) var(--rxl) 0 0!important;
+    margin-top:auto;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════
+   VALIDACIÓN EN LÍNEA DE FORMULARIOS
+   El error va pegado al campo que falla, no en una alerta que
+   tapa el formulario y obliga a recordar qué decía.
+   ═══════════════════════════════════════════════════════════ */
+.campo-error{
+  display:block;margin-top:4px;
+  font-size:12px;line-height:1.4;color:var(--er);font-weight:600;
+  text-transform:none;letter-spacing:0;
+}
+.campo-error[hidden]{display:none;}
+
+input[aria-invalid="true"],
+select[aria-invalid="true"],
+textarea[aria-invalid="true"]{
+  border-color:var(--er-b);
+  background:var(--er-bg);
+}
+input[aria-invalid="true"]:focus,
+select[aria-invalid="true"]:focus,
+textarea[aria-invalid="true"]:focus{
+  border-color:var(--er);
+  box-shadow:0 0 0 3px rgba(192,57,43,.18);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ICONOS SVG
+   ───────────────────────────────────────────────────────────
+   Sustituyen a los emoji del menú, la barra inferior y el menú
+   "Más". Se dimensionan en em, no en px: así crecen con el
+   texto si el usuario agranda la fuente del sistema, cosa que
+   los emoji tampoco hacían de forma fiable.
+   currentColor hace que sigan al texto — incluido el estado
+   activo del menú, donde el fondo cambia y antes el emoji se
+   quedaba con su color de siempre.
+   ═══════════════════════════════════════════════════════════ */
+.ic{
+  width:1.25em;height:1.25em;
+  flex-shrink:0;
+  vertical-align:-0.22em;
+  color:currentColor;
+  /* Los trazos no se deforman aunque el contenedor sea flex. */
+  overflow:visible;
+}
+
+/* El contenedor del icono del menú ya reservaba 18px para el emoji. */
+.ni{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:1.25em;height:1.25em;
+  opacity:1;              /* el emoji iba a .9 para atenuarlo; el SVG ya
+                             hereda el color atenuado del propio item */
+}
+.ni .ic{width:100%;height:100%;vertical-align:0;}
+
+/* Barra inferior: el icono manda sobre la etiqueta, que va a 9.5px. */
+.bn-icon{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:22px;height:22px;line-height:1;
+}
+.bn-icon .ic{width:22px;height:22px;vertical-align:0;}
+
+/* Menú "Más": icono y texto alineados. */
+.bn-more-item{gap:10px;}
+.bn-more-item .ic{width:19px;height:19px;vertical-align:0;}
+
+/* Cerrar sesión. */
+.logout-btn .ic{width:17px;height:17px;vertical-align:0;}
+
+/* Cabeceras de grupo plegables del menú del admin. */
+.nav-group .ni .ic{width:100%;height:100%;}
+
+/* En el item activo del admin el fondo pasa a celeste y el texto a azul
+   marino: el trazo del icono va con él, sin regla extra. */
+
+/* Icono del estado vacio: un simbolo grande y atenuado, no un emoji
+   a 32px que cada sistema dibuja distinto. */
+.ei{line-height:1;margin-bottom:10px;color:var(--bd2);}
+.ic-vacio{width:40px;height:40px;vertical-align:0;stroke-width:1.4;}
+.es strong{display:block;color:var(--td);font-weight:700;font-size:14px;margin-bottom:3px;}
+.es{line-height:1.5;max-width:42ch;margin-inline:auto;}
+
+/* ═══════════════════════════════════════════════════════════
+   UTILIDADES
+   ───────────────────────────────────────────────────────────
+   Entre los dos paneles había 541 atributos style="" con 244
+   declaraciones distintas. Muchas eran la misma idea escrita de
+   formas ligeramente diferentes: tres márgenes inferiores para
+   la misma separación, cuatro maneras de escribir "fila con
+   hueco de 8px". Con eso, un cambio de marca obliga a buscar y
+   reemplazar por todo el HTML.
+
+   Estas clases cubren los patrones que más se repetían. No
+   pretenden ser un framework: solo sacar del HTML lo que ya
+   estaba duplicado.
+
+   NO se tocó style="display:none": ahí no hay estilo, hay
+   estado. El JS lo conmuta con el.style.display='block' y
+   convertirlo en clase rompería media aplicación.
+   ═══════════════════════════════════════════════════════════ */
+
+/* Espaciado — apoyado en la escala de tokens.css */
+.u-mb-0 { margin-bottom: 0 !important; }
+.u-mb-sm{ margin-bottom: var(--sp-sm); }
+.u-mb   { margin-bottom: var(--sp-md); }
+.u-mb-lg{ margin-bottom: var(--sp-lg); }
+.u-mt-sm{ margin-top: var(--sp-sm); }
+.u-p-0  { padding: 0 !important; }
+.u-p-sm { padding: var(--sp-sm); }
+
+/* Composición */
+.u-flex   { display: flex; }
+.u-row    { display: flex; align-items: center; }
+.u-row-6  { display: flex; align-items: center; gap: 6px; }
+.u-row-8  { display: flex; gap: 8px; }
+.u-row-10 { display: flex; gap: 10px; }
+.u-col-8  { display: flex; flex-direction: column; gap: 8px; }
+.u-between{ display: flex; align-items: center; justify-content: space-between; }
+.u-grow   { flex: 1; }
+.u-grow-2 { flex: 2; }
+.u-fixed  { flex-shrink: 0; }
+.u-w-full { width: 100%; }
+.u-rel    { position: relative; }
+
+/* Texto secundario. Ya existía como .tm2 en los dos paneles, pero
+   la mitad de los sitios repetía la declaración a mano. */
+.u-meta   { font-size: 11px; color: var(--tl); }
+.u-meta-2 { font-size: 12px; color: var(--tl); }
+
+/* Etiqueta de sección: versaditas, muy espaciada. */
+.u-label{
+  font-size: 11px; font-weight: 700;
+  text-transform: uppercase; letter-spacing: .4px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   BARRA INFERIOR — legibilidad
+   ───────────────────────────────────────────────────────────
+   Las etiquetas estaban a 9.5px con blanco al 55%: 4.56:1, que
+   pasa AA por los pelos, y un tamaño por debajo de lo cómodo.
+   Es la navegación principal en móvil — la que el vendedor usa
+   de pie, en la calle y con el sol de frente.
+
+   11px y blanco al 72% dan 6.6:1. La altura del botón no cambia
+   (sigue en 53px), así que el área táctil se mantiene.
+   ═══════════════════════════════════════════════════════════ */
+.bn-item{font-size:11px;color:rgba(255,255,255,.72);}
+.bn-item.active{color:var(--sky);font-weight:700;}
+
+/* Subtitulo de marca, rol y pie del menu: estaban a 10px. 11px es el
+   minimo que se lee comodo, y aqui no cuesta nada. */
+.sb-sb,.sb-user-role,.sb-foot p{font-size:11px;}
