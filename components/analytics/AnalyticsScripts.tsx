@@ -2,7 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Script from "next/script";
-import { GA_MEASUREMENT_ID, GTM_ID } from "@/lib/analytics";
+import { GTM_ID } from "@/lib/analytics";
 
 // GA/GTM se excluyen del panel admin (/admin) a propósito: es uso interno
 // del equipo, no comportamiento de clientes, y ensuciaría las métricas.
@@ -41,19 +41,20 @@ export function AnalyticsScripts() {
         })(window,document,'script','dataLayer','${GTM_ID}');`}
       </Script>
 
-      {/* Google Analytics (gtag.js) — mismo criterio de lazyOnload que GTM:
-          son otros 164 KB y ~101 ms de hilo principal que no aportan nada al
-          primer pintado. */}
-      <Script
-        src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`}
-        strategy="lazyOnload"
-      />
-      <Script id="ga-gtag" strategy="lazyOnload">
-        {`window.dataLayer = window.dataLayer || [];
-        function gtag(){dataLayer.push(arguments);}
-        gtag('js', new Date());
-        gtag('config', '${GA_MEASUREMENT_ID}');`}
-      </Script>
+      {/* NO va acá un <Script> de gtag.js para GA4.
+          El contenedor de GTM de arriba ya tiene una etiqueta de configuración
+          de GA4 con esta misma propiedad (ver GA_MEASUREMENT_ID en
+          lib/analytics.ts), así que GTM
+          carga gtag.js por su cuenta. Tenerlo además en duro hacía que el
+          navegador bajara el MISMO archivo de 164 KB dos veces:
+
+            /gtag/js?id=…                  <- el que estaba acá
+            /gtag/js?id=…&cx=c&gtm=4e6850  <- el que carga GTM
+
+          Costaba ~250 ms de hilo principal repetidos y, peor que eso, dos
+          `config` sobre la misma propiedad pueden inflar las visitas en GA4.
+          Si algún día se quita la etiqueta de GA4 del contenedor de GTM, hay
+          que volver a poner el script acá — si no, deja de medirse. */}
     </>
   );
 }

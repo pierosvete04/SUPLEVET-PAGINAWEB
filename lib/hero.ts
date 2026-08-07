@@ -10,10 +10,18 @@ export const HERO_BANNER_MOBILE_FALLBACK = "/images/hero/banner-nuevas-presentac
 
 // Anchos objetivo para el optimizador de imágenes de Next (deben existir en
 // images.deviceSizes — la lista por defecto de Next ya los incluye, ver
-// next.config.ts). 1080 cubre pantallas mobile con hasta ~3x de densidad;
-// 1920 cubre el ancho máximo real del contenedor en desktop (max-w-container
-// llega a 1800px) con margen para pantallas de alta densidad.
-export const HERO_MOBILE_OPTIMIZED_WIDTH = 1080;
+// next.config.ts). 1920 cubre el ancho máximo real del contenedor en desktop
+// (max-w-container llega a 1800px) con margen para pantallas de alta densidad.
+//
+// El de mobile bajó de 1080 a 828: el banner mobile es vertical (1080x1550) y
+// a 1080 pesaba 72 KB para mostrarse en un espacio de ~650px de ancho — 46 KB
+// tirados en la métrica de PageSpeed, sobre la imagen que además ES el LCP.
+// 828 sigue dando ~2x de densidad en un celular de 412px de ancho, que es lo
+// que se nota; el salto a 1080 solo aporta en pantallas de 3x y a costa de la
+// métrica que Google mide. Ojo: app/page.tsx usa esta misma constante para el
+// <link rel="preload">, así que ambos cambian juntos y el preload sigue
+// coincidiendo byte a byte con el src del <img> (si no, se descarta).
+export const HERO_MOBILE_OPTIMIZED_WIDTH = 828;
 export const HERO_DESKTOP_OPTIMIZED_WIDTH = 1920;
 
 // Resuelve qué imagen va en el primer slide del hero, con la misma prioridad

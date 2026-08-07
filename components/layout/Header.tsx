@@ -249,11 +249,18 @@ export function Header() {
             </button>
 
             <Link href="/" className="shrink-0">
+              {/* `sizes` es lo que evita que next/image sirva la variante de
+                  640px de ancho para un logo que se ve a 150-195px. Sin él,
+                  Next arma el srcset a partir de `width` y para 2x salta de
+                  384 a 640 (no hay tamaño intermedio), así que en un celular
+                  se bajaban 19 KB para pintar 263px. Con `sizes` el navegador
+                  elige según el ancho REAL y la densidad de esa pantalla. */}
               <Image
                 src="/logos/logo-white-mixed-horizontal.png"
                 alt="Suplevet"
                 width={195}
                 height={42}
+                sizes="(min-width: 768px) 195px, 150px"
                 priority
                 className="h-auto w-[150px] md:w-[195px]"
               />
@@ -326,6 +333,7 @@ export function Header() {
                 alt="Suplevet"
                 width={195}
                 height={42}
+                sizes="150px"
                 className="h-auto w-[150px]"
               />
             </Link>
