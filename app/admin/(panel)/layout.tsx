@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { getUsuarioSesion } from "@/lib/supabase/usuario";
 import { AppSidebar } from "@/components/admin/AppSidebar";
 import { RestrictedSidebar } from "@/components/admin/RestrictedSidebar";
 import { SiteHeader } from "@/components/admin/SiteHeader";
@@ -14,10 +15,11 @@ const TITULOS_ROL_RESTRINGIDO: Record<string, string> = {
 };
 
 export default async function AdminPanelLayout({ children }: { children: React.ReactNode }) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getUsuarioSesion() verifica el JWT localmente en vez de llamar al servidor
+  // de Auth, y va envuelto en cache() de React para no repetirse dentro del
+  // mismo request. Entre esto y el middleware, entrar al panel pasó de cuatro
+  // viajes a Supabase encadenados a uno solo.
+  const [supabase, user] = await Promise.all([createClient(), getUsuarioSesion()]);
 
   if (!user) redirect("/admin/login");
 
