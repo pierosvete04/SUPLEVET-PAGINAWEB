@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { BrandedLoader } from "@/components/ui/branded-loader";
 import { uploadFileToR2 } from "@/lib/uploadToR2";
+import { QR_YAPE_POR_DEFECTO } from "@/lib/configuracion-cliente";
 import { Campo, ConfiguracionSeccion } from "@/components/admin/configuracion/ConfiguracionSeccion";
 import { useConfiguracionAdmin } from "@/components/admin/configuracion/useConfiguracionAdmin";
 
@@ -65,14 +66,28 @@ export default function ConfiguracionPagosPage() {
               disabled={subiendo}
               onChange={(e) => e.target.files?.[0] && subirQr(e.target.files[0])}
             />
-            <p className="text-xs text-muted-foreground">
-              Si no subes uno, el checkout usa el QR que ya venía con el sitio.
-            </p>
-            {config.yape_plin_qr_url && (
-              <div className="relative mt-1 h-24 w-24 overflow-hidden rounded-lg border">
-                <Image src={config.yape_plin_qr_url} alt="QR" fill className="object-contain" />
+            {/* La vista previa muestra el QR EN USO, no solo el subido. Antes
+                solo aparecía si había uno en la base, y como nunca se subió
+                ninguno el recuadro salía vacío — daba a entender que el
+                checkout no tenía QR, cuando sí lo tiene: usa el archivo que
+                viene con el sitio. Enseñar el que realmente ve el cliente es
+                lo que hace que esta pantalla sirva para comprobar algo. */}
+            <div className="mt-1 flex items-center gap-3">
+              <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-lg border bg-white">
+                <Image
+                  src={config.yape_plin_qr_url || QR_YAPE_POR_DEFECTO}
+                  alt="Código QR de Yape"
+                  fill
+                  className="object-contain p-1"
+                  sizes="96px"
+                />
               </div>
-            )}
+              <p className="text-xs text-muted-foreground">
+                {config.yape_plin_qr_url
+                  ? "QR personalizado. Es el que ve el cliente al pagar con Yape/Plin."
+                  : "Es el QR que viene con el sitio y el que ve el cliente hoy. Sube uno para reemplazarlo."}
+              </p>
+            </div>
           </div>
         </CardContent>
       </Card>

@@ -275,7 +275,7 @@ export default function PrivacidadPage() {
         Si tiene alguna pregunta sobre nuestras prácticas de privacidad o sobre esta Política de
         privacidad, o si desea ejercer cualquiera de los derechos que le corresponden, llámenos al{" "}
         <strong>+51 920 289 902</strong>, envíenos un correo electrónico a{" "}
-        <strong>suplevetperu@gmail.com</strong> o póngase en contacto con nosotros en Nutrova For
+        <strong>team@suplevet.pe</strong> o póngase en contacto con nosotros en Nutrova For
         Pets S.A.C, Calle Río Elba 201, La Molina 15024, Lima, Perú.
       </p>
     </LegalDoc>

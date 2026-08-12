@@ -44,16 +44,21 @@ export interface DatosPago {
 // configuración fallara, el cliente ve los datos correctos igual. Un checkout
 // que muestra una cuenta bancaria vacía es peor que uno que muestra la de
 // siempre.
+/** QR de Yape que viene con el sitio, en /public. Se usa mientras no se suba
+ *  uno desde /admin/configuracion/pagos. Exportado para que el panel pueda
+ *  previsualizar EXACTAMENTE el mismo que verá el cliente. */
+export const QR_YAPE_POR_DEFECTO = "/pago/yape-qr.png";
+
 const PAGO_POR_DEFECTO: DatosPago = {
   yapeNumero: "943 116 820",
   yapeTitular: "Piero Paolo Svete Anchante",
-  yapeQrUrl: "/pago/yape-qr.png",
+  yapeQrUrl: QR_YAPE_POR_DEFECTO,
   bancoNombre: "Interbank",
   bancoTitular: "Nutrova For Pets",
   bancoCuenta: "200-3006830577",
   bancoCci: "003-200-003006830577-37",
   whatsappComprobantes: "51920723721",
-  correoComprobantes: "suplevetperu@gmail.com",
+  correoComprobantes: "team@suplevet.pe",
 };
 
 /** Valores de site-config.ts, usados cuando el campo está vacío en la base o si
