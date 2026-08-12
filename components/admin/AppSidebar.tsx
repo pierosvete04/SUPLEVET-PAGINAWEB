@@ -5,6 +5,9 @@ import Image from "next/image";
 import Link from "next/link";
 import {
   Package,
+  Boxes,
+  Landmark,
+  Share2,
   Users,
   ShoppingBag,
   Truck,
@@ -48,12 +51,14 @@ const navMain: NavEntry[] = [
   { title: "Dashboard", url: "/admin/dashboard", icon: LayoutDashboard },
   { title: "Pedidos", url: "/admin/pedidos", icon: ShoppingBag },
   { title: "Clientes", url: "/admin/clientes", icon: Users },
-  { title: "Libro de reclamaciones", url: "/admin/libro-reclamaciones", icon: FileWarning },
+  // Productos vive en el primer nivel, fuera de "Catálogo": es de lo que más se
+  // edita a diario (precios, stock, fotos) y tenerlo a dos clics dentro de un
+  // submenú desplegable lo hacía lento de alcanzar.
+  { title: "Productos", url: "/admin/productos", icon: Package },
   {
     title: "Catálogo",
-    icon: Package,
+    icon: Boxes,
     items: [
-      { title: "Productos", url: "/admin/productos", icon: Package },
       { title: "Ingredientes", url: "/admin/ingredientes", icon: Leaf },
       { title: "Comparativa", url: "/admin/comparativa", icon: Scale },
       { title: "Resultados reales", url: "/admin/resultados", icon: ImageIcon },
@@ -91,7 +96,20 @@ const navMain: NavEntry[] = [
       { title: "Postulaciones", url: "/admin/oportunidad/postulaciones", icon: Inbox },
     ],
   },
-  { title: "Configuración", url: "/admin/configuracion", icon: Settings },
+  {
+    title: "Configuración",
+    icon: Settings,
+    items: [
+      { title: "General", url: "/admin/configuracion", icon: Settings },
+      { title: "Métodos de pago", url: "/admin/configuracion/pagos", icon: Landmark },
+      { title: "Redes y contacto", url: "/admin/configuracion/redes", icon: Share2 },
+      { title: "Banner principal", url: "/admin/configuracion/banner", icon: GalleryHorizontal },
+      // El libro de reclamaciones es una obligación legal que se consulta de vez
+      // en cuando, no trabajo diario: ocupaba un lugar en el primer nivel del
+      // menú, entre Pedidos y Clientes, que no se corresponde con cuánto se usa.
+      { title: "Libro de reclamaciones", url: "/admin/libro-reclamaciones", icon: FileWarning },
+    ],
+  },
 ];
 
 const navSecondary = [{ title: "Ver sitio web", url: "/", icon: ExternalLink, nuevaPestana: true }];

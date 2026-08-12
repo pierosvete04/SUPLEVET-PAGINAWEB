@@ -1,133 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Image from "next/image";
-import { toast } from "sonner";
-import { revalidarSitioPublico } from "@/lib/revalidar-publico";
-import { createClient } from "@/lib/supabase/client";
-import { traducirErrorSupabase } from "@/lib/errores-supabase";
-import { uploadFileToR2 } from "@/lib/uploadToR2";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { BrandedLoader } from "@/components/ui/branded-loader";
+import { Campo, ConfiguracionSeccion } from "@/components/admin/configuracion/ConfiguracionSeccion";
+import { useConfiguracionAdmin } from "@/components/admin/configuracion/useConfiguracionAdmin";
 
-interface ConfiguracionSitio {
-  announcement_bar_activo: boolean;
-  announcement_bar_texto: string | null;
-  announcement_bar_link: string | null;
-  yape_plin_numero: string | null;
-  yape_plin_titular: string | null;
-  yape_plin_qr_url: string | null;
-  banco_nombre: string | null;
-  banco_cuenta: string | null;
-  banco_cci: string | null;
-  banco_titular: string | null;
-  whatsapp_b2c: string | null;
-  whatsapp_b2b: string | null;
-  whatsapp_distribuidores: string | null;
-  facebook_url: string | null;
-  instagram_url: string | null;
-  tiktok_url: string | null;
-  linkedin_url: string | null;
-  radio_tarjetas: number;
-  legal_razon_social: string | null;
-  legal_ruc: string | null;
-  legal_domicilio_fiscal: string | null;
-  legal_correo_atencion: string | null;
-  correo_contacto: string | null;
-  horario_atencion: string | null;
-  hero_titulo: string | null;
-  hero_subtitulo: string | null;
-  hero_banner_desktop: string | null;
-  hero_banner_mobile: string | null;
-  trustbar_texto_1: string | null;
-  trustbar_texto_2: string | null;
-  trustbar_texto_3: string | null;
-}
-
-function Campo({
-  id,
-  label,
-  value,
-  onChange,
-  textarea = false,
-}: {
-  id: string;
-  label: string;
-  value: string;
-  onChange: (v: string) => void;
-  textarea?: boolean;
-}) {
-  return (
-    <div className="grid gap-1.5">
-      <Label htmlFor={id}>{label}</Label>
-      {textarea ? (
-        <Textarea id={id} rows={3} value={value} onChange={(e) => onChange(e.target.value)} />
-      ) : (
-        <Input id={id} value={value} onChange={(e) => onChange(e.target.value)} />
-      )}
-    </div>
-  );
-}
-
-export default function AdminConfiguracionPage() {
-  const [config, setConfig] = useState<ConfiguracionSitio | null>(null);
-  const [subiendo, setSubiendo] = useState(false);
-  const [guardando, setGuardando] = useState(false);
-
-  useEffect(() => {
-    createClient()
-      .from("configuracion_sitio")
-      .select("*")
-      .eq("id", 1)
-      .single()
-      .then(({ data }) => setConfig(data as ConfiguracionSitio));
-  }, []);
-
-  function actualizar<K extends keyof ConfiguracionSitio>(campo: K, valor: ConfiguracionSitio[K]) {
-    setConfig((c) => (c ? { ...c, [campo]: valor } : c));
-  }
-
-  async function subirQr(file: File) {
-    setSubiendo(true);
-    const url = await uploadFileToR2("productos-web-fotos", file, "configuracion");
-    if (url) actualizar("yape_plin_qr_url", url);
-    setSubiendo(false);
-  }
-
-  async function subirBanner(campo: "hero_banner_desktop" | "hero_banner_mobile", file: File) {
-    setSubiendo(true);
-    const url = await uploadFileToR2("productos-web-fotos", file, "hero");
-    if (url) actualizar(campo, url);
-    setSubiendo(false);
-  }
-
-  async function guardar() {
-    if (!config) return;
-    setGuardando(true);
-    const { error: saveError } = await createClient()
-      .from("configuracion_sitio")
-      .update(config)
-      .eq("id", 1);
-    setGuardando(false);
-    if (saveError) {
-      toast.error(traducirErrorSupabase(saveError));
-      return;
-    }
-    await revalidarSitioPublico();
-    toast.success("Configuración del sitio guardada.");
-  }
+// Ajustes generales del sitio. Los bloques de pagos, redes/contacto y banner
+// viven en sus propias subsecciones del menú — esta página era un formulario
+// único de 458 líneas donde había que bajar por nueve bloques sin relación
+// entre sí para cambiar un dato.
+export default function ConfiguracionGeneralPage() {
+  const { config, actualizar, guardar, guardando } = useConfiguracionAdmin();
 
   if (!config) return <BrandedLoader />;
 
   return (
-    <div className="flex max-w-3xl flex-col gap-6">
-      <h2 className="text-lg font-semibold">Configuración</h2>
-
+    <ConfiguracionSeccion
+      titulo="Configuración general"
+      descripcion="Barra de anuncios, datos legales, barra de confianza y diseño."
+      guardando={guardando}
+      onGuardar={guardar}
+    >
       <Card>
         <CardHeader>
           <CardTitle className="text-sm text-muted-foreground">Barra de anuncios</CardTitle>
@@ -154,103 +49,6 @@ export default function AdminConfiguracionPage() {
               onChange={(v) => actualizar("announcement_bar_link", v)}
             />
           </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm text-muted-foreground">
-            Yape / Plin (pago manual en checkout)
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Campo
-              id="yp-numero"
-              label="Número"
-              value={config.yape_plin_numero ?? ""}
-              onChange={(v) => actualizar("yape_plin_numero", v)}
-            />
-            <Campo
-              id="yp-titular"
-              label="Titular"
-              value={config.yape_plin_titular ?? ""}
-              onChange={(v) => actualizar("yape_plin_titular", v)}
-            />
-          </div>
-          <div className="grid gap-1.5">
-            <Label htmlFor="yp-qr">QR</Label>
-            <Input
-              id="yp-qr"
-              type="file"
-              accept="image/*"
-              disabled={subiendo}
-              onChange={(e) => e.target.files?.[0] && subirQr(e.target.files[0])}
-            />
-            {config.yape_plin_qr_url && (
-              <div className="relative mt-1 h-24 w-24 overflow-hidden rounded-lg border">
-                <Image src={config.yape_plin_qr_url} alt="QR" fill className="object-contain" />
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm text-muted-foreground">Cuenta bancaria (transferencia)</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Campo
-            id="banco-nombre"
-            label="Banco"
-            value={config.banco_nombre ?? ""}
-            onChange={(v) => actualizar("banco_nombre", v)}
-          />
-          <Campo
-            id="banco-titular"
-            label="Titular"
-            value={config.banco_titular ?? ""}
-            onChange={(v) => actualizar("banco_titular", v)}
-          />
-          <Campo
-            id="banco-cuenta"
-            label="N° de cuenta"
-            value={config.banco_cuenta ?? ""}
-            onChange={(v) => actualizar("banco_cuenta", v)}
-          />
-          <Campo
-            id="banco-cci"
-            label="CCI"
-            value={config.banco_cci ?? ""}
-            onChange={(v) => actualizar("banco_cci", v)}
-          />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm text-muted-foreground">WhatsApp</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Campo
-            id="wa-b2c"
-            label="B2C (clientes)"
-            value={config.whatsapp_b2c ?? ""}
-            onChange={(v) => actualizar("whatsapp_b2c", v)}
-          />
-          <Campo
-            id="wa-b2b"
-            label="B2B (veterinarias)"
-            value={config.whatsapp_b2b ?? ""}
-            onChange={(v) => actualizar("whatsapp_b2b", v)}
-          />
-          <Campo
-            id="wa-distribuidores"
-            label="Distribuidores (Oportunidad de negocio)"
-            value={config.whatsapp_distribuidores ?? ""}
-            onChange={(v) => actualizar("whatsapp_distribuidores", v)}
-          />
         </CardContent>
       </Card>
 
@@ -295,67 +93,6 @@ export default function AdminConfiguracionPage() {
             value={config.horario_atencion ?? ""}
             onChange={(v) => actualizar("horario_atencion", v)}
           />
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm text-muted-foreground">Banner principal (Hero)</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <div className="grid gap-1.5">
-            <Label htmlFor="hero-banner-desktop">Banner escritorio (16:9)</Label>
-            <Input
-              id="hero-banner-desktop"
-              type="file"
-              accept="image/*"
-              disabled={subiendo}
-              onChange={(e) =>
-                e.target.files?.[0] && subirBanner("hero_banner_desktop", e.target.files[0])
-              }
-            />
-            {config.hero_banner_desktop && (
-              <div className="relative mt-1 aspect-video w-full max-w-sm overflow-hidden rounded-md border">
-                <Image
-                  src={config.hero_banner_desktop}
-                  alt=""
-                  fill
-                  className="object-contain"
-                  sizes="384px"
-                />
-              </div>
-            )}
-          </div>
-          <div className="grid gap-1.5">
-            <Label htmlFor="hero-banner-mobile">Banner mobile (9:16)</Label>
-            <Input
-              id="hero-banner-mobile"
-              type="file"
-              accept="image/*"
-              disabled={subiendo}
-              onChange={(e) =>
-                e.target.files?.[0] && subirBanner("hero_banner_mobile", e.target.files[0])
-              }
-            />
-            {config.hero_banner_mobile && (
-              <div className="relative mt-1 aspect-[9/16] w-full max-w-[160px] overflow-hidden rounded-md border">
-                <Image
-                  src={config.hero_banner_mobile}
-                  alt=""
-                  fill
-                  className="object-contain"
-                  sizes="160px"
-                />
-              </div>
-            )}
-          </div>
-          <p className="text-xs text-muted-foreground sm:col-span-2">
-            El banner es la imagen principal de Inicio y enlaza a la sección de combos. Si no subes un
-            banner mobile, en celulares se muestra el mismo banner de escritorio. Este banner solo se
-            usa si no hay banners activos con página &quot;Banner principal (Hero)&quot; en{" "}
-            <span className="font-medium">Contenido → Banners</span>; si configuras uno o más ahí, se
-            muestran esos en su lugar (con slide automático si hay más de uno).
-          </p>
         </CardContent>
       </Card>
 
@@ -415,44 +152,6 @@ export default function AdminConfiguracionPage() {
           />
         </CardContent>
       </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-sm text-muted-foreground">Redes sociales</CardTitle>
-        </CardHeader>
-        <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-          <Campo
-            id="rs-facebook"
-            label="Facebook"
-            value={config.facebook_url ?? ""}
-            onChange={(v) => actualizar("facebook_url", v)}
-          />
-          <Campo
-            id="rs-instagram"
-            label="Instagram"
-            value={config.instagram_url ?? ""}
-            onChange={(v) => actualizar("instagram_url", v)}
-          />
-          <Campo
-            id="rs-tiktok"
-            label="TikTok"
-            value={config.tiktok_url ?? ""}
-            onChange={(v) => actualizar("tiktok_url", v)}
-          />
-          <Campo
-            id="rs-linkedin"
-            label="LinkedIn"
-            value={config.linkedin_url ?? ""}
-            onChange={(v) => actualizar("linkedin_url", v)}
-          />
-        </CardContent>
-      </Card>
-
-      <div className="flex items-center gap-3">
-        <Button onClick={guardar} disabled={guardando || subiendo}>
-          {guardando ? "Guardando…" : "Guardar cambios"}
-        </Button>
-      </div>
-    </div>
+    </ConfiguracionSeccion>
   );
 }

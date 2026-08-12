@@ -23,7 +23,38 @@ export interface ConfiguracionSitioCliente {
   instagramUrl: string;
   tiktokUrl: string;
   linkedinUrl: string;
+  pago: DatosPago;
 }
+
+/** Datos que el checkout muestra para los pagos manuales. */
+export interface DatosPago {
+  yapeNumero: string;
+  yapeTitular: string;
+  yapeQrUrl: string;
+  bancoNombre: string;
+  bancoTitular: string;
+  bancoCuenta: string;
+  bancoCci: string;
+  whatsappComprobantes: string;
+  correoComprobantes: string;
+}
+
+// Los valores que estuvieron escritos a mano en PaymentStep.tsx hasta que se
+// conectó el checkout a la base. Siguen acá como respaldo: si la consulta de
+// configuración fallara, el cliente ve los datos correctos igual. Un checkout
+// que muestra una cuenta bancaria vacía es peor que uno que muestra la de
+// siempre.
+const PAGO_POR_DEFECTO: DatosPago = {
+  yapeNumero: "943 116 820",
+  yapeTitular: "Piero Paolo Svete Anchante",
+  yapeQrUrl: "/pago/yape-qr.png",
+  bancoNombre: "Interbank",
+  bancoTitular: "Nutrova For Pets",
+  bancoCuenta: "200-3006830577",
+  bancoCci: "003-200-003006830577-37",
+  whatsappComprobantes: "51920723721",
+  correoComprobantes: "suplevetperu@gmail.com",
+};
 
 /** Valores de site-config.ts, usados cuando el campo está vacío en la base o si
  *  la consulta falla — ningún componente queda nunca sin dato que mostrar. */
@@ -41,6 +72,7 @@ export const CONFIGURACION_POR_DEFECTO: ConfiguracionSitioCliente = {
   instagramUrl: siteConfig.redesSociales.instagram,
   tiktokUrl: siteConfig.redesSociales.tiktok,
   linkedinUrl: siteConfig.redesSociales.linkedin,
+  pago: PAGO_POR_DEFECTO,
 };
 
 /** Fila de configuracion_sitio -> forma que consumen los componentes cliente. */
@@ -66,5 +98,16 @@ export function mapConfiguracionCliente(
     instagramUrl: data.instagram_url || d.instagramUrl,
     tiktokUrl: data.tiktok_url || d.tiktokUrl,
     linkedinUrl: data.linkedin_url || d.linkedinUrl,
+    pago: {
+      yapeNumero: data.yape_plin_numero || d.pago.yapeNumero,
+      yapeTitular: data.yape_plin_titular || d.pago.yapeTitular,
+      yapeQrUrl: data.yape_plin_qr_url || d.pago.yapeQrUrl,
+      bancoNombre: data.banco_nombre || d.pago.bancoNombre,
+      bancoTitular: data.banco_titular || d.pago.bancoTitular,
+      bancoCuenta: data.banco_cuenta || d.pago.bancoCuenta,
+      bancoCci: data.banco_cci || d.pago.bancoCci,
+      whatsappComprobantes: data.pago_whatsapp_comprobantes || d.pago.whatsappComprobantes,
+      correoComprobantes: data.pago_correo_comprobantes || d.pago.correoComprobantes,
+    },
   };
 }

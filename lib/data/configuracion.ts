@@ -12,6 +12,20 @@ export interface ConfiguracionSitio {
   whatsapp_b2c: string | null;
   whatsapp_b2b: string | null;
   whatsapp_distribuidores: string | null;
+  // Datos de los pagos manuales del checkout (Yape/Plin y transferencia).
+  // Vivían escritos a mano en components/checkout/PaymentStep.tsx, así que
+  // cambiar de banco o de número obligaba a tocar el código y desplegar,
+  // mientras el formulario de /admin/configuracion guardaba estas mismas
+  // columnas sin que nadie las leyera.
+  yape_plin_numero: string | null;
+  yape_plin_titular: string | null;
+  yape_plin_qr_url: string | null;
+  banco_nombre: string | null;
+  banco_titular: string | null;
+  banco_cuenta: string | null;
+  banco_cci: string | null;
+  pago_whatsapp_comprobantes: string | null;
+  pago_correo_comprobantes: string | null;
   facebook_url: string | null;
   instagram_url: string | null;
   tiktok_url: string | null;
@@ -73,7 +87,7 @@ export async function getConfiguracionSitio(
   const { data } = await supabase
     .from("configuracion_sitio")
     .select(
-      `radio_tarjetas, whatsapp_b2c, whatsapp_b2b, whatsapp_distribuidores, facebook_url, instagram_url, tiktok_url, linkedin_url, legal_razon_social, legal_ruc, legal_domicilio_fiscal, legal_correo_atencion, correo_contacto, horario_atencion, hero_titulo, hero_subtitulo, hero_banner_desktop, hero_banner_mobile, trustbar_texto_1, trustbar_texto_2, trustbar_texto_3, nosotros_hero_titulo, nosotros_hero_imagen, nosotros_quote, nosotros_origen_texto, nosotros_mision_texto, nosotros_vision_texto, nosotros_overlay_imagen, nosotros_overlay_titulo, nosotros_overlay_texto, ${OPORTUNIDAD_COLUMNAS}`
+      `radio_tarjetas, whatsapp_b2c, whatsapp_b2b, whatsapp_distribuidores, yape_plin_numero, yape_plin_titular, yape_plin_qr_url, banco_nombre, banco_titular, banco_cuenta, banco_cci, pago_whatsapp_comprobantes, pago_correo_comprobantes, facebook_url, instagram_url, tiktok_url, linkedin_url, legal_razon_social, legal_ruc, legal_domicilio_fiscal, legal_correo_atencion, correo_contacto, horario_atencion, hero_titulo, hero_subtitulo, hero_banner_desktop, hero_banner_mobile, trustbar_texto_1, trustbar_texto_2, trustbar_texto_3, nosotros_hero_titulo, nosotros_hero_imagen, nosotros_quote, nosotros_origen_texto, nosotros_mision_texto, nosotros_vision_texto, nosotros_overlay_imagen, nosotros_overlay_titulo, nosotros_overlay_texto, ${OPORTUNIDAD_COLUMNAS}`
     )
     .eq("id", 1)
     .single();

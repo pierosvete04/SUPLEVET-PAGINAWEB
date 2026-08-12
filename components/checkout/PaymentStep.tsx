@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { CreditCard, Smartphone, Landmark, Banknote, Copy, Check } from "lucide-react";
 import { formatPrecio, METODO_PAGO_LABEL, type MetodoPago } from "@/lib/data/productos-shared";
+import { useConfiguracionSitio } from "@/hooks/use-configuracion-sitio";
 
 export type { MetodoPago };
 
@@ -30,20 +31,16 @@ const metodos: { id: MetodoPago; label: string; icon: typeof CreditCard }[] = [
   { id: "contra_entrega", label: METODO_PAGO_LABEL.contra_entrega, icon: Banknote },
 ];
 
-const DATOS_TRANSFERENCIA = {
-  titular: "Nutrova For Pets",
-  banco: "Interbank",
-  cuenta: "200-3006830577",
-  cci: "003-200-003006830577-37",
-};
-
-const DATOS_YAPE_PLIN = {
-  numero: "943 116 820",
-  titular: "Piero Paolo Svete Anchante",
-};
-
-const WHATSAPP_COMPROBANTES = "51920723721";
-const CORREO_COMPROBANTES = "suplevetperu@gmail.com";
+// Los datos bancarios, el número de Yape, el QR y los contactos para enviar el
+// voucher salen de /admin/configuracion (columnas de configuracion_sitio).
+// Antes estaban escritos acá como constantes, con dos consecuencias malas:
+// cambiar de banco exigía tocar el código y desplegar, y el formulario del
+// panel que decía guardar esos mismos datos no afectaba a nada — quien lo
+// llenaba creía haber actualizado el checkout y no había cambiado nada.
+//
+// Llegan por el contexto que ya llena el layout raíz, así que no cuestan
+// ninguna consulta extra. Ver lib/configuracion-cliente.ts, que además
+// conserva los valores anteriores como respaldo.
 
 function CopyField({ label, value }: { label: string; value: string }) {
   const [copiado, setCopiado] = useState(false);
@@ -112,6 +109,7 @@ export function PaymentStep({
   notaMetodos,
 }: PaymentStepProps) {
   const metodosVisibles = metodos.filter(({ id }) => metodosPermitidos.includes(id));
+  const { pago } = useConfiguracionSitio();
 
   return (
     <div>
@@ -181,25 +179,25 @@ export function PaymentStep({
                 {id === "transferencia" && (
                   <div className="flex flex-col gap-3">
                     <p className="font-bold">1. Hacer el depósito o transferencia a nombre de:</p>
-                    <CopyField label="Titular" value={DATOS_TRANSFERENCIA.titular} />
-                    <CopyField label="Banco" value={DATOS_TRANSFERENCIA.banco} />
-                    <CopyField label="Cuenta corriente (S/.)" value={DATOS_TRANSFERENCIA.cuenta} />
-                    <CopyField label="CCI" value={DATOS_TRANSFERENCIA.cci} />
+                    <CopyField label="Titular" value={pago.bancoTitular} />
+                    <CopyField label="Banco" value={pago.bancoNombre} />
+                    <CopyField label="Cuenta corriente (S/.)" value={pago.bancoCuenta} />
+                    <CopyField label="CCI" value={pago.bancoCci} />
 
                     <p className="mt-2 font-bold">2. Envía tu comprobante</p>
                     <p className="text-muted-foreground">
                       Envía el voucher por WhatsApp al{" "}
                       <a
-                        href={`https://wa.me/${WHATSAPP_COMPROBANTES}`}
+                        href={`https://wa.me/${pago.whatsappComprobantes}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="font-bold text-secondary underline"
                       >
-                        +{WHATSAPP_COMPROBANTES.replace(/^51/, "51 ")}
+                        +{pago.whatsappComprobantes.replace(/^51/, "51 ")}
                       </a>{" "}
                       o al correo{" "}
-                      <a href={`mailto:${CORREO_COMPROBANTES}`} className="font-bold text-secondary underline">
-                        {CORREO_COMPROBANTES}
+                      <a href={`mailto:${pago.correoComprobantes}`} className="font-bold text-secondary underline">
+                        {pago.correoComprobantes}
                       </a>
                       .
                     </p>
@@ -219,11 +217,11 @@ export function PaymentStep({
                     <p className="font-bold">1. Realiza el pago</p>
                     <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                       <div className="flex flex-1 flex-col gap-3">
-                        <CopyField label="Yapea o plinea al número" value={DATOS_YAPE_PLIN.numero} />
-                        <LockedField label="Titular" value={DATOS_YAPE_PLIN.titular} />
+                        <CopyField label="Yapea o plinea al número" value={pago.yapeNumero} />
+                        <LockedField label="Titular" value={pago.yapeTitular} />
                       </div>
                       <div className="relative h-40 w-40 shrink-0 overflow-hidden rounded-md border border-border bg-white">
-                        <Image src="/pago/yape-qr.png" alt="Código QR de Yape" fill className="object-contain p-1" sizes="160px" />
+                        <Image src={pago.yapeQrUrl} alt="Código QR de Yape" fill className="object-contain p-1" sizes="160px" />
                       </div>
                     </div>
 
@@ -231,19 +229,19 @@ export function PaymentStep({
                     <p className="text-muted-foreground">
                       Envía el voucher por WhatsApp al{" "}
                       <a
-                        href={`https://wa.me/${WHATSAPP_COMPROBANTES}`}
+                        href={`https://wa.me/${pago.whatsappComprobantes}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="font-bold text-secondary underline"
                       >
-                        +{WHATSAPP_COMPROBANTES.replace(/^51/, "51 ")}
+                        +{pago.whatsappComprobantes.replace(/^51/, "51 ")}
                       </a>
                       . Nuestro equipo validará tu pago y se contactará contigo para confirmar el pedido.
                     </p>
 
                     <p className="mt-2 font-bold">3. Importante</p>
                     <p className="text-xs text-muted-foreground">
-                      Los pagos enviados a otros números que no sean +51 {DATOS_YAPE_PLIN.numero} no serán
+                      Los pagos enviados a otros números que no sean +51 {pago.yapeNumero} no serán
                       procesados como pago de tu pedido — ese es el único número válido para pagos por
                       Yape/Plin.
                     </p>
