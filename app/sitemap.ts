@@ -26,7 +26,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const supabase = createStaticClient();
 
   const [{ data: productos }, { data: posts }] = await Promise.all([
-    supabase.from("productos_web").select("slug").eq("activo", true),
+    // `indexable = false` marca la ficha con noindex; incluirla igual en el
+    // sitemap le manda a Google señales contradictorias.
+    supabase.from("productos_web").select("slug").eq("activo", true).eq("indexable", true),
     supabase.from("blog_posts").select("slug, updated_at").eq("estado", "publicado"),
   ]);
 

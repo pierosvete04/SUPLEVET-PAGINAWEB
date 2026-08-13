@@ -14,6 +14,7 @@ import { createClient } from "@/lib/supabase/client";
 import { getVariantesPorSlugs, type RegaloVariante } from "@/lib/regalo-variantes";
 import { fechaEntregaEstimada, fechaComoInput } from "@/lib/rotulo";
 import { GoogleReviewsOptIn } from "@/components/shared/GoogleReviewsOptIn";
+import { trackEvent } from "@/lib/analytics";
 
 // Google Merchant Center — mismo merchant_id usado en el feed de productos
 // (ver project_catalogo_feed_google_meta_tiktok en memoria).
@@ -186,6 +187,31 @@ function CheckoutExitoContent() {
     if (guardado) setPedido(JSON.parse(guardado));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pedidoIdMp, statusMp]);
+
+  // "purchase" vive acá y no en /checkout: con tarjeta el pago recién se
+  // resuelve en Mercado Pago, así que mandarlo antes del redirect contaba
+  // como venta a todo el que abandonaba la pasarela. Con tarjeta solo cuenta
+  // cuando el pedido ya volvió "pagado"; con los demás métodos el pedido
+  // queda registrado al llegar a esta página, así que ahí sí cuenta.
+  // La marca en sessionStorage evita duplicarlo si se recarga la página.
+  useEffect(() => {
+    if (!pedido?.numero) return;
+    if (pedido.metodo === "tarjeta" && pedido.estadoPago !== "pagado") return;
+
+    const clave = `purchase_enviado_${pedido.numero}`;
+    if (sessionStorage.getItem(clave)) return;
+    sessionStorage.setItem(clave, "1");
+
+    trackEvent("purchase", {
+      transaction_id: pedido.numero,
+      value: pedido.total,
+      metodo_pago: pedido.metodo,
+      items: (pedido.productos ?? []).map((p) => ({
+        item_name: p.nombre,
+        quantity: p.cantidad,
+      })),
+    });
+  }, [pedido]);
 
   useEffect(() => {
     const slugs = pedido?.regaloBandanas ?? [];

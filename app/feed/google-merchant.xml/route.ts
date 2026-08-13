@@ -25,6 +25,9 @@ interface ProductoFeedRow {
   galeria: string[];
   sku: string | null;
   stock: number | null;
+  descripcion_larga: string;
+  gtin: string | null;
+  indexable: boolean;
 }
 
 function escaparXml(texto: string): string {
@@ -53,7 +56,7 @@ function construirItem(p: ProductoFeedRow): string {
     <item>
       <g:id>${escaparXml(p.slug)}</g:id>
       <title>${cdata(p.nombre)}</title>
-      <description>${cdata(p.descripcion || p.nombre)}</description>
+      <description>${cdata(p.descripcion_larga?.trim() || p.descripcion || p.nombre)}</description>
       <link>${escaparXml(url)}</link>
       <g:image_link>${escaparXml(p.imagen)}</g:image_link>
       ${imagenesAdicionales
@@ -64,8 +67,9 @@ function construirItem(p: ProductoFeedRow): string {
       ${enOferta ? `<g:sale_price>${p.precio.toFixed(2)} PEN</g:sale_price>` : ""}
       <g:condition>new</g:condition>
       <g:brand>${escaparXml(MARCA)}</g:brand>
-      <g:identifier_exists>${p.sku ? "yes" : "no"}</g:identifier_exists>
+      ${p.gtin ? `<g:gtin>${escaparXml(p.gtin)}</g:gtin>` : ""}
       ${p.sku ? `<g:mpn>${escaparXml(p.sku)}</g:mpn>` : ""}
+      <g:identifier_exists>${p.gtin || p.sku ? "yes" : "no"}</g:identifier_exists>
       <g:google_product_category>${CATEGORIA_GOOGLE}</g:google_product_category>
       <g:product_type>${cdata(tipoProducto)}</g:product_type>
       <g:is_bundle>${p.categoria === "combo" ? "yes" : "no"}</g:is_bundle>
@@ -77,9 +81,12 @@ export async function GET() {
   const { data } = await supabase
     .from("productos_web")
     .select(
-      "slug, nombre, descripcion, categoria, precio, precio_comparacion, imagen, galeria, sku, stock"
+      "slug, nombre, descripcion, categoria, precio, precio_comparacion, imagen, galeria, sku, stock, descripcion_larga, gtin, indexable"
     )
     .eq("activo", true)
+    // Un producto marcado noindex tampoco debe anunciarse en Shopping: si no
+    // queremos que Google lo indexe, menos aún pagar por mostrarlo.
+    .eq("indexable", true)
     .order("orden", { ascending: true });
 
   const productos = (data as ProductoFeedRow[]) ?? [];

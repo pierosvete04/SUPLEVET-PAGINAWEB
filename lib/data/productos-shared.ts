@@ -43,6 +43,16 @@ export interface ProductoCombo {
   videos: string[];
   shopifyProductId: string | null;
   metodosPagoPermitidos: MetodoPago[];
+  sku: string | null;
+  stock: number | null;
+  // Metafields de SEO. Todos admiten vacío: lib/seo-producto.ts define de qué
+  // campo se deriva cada uno cuando el admin no lo llenó.
+  metaTitulo: string;
+  metaDescripcion: string;
+  descripcionLarga: string;
+  gtin: string | null;
+  ogImagen: string;
+  indexable: boolean;
 }
 
 export function formatPrecio(valor: number): string {

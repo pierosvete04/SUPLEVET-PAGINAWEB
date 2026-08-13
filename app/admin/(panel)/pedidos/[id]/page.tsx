@@ -60,6 +60,16 @@ const FORMA_PAGO_LABEL: Record<string, string> = {
   shopify: "Checkout de Shopify",
 };
 
+// Las únicas formas que el equipo cobra a mano, y por eso las únicas que se
+// pueden elegir acá — el caso real es el cliente que pidió contra entrega y
+// termina pagando por transferencia. Tarjeta y Shopify quedan fuera: ese pago
+// lo verifica el procesador solo, no el panel. La API repite estas reglas.
+const FORMAS_PAGO_EDITABLES = ["yape_plin", "transferencia", "contra_entrega"];
+const FORMAS_PAGO_NO_EDITABLES: Record<string, string> = {
+  tarjeta: "El pago con tarjeta lo verifica Mercado Pago automáticamente.",
+  shopify: "Pedido importado de Shopify: su método de pago es un dato histórico.",
+};
+
 export default function AdminPedidoDetallePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = usePromise(params);
   const [pedido, setPedido] = useState<PedidoAdmin | null>(null);
@@ -179,6 +189,39 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
     );
   }
 
+  // También pasa por la API: las reglas de qué método se puede cambiar (y el
+  // volver a "pendiente de verificación" cuando el pedido ya estaba pagado y
+  // pasa a una forma que exige comprobante) no las puede garantizar la RLS,
+  // que solo distingue admin de no admin.
+  async function actualizarFormaPago(forma: string) {
+    setActualizando(true);
+    const res = await fetch(`/api/admin/pedidos/${id}/forma-pago`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ forma_pago: forma }),
+    });
+    const data = await res.json().catch(() => null);
+    await cargar();
+    setActualizando(false);
+    if (!res.ok) {
+      toast.error(data?.error ?? "No se pudo cambiar el método de pago.");
+      return;
+    }
+    if (data?.vuelveAPendiente) {
+      toast.warning(
+        `Método de pago cambiado a ${FORMA_PAGO_LABEL[forma]}. El pedido volvió a "pendiente de verificación": sube el comprobante y confírmalo de nuevo.`
+      );
+      return;
+    }
+    if (data?.requiereComprobante) {
+      toast.success(
+        `Método de pago cambiado a ${FORMA_PAGO_LABEL[forma]}. Ahora necesitas subir el comprobante para confirmar el pago.`
+      );
+      return;
+    }
+    toast.success(`Método de pago cambiado a ${FORMA_PAGO_LABEL[forma]}.`);
+  }
+
   // Igual que actualizarEstadoPago(): al marcar "entregado" la ruta además
   // acredita SuplePoints (a la entrega, no al pago — evita fraude por
   // devolución inmediata) y manda el correo correspondiente.
@@ -205,6 +248,7 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
   const dir = pedido.direccion_envio as DireccionEnvioPedidoAdmin | null;
   const pago = BADGE_ESTADO_PAGO[pedido.estado_pago];
   const requiereComprobante = FORMAS_QUE_EXIGEN_COMPROBANTE.includes(pedido.forma_pago ?? "");
+  const formaPagoBloqueada = FORMAS_PAGO_NO_EDITABLES[pedido.forma_pago ?? ""];
   const comprobantePendiente = requiereComprobante && !pedido.captura_pago_url;
 
   return (
@@ -357,12 +401,46 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
               <CardTitle className="text-sm text-muted-foreground">Verificación de pago</CardTitle>
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
-              <p className="text-sm">
-                <span className="text-muted-foreground">Método de pago: </span>
-                <span className="font-medium">
-                  {FORMA_PAGO_LABEL[pedido.forma_pago ?? ""] ?? "No especificado"}
-                </span>
-              </p>
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm text-muted-foreground" htmlFor="forma-pago">
+                  Método de pago
+                </label>
+                {formaPagoBloqueada ? (
+                  <>
+                    <p className="text-sm font-medium">
+                      {FORMA_PAGO_LABEL[pedido.forma_pago ?? ""] ?? "No especificado"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{formaPagoBloqueada}</p>
+                  </>
+                ) : (
+                  <>
+                    <Select
+                      value={
+                        FORMAS_PAGO_EDITABLES.includes(pedido.forma_pago ?? "")
+                          ? (pedido.forma_pago as string)
+                          : undefined
+                      }
+                      disabled={actualizando || pedido.estado_pago === "cancelado"}
+                      onValueChange={actualizarFormaPago}
+                    >
+                      <SelectTrigger id="forma-pago">
+                        <SelectValue placeholder="No especificado" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {FORMAS_PAGO_EDITABLES.map((valor) => (
+                          <SelectItem key={valor} value={valor}>
+                            {FORMA_PAGO_LABEL[valor]}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">
+                      Cámbialo si el cliente terminó pagando de otra forma. Yape y transferencia
+                      piden comprobante para poder confirmar el pago.
+                    </p>
+                  </>
+                )}
+              </div>
               {pedido.estado_pago === "cancelado" ? (
                 <p className="text-sm text-muted-foreground">Este pedido fue cancelado. No hay nada más que verificar.</p>
               ) : pedido.estado_pago === "pagado" ? (

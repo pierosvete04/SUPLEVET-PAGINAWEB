@@ -7,6 +7,7 @@ import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
 import { inicializarSesionCliente } from "@/lib/data/portal/cliente";
 import { CodigoOtpInput } from "@/components/auth/CodigoOtpInput";
+import { trackEvent } from "@/lib/analytics";
 import { cn } from "@/lib/utils";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
@@ -52,11 +53,18 @@ export function LoginPanel({ className, next = "/mi-cuenta", onAuthenticated }: 
       });
       if (!r.ok) {
         const d = await r.json();
+        trackEvent("login_error", {
+          paso: "enviar_codigo",
+          motivo: d.msg || d.error_description || "desconocido",
+          origen: next,
+        });
         setError(d.msg || d.error_description || "No pudimos enviar el código");
         return;
       }
+      trackEvent("login_codigo_enviado", { origen: next });
       setPaso("codigo");
     } catch {
+      trackEvent("login_error", { paso: "enviar_codigo", motivo: "conexion", origen: next });
       setError("Error de conexión, intenta de nuevo");
     } finally {
       setCargando(false);
@@ -84,6 +92,11 @@ export function LoginPanel({ className, next = "/mi-cuenta", onAuthenticated }: 
           type: "email",
         });
         if (errorOtp || !data.user) {
+          trackEvent("login_error", {
+            paso: "verificar_codigo",
+            motivo: /expired|invalid/i.test(errorOtp?.message ?? "") ? "codigo_invalido" : "otro",
+            origen: next,
+          });
           // Supabase responde en inglés ("Token has expired or is invalid").
           setError(
             /expired|invalid/i.test(errorOtp?.message ?? "")
@@ -97,6 +110,10 @@ export function LoginPanel({ className, next = "/mi-cuenta", onAuthenticated }: 
         // Un solo round-trip: crea las filas del cliente, vincula pedidos
         // previos de Shopify y nos dice a dónde mandarlo.
         const sesion = await inicializarSesionCliente(supabase);
+
+        // Cerrar el embudo del login: contra login_codigo_enviado da la tasa
+        // real de gente que pide el código y logra entrar.
+        trackEvent("login", { metodo: "otp_email", origen: next });
 
         if (onAuthenticated) {
           onAuthenticated(data.user);

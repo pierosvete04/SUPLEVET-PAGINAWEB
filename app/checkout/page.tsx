@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
@@ -113,6 +113,26 @@ export default function CheckoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [carritoCargando, items.length]);
 
+  // begin_checkout se manda acá y no en los botones que llevan al checkout,
+  // porque hay varios caminos de entrada (carrito lateral, /carrito, URL
+  // directa) y antes solo uno de ellos lo registraba. El ref evita repetirlo
+  // si el componente vuelve a renderizar con el carrito ya cargado.
+  const beginCheckoutEnviado = useRef(false);
+  useEffect(() => {
+    if (carritoCargando || items.length === 0 || beginCheckoutEnviado.current) return;
+    beginCheckoutEnviado.current = true;
+    trackEvent("begin_checkout", {
+      value: subtotal,
+      quantity: items.reduce((total, i) => total + i.cantidad, 0),
+      items: items.map((i) => ({
+        item_slug: i.slug,
+        item_name: i.nombre,
+        quantity: i.cantidad,
+      })),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [carritoCargando, items.length]);
+
   // Intersección de métodos admitidos por todos los items del carrito — si
   // hay un combo (solo Yape/transferencia) junto a un producto individual
   // (los 3 métodos), el pedido completo queda limitado a lo que admiten
@@ -176,6 +196,52 @@ export default function CheckoutPage() {
     bandanasSeleccionadas.filter(Boolean).length >= slotsBandanaRequeridos;
   const puedeConfirmar =
     direccionCompleta && !!zona && costoEnvio !== null && !!metodoPago && bandanasCompletas;
+
+  // Los dos pasos intermedios del checkout. Sin ellos el embudo salta de
+  // "entró al checkout" a "pagó" y no se ve en cuál de los dos se cae.
+  const envioEnviado = useRef(false);
+  useEffect(() => {
+    if (envioEnviado.current) return;
+    if (!direccionCompleta || !zona || costoEnvio === null) return;
+    envioEnviado.current = true;
+    trackEvent("add_shipping_info", {
+      value: subtotal,
+      zona_envio: zonaEnvioSlug(zona.nombre),
+      costo_envio: costoEnvio,
+      metodo_envio: direccion.metodoEnvio,
+      departamento: direccion.departamento,
+      distrito: direccion.distrito,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [direccionCompleta, zona, costoEnvio]);
+
+  const pagoEnviado = useRef<string | null>(null);
+  useEffect(() => {
+    if (!metodoPago || pagoEnviado.current === metodoPago) return;
+    pagoEnviado.current = metodoPago;
+    trackEvent("add_payment_info", { value: subtotal, metodo_pago: metodoPago });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [metodoPago]);
+
+  // El botón de confirmar está deshabilitado hasta que se cumplan cinco
+  // condiciones, así que un clic frustrado no genera ningún evento. Esto
+  // registra, para quien ya llegó a elegir método de pago, qué le falta.
+  const bloqueoEnviado = useRef<string | null>(null);
+  useEffect(() => {
+    if (!metodoPago || puedeConfirmar) return;
+    const faltantes = [
+      !direccionCompleta && "direccion",
+      !zona && "zona_envio",
+      costoEnvio === null && "costo_envio",
+      !bandanasCompletas && "bandana_regalo",
+    ].filter((v): v is string => typeof v === "string");
+    if (faltantes.length === 0) return;
+    const motivo = faltantes.join(",");
+    if (bloqueoEnviado.current === motivo) return;
+    bloqueoEnviado.current = motivo;
+    trackEvent("checkout_bloqueado", { motivo, metodo_pago: metodoPago });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [metodoPago, puedeConfirmar, direccionCompleta, zona, costoEnvio, bandanasCompletas]);
 
   // Mismo cálculo que OrderSummary — se replica acá solo para mostrarle al
   // cliente cuánto tener listo si paga contra entrega.
@@ -258,6 +324,14 @@ export default function CheckoutPage() {
     });
 
     if (error || !data?.ok) {
+      // Una compra perdida por fallo técnico se veía igual que un abandono
+      // voluntario. Esto las separa.
+      trackEvent("checkout_error", {
+        paso: "registrar_pedido",
+        motivo: data?.error ?? error?.message ?? "desconocido",
+        metodo_pago: metodoPago,
+        value: subtotal,
+      });
       setErrorPedido(data?.error ?? "No se pudo registrar el pedido, intenta de nuevo.");
       setProcesando(false);
       return;
@@ -277,6 +351,12 @@ export default function CheckoutPage() {
       const cuerpoMp = await respuestaMp.json().catch(() => null);
 
       if (!respuestaMp.ok || !cuerpoMp?.initPoint) {
+        trackEvent("checkout_error", {
+          paso: "iniciar_mercadopago",
+          motivo: cuerpoMp?.error ?? "sin_init_point",
+          metodo_pago: metodoPago,
+          value: subtotal,
+        });
         setErrorPedido(
           cuerpoMp?.error ??
             `No se pudo iniciar el pago con tarjeta. Tu pedido ${data.numero} quedó registrado — escríbenos por WhatsApp para completarlo.`
@@ -285,12 +365,10 @@ export default function CheckoutPage() {
         return;
       }
 
-      trackEvent("purchase", {
-        transaction_id: data.numero,
-        value: data.total,
-        metodo_pago: metodoPago,
-        items: items.map((i) => ({ item_slug: i.slug, item_name: i.nombre, quantity: i.cantidad })),
-      });
+      // Ojo: acá NO se manda "purchase". Con tarjeta el pago recién ocurre en
+      // Mercado Pago, así que el evento vive en /checkout/exito, cuando el
+      // pedido vuelve con estado_pago "pagado". Mandarlo acá contaba como
+      // venta a todo el que abandonaba la pasarela.
       items.forEach((i) => removeItem(i.slug));
       limpiarBandanas();
       window.location.href = cuerpoMp.initPoint;
@@ -306,13 +384,8 @@ export default function CheckoutPage() {
       body: JSON.stringify({ pedidoId: data.pedido_id }),
     }).catch(() => {});
 
-    trackEvent("purchase", {
-      transaction_id: data.numero,
-      value: data.total,
-      metodo_pago: metodoPago,
-      items: items.map((i) => ({ item_slug: i.slug, item_name: i.nombre, quantity: i.cantidad })),
-    });
-
+    // "purchase" se dispara en /checkout/exito (ver ese archivo), para que
+    // haya un solo lugar que lo mande y no se duplique entre métodos de pago.
     sessionStorage.setItem(
       "ultimo_pedido",
       JSON.stringify({

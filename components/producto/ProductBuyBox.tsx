@@ -59,7 +59,10 @@ export function ProductBuyBox({ producto, regalos, resenas }: ProductBuyBoxProps
       },
       cantidad
     );
-    trackEvent("begin_checkout", {
+    // "Comprar ahora" agrega al carrito y lleva a /carrito — todavía no es
+    // el checkout, así que el evento correcto es add_to_cart. begin_checkout
+    // se dispara al entrar a /checkout, que es el paso real del embudo.
+    trackEvent("add_to_cart", {
       item_slug: producto.slug,
       item_name: producto.nombre,
       value: producto.precio * cantidad,
@@ -150,7 +153,16 @@ export function ProductBuyBox({ producto, regalos, resenas }: ProductBuyBoxProps
               <button
                 key={url}
                 type="button"
-                onClick={() => setVideoAbierto(url)}
+                onClick={() => {
+                  // Abrir el video es señal fuerte de interés — sirve para
+                  // comparar la conversión de quien lo ve contra quien no.
+                  trackEvent("video_producto_abierto", {
+                    item_slug: producto.slug,
+                    item_name: producto.nombre,
+                    posicion: i + 1,
+                  });
+                  setVideoAbierto(url);
+                }}
                 aria-label={`Ver video ${i + 1}`}
                 className="relative flex aspect-[9/16] w-24 shrink-0 items-center justify-center overflow-hidden rounded-[var(--radius-card)] bg-soft-gray text-white transition-opacity hover:opacity-90"
               >

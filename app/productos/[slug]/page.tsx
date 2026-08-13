@@ -10,6 +10,7 @@ import { RelatedProducts } from "@/components/producto/RelatedProducts";
 import { ComoSePrepara } from "@/components/shared/ComoSePrepara";
 import { Faq } from "@/components/shared/Faq";
 import { PageBreadcrumbs } from "@/components/shared/PageBreadcrumbs";
+import { TrackOnMount } from "@/components/analytics/TrackOnMount";
 import { getProductoBySlug } from "@/lib/data/productos";
 import {
   getComparativaPublica,
@@ -21,6 +22,7 @@ import {
   getZonasEnvioPublicas,
 } from "@/lib/data/publico";
 import { detallesEnvioSchema, politicaDevolucionesSchema } from "@/lib/schema-producto";
+import { resolverSeoProducto } from "@/lib/seo-producto";
 import { createStaticClient } from "@/lib/supabase/static";
 import { siteConfig } from "@/lib/site-config";
 
@@ -47,23 +49,28 @@ export async function generateMetadata({ params }: ProductoPageProps): Promise<M
   if (!producto) return {};
 
   const url = `${siteConfig.siteUrl}/productos/${producto.slug}`;
+  const seo = resolverSeoProducto(producto);
 
   return {
-    title: producto.nombre,
-    description: producto.descripcion,
+    // `absolute` evita la plantilla "%s — Suplevet" del layout raíz: el título
+    // ya viene completo desde resolverSeoProducto, así no sale "Suplevet 150g
+    // — Suplevet" con la marca repetida.
+    title: { absolute: seo.titulo },
+    description: seo.descripcion,
     alternates: { canonical: url },
+    robots: seo.indexable ? undefined : { index: false, follow: false },
     openGraph: {
       type: "website",
-      title: producto.nombre,
-      description: producto.descripcion,
+      title: seo.titulo,
+      description: seo.descripcion,
       url,
-      images: producto.imagen ? [{ url: producto.imagen, width: 1200, height: 1200 }] : undefined,
+      images: seo.imagenSocial ? [{ url: seo.imagenSocial }] : undefined,
     },
     twitter: {
       card: "summary_large_image",
-      title: producto.nombre,
-      description: producto.descripcion,
-      images: producto.imagen ? [producto.imagen] : undefined,
+      title: seo.titulo,
+      description: seo.descripcion,
+      images: seo.imagenSocial ? [seo.imagenSocial] : undefined,
     },
   };
 }
@@ -114,20 +121,40 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
       worstRating: 1,
     },
   }));
+  const seo = resolverSeoProducto(producto);
+
+  // `stock` nulo significa "no llevo control de inventario", no cero: solo el
+  // 0 explícito marca agotado. Antes esto decía InStock siempre, así que un
+  // producto agotado seguía apareciendo como disponible en Google.
+  const disponibilidad =
+    producto.stock === 0 ? "https://schema.org/OutOfStock" : "https://schema.org/InStock";
+
+  // Google Search Console avisa "Falta el campo priceValidUntil" y deja de
+  // mostrar el precio en el snippet cuando la fecha vence. Un año por delante
+  // es el horizonte habitual para catálogo estable.
+  const validoHasta = new Date();
+  validoHasta.setFullYear(validoHasta.getFullYear() + 1);
+
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "Product",
     name: producto.nombre,
-    description: producto.descripcion,
+    description: seo.descripcionLarga,
     image: producto.galeria?.length > 0 ? producto.galeria : producto.imagen ? [producto.imagen] : undefined,
-    sku: producto.slug,
+    // El SKU real cuando existe; el slug solo como respaldo, porque Google
+    // exige un identificador estable y único por producto.
+    sku: producto.sku || producto.slug,
+    ...(producto.sku && { mpn: producto.sku }),
+    ...(producto.gtin && { gtin: producto.gtin }),
     brand: { "@type": "Brand", name: "Suplevet" },
     offers: {
       "@type": "Offer",
       url: `${siteConfig.siteUrl}/productos/${producto.slug}`,
       priceCurrency: "PEN",
       price: producto.precio,
-      availability: "https://schema.org/InStock",
+      priceValidUntil: validoHasta.toISOString().slice(0, 10),
+      itemCondition: "https://schema.org/NewCondition",
+      availability: disponibilidad,
       shippingDetails: detallesEnvioSchema(zonasEnvio, distritosEnvio),
       hasMerchantReturnPolicy: politicaDevolucionesSchema,
     },
@@ -146,6 +173,18 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
   return (
     <div>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {/* Sin view_item no se puede saber si un producto vende poco porque
+          nadie entra a su ficha o porque quien entra no se convence. */}
+      <TrackOnMount
+        evento="view_item"
+        clave={producto.slug}
+        params={{
+          item_slug: producto.slug,
+          item_name: producto.nombre,
+          item_category: producto.categoria,
+          value: producto.precio,
+        }}
+      />
       <PageBreadcrumbs items={[{ label: "Productos", href: "/productos" }, { label: producto.nombre }]} />
       <div className="mx-auto max-w-container px-mobile-margin pb-section-y pt-4 md:px-gutter md:pt-6">
         <div className="grid grid-cols-1 gap-10 md:grid-cols-2">

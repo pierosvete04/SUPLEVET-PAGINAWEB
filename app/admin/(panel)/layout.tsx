@@ -36,7 +36,11 @@ export default async function AdminPanelLayout({ children }: { children: React.R
     return (
       <SidebarProvider className="font-body">
         <RestrictedSidebar admin={{ nombre: admin.nombre, usuario: admin.usuario }} titulo={tituloRestringido} />
-        <SidebarInset>
+        {/* min-w-0: SidebarInset es un flex item junto al sidebar y por defecto
+            no puede encogerse por debajo del ancho de su contenido, así que una
+            tabla ancha estiraba TODA la página en vez de scrollear dentro de su
+            tarjeta. */}
+        <SidebarInset className="min-w-0">
           <SiteHeader />
           <main className="flex flex-1 flex-col gap-4 bg-soft-gray p-4 md:p-6">{children}</main>
         </SidebarInset>
@@ -48,7 +52,7 @@ export default async function AdminPanelLayout({ children }: { children: React.R
   return (
     <SidebarProvider className="font-body">
       <AppSidebar admin={{ nombre: admin.nombre, usuario: admin.usuario }} />
-      <SidebarInset>
+      <SidebarInset className="min-w-0">
         <SiteHeader />
         <main className="flex flex-1 flex-col gap-4 bg-soft-gray p-4 md:p-6">{children}</main>
       </SidebarInset>

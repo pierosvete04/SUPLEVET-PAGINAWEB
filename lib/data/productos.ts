@@ -20,6 +20,14 @@ interface ProductoWebRow {
   videos: string[];
   shopify_product_id: string | null;
   metodos_pago_permitidos: MetodoPago[];
+  sku: string | null;
+  stock: number | null;
+  meta_titulo: string;
+  meta_descripcion: string;
+  descripcion_larga: string;
+  gtin: string | null;
+  og_imagen: string;
+  indexable: boolean;
 }
 
 function mapRow(row: ProductoWebRow): ProductoCombo {
@@ -36,11 +44,19 @@ function mapRow(row: ProductoWebRow): ProductoCombo {
     videos: row.videos ?? [],
     shopifyProductId: row.shopify_product_id,
     metodosPagoPermitidos: row.metodos_pago_permitidos,
+    sku: row.sku,
+    stock: row.stock,
+    metaTitulo: row.meta_titulo ?? "",
+    metaDescripcion: row.meta_descripcion ?? "",
+    descripcionLarga: row.descripcion_larga ?? "",
+    gtin: row.gtin,
+    ogImagen: row.og_imagen ?? "",
+    indexable: row.indexable ?? true,
   };
 }
 
 const FIELDS =
-  "slug, nombre, descripcion, categoria, precio, precio_comparacion, imagen, galeria, descuento_porcentaje, videos, shopify_product_id, metodos_pago_permitidos";
+  "slug, nombre, descripcion, categoria, precio, precio_comparacion, imagen, galeria, descuento_porcentaje, videos, shopify_product_id, metodos_pago_permitidos, sku, stock, meta_titulo, meta_descripcion, descripcion_larga, gtin, og_imagen, indexable";
 
 export async function getProductos(): Promise<ProductoCombo[]> {
   const supabase = createStaticClient();

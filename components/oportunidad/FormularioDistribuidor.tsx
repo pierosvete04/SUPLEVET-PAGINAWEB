@@ -151,6 +151,13 @@ export function FormularioDistribuidor() {
     }
 
     // 2) Abrir WhatsApp al número de distribuidores con el mensaje redactado.
+    // Antes solo se registraba el error del insert y el clic a WhatsApp, así
+    // que no había forma de medir cuántos leads de distribuidor entraban.
+    trackEvent("generate_lead", {
+      tipo_lead: "distribuidor",
+      departamento: form.departamento || null,
+      provincia: form.provincia || null,
+    });
     trackEvent("whatsapp_click", { origen: "form_distribuidores" });
     const link = whatsappLink(config.whatsappDistribuidores, construirMensaje());
     window.open(link, "_blank", "noopener,noreferrer");

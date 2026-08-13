@@ -11,6 +11,7 @@ import {
   optimizedHeroSrc,
 } from "@/lib/hero";
 import { dimensionesImg, type MapaDimensiones } from "@/lib/images";
+import { trackEvent } from "@/lib/analytics";
 
 const AUTOPLAY_MS = 6000;
 const HERO_ENLACE_FALLBACK = "#combos";
@@ -90,6 +91,17 @@ export function Hero({ banners, bannerDesktop, bannerMobile, dimensiones }: Hero
                 key={slide.id}
                 href={slide.enlace}
                 aria-label="Ver combos de Suplevet"
+                onClick={() =>
+                  // El clic ya se registra como enlace genérico, pero sin saber
+                  // qué banner estaba visible no se puede comparar uno contra
+                  // otro ni saber si el tercero llega a verse.
+                  trackEvent("banner_click", {
+                    banner_id: slide.id,
+                    posicion: i + 1,
+                    total_banners: slides.length,
+                    destino: slide.enlace,
+                  })
+                }
                 className="block w-full shrink-0"
               >
                 {/* width/height llevan el tamaño REAL del archivo (medido en

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { ProductCard } from "@/components/productos/ProductCard";
+import { TrackOnMount } from "@/components/analytics/TrackOnMount";
 import type { CategoriaProducto, ProductoCombo } from "@/lib/data/productos-shared";
 
 const filtros: { label: string; value: CategoriaProducto | "todos" }[] = [
@@ -22,6 +23,13 @@ export function CatalogoGrid({ productos }: CatalogoGridProps) {
 
   return (
     <div>
+      {/* El par de select_item: cuántos ven el listado y cuántos entran a una
+          ficha desde ahí. */}
+      <TrackOnMount
+        evento="view_item_list"
+        clave={filtro}
+        params={{ lista: "catalogo", filtro, total_items: visibles.length }}
+      />
       <div className="mx-auto flex w-fit gap-1 rounded-[17px] bg-soft-gray p-1">
         {filtros.map((f) => (
           <button

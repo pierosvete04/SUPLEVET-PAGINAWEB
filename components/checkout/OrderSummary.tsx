@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Tag, X } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
+import { trackEvent } from "@/lib/analytics";
 import type { BandanaSeleccion, CartItem } from "@/lib/cart/CartContext";
 import { formatPrecio } from "@/lib/data/productos-shared";
 import { getVariantesPorSlugs, type RegaloVariante } from "@/lib/regalo-variantes";
@@ -69,10 +70,21 @@ export function OrderSummary({
     });
 
     if (rpcError || !data?.ok) {
+      // Un código rechazado es alguien con intención de compra que chocó con
+      // una pared — sirve para detectar cupones vencidos que siguen circulando.
+      trackEvent("cupon_rechazado", {
+        codigo: codigoInput.trim().toUpperCase(),
+        motivo: data?.error ?? "error_validacion",
+      });
       setError(data?.error ?? "No se pudo validar el código, intenta de nuevo.");
       setValidando(false);
       return;
     }
+
+    trackEvent("cupon_aplicado", {
+      codigo: codigoInput.trim().toUpperCase(),
+      descuento: data.descuento_subtotal,
+    });
 
     onDescuentoChange({
       codigo: codigoInput.trim().toUpperCase(),

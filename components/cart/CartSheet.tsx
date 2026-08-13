@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Minus, Plus, Trash2, PawPrint } from "lucide-react";
 import { useCart } from "@/lib/cart/CartContext";
+import { trackEvent } from "@/lib/analytics";
 import { formatPrecio } from "@/lib/data/productos-shared";
 import { RegaloBandanaSelector } from "@/components/cart/RegaloBandanaSelector";
 import { BENEFICIOS_CARRITO_VACIO } from "@/lib/cart/beneficios-carrito-vacio";
@@ -27,6 +28,18 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
   function handlePagarPedido() {
     onOpenChange(false);
     router.push("/checkout");
+  }
+
+  // Sacar algo del carrito es la señal más directa de duda sobre precio o
+  // producto — sin esto no hay forma de saber qué se abandona antes de pagar.
+  function handleQuitar(item: (typeof items)[number]) {
+    trackEvent("remove_from_cart", {
+      item_slug: item.slug,
+      item_name: item.nombre,
+      value: item.precio * item.cantidad,
+      quantity: item.cantidad,
+    });
+    removeItem(item.slug);
   }
 
   return (
@@ -114,7 +127,7 @@ export function CartSheet({ open, onOpenChange }: CartSheetProps) {
                       <button
                         type="button"
                         aria-label={`Eliminar ${item.nombre}`}
-                        onClick={() => removeItem(item.slug)}
+                        onClick={() => handleQuitar(item)}
                         className="text-muted-foreground hover:text-destructive"
                       >
                         <Trash2 className="h-4 w-4" />

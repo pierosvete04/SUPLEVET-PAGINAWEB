@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { trackEvent } from "@/lib/analytics";
 
 interface ProductoOpcion {
   slug: string;
@@ -19,6 +20,9 @@ export function BlogFilters({ productos }: BlogFiltersProps) {
   const searchParams = useSearchParams();
 
   function updateParam(key: string, value: string) {
+    // Son listas desplegables: cambian con una selección, no con un clic, así
+    // que el disparador de botones de GTM nunca las veía.
+    trackEvent("filtro_blog", { filtro: key, valor: value || "(todos)" });
     const params = new URLSearchParams(searchParams.toString());
     if (value) params.set(key, value);
     else params.delete(key);

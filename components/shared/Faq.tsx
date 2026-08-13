@@ -5,6 +5,7 @@ import { Plus } from "lucide-react";
 import { whatsappLink } from "@/lib/site-config";
 import { useConfiguracionSitio } from "@/hooks/use-configuracion-sitio";
 import { WhatsAppIcon } from "@/components/shared/WhatsAppIcon";
+import { trackEvent } from "@/lib/analytics";
 import type { Faq as FaqItem } from "@/lib/faqs";
 
 const CAMPOS_VACIOS = { nombre: "", correo: "", mensaje: "" };
@@ -59,6 +60,18 @@ export function Faq({ preguntas, paddingSuperiorReducido = false }: FaqProps) {
                 {preguntas.map((item) => (
                   <details
                     key={item.id}
+                    onToggle={(e) => {
+                      // Cada apertura es una objeción de compra declarada. Va
+                      // con onToggle y no con onClick del <summary> porque
+                      // <details> también se abre con teclado, y así solo se
+                      // cuenta la apertura (no el cierre).
+                      if (e.currentTarget.open) {
+                        trackEvent("faq_abierta", {
+                          pregunta: item.pregunta.slice(0, 100),
+                          faq_id: item.id,
+                        });
+                      }
+                    }}
                     className="group border-b border-white/10 py-5 first:pt-0 last:border-b-0 [&_summary::-webkit-details-marker]:hidden"
                   >
                     <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-body font-bold text-white">

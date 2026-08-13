@@ -6,6 +6,7 @@ import { Check, ShoppingCart } from "lucide-react";
 import { useState } from "react";
 import { formatPrecio, type ProductoCombo } from "@/lib/data/productos-shared";
 import { useCart } from "@/lib/cart/CartContext";
+import { trackEvent } from "@/lib/analytics";
 
 interface ProductCardProps {
   producto: ProductoCombo;
@@ -27,6 +28,17 @@ export function ProductCard({ producto, ctaLabel = "Añadir al carrito" }: Produ
       categoria: producto.categoria,
       metodosPagoPermitidos: producto.metodosPagoPermitidos,
     });
+    // Esta tarjeta se usa en el catálogo, en relacionados y en la home: sin
+    // este evento no se contaba ninguna de esas adiciones al carrito, solo
+    // las hechas desde la ficha del producto.
+    trackEvent("add_to_cart", {
+      item_slug: producto.slug,
+      item_name: producto.nombre,
+      item_category: producto.categoria,
+      value: producto.precio,
+      quantity: 1,
+      origen: "tarjeta_producto",
+    });
     setAgregado(true);
     setTimeout(() => setAgregado(false), 1500);
   }
@@ -39,6 +51,14 @@ export function ProductCard({ producto, ctaLabel = "Añadir al carrito" }: Produ
       <Link
         href={`/productos/${producto.slug}`}
         aria-label={`Ver ${producto.nombre}`}
+        onClick={() =>
+          trackEvent("select_item", {
+            item_slug: producto.slug,
+            item_name: producto.nombre,
+            item_category: producto.categoria,
+            value: producto.precio,
+          })
+        }
         className="absolute inset-0 z-0"
       />
 
