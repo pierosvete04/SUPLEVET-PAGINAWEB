@@ -667,7 +667,11 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ n
             <AlertDialogTitle>¿Cambiar el estado de preparación?</AlertDialogTitle>
             <AlertDialogDescription>
               El pedido pasará a &quot;
-              {confirmarEstadoPreparacion ? BADGE_ESTADO_PREPARACION[confirmarEstadoPreparacion]?.label : ""}
+              {confirmarEstadoPreparacion
+                ? BADGE_ESTADO_PREPARACION[
+                    confirmarEstadoPreparacion as keyof typeof BADGE_ESTADO_PREPARACION
+                  ]?.label
+                : ""}
               &quot;.
             </AlertDialogDescription>
           </AlertDialogHeader>
