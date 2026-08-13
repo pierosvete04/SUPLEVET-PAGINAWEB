@@ -31,6 +31,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: "estado inválido" }, { status: 400 });
   }
   const estado: EstadoPago = body.estado;
+  // Toggle "avisar al cliente" del panel (como el de Shopify): por defecto se
+  // manda el correo, pero el admin puede destildarlo cuando el cambio es una
+  // corrección propia (ej. se equivocó de botón) y no algo que el cliente
+  // necesite saber. El aviso interno de Telegram no depende de esto.
+  const notificar = body?.notificar !== false;
 
   const supabase = await createClient();
 
@@ -55,7 +60,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     .from("pedidos")
     .update({ estado_pago: estado })
     .eq("id", id)
-    .select("cliente_email, cliente_nombre, shopify_order_number")
+    .select("cliente_email, cliente_nombre, numero_pedido")
     .maybeSingle();
 
   if (error || !pedido) {
@@ -77,11 +82,11 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     console.error("No se pudo enviar el aviso de Telegram del estado de pago:", telegramError);
   }
 
-  if (!pedido.cliente_email) {
+  if (!pedido.cliente_email || !notificar) {
     return NextResponse.json({ ok: true });
   }
 
-  const numeroPedido = pedido.shopify_order_number ?? "";
+  const numeroPedido = pedido.numero_pedido ?? "";
   const nombre = pedido.cliente_nombre ?? "cliente";
   let sendError: string | null;
 

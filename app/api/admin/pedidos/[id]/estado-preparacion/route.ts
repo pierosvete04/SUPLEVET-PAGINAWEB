@@ -42,13 +42,17 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: "estado inválido" }, { status: 400 });
   }
   const estado = body.estado;
+  // Mismo toggle "avisar al cliente" que /estado-pago: por defecto se manda
+  // el correo, pero el admin puede destildarlo. Los SuplePoints de
+  // "entregado" se acreditan igual — solo se salta el correo, no la lógica.
+  const notificar = body?.notificar !== false;
 
   const supabase = await createClient();
   const { data: pedido, error } = await supabase
     .from("pedidos")
     .update({ estado_preparacion: estado })
     .eq("id", id)
-    .select("cliente_email, cliente_nombre, shopify_order_number")
+    .select("cliente_email, cliente_nombre, numero_pedido")
     .maybeSingle();
 
   if (error || !pedido) {
@@ -59,8 +63,8 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   }
 
   if (estado !== "entregado") {
-    if (pedido.cliente_email && estado !== "no_preparado") {
-      const numeroPedido = pedido.shopify_order_number ?? "";
+    if (pedido.cliente_email && estado !== "no_preparado" && notificar) {
+      const numeroPedido = pedido.numero_pedido ?? "";
       const nombre = pedido.cliente_nombre ?? "cliente";
 
       const { error: sendError } =
@@ -124,7 +128,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ ok: true, puntos: false });
   }
 
-  if (resultado.ya_procesado || !pedido.cliente_email) {
+  if (resultado.ya_procesado || !pedido.cliente_email || !notificar) {
     return NextResponse.json({ ok: true, puntos: !!resultado.ya_procesado });
   }
 
@@ -135,7 +139,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       puntosGanados: resultado.puntos,
       saldoAnterior: resultado.saldo_anterior,
       saldoNuevo: resultado.saldo_nuevo,
-      origen: `tu pedido ${pedido.shopify_order_number ?? ""}`,
+      origen: `tu pedido ${pedido.numero_pedido ?? ""}`,
     },
   });
 

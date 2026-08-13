@@ -69,7 +69,7 @@ export async function POST(request: Request) {
   const { data: pedido, error } = await supabase
     .from("pedidos")
     .select(
-      "id, shopify_order_number, total, cliente_email, cliente_nombre, cliente_telefono, forma_pago, estado_pago, productos, regalo_bandana, regalo_bandanas"
+      "id, numero_pedido, total, cliente_email, cliente_nombre, cliente_telefono, forma_pago, estado_pago, productos, regalo_bandana, regalo_bandanas"
     )
     .eq("id", pedidoId)
     .maybeSingle();
@@ -123,7 +123,7 @@ export async function POST(request: Request) {
   // experimentalmente el 2026-07-22). Quitar MERCADOPAGO_MODO_PRUEBA del
   // entorno (o ponerla en false) al pasar a credenciales productivas.
   const esModoPrueba = process.env.MERCADOPAGO_MODO_PRUEBA === "true";
-  const numero = pedido.shopify_order_number ?? pedido.id;
+  const numero = pedido.numero_pedido ?? pedido.id;
   const productos = Array.isArray(pedido.productos) ? (pedido.productos as ItemPedido[]) : [];
   const slugsBandanas = Array.isArray(pedido.regalo_bandanas)
     ? (pedido.regalo_bandanas as { slug: string }[]).map((b) => b.slug)

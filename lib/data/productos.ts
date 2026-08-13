@@ -28,6 +28,7 @@ interface ProductoWebRow {
   gtin: string | null;
   og_imagen: string;
   indexable: boolean;
+  updated_at: string;
 }
 
 function mapRow(row: ProductoWebRow): ProductoCombo {
@@ -52,11 +53,12 @@ function mapRow(row: ProductoWebRow): ProductoCombo {
     gtin: row.gtin,
     ogImagen: row.og_imagen ?? "",
     indexable: row.indexable ?? true,
+    actualizadoEn: row.updated_at,
   };
 }
 
 const FIELDS =
-  "slug, nombre, descripcion, categoria, precio, precio_comparacion, imagen, galeria, descuento_porcentaje, videos, shopify_product_id, metodos_pago_permitidos, sku, stock, meta_titulo, meta_descripcion, descripcion_larga, gtin, og_imagen, indexable";
+  "slug, nombre, descripcion, categoria, precio, precio_comparacion, imagen, galeria, descuento_porcentaje, videos, shopify_product_id, metodos_pago_permitidos, sku, stock, meta_titulo, meta_descripcion, descripcion_larga, gtin, og_imagen, indexable, updated_at";
 
 export async function getProductos(): Promise<ProductoCombo[]> {
   const supabase = createStaticClient();

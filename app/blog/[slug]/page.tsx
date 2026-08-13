@@ -5,10 +5,12 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { getPostBySlug, getRelatedPosts, formatFechaPost } from "@/lib/data/blog";
 import { PageBreadcrumbs } from "@/components/shared/PageBreadcrumbs";
+import { PostFaq } from "@/components/blog/PostFaq";
 import { getProductoBySlug } from "@/lib/data/productos";
 import { getConfiguracionPublica } from "@/lib/data/publico";
 import { whatsappLink, siteConfig } from "@/lib/site-config";
 import { sanitizeHtml } from "@/lib/sanitize-html";
+import { faqPageSchema } from "@/lib/schema-faq";
 
 interface BlogPostPageProps {
   params: Promise<{ slug: string }>;
@@ -82,11 +84,19 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
     mainEntityOfPage: { "@type": "WebPage", "@id": `${siteConfig.siteUrl}/blog/${post.slug}` },
   };
 
+  // FAQPage JSON-LD — el formato que Google AI Overviews y asistentes como
+  // Gemini prefieren extraer para citar una respuesta directa. Se arma con
+  // las mismas preguntas que <PostFaq> pinta más abajo (ver lib/schema-faq.ts).
+  const faqJsonLd = faqPageSchema(post.faqs);
+
   return (
     <>
       <PageBreadcrumbs items={[{ label: "Blog", href: "/blog" }, { label: post.titulo }]} />
       <article className="mx-auto grid max-w-container grid-cols-1 gap-12 px-mobile-margin pb-section-y pt-4 md:px-gutter md:pt-6 lg:grid-cols-12">
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
+      {faqJsonLd && (
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }} />
+      )}
       <div className="lg:col-span-8">
         <Link
           href="/blog"
@@ -120,6 +130,8 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
           className="flex flex-col gap-4 font-body text-secondary [&_h2]:mt-4 [&_h2]:font-display [&_h2]:text-xl [&_h2]:font-bold"
           dangerouslySetInnerHTML={{ __html: sanitizeHtml(post.contenido_html) }}
         />
+
+        <PostFaq faqs={post.faqs} />
 
         <div className="mt-12 flex flex-col items-center justify-between gap-5 rounded-md bg-secondary p-6 md:flex-row md:p-8">
           <div>

@@ -152,6 +152,11 @@ export default async function ProductoPage({ params }: ProductoPageProps) {
       url: `${siteConfig.siteUrl}/productos/${producto.slug}`,
       priceCurrency: "PEN",
       price: producto.precio,
+      // Search Console lo marca como "problema no crítico" si falta junto a
+      // priceValidUntil: le dice a Google desde cuándo rige el precio actual,
+      // no solo hasta cuándo. Se deriva de `updated_at` porque no llevamos
+      // historial de precios; es una aproximación razonable, no exacta.
+      validFrom: producto.actualizadoEn.slice(0, 10),
       priceValidUntil: validoHasta.toISOString().slice(0, 10),
       itemCondition: "https://schema.org/NewCondition",
       availability: disponibilidad,

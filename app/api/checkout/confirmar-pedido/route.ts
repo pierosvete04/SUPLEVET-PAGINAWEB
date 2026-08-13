@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     // En una sola cadena literal a propósito: si se parte en dos con `+`,
     // supabase-js pierde la inferencia de tipos de las columnas y todo el
     // objeto queda como `GenericStringError`.
-    .select("cliente_email, cliente_nombre, cliente_telefono, shopify_order_number, forma_pago, productos, direccion_envio, subtotal, total, descuento_monto")
+    .select("cliente_email, cliente_nombre, cliente_telefono, numero_pedido, forma_pago, productos, direccion_envio, subtotal, total, descuento_monto")
     .eq("id", pedidoId)
     .maybeSingle();
 
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
   }
 
   const metodoPago = METODO_PAGO_LABEL[pedido.forma_pago ?? ""] ?? "transferencia";
-  const numeroPedido = pedido.shopify_order_number ?? "";
+  const numeroPedido = pedido.numero_pedido ?? "";
   const nombre = pedido.cliente_nombre ?? "cliente";
 
   const subtotal = Number(pedido.subtotal ?? 0);

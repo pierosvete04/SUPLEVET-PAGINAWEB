@@ -145,7 +145,7 @@ function CheckoutExitoContent() {
       supabase
         .from("pedidos")
         .select(
-          "shopify_order_number, total, estado_pago, productos, direccion_envio, zona_envio, regalo_bandana, regalo_bandanas, cliente_nombre, cliente_telefono, cliente_email"
+          "numero_pedido, total, estado_pago, productos, direccion_envio, zona_envio, regalo_bandana, regalo_bandanas, cliente_nombre, cliente_telefono, cliente_email"
         )
         .eq("id", pedidoIdMp)
         .maybeSingle()
@@ -157,7 +157,7 @@ function CheckoutExitoContent() {
               ? "pagado"
               : estadoPagoDb;
           setPedido({
-            numero: data.shopify_order_number ?? "",
+            numero: data.numero_pedido ?? "",
             metodo: "tarjeta",
             total: Number(data.total),
             nombre: data.cliente_nombre ?? undefined,

@@ -8,7 +8,7 @@ export interface ProductoPedido {
 
 export interface Pedido {
   id: string;
-  shopify_order_number: string | null;
+  numero_pedido: string | null;
   shopify_order_id: string | null;
   estado: string;
   estado_pago: string | null;

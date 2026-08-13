@@ -11,6 +11,7 @@ import { Badge } from "@/components/admin/Badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -70,21 +71,38 @@ const FORMAS_PAGO_NO_EDITABLES: Record<string, string> = {
   shopify: "Pedido importado de Shopify: su método de pago es un dato histórico.",
 };
 
-export default function AdminPedidoDetallePage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = usePromise(params);
+// El folder de la ruta se llama [numero] a propósito: la URL debe mostrar el
+// número de pedido (ej. "W-1074"), no el UUID interno — mucho más legible al
+// compartirla o pegarla en el navegador. Sigue aceptando un UUID crudo por
+// compatibilidad con links viejos ya enviados (correos, Telegram, "Crear
+// pedido" redirige con el id recién creado), pero todas las llamadas que
+// mutan datos usan pedido.id (el UUID real) una vez cargado, nunca el
+// parámetro de la URL.
+const ES_UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+export default function AdminPedidoDetallePage({ params }: { params: Promise<{ numero: string }> }) {
+  const { numero } = usePromise(params);
+  const identificador = decodeURIComponent(numero);
   const [pedido, setPedido] = useState<PedidoAdmin | null>(null);
   const [bandanasRegalo, setBandanasRegalo] = useState<RegaloVariante[]>([]);
   const [imagenesPorSlug, setImagenesPorSlug] = useState<Record<string, string>>({});
   const [cargando, setCargando] = useState(true);
   const [actualizando, setActualizando] = useState(false);
   const [subiendoComprobante, setSubiendoComprobante] = useState(false);
-  const [confirmarEstadoPago, setConfirmarEstadoPago] = useState<"rechazado" | "cancelado" | null>(null);
+  const [confirmarEstadoPago, setConfirmarEstadoPago] = useState<"pagado" | "rechazado" | "cancelado" | null>(
+    null
+  );
+  const [notificarEstadoPago, setNotificarEstadoPago] = useState(true);
+  const [confirmarEstadoPreparacion, setConfirmarEstadoPreparacion] = useState<string | null>(null);
+  const [notificarEstadoPreparacion, setNotificarEstadoPreparacion] = useState(true);
   const inputComprobanteRef = useRef<HTMLInputElement>(null);
 
   async function cargar() {
     setCargando(true);
     const supabase = createClient();
-    const { data } = await supabase.from("pedidos").select("*").eq("id", id).single();
+    const { data } = ES_UUID.test(identificador)
+      ? await supabase.from("pedidos").select("*").eq("id", identificador).single()
+      : await supabase.from("pedidos").select("*").eq("numero_pedido", identificador).single();
     setPedido(data as PedidoAdmin);
     const p = data as PedidoAdmin | null;
     const slugsBandanas = p?.regalo_bandanas?.length
@@ -134,7 +152,7 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
   useEffect(() => {
     cargar();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  }, [identificador]);
 
   const LABEL_CAMPO: Record<string, string> = {
     courier: "Empresa de envío",
@@ -143,8 +161,9 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
   };
 
   async function actualizarCampo(campo: string, valor: string) {
+    if (!pedido) return;
     setActualizando(true);
-    const { error: saveError } = await createClient().from("pedidos").update({ [campo]: valor }).eq("id", id);
+    const { error: saveError } = await createClient().from("pedidos").update({ [campo]: valor }).eq("id", pedido.id);
     await cargar();
     setActualizando(false);
     if (saveError) {
@@ -155,8 +174,9 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
   }
 
   async function subirComprobante(file: File) {
+    if (!pedido) return;
     setSubiendoComprobante(true);
-    const url = await uploadFileToR2("pedidos-comprobantes", file, id);
+    const url = await uploadFileToR2("pedidos-comprobantes", file, pedido.id);
     setSubiendoComprobante(false);
     if (!url) {
       toast.error("No se pudo subir el comprobante. Intenta de nuevo.");
@@ -170,12 +190,13 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
   // mandar el correo de pago_confirmado/pago_error — y RESEND_API_KEY no
   // puede vivir en el cliente. La ruta reutiliza la misma RLS ("Solo admin
   // actualiza pedidos") así que la autorización no cambia.
-  async function actualizarEstadoPago(estado: "pagado" | "rechazado" | "cancelado") {
+  async function actualizarEstadoPago(estado: "pagado" | "rechazado" | "cancelado", notificar: boolean) {
+    if (!pedido) return;
     setActualizando(true);
-    const res = await fetch(`/api/admin/pedidos/${id}/estado-pago`, {
+    const res = await fetch(`/api/admin/pedidos/${pedido.id}/estado-pago`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ estado }),
+      body: JSON.stringify({ estado, notificar }),
     });
     const data = await res.json().catch(() => null);
     await cargar();
@@ -194,8 +215,9 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
   // pasa a una forma que exige comprobante) no las puede garantizar la RLS,
   // que solo distingue admin de no admin.
   async function actualizarFormaPago(forma: string) {
+    if (!pedido) return;
     setActualizando(true);
-    const res = await fetch(`/api/admin/pedidos/${id}/forma-pago`, {
+    const res = await fetch(`/api/admin/pedidos/${pedido.id}/forma-pago`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ forma_pago: forma }),
@@ -225,12 +247,13 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
   // Igual que actualizarEstadoPago(): al marcar "entregado" la ruta además
   // acredita SuplePoints (a la entrega, no al pago — evita fraude por
   // devolución inmediata) y manda el correo correspondiente.
-  async function actualizarEstadoPreparacion(estado: string) {
+  async function actualizarEstadoPreparacion(estado: string, notificar: boolean) {
+    if (!pedido) return;
     setActualizando(true);
-    const res = await fetch(`/api/admin/pedidos/${id}/estado-preparacion`, {
+    const res = await fetch(`/api/admin/pedidos/${pedido.id}/estado-preparacion`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ estado }),
+      body: JSON.stringify({ estado, notificar }),
     });
     const data = await res.json().catch(() => null);
     await cargar();
@@ -259,7 +282,7 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
 
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold">
-          Pedido {pedido.shopify_order_number ?? `W-${pedido.id.slice(0, 8)}`}
+          Pedido {pedido.numero_pedido ?? `W-${pedido.id.slice(0, 8)}`}
         </h2>
         <div className="flex items-center gap-3">
           <Button asChild variant="outline" size="sm">
@@ -455,7 +478,7 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
                   <div className="flex gap-2">
                     <Button
                       disabled={actualizando || comprobantePendiente}
-                      onClick={() => actualizarEstadoPago("pagado")}
+                      onClick={() => setConfirmarEstadoPago("pagado")}
                       className="flex-1 bg-green-600 hover:bg-green-600/90"
                     >
                       Confirmar
@@ -490,7 +513,13 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
               <Select
                 value={pedido.estado_preparacion}
                 disabled={actualizando}
-                onValueChange={actualizarEstadoPreparacion}
+                onValueChange={(valor) =>
+                  // "no_preparado" no manda correo (ver comentario en la API),
+                  // así que no hace falta preguntar si avisar al cliente.
+                  valor === "no_preparado"
+                    ? actualizarEstadoPreparacion(valor, false)
+                    : setConfirmarEstadoPreparacion(valor)
+                }
               >
                 <SelectTrigger>
                   <SelectValue />
@@ -569,26 +598,96 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ i
         </div>
       </div>
 
-      <AlertDialog open={!!confirmarEstadoPago} onOpenChange={(open) => !open && setConfirmarEstadoPago(null)}>
+      <AlertDialog
+        open={!!confirmarEstadoPago}
+        onOpenChange={(open) => {
+          if (!open) setConfirmarEstadoPago(null);
+          setNotificarEstadoPago(true);
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>
-              {confirmarEstadoPago === "cancelado" ? "¿Cancelar este pedido?" : "¿Rechazar el pago de este pedido?"}
+              {confirmarEstadoPago === "pagado"
+                ? "¿Confirmar el pago de este pedido?"
+                : confirmarEstadoPago === "cancelado"
+                  ? "¿Cancelar este pedido?"
+                  : "¿Rechazar el pago de este pedido?"}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              El cliente recibirá un correo avisándole que su pedido fue{" "}
-              {confirmarEstadoPago === "cancelado" ? "cancelado" : "rechazado"}. Esta acción no se puede deshacer.
+              {confirmarEstadoPago === "pagado"
+                ? "El pedido pasará a pagado."
+                : confirmarEstadoPago === "cancelado"
+                  ? "El pedido se marcará como cancelado."
+                  : "El pago se marcará como rechazado."}{" "}
+              Esta acción no se puede deshacer.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          <label className="flex items-center gap-2 rounded-md border bg-soft-gray px-3 py-2 text-sm">
+            <Checkbox
+              checked={notificarEstadoPago}
+              onCheckedChange={(checked) => setNotificarEstadoPago(checked === true)}
+            />
+            <span>
+              Avisar al cliente por correo{" "}
+              {confirmarEstadoPago === "pagado"
+                ? "que su pago fue confirmado"
+                : confirmarEstadoPago === "cancelado"
+                  ? "que su pedido fue cancelado"
+                  : "que su pago fue rechazado"}
+            </span>
+          </label>
           <AlertDialogFooter>
             <AlertDialogCancel>Volver</AlertDialogCancel>
             <AlertDialogAction
               onClick={() => {
-                if (confirmarEstadoPago) actualizarEstadoPago(confirmarEstadoPago);
+                if (confirmarEstadoPago) actualizarEstadoPago(confirmarEstadoPago, notificarEstadoPago);
                 setConfirmarEstadoPago(null);
               }}
             >
-              {confirmarEstadoPago === "cancelado" ? "Cancelar pedido" : "Rechazar pago"}
+              {confirmarEstadoPago === "pagado"
+                ? "Confirmar pago"
+                : confirmarEstadoPago === "cancelado"
+                  ? "Cancelar pedido"
+                  : "Rechazar pago"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog
+        open={!!confirmarEstadoPreparacion}
+        onOpenChange={(open) => {
+          if (!open) setConfirmarEstadoPreparacion(null);
+          setNotificarEstadoPreparacion(true);
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Cambiar el estado de preparación?</AlertDialogTitle>
+            <AlertDialogDescription>
+              El pedido pasará a &quot;
+              {confirmarEstadoPreparacion ? BADGE_ESTADO_PREPARACION[confirmarEstadoPreparacion]?.label : ""}
+              &quot;.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <label className="flex items-center gap-2 rounded-md border bg-soft-gray px-3 py-2 text-sm">
+            <Checkbox
+              checked={notificarEstadoPreparacion}
+              onCheckedChange={(checked) => setNotificarEstadoPreparacion(checked === true)}
+            />
+            <span>Avisar al cliente por correo de este cambio</span>
+          </label>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Volver</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (confirmarEstadoPreparacion)
+                  actualizarEstadoPreparacion(confirmarEstadoPreparacion, notificarEstadoPreparacion);
+                setConfirmarEstadoPreparacion(null);
+              }}
+            >
+              Guardar
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { revalidarSitioPublico } from "@/lib/revalidar-publico";
 import { traducirErrorSupabase } from "@/lib/errores-supabase";
@@ -23,7 +23,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import type { BlogPost } from "@/lib/data/blog-shared";
+import type { BlogFaq, BlogPost } from "@/lib/data/blog-shared";
+
+const FAQ_VACIA: BlogFaq = { pregunta: "", respuesta: "" };
 
 interface ProductoOpcion {
   slug: string;
@@ -63,6 +65,7 @@ export function PostEditor({ post }: PostEditorProps) {
   const [productoSlug, setProductoSlug] = useState(post?.producto_slug ?? "");
   const [metaTitle, setMetaTitle] = useState(post?.meta_title ?? "");
   const [metaDescription, setMetaDescription] = useState(post?.meta_description ?? "");
+  const [faqs, setFaqs] = useState<BlogFaq[]>(post?.faqs?.length ? post.faqs : []);
   const [subiendo, setSubiendo] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -87,6 +90,18 @@ export function PostEditor({ post }: PostEditorProps) {
     setSubiendo(false);
   }
 
+  function agregarFaq() {
+    setFaqs((f) => [...f, { ...FAQ_VACIA }]);
+  }
+
+  function actualizarFaq(indice: number, campo: keyof BlogFaq, valor: string) {
+    setFaqs((f) => f.map((item, i) => (i === indice ? { ...item, [campo]: valor } : item)));
+  }
+
+  function quitarFaq(indice: number) {
+    setFaqs((f) => f.filter((_, i) => i !== indice));
+  }
+
   async function guardar(estado: "borrador" | "publicado") {
     if (!titulo || !slug) {
       setError("Título y slug son obligatorios.");
@@ -94,6 +109,10 @@ export function PostEditor({ post }: PostEditorProps) {
     }
     setGuardando(true);
     setError(null);
+
+    // Solo se guardan las preguntas con ambos campos completos — una FAQ a
+    // medio llenar no debe llegar al FAQPage JSON-LD de la página pública.
+    const faqsValidas = faqs.filter((f) => f.pregunta.trim() && f.respuesta.trim());
 
     const payload = {
       titulo,
@@ -106,6 +125,7 @@ export function PostEditor({ post }: PostEditorProps) {
       producto_slug: productoSlug || null,
       meta_title: metaTitle || null,
       meta_description: metaDescription || null,
+      faqs: faqsValidas,
       estado,
     };
 
@@ -214,6 +234,51 @@ export function PostEditor({ post }: PostEditorProps) {
                 descripción cerca de {META_DESC_SUGERIDO} — pasarte de largo no rompe nada, pero se
                 verá truncado en los resultados de búsqueda.
               </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm text-muted-foreground">
+                Preguntas frecuentes del artículo
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-4">
+              <p className="text-xs text-muted-foreground">
+                Se muestran como acordeón al final del artículo y además se envían a Google como
+                datos estructurados (FAQPage) — el formato que Google AI Overviews, Gemini y otros
+                asistentes prefieren citar cuando alguien busca una pregunta puntual.
+              </p>
+              {faqs.map((faq, i) => (
+                <div key={i} className="flex flex-col gap-2 rounded-lg border border-border p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <Label className="text-xs">Pregunta {i + 1}</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive"
+                      onClick={() => quitarFaq(i)}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <Input
+                    value={faq.pregunta}
+                    placeholder="¿Suplevet contiene lactoferrina?"
+                    onChange={(e) => actualizarFaq(i, "pregunta", e.target.value)}
+                  />
+                  <Textarea
+                    rows={3}
+                    value={faq.respuesta}
+                    placeholder="Sí, Suplevet está formulado con lactoferrina y..."
+                    onChange={(e) => actualizarFaq(i, "respuesta", e.target.value)}
+                  />
+                </div>
+              ))}
+              <Button type="button" variant="outline" onClick={agregarFaq} className="gap-1.5">
+                <Plus className="h-4 w-4" /> Agregar pregunta
+              </Button>
             </CardContent>
           </Card>
         </div>

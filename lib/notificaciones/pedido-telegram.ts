@@ -72,7 +72,7 @@ interface DireccionEnvio {
 }
 
 const CAMPOS_PEDIDO = `
-  shopify_order_number, created_at, cliente_nombre, cliente_email, cliente_telefono,
+  numero_pedido, created_at, cliente_nombre, cliente_email, cliente_telefono,
   forma_pago, estado_pago, estado_preparacion, captura_pago_url, productos,
   direccion_envio, zona_envio, courier, courier_otro, subtotal, descuento_monto,
   codigo_descuento, total, regalo_bandanas, codigo_rotulo
@@ -267,7 +267,7 @@ export async function notificarPedidoTelegram(
     supabase,
     Array.isArray(datos.regalo_bandanas) ? (datos.regalo_bandanas as BandanaPedido[]) : []
   );
-  const numeroPedido = String(datos.shopify_order_number ?? "").trim() || "sin número";
+  const numeroPedido = String(datos.numero_pedido ?? "").trim() || "sin número";
   const courier = nombreCourier(
     datos.courier as string | null,
     datos.courier_otro as string | null
@@ -287,7 +287,7 @@ export async function notificarPedidoTelegram(
     "",
     bloqueTotales(datos),
     "",
-    `🔗 <a href="${brand.siteUrl}/admin/pedidos/${pedidoId}">Abrir en el panel</a>`,
+    `🔗 <a href="${brand.siteUrl}/admin/pedidos/${datos.numero_pedido || pedidoId}">Abrir en el panel</a>`,
   ].join("\n");
 
   return enviarMensajeTelegram(mensaje);

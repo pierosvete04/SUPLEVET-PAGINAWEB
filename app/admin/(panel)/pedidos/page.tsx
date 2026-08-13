@@ -52,7 +52,7 @@ import { capitalizar } from "@/lib/utils";
 function valorOrden(p: PedidoAdmin, columna: string) {
   switch (columna) {
     case "numero":
-      return p.shopify_order_number ?? p.id;
+      return p.numero_pedido ?? p.id;
     case "fecha":
       return p.created_at ?? "";
     case "cliente":
@@ -195,7 +195,7 @@ export default function AdminPedidosPage() {
     const termino = busqueda.trim().toLowerCase();
     if (!termino) return pedidos;
     return pedidos.filter((p) =>
-      [p.shopify_order_number, p.cliente_nombre, p.cliente_email, p.cliente_telefono]
+      [p.numero_pedido, p.cliente_nombre, p.cliente_email, p.cliente_telefono]
         .filter(Boolean)
         .some((campo) => campo!.toLowerCase().includes(termino))
     );
@@ -378,22 +378,22 @@ export default function AdminPedidosPage() {
                 <TableRow
                   key={p.id}
                   className="cursor-pointer"
-                  onClick={() => router.push(`/admin/pedidos/${p.id}`)}
+                  onClick={() => router.push(`/admin/pedidos/${p.numero_pedido ?? p.id}`)}
                 >
                   <TableCell onClick={(e) => e.stopPropagation()}>
                     <Checkbox
-                      aria-label={`Seleccionar pedido ${p.shopify_order_number ?? p.id}`}
+                      aria-label={`Seleccionar pedido ${p.numero_pedido ?? p.id}`}
                       checked={seleccionados.has(p.id)}
                       onCheckedChange={() => alternarSeleccion(p.id)}
                     />
                   </TableCell>
                   <TableCell className="font-medium">
                     <Link
-                      href={`/admin/pedidos/${p.id}`}
+                      href={`/admin/pedidos/${p.numero_pedido ?? p.id}`}
                       className="text-secondary hover:underline"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      {p.shopify_order_number ?? `W-${p.id.slice(0, 8)}`}
+                      {p.numero_pedido ?? `W-${p.id.slice(0, 8)}`}
                     </Link>
                   </TableCell>
                   <TableCell>{formatFechaPedido(p.created_at)}</TableCell>

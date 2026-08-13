@@ -36,7 +36,7 @@ export async function notificarEquipoVentas(
   datos: DatosNotificacionVenta
 ): Promise<{ error: string | null }> {
   const resend = getResendClient();
-  const urlPedido = `${brand.siteUrl}/admin/pedidos/${datos.pedidoId}`;
+  const urlPedido = `${brand.siteUrl}/admin/pedidos/${datos.numeroPedido || datos.pedidoId}`;
 
   const { error } = await resend.emails.send({
     from: EMAIL_FROM,

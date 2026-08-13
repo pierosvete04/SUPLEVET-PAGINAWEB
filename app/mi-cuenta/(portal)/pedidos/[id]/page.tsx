@@ -39,7 +39,7 @@ interface ProductoPedidoDetalle {
 
 interface PedidoDetalle {
   id: string;
-  shopify_order_number: string | null;
+  numero_pedido: string | null;
   shopify_order_id: string | null;
   estado: string;
   estado_pago: string | null;
@@ -84,7 +84,7 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
     supabase
       .from("pedidos")
       .select(
-        "id, shopify_order_number, shopify_order_id, estado, estado_pago, estado_preparacion, forma_pago, total, productos, puntos_acreditados, fecha_agotamiento_estimada, fecha_pago, fecha_entrega, direccion_envio, zona_envio, regalo_bandana, regalo_bandanas, courier, courier_otro, created_at"
+        "id, numero_pedido, shopify_order_id, estado, estado_pago, estado_preparacion, forma_pago, total, productos, puntos_acreditados, fecha_agotamiento_estimada, fecha_pago, fecha_entrega, direccion_envio, zona_envio, regalo_bandana, regalo_bandanas, courier, courier_otro, created_at"
       )
       .eq("id", id)
       .eq("cliente_id", user.id)
@@ -158,7 +158,7 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="font-display text-2xl font-bold text-portal-navy">
-              {p.shopify_order_number || `#${p.shopify_order_id}`}
+              {p.numero_pedido || `#${p.shopify_order_id}`}
             </p>
             <p className="text-xs text-portal-muted">{formatFecha(p.fecha_pago || p.created_at)}</p>
           </div>

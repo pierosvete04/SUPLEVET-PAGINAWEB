@@ -182,7 +182,7 @@ export default function AdminCrearPedidoPage() {
       return;
     }
     toast.success("Pedido creado.");
-    router.push(`/admin/pedidos/${data.pedido_id}`);
+    router.push(`/admin/pedidos/${data.numero_pedido ?? data.pedido_id}`);
   }
 
   return (

@@ -25,7 +25,7 @@ export default async function PortalPedidosPage() {
     supabase
       .from("pedidos")
       .select(
-        "id, shopify_order_number, shopify_order_id, estado, estado_pago, estado_preparacion, total, productos, puntos_acreditados, fecha_agotamiento_estimada, fecha_pago, created_at"
+        "id, numero_pedido, shopify_order_id, estado, estado_pago, estado_preparacion, total, productos, puntos_acreditados, fecha_agotamiento_estimada, fecha_pago, created_at"
       )
       .eq("cliente_id", user.id)
       .order("created_at", { ascending: false })
@@ -97,13 +97,13 @@ export default async function PortalPedidosPage() {
             >
               <Link
                 href={`/mi-cuenta/pedidos/${p.id}`}
-                aria-label={`Ver detalle del pedido ${p.shopify_order_number || p.shopify_order_id}`}
+                aria-label={`Ver detalle del pedido ${p.numero_pedido || p.shopify_order_id}`}
                 className="absolute inset-0 z-0"
               />
               <div className="pointer-events-none relative flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <p className="font-display text-base font-bold text-portal-navy">
-                    {p.shopify_order_number || `#${p.shopify_order_id}`}
+                    {p.numero_pedido || `#${p.shopify_order_id}`}
                   </p>
                   <p className="text-xs text-portal-muted">{formatFecha(p.fecha_pago || p.created_at)}</p>
                 </div>
@@ -139,7 +139,7 @@ export default async function PortalPedidosPage() {
                         <PedidoProductoDialog
                           clienteId={user.id}
                           pedidoId={p.id}
-                          pedidoNumero={p.shopify_order_number || `#${p.shopify_order_id}`}
+                          pedidoNumero={p.numero_pedido || `#${p.shopify_order_id}`}
                           pedidoFecha={p.fecha_pago || p.created_at}
                           pedidoEstado={estado}
                           productoShopifyId={productoShopifyId}

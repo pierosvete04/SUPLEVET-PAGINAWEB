@@ -49,7 +49,7 @@ export function RotuloPedido({ pedido }: { pedido: PedidoAdmin }) {
 
   const dir = (pedido.direccion_envio ?? {}) as DireccionConDocumento;
   const cobrar = cobraAlEntregar(pedido.forma_pago);
-  const numeroPedido = pedido.shopify_order_number ?? `W-${pedido.id.slice(0, 8)}`;
+  const numeroPedido = pedido.numero_pedido ?? `W-${pedido.id.slice(0, 8)}`;
   const documento = dir.numeroDocumento
     ? `${etiquetaCorta(dir.tipoDocumento)} ${dir.numeroDocumento}`
     : null;
@@ -132,7 +132,7 @@ export function RotuloPedido({ pedido }: { pedido: PedidoAdmin }) {
 
       <div className="no-imprimir mx-auto flex max-w-3xl flex-col gap-4 p-6">
         <Link
-          href={`/admin/pedidos/${pedido.id}`}
+          href={`/admin/pedidos/${numeroPedido}`}
           className="flex w-fit items-center gap-1 text-sm font-medium text-secondary"
         >
           <ArrowLeft className="h-4 w-4" /> Volver al pedido {numeroPedido}

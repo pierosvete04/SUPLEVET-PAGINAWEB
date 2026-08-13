@@ -53,6 +53,8 @@ export interface ProductoCombo {
   gtin: string | null;
   ogImagen: string;
   indexable: boolean;
+  /** Última edición de la fila — se usa como `offers.validFrom` en el JSON-LD. */
+  actualizadoEn: string;
 }
 
 export function formatPrecio(valor: number): string {

@@ -10,6 +10,7 @@ import { SplashScreen } from "@/components/layout/SplashScreen";
 import { CartProvider } from "@/lib/cart/CartContext";
 import { mapConfiguracionCliente } from "@/lib/configuracion-cliente";
 import { getConfiguracionPublica } from "@/lib/data/publico";
+import { organizacionSchema, websiteSchema } from "@/lib/schema-organizacion";
 import { siteConfig } from "@/lib/site-config";
 
 // Manier Bold es la fuente de marca real (PLAN.md sección 2), pero no está
@@ -96,6 +97,15 @@ export default async function RootLayout({
         <noscript>
           <style>{`.scroll-reveal { opacity: 1 !important; transform: none !important; }`}</style>
         </noscript>
+
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizacionSchema) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteSchema) }}
+        />
 
         <SplashScreen />
         <AnalyticsScripts />

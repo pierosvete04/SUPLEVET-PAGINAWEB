@@ -17,7 +17,7 @@ import { BrandedLoader } from "@/components/ui/branded-loader";
 
 type PedidoResumen = Pick<
   PedidoAdmin,
-  "id" | "shopify_order_number" | "created_at" | "total" | "estado_pago" | "estado_preparacion"
+  "id" | "numero_pedido" | "created_at" | "total" | "estado_pago" | "estado_preparacion"
 >;
 
 interface Transaccion {
@@ -59,7 +59,7 @@ export default function AdminClienteDetallePage({ params }: { params: Promise<{ 
       supabase.from("admin_clientes_resumen").select("*").eq("id", id).single(),
       supabase
         .from("pedidos")
-        .select("id, shopify_order_number, created_at, total, estado_pago, estado_preparacion")
+        .select("id, numero_pedido, created_at, total, estado_pago, estado_preparacion")
         .eq("cliente_id", id)
         .order("created_at", { ascending: false }),
       supabase
@@ -118,12 +118,12 @@ export default function AdminClienteDetallePage({ params }: { params: Promise<{ 
                     return (
                       <Link
                         key={p.id}
-                        href={`/admin/pedidos/${p.id}`}
+                        href={`/admin/pedidos/${p.numero_pedido ?? p.id}`}
                         className="flex flex-col gap-2 rounded-md border p-3 text-sm hover:bg-muted/50 sm:flex-row sm:items-center sm:justify-between"
                       >
                         <div className="flex flex-col">
                           <span className="font-medium text-secondary">
-                            {p.shopify_order_number ?? `W-${p.id.slice(0, 8)}`}
+                            {p.numero_pedido ?? `W-${p.id.slice(0, 8)}`}
                           </span>
                           <span className="text-xs text-muted-foreground">{formatFechaPedido(p.created_at)}</span>
                         </div>

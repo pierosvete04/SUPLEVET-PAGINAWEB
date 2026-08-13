@@ -288,7 +288,7 @@ export async function POST(request: Request) {
       regalo_bandana: bandanasAsignadas[0]?.slug ?? null,
       regalo_bandanas: bandanasAsignadas,
     })
-    .select("id")
+    .select("id, numero_pedido")
     .single();
 
   if (error || !pedido) {
@@ -306,5 +306,9 @@ export async function POST(request: Request) {
     console.error("No se pudo enviar el aviso de Telegram del pedido manual:", telegramError);
   }
 
-  return NextResponse.json({ ok: true, pedido_id: pedido.id });
+  return NextResponse.json({
+    ok: true,
+    pedido_id: pedido.id,
+    numero_pedido: pedido.numero_pedido,
+  });
 }

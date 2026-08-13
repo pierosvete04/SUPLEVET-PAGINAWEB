@@ -21,7 +21,7 @@ export interface DireccionEnvioPedido {
 
 export interface PedidoAdmin {
   id: string;
-  shopify_order_number: string | null;
+  numero_pedido: string | null;
   cliente_id: string | null;
   cliente_email: string;
   cliente_nombre: string | null;

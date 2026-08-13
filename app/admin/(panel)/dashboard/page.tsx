@@ -238,15 +238,15 @@ export default function AdminDashboardPage() {
                       <TableRow
                         key={p.id}
                         className="cursor-pointer"
-                        onClick={() => router.push(`/admin/pedidos/${p.id}`)}
+                        onClick={() => router.push(`/admin/pedidos/${p.numero_pedido ?? p.id}`)}
                       >
                         <TableCell className="font-medium">
                           <Link
-                            href={`/admin/pedidos/${p.id}`}
+                            href={`/admin/pedidos/${p.numero_pedido ?? p.id}`}
                             className="text-secondary hover:underline"
                             onClick={(e) => e.stopPropagation()}
                           >
-                            {p.shopify_order_number ?? `W-${p.id.slice(0, 8)}`}
+                            {p.numero_pedido ?? `W-${p.id.slice(0, 8)}`}
                           </Link>
                         </TableCell>
                         <TableCell>{formatFechaPedido(p.created_at)}</TableCell>

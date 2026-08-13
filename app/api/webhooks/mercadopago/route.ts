@@ -131,7 +131,7 @@ export async function POST(request: Request) {
     .update({ estado_pago: nuevoEstado })
     .eq("id", pedidoId)
     .or(`estado_pago.is.null,estado_pago.neq.${nuevoEstado}`)
-    .select("cliente_email, cliente_nombre, cliente_telefono, shopify_order_number, total");
+    .select("cliente_email, cliente_nombre, cliente_telefono, numero_pedido, total");
 
   if (updateError) {
     console.error("Error actualizando el pedido desde el webhook de Mercado Pago:", updateError);
@@ -146,7 +146,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  const numeroPedido = pedido.shopify_order_number ?? "";
+  const numeroPedido = pedido.numero_pedido ?? "";
   const nombre = pedido.cliente_nombre ?? "cliente";
   let sendError: string | null = null;
 

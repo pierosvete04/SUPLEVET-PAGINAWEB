@@ -19,7 +19,7 @@ function saludo(pedido: PedidoAdmin): string {
 }
 
 function numeroPedido(pedido: PedidoAdmin): string {
-  return pedido.shopify_order_number ?? `W-${pedido.id.slice(0, 8)}`;
+  return pedido.numero_pedido ?? `W-${pedido.id.slice(0, 8)}`;
 }
 
 /**
