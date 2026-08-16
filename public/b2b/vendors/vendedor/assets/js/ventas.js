@@ -67,7 +67,11 @@ function limpiarForm(){
 }
 
 function guardarVenta(){
-  var vete=val('v-vete'),mov=val('v-mov'),zona=val('v-zona'),prod=val('v-prod');
+  // Normalizado a MAYÚSCULAS al guardar (no mientras se escribe, para no
+  // pelear con el cursor del autocompletado): así ventas y clientes_vet
+  // quedan siempre en el mismo formato y no se generan duplicados por
+  // mayúscula/minúscula como pasaba antes.
+  var vete=(val('v-vete')||'').toUpperCase(),mov=val('v-mov'),zona=val('v-zona'),prod=val('v-prod');
   var cant=parseInt(gel('v-cant').value)||0;
   var precio=parseFloat(gel('v-precio').value)||0;
   var isVisita=(mov==='Visita');

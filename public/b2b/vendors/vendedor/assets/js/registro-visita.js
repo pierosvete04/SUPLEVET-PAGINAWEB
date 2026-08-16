@@ -898,7 +898,11 @@ function mvGuardarVisita(){
   // hoja abierta lo taparía. El aviso de "sin movimientos", que sí viaja
   // dentro del acordeón, vuelve a abrirlo por su cuenta.
   mvSheetCerrar();
-  var vete=val('mv-vete'), zona=val('mv-zona'), fecha=val('mv-fecha')||hoy();
+  // Normalizado a MAYÚSCULAS al guardar (no mientras se escribe, para no
+  // pelear con el cursor del autocompletado): así ventas y clientes_vet
+  // quedan siempre en el mismo formato y no se generan duplicados por
+  // mayúscula/minúscula.
+  var vete=(val('mv-vete')||'').toUpperCase(), zona=val('mv-zona'), fecha=val('mv-fecha')||hoy();
   var hora=gel('mv-hora').value||null;
   var doctora=val('mv-doctora')||null;
   var celular=val('mv-celular')||null;

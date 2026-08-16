@@ -595,6 +595,9 @@ function guardarEditCliente(){
   var tipo=modal.dataset.editTipo||modal.dataset.tipo;
   var oldNombre=modal.dataset.editNombre||modal.dataset.nombre;
   var newNombre=(val('edit-cli-nombre')||'').trim();
+  // Las veterinarias se guardan siempre en MAYÚSCULAS (convención del panel);
+  // los doctores se dejan como los escribió el vendedor (Nombre Apellido).
+  if(tipo==='vet')newNombre=newNombre.toUpperCase();
   var newZona=val('edit-cli-zona');
   var newCel=val('edit-cli-celular');
   var newRuc=val('edit-cli-ruc');
@@ -797,7 +800,8 @@ function abrirNuevoCliente(){
 function cerrarNuevoCliente(){gel('modal-nuevo-cliente').classList.remove('open');}
 
 function guardarNuevoCliente(){
-  var nombre=(val('nc-nombre')||'').trim();
+  // Veterinarias siempre en MAYÚSCULAS — mismo criterio que el resto del panel.
+  var nombre=(val('nc-nombre')||'').trim().toUpperCase();
   var zona=(val('nc-zona')||'').trim();
   var doctor=(val('nc-doctor')||'').trim();
   var celular=(val('nc-celular')||'').trim();
