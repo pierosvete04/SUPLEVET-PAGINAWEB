@@ -113,7 +113,10 @@ function guardarVenta(){
     estado:estado,notas:val('v-notas')
   };
   sbP('ventas',row).then(function(){
-    return sbG('clientes_vet','nombre_vet=eq.'+encodeURIComponent(vete)+'&select=id');
+    // ilike (no eq): v-vete es texto libre con autocompletado — con eq. una
+    // diferencia de mayúscula/minúscula no encontraba el cliente existente y
+    // creaba una fila duplicada en clientes_vet en vez de reutilizar la que ya había.
+    return sbG('clientes_vet','nombre_vet=ilike.'+encodeURIComponent(vete)+'&select=id');
   }).then(function(ex){
     if(!ex||!ex.length)return sbP('clientes_vet',{nombre_vet:vete,doctora:val('v-doctora')||null,zona:zona});
   }).then(function(){

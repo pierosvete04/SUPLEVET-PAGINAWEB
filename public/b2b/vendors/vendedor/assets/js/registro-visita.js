@@ -850,7 +850,12 @@ function mvLimpiar(){
 // Best-effort: si falla, no debe interrumpir el guardado de la visita.
 function mvSincronizarClienteVet(nombreVet,doctora,zona,ruc){
   if(!nombreVet)return Promise.resolve();
-  return sbG('clientes_vet','nombre_vet=eq.'+encodeURIComponent(nombreVet)+'&select=id,doctora,zona,ruc')
+  // ilike (no eq): el campo de veterinaria es texto libre con autocompletado,
+  // así que dos visitas del mismo cliente pueden llegar con distinta
+  // mayúscula/minúscula. Con eq. antes no encontraba la fila existente y
+  // creaba un clientes_vet duplicado en vez de actualizar el que ya había
+  // (así nació el duplicado "ANIMAL 24 HORAS - san miguel" / "- SAN MIGUEL").
+  return sbG('clientes_vet','nombre_vet=ilike.'+encodeURIComponent(nombreVet)+'&select=id,doctora,zona,ruc')
     .then(function(filas){
       filas=filas||[];
       if(filas.length){
