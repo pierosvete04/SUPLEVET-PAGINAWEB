@@ -59,6 +59,7 @@
 <g id="i-pin" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-5.5 10.2-7.4 11.8a1 1 0 0 1-1.2 0C9.5 20.2 4 15 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></g>
 <g id="i-telefono" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"/></g>
 <g id="i-regalo" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8"/><path d="M16.5 8a2.5 2.5 0 0 0 0-5C13 3 12 8 12 8"/></g>
+<g id="i-etiqueta" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z"/><circle cx="7.5" cy="7.5" r=".5" fill="currentColor"/></g>
 <g id="i-billete" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01"/><path d="M18 12h.01"/></g>
 <g id="i-monedas" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="6"/><path d="M18.1 10.4A6 6 0 1 1 10.4 18.1"/><path d="M8 7h1v4"/></g>
 <g id="i-tarjeta" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/></g>
@@ -730,7 +731,7 @@
             <div class="fgr"><label>Hora</label><input type="time" id="rv-hora"/></div>
             <div class="fgr full u-rel">
               <label>Veterinaria / Clínica</label>
-              <input type="text" id="rv-vete" placeholder="Escribe para buscar..." autocomplete="off" oninput="rvBuscarVete(this.value);if(_rvTipo==='Cobro de credito')rvCargarCreditos();if(typeof rvActualizarStepper==='function')rvActualizarStepper()" onfocus="rvBuscarVete(this.value)" onblur="setTimeout(function(){var d=gel('rv-vete-drop');if(d)d.style.display='none';},200)"/>
+              <input type="text" id="rv-vete" placeholder="Escribe para buscar..." autocomplete="off" oninput="rvBuscarVete(this.value);if(_rvTipo==='Cobro de credito')rvCargarCreditos();if(typeof rvActualizarStepper==='function')rvActualizarStepper();if(typeof rvRenderEtiquetasPicker==='function'&&gel('rv-etiquetas-wrap')&&gel('rv-etiquetas-wrap').style.display!=='none')rvRenderEtiquetasPicker()" onfocus="rvBuscarVete(this.value)" onblur="setTimeout(function(){var d=gel('rv-vete-drop');if(d)d.style.display='none';},200)"/>
               <div id="rv-vete-drop" style="display:none;position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--sky);border-radius:var(--r);box-shadow:var(--sh2);max-height:200px;overflow-y:auto;z-index:200;"></div>
             </div>
             <!-- El admin no tenía ninguna pista de que uno de estos dos
@@ -755,6 +756,18 @@
               <select id="rv-cat" style="font-size:13px;padding:.46rem .7rem;border:1.5px solid var(--bd);border-radius:var(--r);width:100%;">
                 <option value="">— Sin categoría —</option>
               </select>
+            </div>
+            <!-- Etiquetas: oculto detrás de un botón chico a propósito, igual que
+                 "Incluye regalo" — solo asigna etiquetas existentes; crear
+                 etiquetas nuevas se queda en Editar cliente. -->
+            <div class="fgr full">
+              <button type="button" id="btn-rv-etiquetas-toggle" onclick="rvToggleEtiquetasPicker()" class="btn btn-s btn-sm" style="padding:.32rem .65rem;font-size:11.5px;width:auto;">
+                <svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24" style="width:13px;height:13px;"><use href="#i-etiqueta"/></svg> Etiquetas
+              </button>
+              <div id="rv-etiquetas-wrap" style="display:none;margin-top:8px;background:var(--sky4);border:1px solid var(--sky);border-radius:var(--r);padding:.6rem .75rem;">
+                <div id="rv-etiquetas-chips" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+                <div style="font-size:11px;color:var(--tl);margin-top:6px;">Escribe primero la veterinaria arriba. Toca una etiqueta para asignarla o quitarla.</div>
+              </div>
             </div>
             <div class="fgr full"><label>Notas</label><textarea id="rv-notas" rows="2" placeholder="Observaciones..."></textarea></div>
           </div>
@@ -1651,7 +1664,7 @@
 <script src="assets/js/dashboard.js?v=20260815-egress"></script>
 <script src="assets/js/zonas.js?v=20260815-egress"></script>
 <script src="assets/js/zona-detalle.js?v=20260804-zonas"></script>
-<script src="assets/js/visitas.js?v=20260815-etiquetas"></script>
+<script src="assets/js/visitas.js?v=20260815-etiquetasrv"></script>
 <script src="assets/js/pdfs.js?v=20260803-uxfix"></script>
 <script src="assets/js/analiticas.js?v=20260803-uxfix"></script>
 <script src="assets/js/inventario.js?v=20260815-egress"></script>

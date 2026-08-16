@@ -194,6 +194,7 @@ function mvInicializar(){
   if(gel('mv-ruc'))gel('mv-ruc').value = '';
   gel('mv-notas').value = '';
   gel('mv-vete').value = '';
+  var etWrap=gel('mv-etiquetas-wrap');if(etWrap)etWrap.style.display='none';
   docsReset('mv');
   // Sin argumento, limpiarErrores() barre TODA la página — incluidos
   // errores de otras pestañas del SPA que no vienen al caso. Se acota al
@@ -387,6 +388,65 @@ function mvSelectDoctora(nombre){
   if(_celMap[nombre]&&!val('mv-celular'))gel('mv-celular').value=_celMap[nombre];
   // Refrescar lista de créditos si estamos en modo cobro
   if(_mvTipoActual === 'Cobro de credito') mvCargarCreditosVete(val('mv-vete'), nombre);
+}
+
+// Etiquetas en Registrar Visita: oculto tras un botón chico, igual criterio
+// que "Incluye regalo" — no es obligatorio, es la excepción. Solo asigna
+// etiquetas ya existentes; crearlas es cosa del panel admin. No hay caché
+// global de etiquetas acá, se resuelven al vuelo.
+function mvToggleEtiquetasPicker(){
+  var wrap=gel('mv-etiquetas-wrap');
+  if(!wrap)return;
+  if(wrap.style.display==='none'){wrap.style.display='block';mvRenderEtiquetasPicker();}
+  else wrap.style.display='none';
+}
+function mvRenderEtiquetasPicker(){
+  var el=gel('mv-etiquetas-chips');if(!el)return;
+  var nombre=(gel('mv-vete')&&gel('mv-vete').value||'').trim();
+  if(!nombre){el.innerHTML='<span style="font-size:12px;color:var(--tl);">Escribe primero la veterinaria.</span>';return;}
+  el.innerHTML='<span style="font-size:12px;color:var(--tl);">Cargando…</span>';
+  Promise.all([
+    sbG('etiquetas_cliente','select=id,nombre,color&order=nombre.asc'),
+    sbG('clientes_vet','nombre_vet=ilike.'+encodeURIComponent(nombre)+'&select=id')
+  ]).then(function(res){
+    var todas=res[0]||[];
+    var clienteId=res[1]&&res[1][0]&&res[1][0].id;
+    if(!todas.length){el.innerHTML='<span style="font-size:12px;color:var(--tl);">Todavía no hay etiquetas creadas (se crean desde el panel admin).</span>';return;}
+    var asignadasP=clienteId
+      ? sbG('cliente_etiquetas','cliente_id=eq.'+clienteId+'&select=etiqueta_id')
+      : Promise.resolve([]);
+    asignadasP.then(function(asig){
+      var asignadas={};
+      (asig||[]).forEach(function(a){asignadas[a.etiqueta_id]=1;});
+      el.innerHTML=todas.map(function(et){
+        var activa=!!asignadas[et.id];
+        var estilo=activa
+          ?'background:'+et.color+';color:'+_colorTextoLegible(et.color)+';border:1.5px solid '+et.color+';'
+          :'background:transparent;color:var(--tl);border:1.5px dashed var(--bd2);';
+        return '<span class="cli-chip" style="'+estilo+'font-weight:700;cursor:pointer;" onclick="mvToggleEtiquetaVisita(\''+et.id+'\')">'+esc(et.nombre)+'</span>';
+      }).join('');
+    });
+  }).catch(function(){el.innerHTML='<span style="font-size:12px;color:var(--er);">No se pudieron cargar las etiquetas.</span>';});
+}
+function mvToggleEtiquetaVisita(etiquetaId){
+  var nombre=(gel('mv-vete')&&gel('mv-vete').value||'').trim();
+  if(!nombre)return;
+  sbG('clientes_vet','nombre_vet=ilike.'+encodeURIComponent(nombre)+'&select=id')
+  .then(function(r){
+    var clienteId=r&&r[0]&&r[0].id;
+    if(clienteId)return clienteId;
+    return sbP('clientes_vet',{nombre_vet:nombre}).then(function(rr){return rr&&rr[0]&&rr[0].id;});
+  }).then(function(clienteId){
+    if(!clienteId)return;
+    return sbG('cliente_etiquetas','cliente_id=eq.'+clienteId+'&etiqueta_id=eq.'+etiquetaId+'&select=id')
+    .then(function(ex){
+      var existente=ex&&ex[0];
+      if(existente)return sbDel('cliente_etiquetas','id=eq.'+existente.id);
+      return sbP('cliente_etiquetas',{cliente_id:clienteId,etiqueta_id:etiquetaId});
+    });
+  }).then(function(){
+    mvRenderEtiquetasPicker();
+  }).catch(function(e){setSt(e.message||'No se pudo actualizar la etiqueta','er');});
 }
 
 function mvSelTipo(tipo, btn){

@@ -414,6 +414,34 @@ function rvSelecDoc(nombre, cel){
   if(_rvTipo==='Cobro de credito') rvCargarCreditos();
 }
 
+// Etiquetas en Registrar Visita: oculto tras un botón chico (mismo criterio
+// que "Incluye regalo"). Solo asigna etiquetas ya existentes; el catálogo
+// vive en _etiquetas (cargado por reloadEtiquetas en core.js).
+function rvToggleEtiquetasPicker(){
+  var wrap=gel('rv-etiquetas-wrap');
+  if(!wrap)return;
+  if(wrap.style.display==='none'){wrap.style.display='block';rvRenderEtiquetasPicker();}
+  else wrap.style.display='none';
+}
+function rvRenderEtiquetasPicker(){
+  var el=gel('rv-etiquetas-chips');if(!el)return;
+  var nombre=(gel('rv-vete')&&gel('rv-vete').value||'').trim();
+  if(!nombre){el.innerHTML='<span style="font-size:12px;color:var(--tl);">Escribe primero la veterinaria.</span>';return;}
+  var info=_cliVetInfo(nombre);
+  var asignadas={};
+  if(info)_etiquetasDeCliente(info.id).forEach(function(et){asignadas[et.id]=1;});
+  el.innerHTML=(_etiquetas||[]).map(function(et){
+    return _chipEtiqueta(et,!!asignadas[et.id],"rvToggleEtiquetaVisita('"+et.id+"')");
+  }).join('')||'<span style="font-size:12px;color:var(--tl);">Todavía no hay etiquetas creadas (se crean desde Editar cliente).</span>';
+}
+function rvToggleEtiquetaVisita(etiquetaId){
+  var nombre=(gel('rv-vete')&&gel('rv-vete').value||'').trim();
+  if(!nombre)return;
+  _clienteEtiquetaToggle(nombre,etiquetaId).then(function(){
+    rvRenderEtiquetasPicker();
+  }).catch(function(e){showToast(e.message||'No se pudo actualizar la etiqueta','er');});
+}
+
 function rvSetTipo(tipo){
   _rvTipo = tipo;
   // .tipo-btn/.sel en vez de tres colores reescritos a mano por tarjeta
@@ -1077,6 +1105,7 @@ function rvGuardar(){
     setSt('Visita guardada correctamente','ok'); setTimeout(function(){setSt('');},3000);
     _rvMovimientos=[]; rvRenderLista(); rvRenderResumen();
     ['rv-vete','rv-doctora','rv-notas','rv-celular','rv-ruc','rv-zona','rv-hora','rv-cat','rv-metodo-pago'].forEach(function(id){var e=gel(id);if(e)e.value='';});
+    var etWrap=gel('rv-etiquetas-wrap');if(etWrap)etWrap.style.display='none';
     docsReset('rv');
     rvActualizarMP();
     var fechaEl=gel('rv-fecha');if(fechaEl)fechaEl.value=hoy();
@@ -1591,9 +1620,11 @@ function _cliEntObtenerOCrearClienteId(nombre){
     return fila&&fila.id;
   });
 }
-function cliToggleEtiqueta(etiquetaId){
-  var nombre=val('cli-edit-nombre-orig');
-  _cliEntObtenerOCrearClienteId(nombre).then(function(clienteId){
+// Genérico: usado tanto por "Editar cliente" como por "Registrar Visita" —
+// resuelve/crea la fila de clientes_vet por nombre y prende/apaga la
+// etiqueta. Devuelve una promesa para que cada llamador re-pinte lo suyo.
+function _clienteEtiquetaToggle(nombre,etiquetaId){
+  return _cliEntObtenerOCrearClienteId(nombre).then(function(clienteId){
     if(!clienteId)return;
     var existente=null;
     for(var i=0;i<_clienteEtiquetas.length;i++){
@@ -1608,7 +1639,10 @@ function cliToggleEtiqueta(etiquetaId){
     return sbP('cliente_etiquetas',{cliente_id:clienteId,etiqueta_id:etiquetaId}).then(function(r){
       if(r&&r[0])_clienteEtiquetas.push(r[0]);
     });
-  }).then(function(){
+  });
+}
+function cliToggleEtiqueta(etiquetaId){
+  _clienteEtiquetaToggle(val('cli-edit-nombre-orig'),etiquetaId).then(function(){
     cliRenderTagsEdit();
     cliRenderTagsPerfil();
   }).catch(function(e){showToast(e.message||'No se pudo actualizar la etiqueta','er');});
