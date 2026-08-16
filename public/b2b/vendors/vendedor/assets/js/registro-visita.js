@@ -446,6 +446,26 @@ function mvSelTipo(tipo, btn){
   gel('mv-cant').value = '';
   gel('mv-precio').value = '';
   gel('mv-total-disp').textContent = 'S/ 0.00';
+  if(typeof mvOcultarRegalo==='function')mvOcultarRegalo();
+}
+
+// ── REGALO ──
+// A propósito detrás de un botón chico en vez de un checkbox a la vista:
+// es la excepción (una promo puntual), no algo que el vendedor deba
+// decidir en cada venta que registra.
+function mvToggleRegalo(){
+  var wrap=gel('mv-regalo-wrap');
+  if(!wrap)return;
+  if(wrap.style.display==='none')mvMostrarRegalo();else mvOcultarRegalo();
+}
+function mvMostrarRegalo(){
+  var wrap=gel('mv-regalo-wrap');if(wrap)wrap.style.display='block';
+  var btn=gel('btn-mv-regalo-toggle');if(btn)btn.classList.add('btn-sk');
+}
+function mvOcultarRegalo(){
+  var wrap=gel('mv-regalo-wrap');if(wrap)wrap.style.display='none';
+  var cant=gel('mv-regalo-cant');if(cant)cant.value='';
+  var btn=gel('btn-mv-regalo-toggle');if(btn)btn.classList.remove('btn-sk');
 }
 
 function mvCargarCreditosVete(vete, doctora){
@@ -754,13 +774,20 @@ function mvAgregarMovimiento(){
     'Credito a 15 dias':'#d97706','Devolucion':'#dc2626'
   };
 
+  // Regalo: unidades extra del mismo producto, entregadas sin costo junto
+  // con esta venta (p.ej. "compra 12, llevas 13"). Solo aplica si el
+  // vendedor abri\u00f3 el panel de regalo; si no, regaloCant queda en 0.
+  var regaloWrapVisible = gel('mv-regalo-wrap') && gel('mv-regalo-wrap').style.display!=='none';
+  var regaloCant = regaloWrapVisible ? (parseInt(gel('mv-regalo-cant').value,10)||0) : 0;
+
   _mvMovimientos.push({
     tipo: tipo,
-    label: tipo+': '+prod+' \u00b7 '+cant+' uds \u00b7 '+money(cant*precio),
+    label: tipo+': '+prod+' \u00b7 '+cant+' uds \u00b7 '+money(cant*precio)+(regaloCant>0?' \u00b7 \ud83c\udf81 +'+regaloCant+' regalo':''),
     color: colores[tipo]||'#374151',
     prod: prod, cant: cant, precio: precio,
     total: cant*precio,
     estado: estados[tipo]||'\u2705 Pagado',
+    regaloCant: regaloCant,
     fechaCobro: tipo==='Credito a 15 dias'?(function(){var d=new Date();d.setDate(d.getDate()+15);return d.toISOString().split('T')[0];})():null
   });
   mvRenderLista(); if(typeof mvUpdateSummary==='function')mvUpdateSummary();
@@ -770,6 +797,7 @@ function mvAgregarMovimiento(){
   gel('mv-prod').value='';
   gel('mv-cant').value=''; gel('mv-precio').value='';
   gel('mv-total-disp').textContent='S/ 0.00';
+  mvOcultarRegalo();
   setSt('Movimiento agregado','ok'); setTimeout(function(){setSt('');},1500);
 }
 
@@ -1011,6 +1039,29 @@ function mvGuardarVisita(){
         receptor_efectivo:(tiposConPago.indexOf(m.tipo)>=0&&mpValue==='EFECTIVO')?receptorEfectivo:null,
         notas:notas
       });
+      // Regalo: fila aparte con el mismo producto a precio 0, marcada
+      // es_regalo=true — así el conteo de "unidades entregadas" del cliente
+      // incluye el regalo, pero el total en soles de la venta no se infla.
+      if(m.regaloCant>0){
+        rows.push({
+          vendedor_id:CUR.id, fecha:fecha, hora:hora,
+          veterinaria:vete, doctora:doctora, num_medico:celular,
+          ruc:ruc,
+          zona:zona, movimiento:m.tipo,
+          producto:m.prod||'', cantidad:m.regaloCant,
+          precio_unitario:0, total:0,
+          fecha_cobro:null,
+          estado:'✅ Pagado',
+          es_regalo:true,
+          segmento_cliente:catCliente,
+          tipo_documento:null,
+          numero_documento:null,
+          imagen_documento:imgUrl||null,
+          metodo_pago:null,
+          receptor_efectivo:null,
+          notas:(notas?notas+' · ':'')+'Regalo por compra de '+(m.cant||0)+' uds de '+(m.prod||'')
+        });
+      }
     }
   }
 

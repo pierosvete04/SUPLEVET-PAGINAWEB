@@ -203,7 +203,7 @@ function rHist(){
       '<td>'+(v.doctora||'---')+'</td>'+
       '<td>'+(v.zona||'---')+'</td>'+
       '<td>'+bMov(v.movimiento)+'</td>'+
-      '<td>'+(v.producto||'---')+'</td>'+
+      '<td>'+(v.producto||'---')+(v.es_regalo?' <span class="b b-visita" title="Unidades de regalo, sin costo">🎁 Regalo</span>':'')+'</td>'+
       '<td>'+(v.cantidad||0)+'</td>'+
       '<td><strong>S/ '+Number(v.total||0).toFixed(2)+'</strong></td>'+
       '<td>'+bEst(v.estado)+'</td>'+
@@ -521,7 +521,7 @@ function rVentas(){
       '<td>'+(v.doctora||'---')+'</td>'+
       '<td>'+(v.zona||'---')+'</td>'+
       '<td>'+bMov(v.movimiento)+'</td>'+
-      '<td>'+(v.producto||'---')+'</td>'+
+      '<td>'+(v.producto||'---')+(v.es_regalo?' <span class="b b-visita" title="Unidades de regalo, sin costo">🎁 Regalo</span>':'')+'</td>'+
       '<td>'+(v.cantidad||0)+'</td>'+
       '<td><strong>S/ '+Number(v.total||0).toFixed(2)+'</strong></td>'+
       '<td>'+bEst(v.estado)+'</td>'+

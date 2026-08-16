@@ -56,6 +56,7 @@
 <g id="i-brujula" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="m16.2 7.8-1.8 5.4a2 2 0 0 1-1.3 1.3L7.8 16.2l1.8-5.4a2 2 0 0 1 1.3-1.3z"/></g>
 <g id="i-pin" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 5-5.5 10.2-7.4 11.8a1 1 0 0 1-1.2 0C9.5 20.2 4 15 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></g>
 <g id="i-telefono" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384"/></g>
+<g id="i-regalo" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13"/><path d="M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8"/><path d="M16.5 8a2.5 2.5 0 0 0 0-5C13 3 12 8 12 8"/></g>
 <g id="i-billete" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 12h.01"/><path d="M18 12h.01"/></g>
 <g id="i-monedas" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="9" r="6"/><path d="M18.1 10.4A6 6 0 1 1 10.4 18.1"/><path d="M8 7h1v4"/></g>
 <g id="i-tarjeta" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/></g>
@@ -248,6 +249,19 @@
                 <div class="fgr full">
                   <label>Total</label>
                   <div style="background:var(--sky4);border:1.5px solid var(--sky);border-radius:var(--r);padding:.6rem .85rem;font-family:'Bebas Neue',sans-serif;font-size:26px;color:var(--brand);" id="mv-total-disp">S/ 0.00</div>
+                </div>
+              </div>
+              <!-- Regalo: oculto detrás de un botón chico a propósito — es la excepción,
+                   no algo que el vendedor deba ver/decidir en cada venta. -->
+              <div style="margin:-2px 0 10px;">
+                <button type="button" id="btn-mv-regalo-toggle" onclick="mvToggleRegalo()" class="btn btn-s btn-sm" style="padding:.32rem .65rem;font-size:11.5px;width:auto;">
+                  <svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24" style="width:13px;height:13px;"><use href="#i-regalo"/></svg> Incluye regalo
+                </button>
+                <div id="mv-regalo-wrap" style="display:none;margin-top:8px;background:var(--sky4);border:1px solid var(--sky);border-radius:var(--r);padding:.6rem .75rem;">
+                  <div class="fgr" style="max-width:160px;">
+                    <label>Unidades de regalo <span style="font-weight:400;color:var(--tl);">(mismo producto, sin costo)</span></label>
+                    <input type="number" id="mv-regalo-cant" min="1" placeholder="0"/>
+                  </div>
                 </div>
               </div>
               <div id="mv-cobro-wrap" style="display:none;margin-bottom:10px;">
@@ -868,12 +882,12 @@
 <script src="assets/js/app.js?v=20260803-uxfix"></script>
 <script src="assets/js/dashboard.js?v=20260803-uxfix"></script>
 <script src="assets/js/ventas.js?v=20260815-mayusculas"></script>
-<script src="assets/js/historial.js?v=20260803-uxfix"></script>
+<script src="assets/js/historial.js?v=20260815-regalo"></script>
 <script src="assets/js/creditos.js?v=20260803-uxfix"></script>
-<script src="assets/js/clientes.js?v=20260815-mayusculas"></script>
+<script src="assets/js/clientes.js?v=20260815-regalo"></script>
 <script src="assets/js/detalle.js?v=20260803-uxfix"></script>
 <script src="assets/js/pdf.js?v=20260803-uxfix"></script>
-<script src="assets/js/registro-visita.js?v=20260815-mayusculas"></script>
+<script src="assets/js/registro-visita.js?v=20260815-regalo"></script>
 <script src="assets/js/plan.js?v=20260803-uxfix"></script>
 <script src="assets/js/ruta.js?v=20260803-uxfix"></script>
 <script src="assets/js/pwa.js?v=20260803-uxfix"></script>
