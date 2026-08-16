@@ -288,6 +288,12 @@ function rVendedores(){
     var total=vm.reduce(function(s,vt){return s+(vt.total||0);},0);
     var stock=stockVendedor(v.id);
     var lowStock=stock.filter(function(s){return s.c<=5;}).length;
+    // Nuevos clientes que le atribuimos a este vendedor (creado_por_vendedor_id)
+    // y que siguen dentro de la ventana de "Nuevo" (15 días) — mide qué tanto
+    // está trayendo cartera nueva, no solo vendiéndole a la que ya existía.
+    var nuevosCliente=(typeof _clientesVet!=='undefined'?_clientesVet:[]).filter(function(c){
+      return String(c.creado_por_vendedor_id)===String(v.id) && typeof _esClienteNuevo==='function' && _esClienteNuevo(c.created_at);
+    }).length;
     var pendientes=_ventas.filter(function(vt){
       return String(vt.vendedor_id)===String(v.id) &&
         (vt.movimiento==='Credito a 15 dias'||vt.movimiento==='Cr\u00e9dito a 15 d\u00edas') &&
@@ -306,6 +312,7 @@ function rVendedores(){
       '</div>'+
       '<div style="font-size:11px;color:var(--tl);">'+subInfo+'</div></div>'+
       (!inactivo?('<div style="text-align:right;margin-right:8px;"><div style="font-weight:700;color:var(--brand);">'+money(total)+'</div><div style="font-size:11px;color:var(--tl);">este mes</div>'+
+        (nuevosCliente>0?'<div style="font-size:10px;color:#1e8a94;font-weight:700;">+'+nuevosCliente+' cliente'+(nuevosCliente!==1?'s':'')+' nuevo'+(nuevosCliente!==1?'s':'')+' (15d)</div>':'')+
         (lowStock>0?'<div style="font-size:10px;color:#d97706;font-weight:600;">\u26a0 Bajo stock</div>':'')+'</div>'):'')+
       '<div style="display:flex;gap:6px;flex-wrap:wrap;">'+
       '<button class="btn btn-sk btn-sm" onclick="verVendedor(\''+esc(v.id)+'\')">Ver</button>'+

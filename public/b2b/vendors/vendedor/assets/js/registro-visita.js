@@ -968,7 +968,9 @@ function mvSincronizarClienteVet(nombreVet,doctora,zona,ruc){
         if(!Object.keys(cambios).length)return;
         return sbU('clientes_vet',actual.id,cambios);
       }
-      return sbP('clientes_vet',{nombre_vet:nombreVet,doctora:doctora||null,zona:zona||null,ruc:ruc||null});
+      // creado_por_vendedor_id: quién trajo a este cliente — se fija una sola
+      // vez, al crear la fila, para poder medir nuevos clientes por vendedor.
+      return sbP('clientes_vet',{nombre_vet:nombreVet,doctora:doctora||null,zona:zona||null,ruc:ruc||null,creado_por_vendedor_id:(CUR&&CUR.id)||null});
     })
     .catch(function(e){ if(window.console)console.warn('No se pudo sincronizar clientes_vet:',e.message); });
 }

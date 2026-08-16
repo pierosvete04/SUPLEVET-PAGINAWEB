@@ -59,7 +59,7 @@ function rClientes(){
     // Si hay más de una vet con el mismo nombre (en distintos distritos), mostrar
     // el distrito como chip — es la única manera de distinguirlas visualmente.
     var badgeDistrito=(c.esDuplicado&&c.distrito)?'<span style="display:inline-block;background:#fef3c7;color:#92400e;font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;text-transform:uppercase;letter-spacing:.5px;margin-left:6px;vertical-align:middle;">📍 '+c.distrito+'</span>':'';
-    // Etiquetas + "Nuevo" (< 30 días de alta): solo aplica a veterinarias,
+    // Etiquetas + "Nuevo" (< 15 días de alta): solo aplica a veterinarias,
     // mismo criterio que el resto del sistema (los doctores no tienen fila
     // propia en clientes_vet). "Nuevo" acá es distinto de "esNueva" arriba:
     // esNueva = todavía sin ventas; Nuevo = el cliente en sí es reciente.
@@ -158,9 +158,9 @@ function verEntidad(tipo,nombre){
 // ── ETIQUETAS (solo lectura) ──
 // La gestión de etiquetas (crear/asignar) vive en el panel admin; acá solo
 // se muestran. "Nuevo" no es una etiqueta guardada: se calcula al vuelo
-// desde clientes_vet.created_at (< 30 días), así que no hace falta nada
+// desde clientes_vet.created_at (< 15 días), así que no hace falta nada
 // para que "se quite sola" al mes.
-var DIAS_CLIENTE_NUEVO=30;
+var DIAS_CLIENTE_NUEVO=15;
 function _esClienteNuevo(createdAt){
   if(!createdAt)return false;
   var d=new Date(createdAt);
@@ -1037,7 +1037,7 @@ function guardarNuevoCliente(){
     return resolverCoordsUbicacion(calle,distrito,mapsUrl);
   })
   .then(function(coords){
-    var datos={nombre_vet:nombre, zona:zona};
+    var datos={nombre_vet:nombre, zona:zona, creado_por_vendedor_id:(CUR&&CUR.id)||null};
     if(doctor)datos.doctora=doctor;
     if(celular)datos.num_medico=celular;
     if(ruc)datos.ruc=ruc;

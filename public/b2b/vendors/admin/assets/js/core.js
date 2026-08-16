@@ -358,9 +358,10 @@ function reloadNiveles(){
 }
 function reloadClientesVet(){
   // id y created_at se agregan para etiquetas (cliente_etiquetas.cliente_id)
-  // y para calcular el badge "Nuevo" (< 30 días desde el alta), que no vive
-  // como etiqueta real — se calcula solo desde este campo.
-  return _loadOne('clientes_vet','select=id,nombre_vet,doctora,zona,direccion,distrito,num_medico,ruc,created_at&order=nombre_vet.asc',function(r){_clientesVet=r;});
+  // y para calcular el badge "Nuevo" (< 15 días desde el alta), que no vive
+  // como etiqueta real — se calcula solo desde este campo. creado_por_vendedor_id
+  // es quién lo trajo — con eso se arma "nuevos clientes por vendedor".
+  return _loadOne('clientes_vet','select=id,nombre_vet,doctora,zona,direccion,distrito,num_medico,ruc,created_at,creado_por_vendedor_id&order=nombre_vet.asc',function(r){_clientesVet=r;});
 }
 function reloadEtiquetas(){
   return Promise.all([

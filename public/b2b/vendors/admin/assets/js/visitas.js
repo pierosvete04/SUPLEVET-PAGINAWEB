@@ -1053,7 +1053,7 @@ function rvGuardar(){
       // las visitas registradas por el admin a vets nuevas nunca aparecen en "Mi Ruta".
       return sbG('clientes_vet','nombre_vet=ilike.'+encodeURIComponent(vete)+'&select=id')
         .then(function(ex){
-          if(!ex||!ex.length)return sbP('clientes_vet',{nombre_vet:vete,doctora:doc||null,zona:zona,num_medico:cel||null,ruc:ruc||null});
+          if(!ex||!ex.length)return sbP('clientes_vet',{nombre_vet:vete,doctora:doc||null,zona:zona,num_medico:cel||null,ruc:ruc||null,creado_por_vendedor_id:vid||null});
           // Ya existe: sincronizar el RUC si el usuario lo cambió/ingresó en esta visita
           // (mismo criterio que num_medico — el valor capturado en la visita es la fuente de verdad más reciente).
           if(ruc) return sbU('clientes_vet',ex[0].id,{ruc:ruc});
@@ -1572,7 +1572,7 @@ var _cliEntHistUltimoMes='';
 // "Nuevo" no es una fila en cliente_etiquetas: se calcula al vuelo desde
 // clientes_vet.created_at, así que no hace falta ningún cron para que
 // "se quite sola" al mes — simplemente deja de cumplir la condición.
-var DIAS_CLIENTE_NUEVO=30;
+var DIAS_CLIENTE_NUEVO=15;
 function _esClienteNuevo(createdAt){
   if(!createdAt)return false;
   var d=new Date(createdAt);

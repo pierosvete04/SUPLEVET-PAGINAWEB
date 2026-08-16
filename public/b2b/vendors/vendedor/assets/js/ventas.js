@@ -122,7 +122,7 @@ function guardarVenta(){
     // creaba una fila duplicada en clientes_vet en vez de reutilizar la que ya había.
     return sbG('clientes_vet','nombre_vet=ilike.'+encodeURIComponent(vete)+'&select=id');
   }).then(function(ex){
-    if(!ex||!ex.length)return sbP('clientes_vet',{nombre_vet:vete,doctora:val('v-doctora')||null,zona:zona});
+    if(!ex||!ex.length)return sbP('clientes_vet',{nombre_vet:vete,doctora:val('v-doctora')||null,zona:zona,creado_por_vendedor_id:(CUR&&CUR.id)||null});
   }).then(function(){
     return Promise.all([loadVentas(),loadProductos()]);
   }).then(function(){
