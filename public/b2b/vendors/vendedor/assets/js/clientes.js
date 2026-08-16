@@ -381,6 +381,12 @@ function abrirEditCliente(){
   var modal=gel('modal-cliente');
   var tipo=modal.dataset.tipo,nombre=modal.dataset.nombre;
   if(!tipo||!nombre)return;
+  // Se fija ACÁ, no al final de la función: cliRenderTagsEditVendedor() y la
+  // carga de cargo (más abajo) leen modal.dataset.editNombre — si se fijaba
+  // al final, ambas arrancaban con el nombre del cliente anterior (o vacío
+  // la primera vez), y las etiquetas nunca cargaban para el cliente correcto.
+  modal.dataset.editTipo=tipo;
+  modal.dataset.editNombre=nombre;
 
   // Buscar todas las transacciones de este cliente
   var ventas=_ventas.filter(function(v){
@@ -470,8 +476,6 @@ function abrirEditCliente(){
     }
   }).catch(function(){});
 
-  modal.dataset.editTipo=tipo;
-  modal.dataset.editNombre=nombre;
   gel('modal-edit-cliente').classList.add('open');
   setTimeout(function(){gel('edit-cli-nombre').focus();},200);
 }
