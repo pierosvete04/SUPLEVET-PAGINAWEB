@@ -624,6 +624,23 @@ function rvCalcTotal(){
   gel('rv-total').value = money(c*p);
 }
 
+// Regalo: oculto detrás de un botón chico a propósito (ver comentario en
+// mvToggleRegalo del panel vendedor — mismo criterio en los dos paneles).
+function rvToggleRegalo(){
+  var wrap=gel('rv-regalo-wrap');
+  if(!wrap)return;
+  if(wrap.style.display==='none')rvMostrarRegalo();else rvOcultarRegalo();
+}
+function rvMostrarRegalo(){
+  var wrap=gel('rv-regalo-wrap');if(wrap)wrap.style.display='block';
+  var btn=gel('btn-rv-regalo-toggle');if(btn)btn.classList.add('btn-sk');
+}
+function rvOcultarRegalo(){
+  var wrap=gel('rv-regalo-wrap');if(wrap)wrap.style.display='none';
+  var cant=gel('rv-regalo-cant');if(cant)cant.value='';
+  var btn=gel('btn-rv-regalo-toggle');if(btn)btn.classList.remove('btn-sk');
+}
+
 function rvAgregarMovimiento(){
   var tipo = _rvTipo;
   var mov = { tipo: tipo };
@@ -669,10 +686,19 @@ function rvAgregarMovimiento(){
     mov.producto=prod; mov.cantidad=cant; mov.precio=precio; mov.total=cant*precio;
     mov.desc=prod+' × '+cant+' = '+money(mov.total);
     if(_mpv){ mov.metodo_pago=_mpv; mov.desc += ' · '+_mpv; }
+    // Regalo: unidades extra del mismo producto, entregadas sin costo junto
+    // con esta venta (p.ej. "compra 12, llevas 13"). Solo aplica si se abrió
+    // el panel de regalo; si no, regaloCant queda en 0.
+    var _regaloWrapVisible = gel('rv-regalo-wrap') && gel('rv-regalo-wrap').style.display!=='none';
+    mov.regaloCant = _regaloWrapVisible ? (parseInt(gel('rv-regalo-cant').value,10)||0) : 0;
+    if(mov.regaloCant>0){
+      mov.desc += ' · +'+mov.regaloCant+' regalo';
+    }
   }
   _rvMovimientos.push(mov);
   // reset campos
   gel('rv-producto').value=''; gel('rv-cantidad').value=''; gel('rv-precio').value=''; gel('rv-total').value='';
+  rvOcultarRegalo();
   rvRenderLista(); rvRenderResumen();
 }
 
@@ -959,8 +985,27 @@ function rvGuardar(){
         imagen_documento:imgUrl||null,
         segmento_cliente:catCliente||null,
         metodo_pago:     m.metodo_pago||null,
-        receptor_efectivo:(m.metodo_pago||null)==='EFECTIVO'?(rvReceptorEfectivo||null):null
+        receptor_efectivo:(m.metodo_pago||null)==='EFECTIVO'?(rvReceptorEfectivo||null):null,
+        es_regalo:       false
       };
+    });
+    // Regalo: fila aparte con el mismo producto a precio 0, marcada
+    // es_regalo=true — mismas keys que las filas de arriba (PGRST102 exige
+    // que todo el lote comparta exactamente el mismo set de columnas).
+    noCobroMov.forEach(function(m){
+      if(!(m.regaloCant>0))return;
+      payload.push({
+        vendedor_id:vid, fecha:fecha, hora:hora||null,
+        veterinaria:vete||null, doctora:doc||null, num_medico:cel||null,
+        zona:zona, ruc:ruc||null, notas:(notas?notas+' · ':'')+'Regalo por compra de '+(m.cantidad||0)+' uds de '+(m.producto||''),
+        movimiento:m.tipo, estado:'✅ Pagado', grupo_visita_id:grupoId,
+        producto:m.producto||null, cantidad:m.regaloCant,
+        precio_unitario:0, total:0,
+        fecha_cobro:null, tipo_documento:null, numero_documento:null,
+        imagen_documento:imgUrl||null, segmento_cliente:catCliente||null,
+        metodo_pago:null, receptor_efectivo:null,
+        es_regalo:true
+      });
     });
     var prom = payload.length ? sbP('ventas',payload) : Promise.resolve();
     return prom.then(function(){
@@ -1027,7 +1072,7 @@ function rvGuardar(){
       }));
     });
   })
-  .then(function(){ return loadAll(); })
+  .then(function(){ return Promise.all([reloadVentas(), reloadClientesVet()]); })
   .then(function(){
     setSt('Visita guardada correctamente','ok'); setTimeout(function(){setSt('');},3000);
     _rvMovimientos=[]; rvRenderLista(); rvRenderResumen();
@@ -1452,7 +1497,7 @@ function cliEntRender(ventas,mes){
     var canAnul=v.estado!=='Anulado';
     var barra=_colorEst[v.estado]||'transparent';
     rows+='<tr style="box-shadow:inset 3px 0 0 '+barra+';"><td style="white-space:nowrap;">'+fmt(v.fecha)+(v.hora?' <span class="tm2">'+esc(v.hora)+'</span>':'')+'</td>'+
-      '<td>'+bMov(v.movimiento)+'</td><td>'+esc(v.producto||'---')+'</td><td>'+(v.cantidad||0)+'</td>'+
+      '<td>'+bMov(v.movimiento)+'</td><td>'+esc(v.producto||'---')+(v.es_regalo?' <span class="b b-visita" title="Unidades de regalo, sin costo"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24" style="width:11px;height:11px;vertical-align:-1px;"><use href="#i-regalo"/></svg> Regalo</span>':'')+'</td><td>'+(v.cantidad||0)+'</td>'+
       '<td><strong>S/ '+Number(v.total||0).toFixed(2)+'</strong></td><td>'+bEst(v.estado)+'</td>'+
       '<td style="white-space:nowrap;"><button class="btn btn-sm" style="background:var(--sky4);color:var(--brand);border:1px solid var(--sky);" onclick="verDetalle(\''+esc(v.id)+'\')">Ver detalle</button>'+
       (canAnul?' <button class="btn btn-d btn-sm" onclick="event.stopPropagation();anularVenta(\''+esc(v.id)+'\')">Anular</button>':'')+
@@ -1598,7 +1643,7 @@ function _cliEditTransferirConfirmado(nombre,vendId,zonaDestino,vendNombre,msg){
       // Si no existe la fila, la creamos en la zona destino para que aparezca a\u00fan sin ubicaci\u00f3n
       return sbP('clientes_vet',{nombre_vet:nombre,zona:zonaDestino});
     })
-    .then(function(){return loadAll();})
+    .then(function(){return reloadClientesVet();})
     .then(function(){
       if(msg){msg.style.color='var(--ok)';msg.textContent='\u2705 '+nombre+' trasladada a '+vendNombre+' ('+zonaDestino+').';}
     })
@@ -1843,6 +1888,9 @@ function cliAsignadoGuardar(){
 function cliGuardar(){
   var tipo=val('cli-edit-tipo'), orig=val('cli-edit-nombre-orig');
   var nuevoNombre=(gel('cli-edit-nombre').value||'').trim();
+  // Las veterinarias se guardan siempre en MAYÚSCULAS (convención del panel);
+  // los doctores se dejan como los escribió el vendedor (Nombre Apellido).
+  if(tipo==='vets')nuevoNombre=nuevoNombre.toUpperCase();
   var zona=val('cli-edit-zona'), cel=val('cli-edit-cel'), ruc=val('cli-edit-ruc');
   if(!nuevoNombre){showToast('El nombre es obligatorio','er');return;}
   // Se guarda aparte porque vive en clientes_vet, no en ventas.
@@ -1972,7 +2020,7 @@ function cliGuardar(){
   }
 
   Promise.all(promesas)
-  .then(function(){return loadAll();})
+  .then(function(){return Promise.all([reloadVentas(), reloadClientesVet()]);})
   .then(function(){
     cerrarModal('modal-cli-edit');
     rClientesAdmin();

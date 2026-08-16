@@ -389,7 +389,7 @@ function agregarZona() {
   if (repetida) { showToast('Ya existe una zona con ese nombre', 'er'); return; }
 
   sbP('zonas', { nombre: nombre })
-    .then(function () { return loadAll(); })
+    .then(function () { return reloadZonas(); })
     .then(function () {
       gel('nueva-zona').value = '';
       znToggleNueva(false);
@@ -409,7 +409,7 @@ function eliminarZona(id) {
     'Sí, eliminar',
     function () {
       sbDel('zonas', 'id=eq.' + id)
-        .then(function () { return loadAll(); })
+        .then(function () { return reloadZonas(); })
         .then(function () {
           // Si se borró desde la página de la zona, esa página ya no
           // tiene sujeto: hay que volver a la lista, no repintarla vacía.

@@ -313,25 +313,63 @@ function _loadOne(tabla,q,assign){
 var VENTAS_LIMITE=20000;
 var _ventasTotalReal=null;
 
-function loadAll(){
-  _loadErrors=[];
+// ── RELOADS GRANULARES ──
+// Cada acción de guardado del panel solo escribe en una o dos tablas, pero
+// hasta ahora todas recargaban TODO (loadAll): hasta 20.000 filas de ventas,
+// la tabla de movimientos completa, clientes_vet completa, etc. — el mismo
+// costo de red que un login, repetido en cada guardado. Estas funciones
+// recargan solo la porción que cada acción realmente pudo cambiar; loadAll()
+// las reutiliza todas para la carga inicial y el botón "Actualizar" manual.
+function reloadVendedores(){
+  return _loadOne('vendedores','order=nombre.asc',function(r){_vendedores=r;});
+}
+function reloadVentas(){
   _ventasTotalReal=null;
   return Promise.all([
-    _loadOne('vendedores','order=nombre.asc',function(r){_vendedores=r;}),
     _loadOne('ventas','order=created_at.desc&limit='+VENTAS_LIMITE,function(r){_ventas=r;}),
-    // En paralelo, el total real, para detectar cualquier recorte.
-    sbCount('ventas').then(function(total){_ventasTotalReal=total;}),
-    _loadOne('productos','order=nombre.asc',function(r){_productos=r;}),
-    _loadOne('zonas','order=nombre.asc',function(r){_zonas=r;}),
+    sbCount('ventas').then(function(total){_ventasTotalReal=total;})
+  ]);
+}
+function reloadProductos(){
+  return _loadOne('productos','order=nombre.asc',function(r){_productos=r;});
+}
+function reloadZonas(){
+  return _loadOne('zonas','order=nombre.asc',function(r){_zonas=r;});
+}
+// _movimientos (stock por vendedor) e _invMov (historial de inventario) son
+// dos vistas de la misma tabla `movimientos`: cualquier escritura ahí puede
+// afectar a ambas, así que se recargan juntas.
+function reloadMovimientos(){
+  return Promise.all([
     _loadOne('movimientos','tipo=eq.salida&categoria=eq.producto&order=created_at.desc',function(r){_movimientos=r;}),
-    _loadOne('materiales','order=nombre.asc',function(r){_materiales=r;}),
-    _loadOne('movimientos','order=created_at.desc&limit=500',function(r){_invMov=r;}),
-    _loadOne('segmentos_vendedor','order=nombre.asc',function(r){_segmentos=r;}),
-    // Los niveles se cargaban solo al abrir su página, así que anNivelVendedor()
-    // devolvía null en analíticas, dashboard y PDFs mientras no la visitaras.
-    // Ahora entran con el resto de datos y están siempre disponibles.
-    _loadOne('niveles_config','order=orden.asc',function(r){_niveles=r;}),
-    _loadOne('clientes_vet','select=nombre_vet,doctora,zona,direccion,distrito,num_medico,ruc&order=nombre_vet.asc',function(r){_clientesVet=r;})
+    _loadOne('movimientos','order=created_at.desc&limit=500',function(r){_invMov=r;})
+  ]);
+}
+function reloadMateriales(){
+  return _loadOne('materiales','order=nombre.asc',function(r){_materiales=r;});
+}
+function reloadSegmentos(){
+  return _loadOne('segmentos_vendedor','order=nombre.asc',function(r){_segmentos=r;});
+}
+function reloadNiveles(){
+  return _loadOne('niveles_config','order=orden.asc',function(r){_niveles=r;});
+}
+function reloadClientesVet(){
+  return _loadOne('clientes_vet','select=nombre_vet,doctora,zona,direccion,distrito,num_medico,ruc&order=nombre_vet.asc',function(r){_clientesVet=r;});
+}
+
+function loadAll(){
+  _loadErrors=[];
+  return Promise.all([
+    reloadVendedores(),
+    reloadVentas(),
+    reloadProductos(),
+    reloadZonas(),
+    reloadMovimientos(),
+    reloadMateriales(),
+    reloadSegmentos(),
+    reloadNiveles(),
+    reloadClientesVet()
   ]);
 }
 

@@ -258,7 +258,7 @@ function renderModalVentas(ventas,mes){
     var canAnul=(v.estado!=='Anulado'&&v.estado!=='\ud83d\udce6 Devuelto');
     var barra=_colorEst[v.estado]||'transparent';
     rows+='<tr style="box-shadow:inset 3px 0 0 '+barra+';"><td>'+fmt(v.fecha)+(v.hora?' <span class="tm2">'+v.hora+'</span>':'')+'</td><td>'+bMov(v.movimiento)+'</td>'+
-      '<td>'+(v.producto||'---')+(v.es_regalo?' <span class="b b-visita" title="Unidades de regalo, sin costo">🎁 Regalo</span>':'')+'</td><td>'+(v.cantidad||0)+'</td>'+
+      '<td>'+(v.producto||'---')+(v.es_regalo?' <span class="b b-visita" title="Unidades de regalo, sin costo"><svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24" style="width:11px;height:11px;vertical-align:-1px;"><use href="#i-regalo"/></svg> Regalo</span>':'')+'</td><td>'+(v.cantidad||0)+'</td>'+
       '<td><strong>S/ '+Number(v.total||0).toFixed(2)+'</strong></td>'+
       '<td>'+bEst(v.estado)+'</td>'+
       '<td style="display:flex;gap:4px;flex-wrap:wrap;">'+

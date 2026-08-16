@@ -782,7 +782,7 @@ function mvAgregarMovimiento(){
 
   _mvMovimientos.push({
     tipo: tipo,
-    label: tipo+': '+prod+' \u00b7 '+cant+' uds \u00b7 '+money(cant*precio)+(regaloCant>0?' \u00b7 \ud83c\udf81 +'+regaloCant+' regalo':''),
+    label: tipo+': '+prod+' \u00b7 '+cant+' uds \u00b7 '+money(cant*precio)+(regaloCant>0?' \u00b7 +'+regaloCant+' regalo':''),
     color: colores[tipo]||'#374151',
     prod: prod, cant: cant, precio: precio,
     total: cant*precio,

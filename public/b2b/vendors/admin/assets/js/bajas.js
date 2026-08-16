@@ -322,7 +322,7 @@ function confirmarBaja(){
       motivo_baja:motivo||null,
       zonas_asignadas:restantes
     });
-  }).then(function(){ return loadAll(); })
+  }).then(function(){ return Promise.all([reloadVentas(), reloadVendedores()]); })
   .then(function(){
     cerrarModal('modal-vend-baja');
     rVendedores();
@@ -342,7 +342,7 @@ function reactivarVendedor(id){
     '¿Reactivar a <strong>'+esc(v.nombre)+'</strong>? Volverá a aparecer en los listados, pero las zonas y créditos que ya transferiste a otros vendedores no se devuelven automáticamente.',
     'Reactivar vendedor','Reactivar', function(){
       sbU('vendedores', id, {activo:true, fecha_baja:null, motivo_baja:null})
-        .then(function(){return loadAll();})
+        .then(function(){return reloadVendedores();})
         .then(function(){ rVendedores(); setSt(''+v.nombre+' reactivado','ok'); setTimeout(function(){setSt('');},2500); })
         .catch(function(e){setSt(SVUI.error(e),'er');});
     });
@@ -438,7 +438,7 @@ function confirmarTransferencia(){
 
   setBL('btn-vt-ok',true,'Procesando...');
   transferirCartera(origen, destino, {clientes:clientes}, 'transferencia', motivo||null)
-    .then(function(res){return loadAll().then(function(){return res;});})
+    .then(function(res){return reloadVentas().then(function(){return res;});})
     .then(function(res){
       cerrarModal('modal-vend-transf');
       rVendedores();

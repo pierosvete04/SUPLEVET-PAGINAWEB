@@ -501,7 +501,7 @@ function nuevoSegmento(){
       var nombre=(gel('seg-nombre-inp').value||'').trim();
       if(!nombre)return;
       sbP('segmentos_vendedor',{nombre:nombre})
-      .then(function(){return loadAll();})
+      .then(function(){return reloadSegmentos();})
       .then(function(){rSegmentos();setSt('Categoría añadida','ok');setTimeout(function(){setSt('');},2000);})
       .catch(function(e){setSt(SVUI.error(e),'er');});
     });
@@ -511,7 +511,7 @@ function nuevoSegmento(){
 function eliminarSegmento(id){
   showConfirm('¿Eliminar esta categoría? Se perderá la asignación en los vendedores que la tengan.','Eliminar categoría','Eliminar',function(){
     sbDel('segmentos_vendedor','id=eq.'+id)
-    .then(function(){return loadAll();})
+    .then(function(){return reloadSegmentos();})
     .then(function(){rSegmentos();setSt('Categoría eliminada','ok');setTimeout(function(){setSt('');},2000);})
     .catch(function(e){setSt(SVUI.error(e),'er');});
   });
@@ -597,7 +597,7 @@ function _guardarVendedorFinal(id,row,usuario,pass,zonasNuevas){
       // Editar vendedor existente
       return _reasignarTransaccionesZonas(zonasNuevas,id)
       .then(function(){return sbU('vendedores',id,row);})
-      .then(function(){return loadAll();})
+      .then(function(){return Promise.all([reloadVendedores(), reloadVentas()]);})
       .then(function(){
         cerrarModal('modal-vend-form');rVendedores();
         setSt('\u2705 Vendedor actualizado','ok');setTimeout(function(){setSt('');},2500);
@@ -618,7 +618,7 @@ function _guardarVendedorFinal(id,row,usuario,pass,zonasNuevas){
       row.id=authId;
       return sbP('vendedores',row);
     })
-    .then(function(){return loadAll();})
+    .then(function(){return reloadVendedores();})
     .then(function(){
       cerrarModal('modal-vend-form');rVendedores();
       setSt('\u2705 Vendedor creado','ok');setTimeout(function(){setSt('');},2500);
@@ -931,7 +931,7 @@ function confirmarMarcarPagado(){
     if(tipoDoc)upd.tipo_documento=tipoDoc;
     if(numDoc)upd.numero_documento=numDoc;
     return sbU('ventas',id,upd);
-  }).then(function(){return loadAll();})
+  }).then(function(){return reloadVentas();})
   .then(function(){
     gel('modal-marcar-pagado').classList.remove('open');
     _cobAdminImgs.mp=[];
@@ -1061,7 +1061,7 @@ function confirmarCobroParcialAdmin(){
 
     if(rep.completo){
       upd.notas=(v.notas?v.notas+' | ':'')+'Cobrado el '+fmt(fechaCobro);
-      return sbU('ventas',id,upd).then(function(){return loadAll();})
+      return sbU('ventas',id,upd).then(function(){return reloadVentas();})
         .then(function(){
           _cerrar();
           setSt('Crédito saldado por completo el '+fmt(fechaCobro),'ok');
@@ -1079,7 +1079,7 @@ function confirmarCobroParcialAdmin(){
       return sbP('ventas',SVCobros.filaSaldo(v,rep,{
         notas:SVCobros.notaSaldo(v,rep,_cpModo,fmt(fechaCobro))
       }));
-    }).then(function(){return loadAll();})
+    }).then(function(){return reloadVentas();})
       .then(function(){
         _cerrar();
         setSt('Cobrado '+money(rep.montoPagado)+' el '+fmt(fechaCobro)+'. Quedan '+money(rep.montoSaldo)+' pendientes.','ok');
@@ -1477,7 +1477,7 @@ function anularVenta(id){
     'Anular transacci\u00f3n',
     'S\u00ed, anular',
     function(){
-      sbU('ventas',id,{estado:'Anulado'}).then(function(){return loadAll();})
+      sbU('ventas',id,{estado:'Anulado'}).then(function(){return reloadVentas();})
       .then(function(){
         rDash();rHist();rCreditos();
         var modal=gel('modal-detalle');if(modal&&modal.classList.contains('open'))cerrarModal('modal-detalle');
@@ -1963,7 +1963,7 @@ function guardarCambios(){
     // cliente y se autocomplete en la próxima visita, no solo en esta fila.
     // Best-effort: si falla, el movimiento ya quedó guardado igual.
     return _dvSincronizarRuc(ruc);
-  }).then(function(){return loadAll();})
+  }).then(function(){return Promise.all([reloadVentas(), reloadClientesVet()]);})
   .then(function(){
     rDash();rHist();rCreditos();
     var msg=vendCambio

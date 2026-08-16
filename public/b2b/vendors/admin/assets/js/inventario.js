@@ -400,7 +400,7 @@ async function invGNP() {
     var res = await sbP('productos', { nombre: nom, categoria: gel('np-cat').value, presentacion: val('np-pre'), stock: stk, minimo: parseInt(gel('np-min').value) || 5, notas: val('np-not') });
     var prod = Array.isArray(res) ? res[0] : res;
     if (stk > 0) await sbP('movimientos', { tipo: 'entrada', categoria: 'producto', item_id: prod.id, item_nombre: prod.nombre, cantidad: stk, motivo: 'Stock inicial', fecha: hoy() });
-    await loadAll(); invCloseModal('m-np');
+    await Promise.all([reloadProductos(), reloadMovimientos()]); invCloseModal('m-np');
     ['np-nom', 'np-not'].forEach(function(x) { var e = gel(x); if (e) e.value = ''; });
     gel('np-stk').value = '0'; _rInvCurrent(); setSt('Producto guardado', 'ok'); setTimeout(function() { setSt(''); }, 3000);
   } catch(e) { setSt(SVUI.error(e), 'er'); } finally { setBL('btn-np', false, 'Guardar'); }
@@ -417,7 +417,7 @@ async function invGNM() {
     var res = await sbP('materiales', { nombre: nom, unidad: gel('nm-uni').value, stock: stk, minimo: parseInt(gel('nm-min').value) || 10, notas: val('nm-not') });
     var mat = Array.isArray(res) ? res[0] : res;
     if (stk > 0) await sbP('movimientos', { tipo: 'entrada', categoria: 'material', item_id: mat.id, item_nombre: mat.nombre, cantidad: stk, motivo: 'Stock inicial', fecha: hoy() });
-    await loadAll(); invCloseModal('m-nm'); _rInvCurrent(); setSt('Material guardado', 'ok'); setTimeout(function() { setSt(''); }, 3000);
+    await Promise.all([reloadMateriales(), reloadMovimientos()]); invCloseModal('m-nm'); _rInvCurrent(); setSt('Material guardado', 'ok'); setTimeout(function() { setSt(''); }, 3000);
   } catch(e) { setSt(SVUI.error(e), 'er'); } finally { setBL('btn-nm', false, 'Guardar'); }
 }
 
@@ -432,7 +432,7 @@ async function invGEP() {
   try {
     await sbU('productos', id, { stock: prod.stock + can });
     await sbP('movimientos', { tipo: 'entrada', categoria: 'producto', item_id: id, item_nombre: prod.nombre, cantidad: can, motivo: val('ep-mot') || 'Compra', persona: val('ep-res'), lote: val('ep-lote'), fecha: gel('ep-fec').value || hoy() });
-    await loadAll(); invCloseModal('m-ep'); _rInvCurrent(); setSt('Entrada registrada', 'ok'); setTimeout(function() { setSt(''); }, 3000);
+    await Promise.all([reloadProductos(), reloadMovimientos()]); invCloseModal('m-ep'); _rInvCurrent(); setSt('Entrada registrada', 'ok'); setTimeout(function() { setSt(''); }, 3000);
   } catch(e) { setSt(SVUI.error(e), 'er'); } finally { setBL('btn-ep', false, 'Registrar'); }
 }
 
@@ -450,7 +450,7 @@ async function invGSP() {
   try {
     await sbU('productos', id, { stock: prod.stock - can });
     await sbP('movimientos', { tipo: 'salida', categoria: 'producto', item_id: id, item_nombre: prod.nombre, cantidad: can, motivo: gel('sp-mot').value, persona: vnd ? vnd.nombre : '', empresa: val('sp-emp') || (vnd ? vnd.empresa : '') || '', telefono: vnd ? vnd.telefono : '', tipo_persona: vnd ? vnd.tipo : '', notas: val('sp-not'), lote: val('sp-lote'), vendedor_id: sv, fecha: gel('sp-fec').value || hoy() });
-    await loadAll(); invCloseModal('m-sp');
+    await Promise.all([reloadProductos(), reloadMovimientos()]); invCloseModal('m-sp');
     ['sp-emp', 'sp-not'].forEach(function(x) { var e = gel(x); if (e) e.value = ''; });
     _rInvCurrent(); setSt('Entrega registrada', 'ok'); setTimeout(function() { setSt(''); }, 3000);
   } catch(e) { setSt(SVUI.error(e), 'er'); } finally { setBL('btn-sp', false, 'Registrar'); }
@@ -467,7 +467,7 @@ async function invGEM() {
   try {
     await sbU('materiales', id, { stock: mat.stock + can });
     await sbP('movimientos', { tipo: 'entrada', categoria: 'material', item_id: id, item_nombre: mat.nombre, cantidad: can, motivo: val('em-mot') || 'Compra', persona: val('em-res'), lote: val('em-lote'), fecha: gel('em-fec').value || hoy() });
-    await loadAll(); invCloseModal('m-em'); _rInvCurrent(); setSt('Entrada registrada', 'ok'); setTimeout(function() { setSt(''); }, 3000);
+    await Promise.all([reloadMateriales(), reloadMovimientos()]); invCloseModal('m-em'); _rInvCurrent(); setSt('Entrada registrada', 'ok'); setTimeout(function() { setSt(''); }, 3000);
   } catch(e) { setSt(SVUI.error(e), 'er'); } finally { setBL('btn-em', false, 'Registrar'); }
 }
 
@@ -485,7 +485,7 @@ async function invGSM() {
   try {
     await sbU('materiales', id, { stock: mat.stock - can });
     await sbP('movimientos', { tipo: 'salida', categoria: 'material', item_id: id, item_nombre: mat.nombre, cantidad: can, motivo: val('sm-mot'), persona: vnd ? vnd.nombre : '', empresa: val('sm-emp') || (vnd ? vnd.empresa : '') || '', telefono: vnd ? vnd.telefono : '', tipo_persona: vnd ? vnd.tipo : '', notas: val('sm-not'), lote: val('sm-lote'), vendedor_id: sv, fecha: gel('sm-fec').value || hoy() });
-    await loadAll(); invCloseModal('m-sm');
+    await Promise.all([reloadMateriales(), reloadMovimientos()]); invCloseModal('m-sm');
     ['sm-emp', 'sm-not', 'sm-mot'].forEach(function(x) { var e = gel(x); if (e) e.value = ''; });
     _rInvCurrent(); setSt('Entrega registrada', 'ok'); setTimeout(function() { setSt(''); }, 3000);
   } catch(e) { setSt(SVUI.error(e), 'er'); } finally { setBL('btn-sm', false, 'Registrar'); }
@@ -497,7 +497,7 @@ async function invGSM() {
 function invDel(tp, id) {
   showConfirm('¿Eliminar este elemento?','Eliminar','Eliminar',function(){
     (tp === 'p' ? sbDel('productos','id=eq.'+id) : sbDel('materiales','id=eq.'+id))
-    .then(function(){return loadAll();})
+    .then(function(){return tp === 'p' ? reloadProductos() : reloadMateriales();})
     .then(function(){_rInvCurrent();setSt('Eliminado','ok');setTimeout(function(){setSt('');},2500);})
     .catch(function(e){setSt(SVUI.error(e),'er');});
   });
@@ -527,7 +527,7 @@ async function invSaveProd() {
   setBL('btn-editprod', true);
   try {
     await sbU('productos', id, { nombre: nom, categoria: gel('editprod-cat').value, presentacion: val('editprod-pre'), stock: newStk, minimo: parseInt(gel('editprod-min').value) || 5, notas: val('editprod-not') });
-    await loadAll(); invCloseModal('m-editprod'); _rInvCurrent(); setSt('Producto actualizado', 'ok'); setTimeout(function() { setSt(''); }, 3000);
+    await reloadProductos(); invCloseModal('m-editprod'); _rInvCurrent(); setSt('Producto actualizado', 'ok'); setTimeout(function() { setSt(''); }, 3000);
   } catch(e) { setSt(SVUI.error(e), 'er'); } finally { setBL('btn-editprod', false, 'Guardar'); }
 }
 
@@ -552,7 +552,7 @@ async function invSaveMat() {
   setBL('btn-editmat', true);
   try {
     await sbU('materiales', id, { nombre: nom, unidad: gel('editmat-uni').value, stock: newStk, minimo: parseInt(gel('editmat-min').value) || 10, notas: val('editmat-not') });
-    await loadAll(); invCloseModal('m-editmat'); _rInvCurrent(); setSt('Material actualizado', 'ok'); setTimeout(function() { setSt(''); }, 3000);
+    await reloadMateriales(); invCloseModal('m-editmat'); _rInvCurrent(); setSt('Material actualizado', 'ok'); setTimeout(function() { setSt(''); }, 3000);
   } catch(e) { setSt(SVUI.error(e), 'er'); } finally { setBL('btn-editmat', false, 'Guardar'); }
 }
 
@@ -595,7 +595,7 @@ async function invSaveMov() {
       await sbU(tbl, itemId, { stock: stock });
     }
     await sbU('movimientos', id, { tipo: newTipo, cantidad: newCan, fecha: gel('editmov-fec').value || hoy(), persona: val('editmov-per'), empresa: val('editmov-emp'), motivo: val('editmov-mot'), notas: val('editmov-not') });
-    await loadAll(); invCloseModal('m-editmov');
+    await Promise.all([reloadMovimientos(), cat === 'producto' ? reloadProductos() : reloadMateriales()]); invCloseModal('m-editmov');
     if (_invPI >= 0 && gel('m-persona') && gel('m-persona').classList.contains('open')) invOpenPersona(_invPI);
     _rInvCurrent(); setSt('Movimiento actualizado', 'ok'); setTimeout(function() { setSt(''); }, 3000);
   } catch(e) { setSt(SVUI.error(e), 'er'); } finally { setBL('btn-editmov', false, 'Guardar'); }
@@ -613,7 +613,7 @@ function invDelMov(id, cat, itemId, can, tipo) {
       stockProm = sbU(tbl, itemId, {stock:stock});
     }
     stockProm.then(function(){return sbDel('movimientos','id=eq.'+id);})
-    .then(function(){return loadAll();})
+    .then(function(){return Promise.all([reloadMovimientos(), cat === 'producto' ? reloadProductos() : reloadMateriales()]);})
     .then(function(){
       invCloseModal('m-editmov');
       if (_invPI >= 0 && gel('m-persona') && gel('m-persona').classList.contains('open')) invOpenPersona(_invPI);
