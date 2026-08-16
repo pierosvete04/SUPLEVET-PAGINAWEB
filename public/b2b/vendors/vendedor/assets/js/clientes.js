@@ -41,6 +41,13 @@ function rClientes(){
     // Si hay más de una vet con el mismo nombre (en distintos distritos), mostrar
     // el distrito como chip — es la única manera de distinguirlas visualmente.
     var badgeDistrito=(c.esDuplicado&&c.distrito)?'<span style="display:inline-block;background:#fef3c7;color:#92400e;font-size:9px;font-weight:700;padding:2px 6px;border-radius:10px;text-transform:uppercase;letter-spacing:.5px;margin-left:6px;vertical-align:middle;">📍 '+c.distrito+'</span>':'';
+    // Etiquetas + "Nuevo" (< 30 días de alta): solo aplica a veterinarias,
+    // mismo criterio que el resto del sistema (los doctores no tienen fila
+    // propia en clientes_vet). "Nuevo" acá es distinto de "esNueva" arriba:
+    // esNueva = todavía sin ventas; Nuevo = el cliente en sí es reciente.
+    var tagInfo=_cliTab==='vet'?_vetTagsMap[(c.nombre||'').trim().toLowerCase()]:null;
+    var etiquetasHtml=((tagInfo&&_esClienteNuevo(tagInfo.created_at))?'<span class="b b-contado" style="padding:1px 6px;font-size:9.5px;">Nuevo</span> ':'')+
+      ((tagInfo&&tagInfo.tags)||[]).map(function(et){return '<span style="display:inline-block;padding:1px 7px;border-radius:20px;font-size:9.5px;font-weight:700;background:'+et.color+';color:'+_colorTextoLegible(et.color)+';margin-right:3px;">'+esc(et.nombre)+'</span>';}).join('');
     var derecha=c.esNueva
       ? '<div style="text-align:right"><div class="tm2" style="font-style:italic;">Sin movimientos aún</div></div>'
       : '<div style="text-align:right"><div style="font-weight:700;font-size:14px;color:var(--brand);">S/ '+c.total.toFixed(2)+'</div>'+
@@ -51,7 +58,9 @@ function rClientes(){
       '<div class="cb" style="display:flex;align-items:center;gap:14px;">'+
       '<div style="width:42px;height:42px;border-radius:50%;background:'+color+';border:2px solid '+border+';display:flex;align-items:center;justify-content:center;font-family:Bebas Neue,sans-serif;font-size:18px;color:var(--brand);flex-shrink:0;">'+c.nombre.charAt(0).toUpperCase()+'</div>'+
       '<div style="flex:1"><div style="font-weight:700;font-size:14px;">'+c.nombre+badgeNuevo+badgeDistrito+'</div>'+
-      '<div class="tm2">'+(c.otros.length?c.otros.slice(0,3).join(', '):'')+'</div></div>'+
+      '<div class="tm2">'+(c.otros.length?c.otros.slice(0,3).join(', '):'')+'</div>'+
+      (etiquetasHtml?'<div style="margin-top:4px;">'+etiquetasHtml+'</div>':'')+
+      '</div>'+
       derecha+
       '<div style="color:var(--tl);font-size:20px;">&rsaquo;</div></div></div>';
   }).join(''):'<div class="es"><div class="ei"><svg class="ic ic-vacio" aria-hidden="true" focusable="false" viewBox="0 0 24 24"><use href="#i-bandeja"/></svg></div><strong>Aún no tienes clientes en tu cartera.</strong><br>Registra una visita y la veterinaria aparecerá aquí.</div>';
@@ -148,6 +157,26 @@ function _colorTextoLegible(hex){
   var r=parseInt(hex.substr(0,2),16),g=parseInt(hex.substr(2,2),16),b=parseInt(hex.substr(4,2),16);
   var luz=(0.299*r+0.587*g+0.114*b)/255;
   return luz>0.6?'#1a2535':'#fff';
+}
+// Mapa nombre_vet (en minúsculas) -> {created_at, tags:[{nombre,color}]},
+// para pintar etiquetas en la LISTA de "Mis Clientes" sin una consulta por
+// tarjeta (embed anidado de PostgREST: clientes_vet -> cliente_etiquetas ->
+// etiquetas_cliente, todo en un solo viaje). Se recarga junto con
+// loadVeterinarias() — mismo momento en que se refresca todo lo demás.
+var _vetTagsMap={};
+function cargarEtiquetasVendedor(){
+  return sbG('clientes_vet','select=nombre_vet,created_at,cliente_etiquetas(etiquetas_cliente(nombre,color))')
+  .then(function(r){
+    _vetTagsMap={};
+    (r||[]).forEach(function(c){
+      var k=(c.nombre_vet||'').trim().toLowerCase();
+      if(!k)return;
+      _vetTagsMap[k]={
+        created_at:c.created_at,
+        tags:(c.cliente_etiquetas||[]).map(function(ce){return ce.etiquetas_cliente;}).filter(Boolean)
+      };
+    });
+  }).catch(function(){});
 }
 function cliPintarTags(fila){
   var el=gel('cli-tags');if(!el)return;

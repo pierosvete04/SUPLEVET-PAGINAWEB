@@ -104,7 +104,7 @@ function initApp(){
   setSt('Cargando...','ld');
   _loadErrors=[];
   Promise.all([loadVentas(),loadProductos(),loadZonas()])
-  .then(function(){ return loadVeterinarias(); })
+  .then(function(){ return Promise.all([loadVeterinarias(), typeof cargarEtiquetasVendedor==='function'?cargarEtiquetasVendedor():null]); })
   .then(function(){loadNiveles().then(function(){
     if(_loadErrors.length){
       setSt('No pudimos cargar: '+_loadErrors.join(', ')+'. Las cifras que ves están incompletas. Revisa tu conexión y recarga.','er');

@@ -1211,6 +1211,10 @@ function rClientesAdmin(){
     c.distrito=(info&&info.distrito)||'';
     if(!c.celular&&info&&info.num_medico)c.celular=info.num_medico;
     if(!c.zona&&info&&info.zona)c.zona=info.zona;
+    // Solo aplica a veterinarias: los doctores no tienen fila propia en
+    // clientes_vet, así que no hay dónde colgar etiquetas ni created_at.
+    c.tags=info?_etiquetasDeCliente(info.id):[];
+    c.esNuevo=info?_esClienteNuevo(info.created_at):false;
   });
 
   if(_cliView==='tabla'){
@@ -1225,11 +1229,17 @@ function cliRenderCards(list){
   list.forEach(function(c){
     var color=_cliTab==='vets'?'var(--sky4)':'var(--orange3)';
     var border=_cliTab==='vets'?'var(--sky)':'var(--orange2)';
+    // Chips chicos para no romper el alto de la tarjeta en una lista larga
+    // \u2014 el detalle completo (con "sin registrar" etc.) vive en la ficha.
+    var tagsHtml=(c.esNuevo?'<span class="b b-contado" style="padding:1px 6px;font-size:9.5px;">Nuevo</span>':'')+
+      (c.tags||[]).map(function(et){return '<span style="display:inline-block;padding:1px 7px;border-radius:20px;font-size:9.5px;font-weight:700;background:'+et.color+';color:'+_colorTextoLegible(et.color)+';">'+esc(et.nombre)+'</span>';}).join('');
     html+='<div class="card" style="margin-bottom:.7rem;cursor:pointer;" data-cli-tipo="'+esc(_cliTab)+'" data-cli-nombre="'+esc(c.nombre)+'" onclick="cliVerEntidadEl(this)">'+
       '<div class="cb" style="display:flex;align-items:center;gap:14px;">'+
       '<div style="width:42px;height:42px;border-radius:50%;background:'+color+';border:2px solid '+border+';display:flex;align-items:center;justify-content:center;font-family:Bebas Neue,sans-serif;font-size:18px;color:var(--brand);flex-shrink:0;">'+esc(c.nombre.charAt(0).toUpperCase())+'</div>'+
       '<div style="flex:1"><div style="font-weight:700;font-size:14px;">'+esc(c.nombre)+'</div>'+
-      '<div class="tm2">'+esc(c.otros.length?c.otros.slice(0,3).join(', '):'')+esc(c.zona?' \u00b7 '+c.zona:'')+'</div></div>'+
+      '<div class="tm2">'+esc(c.otros.length?c.otros.slice(0,3).join(', '):'')+esc(c.zona?' \u00b7 '+c.zona:'')+'</div>'+
+      (tagsHtml?'<div style="margin-top:4px;display:flex;gap:4px;flex-wrap:wrap;">'+tagsHtml+'</div>':'')+
+      '</div>'+
       '<div style="text-align:right"><div style="font-weight:700;font-size:14px;color:var(--brand);">S/ '+c.total.toFixed(2)+'</div>'+
       '<div class="tm2">'+c.transacc+' transacciones'+(c.visitas?' \u00b7 '+c.visitas+' visitas':'')+'</div>'+
       (c.pendiente>0?'<div style="font-size:11px;color:#d97706;font-weight:600;">S/ '+c.pendiente.toFixed(2)+' pendiente</div>':'')+
@@ -1254,9 +1264,11 @@ function cliRenderTabla(list){
   }
   var colOtros=_cliTab==='vets'?'Doctor(a)':'Veterinaria';
   var html='<table><thead><tr>'+
-    '<th>'+(_cliTab==='vets'?'Veterinaria':'Doctor(a)')+'</th><th>'+colOtros+'</th><th>Zona</th><th>Direcci\u00f3n</th><th>Distrito</th><th>Celular</th><th>Total comprado</th><th>Pendiente</th><th>Transacc.</th>'+
+    '<th>'+(_cliTab==='vets'?'Veterinaria':'Doctor(a)')+'</th><th>'+colOtros+'</th><th>Zona</th><th>Direcci\u00f3n</th><th>Distrito</th><th>Celular</th><th>Etiquetas</th><th>Total comprado</th><th>Pendiente</th><th>Transacc.</th>'+
   '</tr></thead><tbody>';
   list.forEach(function(c){
+    var tagsCelda=(c.esNuevo?'<span class="b b-contado" style="padding:1px 6px;font-size:9.5px;">Nuevo</span> ':'')+
+      (c.tags||[]).map(function(et){return '<span style="display:inline-block;padding:1px 7px;border-radius:20px;font-size:9.5px;font-weight:700;background:'+et.color+';color:'+_colorTextoLegible(et.color)+';margin-right:2px;">'+esc(et.nombre)+'</span>';}).join('');
     html+='<tr style="cursor:pointer;" data-cli-tipo="'+esc(_cliTab)+'" data-cli-nombre="'+esc(c.nombre)+'" onclick="cliVerEntidadEl(this)">'+
       '<td><strong>'+esc(c.nombre)+'</strong></td>'+
       '<td>'+esc(c.otros.length?c.otros.slice(0,3).join(', '):'---')+'</td>'+
@@ -1264,6 +1276,7 @@ function cliRenderTabla(list){
       '<td>'+esc(c.direccion||'---')+'</td>'+
       '<td>'+esc(c.distrito||'---')+'</td>'+
       '<td>'+esc(c.celular||'---')+'</td>'+
+      '<td>'+(tagsCelda||'---')+'</td>'+
       '<td><strong>S/ '+c.total.toFixed(2)+'</strong></td>'+
       '<td>'+(c.pendiente>0?'<span class="b b-pendiente">S/ '+c.pendiente.toFixed(2)+'</span>':'---')+'</td>'+
       '<td style="text-align:center;">'+c.transacc+'</td>'+
