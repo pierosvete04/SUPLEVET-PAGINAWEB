@@ -224,6 +224,13 @@ function mvInicializar(){
       o.dataset.precio=p.precio_sugerido||0;
       selP.appendChild(o);
     });
+    // Mismo catálogo para el producto de regalo — puede ser distinto al que
+    // se está vendiendo (ej. venden bolsas de 150g y regalan una muestra).
+    var selR = gel('mv-regalo-prod'); if(!selR) return;
+    selR.innerHTML='<option value="">— Mismo producto que la venta —</option>';
+    listaP.forEach(function(p){
+      var o=document.createElement('option');o.value=p.nombre;o.textContent=p.nombre;selR.appendChild(o);
+    });
   }
   function _mvPoblarCategorias(cats){
     var selCat=gel('mv-cat'), wrapCat=gel('mv-cat-wrap');
@@ -525,6 +532,7 @@ function mvMostrarRegalo(){
 function mvOcultarRegalo(){
   var wrap=gel('mv-regalo-wrap');if(wrap)wrap.style.display='none';
   var cant=gel('mv-regalo-cant');if(cant)cant.value='';
+  var prodR=gel('mv-regalo-prod');if(prodR)prodR.value='';
   var btn=gel('btn-mv-regalo-toggle');if(btn)btn.classList.remove('btn-sk');
 }
 
@@ -839,15 +847,19 @@ function mvAgregarMovimiento(){
   // vendedor abri\u00f3 el panel de regalo; si no, regaloCant queda en 0.
   var regaloWrapVisible = gel('mv-regalo-wrap') && gel('mv-regalo-wrap').style.display!=='none';
   var regaloCant = regaloWrapVisible ? (parseInt(gel('mv-regalo-cant').value,10)||0) : 0;
+  // Si no elige producto de regalo, se asume el mismo que se est\u00e1 vendiendo
+  // (el caso m\u00e1s com\u00fan: "compra 12, llevas 13" del mismo producto).
+  var regaloProd = regaloWrapVisible ? ((val('mv-regalo-prod')||'').trim()||prod) : '';
 
   _mvMovimientos.push({
     tipo: tipo,
-    label: tipo+': '+prod+' \u00b7 '+cant+' uds \u00b7 '+money(cant*precio)+(regaloCant>0?' \u00b7 +'+regaloCant+' regalo':''),
+    label: tipo+': '+prod+' \u00b7 '+cant+' uds \u00b7 '+money(cant*precio)+(regaloCant>0?' \u00b7 +'+regaloCant+' '+regaloProd+' de regalo':''),
     color: colores[tipo]||'#374151',
     prod: prod, cant: cant, precio: precio,
     total: cant*precio,
     estado: estados[tipo]||'\u2705 Pagado',
     regaloCant: regaloCant,
+    regaloProd: regaloProd,
     fechaCobro: tipo==='Credito a 15 dias'?(function(){var d=new Date();d.setDate(d.getDate()+15);return d.toISOString().split('T')[0];})():null
   });
   mvRenderLista(); if(typeof mvUpdateSummary==='function')mvUpdateSummary();
@@ -1108,7 +1120,7 @@ function mvGuardarVisita(){
           veterinaria:vete, doctora:doctora, num_medico:celular,
           ruc:ruc,
           zona:zona, movimiento:m.tipo,
-          producto:m.prod||'', cantidad:m.regaloCant,
+          producto:m.regaloProd||m.prod||'', cantidad:m.regaloCant,
           precio_unitario:0, total:0,
           fecha_cobro:null,
           estado:'✅ Pagado',

@@ -264,16 +264,25 @@
                 </div>
               </div>
               <!-- Regalo: oculto detrás de un botón chico a propósito — es la excepción,
-                   no algo que el vendedor deba ver/decidir en cada venta. -->
-              <div style="margin:-2px 0 10px;">
-                <button type="button" id="btn-mv-regalo-toggle" onclick="mvToggleRegalo()" class="btn btn-s btn-sm" style="padding:.32rem .65rem;font-size:11.5px;width:auto;">
+                   no algo que el vendedor deba ver/decidir en cada venta. Separado del
+                   bloque de arriba con su propio borde y margen positivo (antes tenía
+                   margin negativo y quedaba pegado contra el recuadro de Total). -->
+              <div style="margin:16px 0 14px;padding-top:14px;border-top:1px dashed var(--bd);">
+                <button type="button" id="btn-mv-regalo-toggle" onclick="mvToggleRegalo()" class="btn btn-s btn-sm" style="padding:.4rem .75rem;font-size:11.5px;width:auto;">
                   <svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24" style="width:13px;height:13px;"><use href="#i-regalo"/></svg> Incluye regalo
                 </button>
-                <div id="mv-regalo-wrap" style="display:none;margin-top:8px;background:var(--sky4);border:1px solid var(--sky);border-radius:var(--r);padding:.6rem .75rem;">
-                  <div class="fgr" style="max-width:160px;">
-                    <label>Unidades de regalo <span style="font-weight:400;color:var(--tl);">(mismo producto, sin costo)</span></label>
-                    <input type="number" id="mv-regalo-cant" min="1" placeholder="0"/>
+                <div id="mv-regalo-wrap" style="display:none;margin-top:10px;background:var(--sky4);border:1px solid var(--sky);border-radius:var(--r);padding:.75rem .8rem;">
+                  <div class="fg" style="gap:10px;">
+                    <div class="fgr full">
+                      <label>Producto de regalo</label>
+                      <select id="mv-regalo-prod"><option value="">— Mismo producto que la venta —</option></select>
+                    </div>
+                    <div class="fgr" style="max-width:160px;">
+                      <label>Unidades de regalo</label>
+                      <input type="number" id="mv-regalo-cant" min="1" placeholder="0"/>
+                    </div>
                   </div>
+                  <div style="font-size:11px;color:var(--tl);margin-top:2px;">Se entrega sin costo — no cambia el total de la venta.</div>
                 </div>
               </div>
               <div id="mv-cobro-wrap" style="display:none;margin-bottom:10px;">
@@ -909,7 +918,7 @@
 <script src="assets/js/clientes.js?v=20260816-fixetiquetas"></script>
 <script src="assets/js/detalle.js?v=20260803-uxfix"></script>
 <script src="assets/js/pdf.js?v=20260803-uxfix"></script>
-<script src="assets/js/registro-visita.js?v=20260815-etiquetasrv"></script>
+<script src="assets/js/registro-visita.js?v=20260816-regaloprod"></script>
 <script src="assets/js/plan.js?v=20260803-uxfix"></script>
 <script src="assets/js/ruta.js?v=20260803-uxfix"></script>
 <script src="assets/js/pwa.js?v=20260803-uxfix"></script>

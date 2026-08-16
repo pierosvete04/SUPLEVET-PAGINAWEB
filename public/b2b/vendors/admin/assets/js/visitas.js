@@ -103,6 +103,13 @@ function _rvPoblarProductos(selEl, vendId){
     selEl.appendChild(o);
   });
   if(prev)selEl.value=prev; // restore selection if still valid
+  // Mismo catálogo para el producto de regalo — puede ser distinto al que
+  // se está vendiendo (ej. venden bolsas de 150g y regalan una muestra).
+  var selR=gel('rv-regalo-prod');
+  if(selR){
+    selR.innerHTML='<option value="">— Mismo producto que la venta —</option>';
+    lista.forEach(function(p){var o=document.createElement('option');o.value=p.nombre;o.textContent=p.nombre;selR.appendChild(o);});
+  }
 }
 
 function _rvImgAgregar(){
@@ -666,6 +673,7 @@ function rvMostrarRegalo(){
 function rvOcultarRegalo(){
   var wrap=gel('rv-regalo-wrap');if(wrap)wrap.style.display='none';
   var cant=gel('rv-regalo-cant');if(cant)cant.value='';
+  var prodR=gel('rv-regalo-prod');if(prodR)prodR.value='';
   var btn=gel('btn-rv-regalo-toggle');if(btn)btn.classList.remove('btn-sk');
 }
 
@@ -719,8 +727,10 @@ function rvAgregarMovimiento(){
     // el panel de regalo; si no, regaloCant queda en 0.
     var _regaloWrapVisible = gel('rv-regalo-wrap') && gel('rv-regalo-wrap').style.display!=='none';
     mov.regaloCant = _regaloWrapVisible ? (parseInt(gel('rv-regalo-cant').value,10)||0) : 0;
+    // Si no elige producto de regalo, se asume el mismo que se está vendiendo.
+    mov.regaloProd = _regaloWrapVisible ? ((gel('rv-regalo-prod')&&gel('rv-regalo-prod').value||'').trim()||prod) : '';
     if(mov.regaloCant>0){
-      mov.desc += ' · +'+mov.regaloCant+' regalo';
+      mov.desc += ' · +'+mov.regaloCant+' '+mov.regaloProd+' de regalo';
     }
   }
   _rvMovimientos.push(mov);
@@ -1027,7 +1037,7 @@ function rvGuardar(){
         veterinaria:vete||null, doctora:doc||null, num_medico:cel||null,
         zona:zona, ruc:ruc||null, notas:(notas?notas+' · ':'')+'Regalo por compra de '+(m.cantidad||0)+' uds de '+(m.producto||''),
         movimiento:m.tipo, estado:'✅ Pagado', grupo_visita_id:grupoId,
-        producto:m.producto||null, cantidad:m.regaloCant,
+        producto:m.regaloProd||m.producto||null, cantidad:m.regaloCant,
         precio_unitario:0, total:0,
         fecha_cobro:null, tipo_documento:null, numero_documento:null,
         imagen_documento:imgUrl||null, segmento_cliente:catCliente||null,
