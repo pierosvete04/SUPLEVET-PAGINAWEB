@@ -1,6 +1,24 @@
 ﻿var _cliTab='vet';
 var _vetsExtra=[]; // veterinarias a\u00f1adidas v\u00eda "+ A\u00f1adir cliente" que a\u00fan no tienen ventas
 
+// Cargos disponibles para un contacto/doctor vinculado a una veterinaria.
+// Solo se edita desde "Editar cliente" \u2014 nunca desde Registrar Visita.
+var CARGOS_CONTACTO=['Veterinario','Administrador','Due\u00f1o','Recepci\u00f3n','Otro'];
+// Solo lectura: no crea la fila si no existe (abrir el editor no debe tener
+// efectos secundarios). El toggle de cargo/etiqueta s\u00ed puede crearla, porque
+// ah\u00ed ya hay una acci\u00f3n expl\u00edcita del usuario.
+function _buscarClienteId(nombre){
+  if(!nombre)return Promise.resolve(null);
+  return sbG('clientes_vet','nombre_vet=ilike.'+encodeURIComponent(nombre)+'&select=id')
+    .then(function(r){return r&&r[0]&&r[0].id;}).catch(function(){return null;});
+}
+function _resolverOCrearClienteId(nombre){
+  return _buscarClienteId(nombre).then(function(id){
+    if(id)return id;
+    return sbP('clientes_vet',{nombre_vet:nombre}).then(function(rr){return rr&&rr[0]&&rr[0].id;});
+  });
+}
+
 function rClientes(){
   var busq=(val('srch-cli')||'').toLowerCase();
   var el=gel('lista-clientes');if(!el)return;
@@ -414,7 +432,20 @@ function abrirEditCliente(){
   gel('edit-cli-rels-help').textContent=helpText;
   gel('edit-cli-rel-new').placeholder=placeholder;
 
+  _contactoCargoMap={};
   _renderEditCliRels(tipo);
+  if(tipo==='vet'){
+    // Solo-lectura: no crea la fila de clientes_vet por el simple hecho de
+    // abrir el editor. El cargo se ve una vez que llega (re-pinta la lista).
+    _buscarClienteId(nombre).then(function(clienteId){
+      if(!clienteId)return;
+      return sbG('contacto_cargo','cliente_id=eq.'+clienteId+'&select=nombre,cargo');
+    }).then(function(rows){
+      (rows||[]).forEach(function(r){_contactoCargoMap[(r.nombre||'').trim().toLowerCase()]=r.cargo;});
+      _renderEditCliRels(tipo);
+    }).catch(function(){});
+  }
+  cliRenderTagsEditVendedor();
 
   // Ubicación: solo aplica a veterinarias — son las que necesitan coordenadas
   // para aparecer en "Mi Ruta" del vendedor.
@@ -453,17 +484,101 @@ function _renderEditCliRels(tipo){
       '</div>';
     return;
   }
-  // El "tipo del relacionado" es el opuesto: si edito vet, los rels son doctores
+  // El "tipo del relacionado" es el opuesto: si edito vet, los rels son doctores.
+  // El cargo solo tiene sentido acá: describe el rol de la persona EN esta
+  // veterinaria — una vet vinculada a un doctor no tiene "cargo".
   var tipoRel=tipo==='vet'?'doc':'vet';
-  var iconRel=tipo==='vet'?'\ud83d\udc69\u200d\u2695\ufe0f':'\ud83c\udfe5';
   box.innerHTML=_editCliRels.map(function(r,idx){
-    return '<div style="display:flex;align-items:center;gap:6px;background:var(--sky4);border:1px solid var(--sky);border-radius:var(--r);padding:.45rem .55rem;font-size:13px;">'+
-      '<span style="flex-shrink:0;font-size:14px;">'+iconRel+'</span>'+
-      '<input type="text" value="'+r.replace(/"/g,'&quot;')+'" data-orig="'+r.replace(/"/g,'&quot;')+'" oninput="_editCliRelChange('+idx+',this.value)" style="flex:1;min-width:0;border:none;background:transparent;font-size:13px;font-weight:600;color:var(--brand);padding:0;"/>'+
-      '<button onclick="editRelEntity(\''+tipoRel+'\',\''+r.replace(/'/g,"\\'")+'\')" title="Editar perfil de '+r.replace(/"/g,'&quot;')+'" style="background:none;border:none;color:var(--brand);cursor:pointer;font-size:13px;line-height:1;padding:2px 5px;border-radius:4px;flex-shrink:0;" onmouseover="this.style.background=\'rgba(20,79,89,.1)\'" onmouseout="this.style.background=\'none\'">\u270f\ufe0f</button>'+
-      '<button onclick="_editCliRelRemove('+idx+')" style="background:none;border:none;color:var(--er);cursor:pointer;font-size:16px;line-height:1;padding:0 4px;flex-shrink:0;" title="Quitar de esta lista">×</button>'+
+    var cargoActual=_contactoCargoMap[r.trim().toLowerCase()]||'';
+    var opciones='<option value="">Sin cargo especificado</option>'+CARGOS_CONTACTO.map(function(c){
+      return '<option value="'+c+'"'+(c===cargoActual?' selected':'')+'>'+c+'</option>';
+    }).join('');
+    return '<div style="background:var(--wh);border:1.5px solid var(--bd);border-radius:var(--r);padding:.55rem .65rem;">'+
+      '<div style="display:flex;align-items:center;gap:8px;">'+
+        '<div style="width:26px;height:26px;border-radius:50%;background:var(--sky4);border:1.5px solid var(--sky);display:flex;align-items:center;justify-content:center;font-family:\'Bebas Neue\',sans-serif;font-size:12px;color:var(--brand);flex-shrink:0;">'+esc((r.charAt(0)||'?').toUpperCase())+'</div>'+
+        '<input type="text" value="'+r.replace(/"/g,'&quot;')+'" data-orig="'+r.replace(/"/g,'&quot;')+'" oninput="_editCliRelChange('+idx+',this.value)" style="flex:1;min-width:0;border:none;background:transparent;font-size:13.5px;font-weight:700;color:var(--td);padding:2px 0;"/>'+
+        '<button onclick="editRelEntity(\''+tipoRel+'\',\''+r.replace(/'/g,"\\'")+'\')" title="Editar perfil de '+r.replace(/"/g,'&quot;')+'" style="background:none;border:none;color:var(--brand);cursor:pointer;font-size:13px;line-height:1;padding:4px 6px;border-radius:4px;flex-shrink:0;">'+
+          '<svg class="ic" aria-hidden="true" focusable="false" viewBox="0 0 24 24" style="width:14px;height:14px;"><use href="#i-editar"/></svg>'+
+        '</button>'+
+        '<button onclick="_editCliRelRemove('+idx+')" style="background:none;border:none;color:var(--er);cursor:pointer;font-size:17px;line-height:1;padding:0 4px;flex-shrink:0;" title="Quitar de esta lista">×</button>'+
+      '</div>'+
+      (tipo==='vet'?'<div style="margin-top:6px;padding-left:34px;"><select onchange="_editCliRelCargoChange('+idx+',this.value)" style="font-size:12px;padding:.3rem .55rem;width:auto;min-width:150px;">'+opciones+'</select></div>':'')+
     '</div>';
   }).join('');
+}
+// El cargo se guarda al instante (no espera al "Guardar cambios" general del
+// modal) porque vive en su propia tabla, ligada al cliente_id — no al resto
+// de campos del formulario.
+function _editCliRelCargoChange(idx,cargo){
+  var modal=gel('modal-cliente');
+  if((modal.dataset.editTipo||'vet')!=='vet')return;
+  var nombreVet=modal.dataset.editNombre;
+  var nombreContacto=_editCliRels[idx];
+  if(!nombreVet||!nombreContacto)return;
+  _resolverOCrearClienteId(nombreVet).then(function(clienteId){
+    if(!clienteId)return;
+    return sbG('contacto_cargo','cliente_id=eq.'+clienteId+'&nombre=ilike.'+encodeURIComponent(nombreContacto)+'&select=id')
+    .then(function(ex){
+      var existente=ex&&ex[0];
+      if(existente)return sbU('contacto_cargo',existente.id,{cargo:cargo||null,updated_at:new Date().toISOString()});
+      return sbP('contacto_cargo',{cliente_id:clienteId,nombre:nombreContacto,cargo:cargo||null});
+    });
+  }).then(function(){
+    _contactoCargoMap[nombreContacto.trim().toLowerCase()]=cargo||'';
+  }).catch(function(e){setSt(e.message||'No se pudo guardar el cargo','er');});
+}
+
+// ── ETIQUETAS (desde Editar cliente) ──
+// Solo asigna etiquetas ya existentes; crearlas es cosa del panel admin.
+function cliRenderTagsEditVendedor(){
+  var wrap=gel('edit-cli-etiquetas-wrap');
+  var modal=gel('modal-cliente');
+  var tipo=modal.dataset.editTipo||'vet';
+  if(wrap)wrap.style.display=tipo==='vet'?'block':'none';
+  if(tipo!=='vet')return;
+  var el=gel('edit-cli-etiquetas-chips');if(!el)return;
+  var nombre=modal.dataset.editNombre;
+  el.innerHTML='<span style="font-size:12px;color:var(--tl);">Cargando…</span>';
+  Promise.all([
+    sbG('etiquetas_cliente','select=id,nombre,color&order=nombre.asc'),
+    _buscarClienteId(nombre)
+  ]).then(function(res){
+    var todas=res[0]||[];
+    var clienteId=res[1];
+    if(!todas.length){el.innerHTML='<span style="font-size:12px;color:var(--tl);">Todavía no hay etiquetas creadas (se crean desde el panel admin).</span>';return;}
+    var asigProm=clienteId?sbG('cliente_etiquetas','cliente_id=eq.'+clienteId+'&select=etiqueta_id'):Promise.resolve([]);
+    asigProm.then(function(asig){
+      var asignadas={};(asig||[]).forEach(function(a){asignadas[a.etiqueta_id]=1;});
+      el.innerHTML=todas.map(function(et){
+        var activa=!!asignadas[et.id];
+        var estilo=activa
+          ?'background:'+et.color+';color:'+_colorTextoLegible(et.color)+';border:1.5px solid '+et.color+';'
+          :'background:transparent;color:var(--tl);border:1.5px dashed var(--bd2);';
+        return '<span class="cli-chip" style="'+estilo+'font-weight:700;cursor:pointer;" onclick="_editCliToggleEtiqueta(\''+et.id+'\')">'+esc(et.nombre)+'</span>';
+      }).join('');
+    });
+  }).catch(function(){el.innerHTML='<span style="font-size:12px;color:var(--er);">No se pudieron cargar las etiquetas.</span>';});
+}
+function _editCliToggleEtiqueta(etiquetaId){
+  var modal=gel('modal-cliente');
+  var nombre=modal.dataset.editNombre;
+  if(!nombre)return;
+  _resolverOCrearClienteId(nombre).then(function(clienteId){
+    if(!clienteId)return;
+    return sbG('cliente_etiquetas','cliente_id=eq.'+clienteId+'&etiqueta_id=eq.'+etiquetaId+'&select=id')
+    .then(function(ex){
+      var existente=ex&&ex[0];
+      if(existente)return sbDel('cliente_etiquetas','id=eq.'+existente.id);
+      return sbP('cliente_etiquetas',{cliente_id:clienteId,etiqueta_id:etiquetaId});
+    });
+  }).then(function(){
+    cliRenderTagsEditVendedor();
+    // La ficha detrás del modal de edición también debe reflejar el cambio.
+    if(typeof cliPintarTags==='function'){
+      sbG('clientes_vet','nombre_vet=ilike.'+encodeURIComponent(nombre)+'&select=id,ruc,num_medico,direccion,distrito,created_at')
+      .then(function(r){if(r&&r[0])cliPintarTags(r[0]);}).catch(function(){});
+    }
+  }).catch(function(e){setSt(e.message||'No se pudo actualizar la etiqueta','er');});
 }
 
 // Saltar a editar la entidad relacionada (doctor↔vet)
@@ -532,7 +647,7 @@ function addEditCliRel(){
 
 function cerrarEditCliente(){
   gel('modal-edit-cliente').classList.remove('open');
-  _editCliRels=[];_editCliRelsRemoved=[];
+  _editCliRels=[];_editCliRelsRemoved=[];_contactoCargoMap={};
 }
 
 // ── UBICACIÓN DE LA VETERINARIA (geocodifica y guarda en clientes_vet) ──

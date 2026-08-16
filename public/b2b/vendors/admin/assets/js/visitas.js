@@ -1712,7 +1712,18 @@ function cliEntAbrirEditar(){
   });
   _cliEditRels=Object.keys(relMap).map(function(k){return relMap[k];});
   _cliEditRelsRemoved=[];
+  _contactoCargoMap={};
   cliRenderRels(tipo);
+  if(tipo==='vets'){
+    // Solo-lectura: no crea la fila de clientes_vet por abrir el editor.
+    var infoParaCargo=_cliVetInfo(nombre);
+    if(infoParaCargo&&infoParaCargo.id){
+      sbG('contacto_cargo','cliente_id=eq.'+infoParaCargo.id+'&select=nombre,cargo').then(function(rows){
+        (rows||[]).forEach(function(r){_contactoCargoMap[(r.nombre||'').trim().toLowerCase()]=r.cargo;});
+        cliRenderRels(tipo);
+      }).catch(function(){});
+    }
+  }
   cliRenderTagsEdit();
 
   // Ubicaci\u00f3n: s\u00f3lo aplica a veterinarias (clientes_vet guarda una fila por vet, no por doctor).
@@ -1811,20 +1822,32 @@ function _cliEditTransferirConfirmado(nombre,vendId,zonaDestino,vendNombre,msg){
 
 var _cliEditRels=[]; // [{nombre, celular}, ...]
 var _cliEditRelsRemoved=[]; // los nombres que el usuario quit\u00f3 (para PATCH a null en ventas)
+var _contactoCargoMap={}; // nombre en min\u00fasculas -> cargo (solo tipo vets)
+var CARGOS_CONTACTO=['Veterinario','Administrador','Due\u00f1o','Recepci\u00f3n','Otro'];
+// Cada contacto es su propia tarjeta en vez de un chip con dos inputs
+// apretados adentro \u2014 as\u00ed hay espacio para el cargo sin amontonar todo
+// en una sola fila de 28px.
 function cliRenderRels(tipo){
   var box=gel('cli-edit-rels-list');if(!box)return;
-  var icon=tipo==='vets'?'\ud83d\udc69\u200d\u2695\ufe0f':'\ud83c\udfe5';
   if(!_cliEditRels.length){box.innerHTML='<div style="font-size:11.5px;color:var(--tl);font-style:italic;padding:.4rem 0;">'+(tipo==='vets'?'Sin doctores vinculados.':'Sin veterinarias vinculadas.')+'</div>';return;}
   box.innerHTML=_cliEditRels.map(function(r,idx){
     var nEsc=(r.nombre||'').replace(/"/g,'&quot;');
     var cEsc=(r.celular||'').replace(/"/g,'&quot;');
-    return '<div style="display:grid;grid-template-columns:1fr 1fr 28px;gap:6px;align-items:center;background:var(--sky4);border:1px solid var(--sky);border-radius:var(--r);padding:.45rem .55rem;font-size:13px;margin-bottom:4px;">'+
-      '<div style="display:flex;align-items:center;gap:6px;min-width:0;"><span>'+icon+'</span>'+
-      '<input type="text" value="'+nEsc+'" data-orig="'+nEsc+'" oninput="_cliRelChange('+idx+',\'nombre\',this.value)" '+
-        'style="flex:1;min-width:0;border:none;background:transparent;font-size:13px;font-weight:600;color:var(--brand);padding:0;"/></div>'+
-      '<input type="tel" value="'+cEsc+'" placeholder="Celular" oninput="_cliRelChange('+idx+',\'celular\',this.value)" '+
-        'style="min-width:0;border:none;background:transparent;font-size:13px;color:var(--td);padding:0;"/>'+
-      '<button onclick="_cliRelRemove('+idx+',\''+tipo+'\')" style="background:none;border:none;color:var(--er);cursor:pointer;font-size:16px;padding:0 4px;">&times;</button></div>';
+    var cargoActual=_contactoCargoMap[(r.nombre||'').trim().toLowerCase()]||'';
+    var opciones='<option value="">Sin cargo especificado</option>'+CARGOS_CONTACTO.map(function(c){
+      return '<option value="'+c+'"'+(c===cargoActual?' selected':'')+'>'+c+'</option>';
+    }).join('');
+    return '<div style="background:var(--wh);border:1.5px solid var(--bd);border-radius:var(--r);padding:.55rem .65rem;margin-bottom:6px;">'+
+      '<div style="display:flex;align-items:center;gap:8px;">'+
+        '<div style="width:26px;height:26px;border-radius:50%;background:var(--sky4);border:1.5px solid var(--sky);display:flex;align-items:center;justify-content:center;font-family:\'Bebas Neue\',sans-serif;font-size:12px;color:var(--brand);flex-shrink:0;">'+esc((r.nombre||'?').charAt(0).toUpperCase())+'</div>'+
+        '<input type="text" value="'+nEsc+'" data-orig="'+nEsc+'" oninput="_cliRelChange('+idx+',\'nombre\',this.value)" style="flex:1;min-width:0;border:none;background:transparent;font-size:13.5px;font-weight:700;color:var(--td);padding:2px 0;"/>'+
+        '<button onclick="_cliRelRemove('+idx+',\''+tipo+'\')" style="background:none;border:none;color:var(--er);cursor:pointer;font-size:17px;line-height:1;padding:0 4px;flex-shrink:0;" title="Quitar de esta lista">&times;</button>'+
+      '</div>'+
+      '<div style="display:flex;align-items:center;gap:8px;margin-top:6px;padding-left:34px;flex-wrap:wrap;">'+
+        '<input type="tel" value="'+cEsc+'" placeholder="Celular" oninput="_cliRelChange('+idx+',\'celular\',this.value)" style="width:130px;font-size:12.5px;padding:.3rem .5rem;"/>'+
+        (tipo==='vets'?'<select onchange="_cliRelCargoChange('+idx+',this.value)" style="font-size:12px;padding:.3rem .5rem;width:auto;min-width:150px;">'+opciones+'</select>':'')+
+      '</div>'+
+    '</div>';
   }).join('');
 }
 function _cliRelChange(idx,campo,value){if(_cliEditRels[idx])_cliEditRels[idx][campo]=value;}
@@ -1833,6 +1856,26 @@ function _cliRelRemove(idx,tipo){
   if(removed && removed.nombre && _cliEditRelsRemoved.indexOf(removed.nombre)<0) _cliEditRelsRemoved.push(removed.nombre);
   _cliEditRels.splice(idx,1);
   cliRenderRels(tipo);
+}
+// El cargo se guarda al instante \u2014 vive en su propia tabla ligada al
+// cliente_id, no en los campos que junta "Guardar cambios".
+function _cliRelCargoChange(idx,cargo){
+  var tipo=val('cli-edit-tipo');
+  if(tipo!=='vets')return;
+  var nombreVet=val('cli-edit-nombre-orig');
+  var nombreContacto=_cliEditRels[idx]&&_cliEditRels[idx].nombre;
+  if(!nombreVet||!nombreContacto)return;
+  _cliEntObtenerOCrearClienteId(nombreVet).then(function(clienteId){
+    if(!clienteId)return;
+    return sbG('contacto_cargo','cliente_id=eq.'+clienteId+'&nombre=ilike.'+encodeURIComponent(nombreContacto)+'&select=id')
+    .then(function(ex){
+      var existente=ex&&ex[0];
+      if(existente)return sbU('contacto_cargo',existente.id,{cargo:cargo||null,updated_at:new Date().toISOString()});
+      return sbP('contacto_cargo',{cliente_id:clienteId,nombre:nombreContacto,cargo:cargo||null});
+    });
+  }).then(function(){
+    _contactoCargoMap[nombreContacto.trim().toLowerCase()]=cargo||'';
+  }).catch(function(e){showToast(e.message||'No se pudo guardar el cargo','er');});
 }
 function cliAddRel(){
   var inp=gel('cli-edit-rel-new');if(!inp)return;
