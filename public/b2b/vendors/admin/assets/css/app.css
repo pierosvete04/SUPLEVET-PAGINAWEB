@@ -102,6 +102,18 @@ tbody tr{border-bottom:1px solid var(--bd);}tbody td{padding:.6rem .7rem;vertica
    el panel de vendedores para esta insignia. */
 .b-credito{background:var(--orange3);color:var(--orange-d);border:1px solid var(--orange2);}
 .b-delivery{background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd;}.b-devolucion{background:#f3f4f6;color:#374151;border:1px solid #d1d5db;}
+/* Ficha de cliente (modal-cli-ent): chips de datos de contacto/fiscales y
+   mini gráfico de tendencia de compra. Reutilizan --sky/--brand/--tl del
+   sistema de tokens, no colores nuevos. */
+.cli-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 10px 3px 8px;border-radius:20px;background:var(--sky4);border:1px solid var(--sky2);color:var(--brand);font-size:12px;font-weight:600;line-height:1.6;}
+.cli-chip svg{width:13px;height:13px;flex-shrink:0;}
+.cli-chip.muted{background:var(--gry);border-color:var(--bd2);color:var(--tl);font-weight:500;}
+.cli-trend{display:flex;align-items:flex-end;gap:8px;height:72px;padding:.5rem .2rem 0;}
+.cli-trend .ctb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;height:100%;min-width:0;}
+.cli-trend .ctb i{display:block;width:100%;max-width:30px;border-radius:4px 4px 1px 1px;background:var(--sky);transition:height .3s var(--ease,ease);}
+.cli-trend .ctb.now i{background:var(--brand);}
+.cli-trend .ctb b{font-size:9.5px;color:var(--tm);font-weight:700;}
+.cli-trend .ctb span{font-size:9px;color:var(--tl);font-weight:600;text-transform:uppercase;letter-spacing:.3px;}
 .alert{padding:.65rem .9rem;border-radius:var(--r);font-size:12px;margin-bottom:.6rem;display:flex;align-items:center;gap:8px;}
 .ai{background:var(--sky4);color:#1e6e77;border:1px solid var(--sky);}
 .st-bar{display:flex;align-items:center;gap:8px;padding:.45rem .8rem;border-radius:var(--r);font-size:12px;font-weight:500;margin-bottom:.8rem;}

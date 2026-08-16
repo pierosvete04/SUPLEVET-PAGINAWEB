@@ -132,6 +132,18 @@ tbody tr:hover{background:rgba(153,211,218,.06);}
 .b-delivery{background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd;}
 .b-devolucion{background:#f3f4f6;color:#374151;border:1px solid #d1d5db;}
 .b-cobro{background:#dcfce7;color:#166534;border:1px solid #86efac;}
+/* Ficha de cliente (modal-cliente): chips de datos de contacto/fiscales y
+   mini gráfico de tendencia de compra. Reutilizan --sky/--brand/--tl del
+   sistema de tokens, no colores nuevos. */
+.cli-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 10px 3px 8px;border-radius:20px;background:var(--sky4);border:1px solid var(--sky2);color:var(--brand);font-size:12px;font-weight:600;line-height:1.6;}
+.cli-chip svg{width:13px;height:13px;flex-shrink:0;}
+.cli-chip.muted{background:var(--gry);border-color:var(--bd2);color:var(--tl);font-weight:500;}
+.cli-trend{display:flex;align-items:flex-end;gap:8px;height:72px;padding:.5rem .2rem 0;}
+.cli-trend .ctb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:4px;height:100%;min-width:0;}
+.cli-trend .ctb i{display:block;width:100%;max-width:30px;border-radius:4px 4px 1px 1px;background:var(--sky);transition:height .3s ease;}
+.cli-trend .ctb.now i{background:var(--brand);}
+.cli-trend .ctb b{font-size:9.5px;color:var(--tm);font-weight:700;}
+.cli-trend .ctb span{font-size:9px;color:var(--tl);font-weight:600;text-transform:uppercase;letter-spacing:.3px;}
 .b-visita{background:#e0f2fe;color:#0369a1;border:1px solid #bae6fd;}
 /* Era #9ca3af sobre #f3f4f6: 2.31:1, el peor contraste del portal.
    Ahora 5.45:1 con el token neutro compartido. */

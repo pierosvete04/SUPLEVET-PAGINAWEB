@@ -90,8 +90,69 @@ function verEntidad(tipo,nombre){
   }
   gel('cli-nombre').textContent=nombre;
   gel('cli-meta').innerHTML=meta;
+  // Celular, RUC y dirección: se muestran con lo que haya en la última venta
+  // (inmediato) y luego se refinan con clientes_vet, que es la fuente
+  // canónica (persiste aunque la última venta no haya traído ese dato,
+  // p.ej. una simple visita).
+  var ventasOrd=ventas.slice().sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');});
+  var lastConDatos=ventasOrd[0]||{};
+  var dt=gel('cli-datos');
+  if(dt){
+    var pintarDatos=function(cel,ruc,dir){
+      var chips=[];
+      chips.push('<span class="cli-chip'+(cel?'':' muted')+'"><svg class="ic" viewBox="0 0 24 24"><use href="#i-telefono"/></svg>'+(cel?esc(cel):'Celular no registrado')+'</span>');
+      chips.push('<span class="cli-chip'+(ruc?'':' muted')+'"><svg class="ic" viewBox="0 0 24 24"><use href="#i-tarjeta"/></svg>RUC: '+(ruc?esc(ruc):'no registrado')+'</span>');
+      if(tipo==='vet')chips.push('<span class="cli-chip'+(dir?'':' muted')+'"><svg class="ic" viewBox="0 0 24 24"><use href="#i-pin"/></svg>'+(dir?esc(dir):'Sin ubicación registrada')+'</span>');
+      dt.innerHTML=chips.join('');
+    };
+    pintarDatos(lastConDatos.num_medico||lastConDatos.celular||'',lastConDatos.ruc||'','');
+    if(tipo==='vet'){
+      sbG('clientes_vet','nombre_vet=ilike.'+encodeURIComponent(nombre)+'&select=ruc,num_medico,direccion,distrito')
+      .then(function(r){
+        var fila=r&&r[0];
+        if(!fila)return;
+        var dir=[fila.direccion,fila.distrito].filter(Boolean).join(', ');
+        pintarDatos(fila.num_medico||lastConDatos.num_medico||lastConDatos.celular||'',fila.ruc||lastConDatos.ruc||'',dir);
+      }).catch(function(){});
+    }
+  }
+  // Estado de cuenta: deuda vigente en TODO el histórico del cliente.
+  var elEstado=gel('cli-estado');
+  if(elEstado){
+    var pendTotalHist=ventas.reduce(function(s,v){return s+((v.estado==='⏳ Pendiente'||v.estado==='❌ Vencido')?(v.total||0):0);},0);
+    elEstado.innerHTML=pendTotalHist>0?'<span class="b b-vencido">Con deuda · S/ '+pendTotalHist.toFixed(2)+'</span>':'<span class="b b-pagado">Al día</span>';
+  }
+  cliRenderTrend(ventas);
   renderModalVentas(ventas,'');
   modal.classList.add('open');
+}
+
+// Tendencia de compra: total vendido por mes en los últimos 6 meses, sobre
+// el histórico completo del cliente (no cambia con el filtro de mes de abajo).
+function cliRenderTrend(ventas){
+  var el=gel('cli-trend');if(!el)return;
+  var nombresMes=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  var hoy=new Date();
+  var meses=[];
+  for(var i=5;i>=0;i--){
+    var d=new Date(hoy.getFullYear(),hoy.getMonth()-i,1);
+    meses.push({key:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),lbl:nombresMes[d.getMonth()],total:0,esActual:i===0});
+  }
+  var byKey={};meses.forEach(function(m){byKey[m.key]=m;});
+  ventas.forEach(function(v){
+    var mov=v.movimiento||'';
+    var esDevol=mov==='Devolucion'||mov==='Devolución';
+    if(esDevol||v.estado==='Anulado'||mov==='Visita')return;
+    var k=v.fecha?v.fecha.substring(0,7):null;
+    if(k&&byKey[k])byKey[k].total+=(v.total||0);
+  });
+  var max=Math.max.apply(null,meses.map(function(m){return m.total;}).concat([1]));
+  var hayDatos=meses.some(function(m){return m.total>0;});
+  if(!hayDatos){el.innerHTML='<div class="es" style="padding:.5rem;width:100%;"><strong>Sin compras en los últimos 6 meses.</strong></div>';return;}
+  el.innerHTML=meses.map(function(m){
+    var h=Math.max(6,Math.round((m.total/max)*100));
+    return '<div class="ctb'+(m.esActual?' now':'')+'"><b>'+(m.total>0?'S/ '+m.total.toFixed(0):'')+'</b><i style="height:'+h+'%;" title="'+m.lbl+': S/ '+m.total.toFixed(2)+'"></i><span>'+m.lbl+'</span></div>';
+  }).join('');
 }
 
 function cliRenderProdCards(ventas){
@@ -154,27 +215,49 @@ function renderModalVentas(ventas,mes){
     if(db>da)return 1;if(db<da)return -1;
     return (b.id||'')>(a.id||'')?1:(b.id||'')<(a.id||'')?-1:0;
   });
-  var total=0,cobrado=0,pendiente=0,transacc=0;
+  var total=0,cobrado=0,pendiente=0,transacc=0,ultimaFecha=null;
   for(var i=0;i<filtered.length;i++){
     var v=filtered[i];
     if(v.movimiento!=='Devolucion'&&v.estado!=='Anulado'){total+=(v.total||0);transacc++;}
     if(v.estado==='\u2705 Pagado')cobrado+=(v.total||0);
     if(v.estado==='\u23f3 Pendiente'||v.estado==='\u274c Vencido')pendiente+=(v.total||0);
+    // "\u00daltima compra" = venta real m\u00e1s reciente, no una simple visita sin producto.
+    if(v.movimiento!=='Visita'&&v.movimiento!=='Devolucion'&&v.estado!=='Anulado'&&v.fecha&&(!ultimaFecha||v.fecha>ultimaFecha))ultimaFecha=v.fecha;
   }
-  gel('cli-total').textContent='S/ '+total.toFixed(2);
-  gel('cli-transacc').textContent=transacc;
-  gel('cli-pendiente').textContent='S/ '+pendiente.toFixed(2);
+  var ticketProm=transacc>0?total/transacc:0;
+  var ultimaTxt='Sin compras';
+  if(ultimaFecha){
+    var p=ultimaFecha.substring(0,10).split('-');
+    var d1=Date.UTC(+p[0],+p[1]-1,+p[2]);
+    var hoyD=new Date();
+    var d2=Date.UTC(hoyD.getFullYear(),hoyD.getMonth(),hoyD.getDate());
+    var dias=Math.round((d2-d1)/86400000);
+    ultimaTxt=dias<=0?'Hoy':dias===1?'Ayer':'Hace '+dias+' d\u00edas';
+  }
+  var elStats=gel('cli-stats');
+  if(elStats){
+    elStats.innerHTML=
+      '<div class="sc"><div class="sl">Total comprado</div><div class="sv sv-b">S/ '+total.toFixed(2)+'</div></div>'+
+      '<div class="sc"><div class="sl">Transacciones</div><div class="sv sv-b">'+transacc+'</div></div>'+
+      '<div class="sc"><div class="sl">Ticket promedio</div><div class="sv sv-s">S/ '+ticketProm.toFixed(2)+'</div></div>'+
+      '<div class="sc"><div class="sl">\u00daltima compra</div><div class="sv" style="font-size:16px;color:var(--brand);">'+esc(ultimaTxt)+'</div></div>'+
+      '<div class="sc"><div class="sl">Pendiente cobro</div><div class="sv" style="color:'+(pendiente>0?'var(--er)':'var(--ok)')+'">S/ '+pendiente.toFixed(2)+'</div></div>';
+  }
   // Clientes con anos de antiguedad pueden acumular miles de transacciones.
   // Pintar la tabla completa de una sola vez (y que el observador de
   // accesibilidad la vuelva a recorrer entera) se sentia como una demora al
   // abrir la ficha. Se pinta un tope inicial con un boton para traer el resto.
   var haySobrante=!_cliHistVerTodo && filtered.length>CLI_HIST_LIMITE;
   var visibles=haySobrante?filtered.slice(0,CLI_HIST_LIMITE):filtered;
+  // Franja de color a la izquierda de cada fila seg\u00fan su estado \u2014 permite
+  // escanear pendientes/vencidos de un vistazo sin leer cada badge.
+  var _colorEst={'\u2705 Pagado':'var(--ok)','\u23f3 Pendiente':'var(--warn)','\u274c Vencido':'var(--er)','Anulado':'var(--neutral)'};
   var rows='';
   for(var i=0;i<visibles.length;i++){
     var v=visibles[i];
     var canAnul=(v.estado!=='Anulado'&&v.estado!=='\ud83d\udce6 Devuelto');
-    rows+='<tr><td>'+fmt(v.fecha)+(v.hora?' <span class="tm2">'+v.hora+'</span>':'')+'</td><td>'+bMov(v.movimiento)+'</td>'+
+    var barra=_colorEst[v.estado]||'transparent';
+    rows+='<tr style="box-shadow:inset 3px 0 0 '+barra+';"><td>'+fmt(v.fecha)+(v.hora?' <span class="tm2">'+v.hora+'</span>':'')+'</td><td>'+bMov(v.movimiento)+'</td>'+
       '<td>'+(v.producto||'---')+'</td><td>'+(v.cantidad||0)+'</td>'+
       '<td><strong>S/ '+Number(v.total||0).toFixed(2)+'</strong></td>'+
       '<td>'+bEst(v.estado)+'</td>'+

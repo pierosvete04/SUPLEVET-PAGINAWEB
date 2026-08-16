@@ -1293,10 +1293,62 @@ function cliVerEntidad(tipo,nombre){
   var meta=tipo==='vets'?(docs.join(', ')+(zona?' \u00b7 '+zona:'')):vets.join(', ');
   var ttl=gel('cli-ent-nombre');if(ttl)ttl.textContent=nombre;
   var mt=gel('cli-ent-meta');if(mt)mt.innerHTML=meta;
+  // Celular, RUC y dirección: misma fuente canónica que usa el formulario de
+  // editar (clientes_vet, no la última venta) para que se vea aquí lo que ya
+  // está registrado en vez de aparecer vacío cuando la última venta fue una
+  // visita sin esos datos.
+  var dt=gel('cli-ent-datos');
+  var infoVetDatos=tipo==='vets'?_cliVetInfo(nombre):null;
+  if(dt){
+    var celDatos=(infoVetDatos&&infoVetDatos.num_medico)||ventasSorted.reduce(function(c,v){return c||v.num_medico||v.celular||'';},'')||'';
+    var rucDatos=(infoVetDatos&&infoVetDatos.ruc)||ventasSorted.reduce(function(r,v){return r||v.ruc||'';},'')||'';
+    var dirDatos=infoVetDatos?[infoVetDatos.direccion,infoVetDatos.distrito].filter(Boolean).join(', '):'';
+    var chips=[];
+    chips.push('<span class="cli-chip'+(celDatos?'':' muted')+'"><svg class="ic" viewBox="0 0 24 24"><use href="#i-telefono"/></svg>'+(celDatos?esc(celDatos):'Celular no registrado')+'</span>');
+    chips.push('<span class="cli-chip'+(rucDatos?'':' muted')+'"><svg class="ic" viewBox="0 0 24 24"><use href="#i-tarjeta"/></svg>RUC: '+(rucDatos?esc(rucDatos):'no registrado')+'</span>');
+    if(tipo==='vets')chips.push('<span class="cli-chip'+(dirDatos?'':' muted')+'"><svg class="ic" viewBox="0 0 24 24"><use href="#i-pin"/></svg>'+(dirDatos?esc(dirDatos):'Sin ubicación registrada')+'</span>');
+    dt.innerHTML=chips.join('');
+  }
+  // Estado de cuenta: deuda vigente en TODO el histórico del cliente, no solo
+  // el mes filtrado — es lo que responde "¿le debe algo a Suplevet ahora?".
+  var elEstado=gel('cli-ent-estado');
+  if(elEstado){
+    var pendTotalHist=ventas.reduce(function(s,v){return s+((v.estado==='⏳ Pendiente'||v.estado==='❌ Vencido')?(v.total||0):0);},0);
+    elEstado.innerHTML=pendTotalHist>0?'<span class="b b-vencido">Con deuda · S/ '+pendTotalHist.toFixed(2)+'</span>':'<span class="b b-pagado">Al día</span>';
+  }
+  cliRenderTrend(ventas);
   // Tarjetas de productos pendientes
   cliRenderProdCards(ventas);
   cliEntRender(ventas,'');
   abrirModal('modal-cli-ent');
+}
+
+// Tendencia de compra: total vendido por mes en los últimos 6 meses,
+// siempre sobre el histórico completo del cliente (no cambia con el filtro
+// de mes del selector, que es para el detalle de abajo) — así se ve la
+// evolución real de la relación comercial de un vistazo.
+function cliRenderTrend(ventas){
+  var el=gel('cli-ent-trend');if(!el)return;
+  var nombresMes=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  var hoy=new Date();
+  var meses=[];
+  for(var i=5;i>=0;i--){
+    var d=new Date(hoy.getFullYear(),hoy.getMonth()-i,1);
+    meses.push({key:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),lbl:nombresMes[d.getMonth()],total:0,esActual:i===0});
+  }
+  var byKey={};meses.forEach(function(m){byKey[m.key]=m;});
+  ventas.forEach(function(v){
+    if(esDevolucion(v.movimiento)||v.estado==='Anulado'||v.movimiento==='Visita')return;
+    var k=v.fecha?v.fecha.substring(0,7):null;
+    if(k&&byKey[k])byKey[k].total+=(v.total||0);
+  });
+  var max=Math.max.apply(null,meses.map(function(m){return m.total;}).concat([1]));
+  var hayDatos=meses.some(function(m){return m.total>0;});
+  if(!hayDatos){el.innerHTML='<div class="es" style="padding:.5rem;width:100%;"><strong>Sin compras en los últimos 6 meses.</strong></div>';return;}
+  el.innerHTML=meses.map(function(m){
+    var h=Math.max(6,Math.round((m.total/max)*100));
+    return '<div class="ctb'+(m.esActual?' now':'')+'"><b>'+(m.total>0?'S/ '+m.total.toFixed(0):'')+'</b><i style="height:'+h+'%;" title="'+m.lbl+': S/ '+m.total.toFixed(2)+'"></i><span>'+m.lbl+'</span></div>';
+  }).join('');
 }
 
 function cliRenderProdCards(ventas){
@@ -1365,16 +1417,26 @@ function cliEntFiltrarMes(){
 function cliEntRender(ventas,mes){
   var filtered=mes?ventas.filter(function(v){return v.fecha&&v.fecha.indexOf(mes)===0;}):ventas;
   filtered=filtered.slice().sort(function(a,b){var da=(a.fecha||'')+(a.hora||'');var db=(b.fecha||'')+(b.hora||'');return db>da?1:db<da?-1:0;});
-  var total=0,cobrado=0,pendiente=0,transacc=0;
+  var total=0,cobrado=0,pendiente=0,transacc=0,ultimaFecha=null;
   filtered.forEach(function(v){
     if(!esDevolucion(v.movimiento)&&v.estado!=='Anulado'){total+=(v.total||0);transacc++;}
     if(v.estado==='\u2705 Pagado')cobrado+=(v.total||0);
     if(v.estado==='\u23f3 Pendiente'||v.estado==='\u274c Vencido')pendiente+=(v.total||0);
+    // "\u00daltima compra" es la venta real m\u00e1s reciente (no una simple visita
+    // sin producto), que es lo que responde "\u00bfcu\u00e1ndo nos compr\u00f3 por \u00faltima vez?".
+    if(v.movimiento!=='Visita'&&!esDevolucion(v.movimiento)&&v.estado!=='Anulado'&&v.fecha&&(!ultimaFecha||v.fecha>ultimaFecha))ultimaFecha=v.fecha;
   });
-  var elT=gel('cli-ent-total'),elTr=gel('cli-ent-transacc'),elP=gel('cli-ent-pend');
-  if(elT)elT.textContent='S/ '+total.toFixed(2);
-  if(elTr)elTr.textContent=transacc;
-  if(elP){elP.textContent='S/ '+pendiente.toFixed(2);elP.style.color=pendiente>0?'#dc2626':'var(--ok)';}
+  var ticketProm=transacc>0?total/transacc:0;
+  var ultimaTxt=ultimaFecha?(function(){var d=diasDesde(ultimaFecha);return d<=0?'Hoy':d===1?'Ayer':'Hace '+d+' d\u00edas';})():'Sin compras';
+  var elStats=gel('cli-ent-stats');
+  if(elStats){
+    elStats.innerHTML=
+      '<div class="sc"><div class="sl">Total comprado</div><div class="sv sv-b">S/ '+total.toFixed(2)+'</div></div>'+
+      '<div class="sc"><div class="sl">Transacciones</div><div class="sv sv-b">'+transacc+'</div></div>'+
+      '<div class="sc"><div class="sl">Ticket promedio</div><div class="sv sv-s">S/ '+ticketProm.toFixed(2)+'</div></div>'+
+      '<div class="sc"><div class="sl">\u00daltima compra</div><div class="sv" style="font-size:16px;color:var(--brand);">'+esc(ultimaTxt)+'</div></div>'+
+      '<div class="sc"><div class="sl">Pendiente cobro</div><div class="sv" style="color:'+(pendiente>0?'var(--er)':'var(--ok)')+'">S/ '+pendiente.toFixed(2)+'</div></div>';
+  }
   // Clientes con a\u00f1os de antig\u00fcedad pueden acumular miles de transacciones
   // (m\u00e1s a\u00fan en admin, que ve TODOS los vendedores). Pintar la tabla entera
   // de una sola vez \u2014y que el observador de accesibilidad la vuelva a
@@ -1382,10 +1444,14 @@ function cliEntRender(ventas,mes){
   // un tope inicial con un bot\u00f3n para traer el resto solo si hace falta.
   var haySobrante=!_cliEntHistVerTodo && filtered.length>CLI_ENT_HIST_LIMITE;
   var visibles=haySobrante?filtered.slice(0,CLI_ENT_HIST_LIMITE):filtered;
+  // Franja de color a la izquierda de cada fila según su estado — permite
+  // escanear pendientes/vencidos de un vistazo sin leer cada badge.
+  var _colorEst={'✅ Pagado':'var(--ok)','⏳ Pendiente':'var(--warn)','❌ Vencido':'var(--er)','Anulado':'var(--neutral)'};
   var rows='';
   visibles.forEach(function(v){
     var canAnul=v.estado!=='Anulado';
-    rows+='<tr><td style="white-space:nowrap;">'+fmt(v.fecha)+(v.hora?' <span class="tm2">'+esc(v.hora)+'</span>':'')+'</td>'+
+    var barra=_colorEst[v.estado]||'transparent';
+    rows+='<tr style="box-shadow:inset 3px 0 0 '+barra+';"><td style="white-space:nowrap;">'+fmt(v.fecha)+(v.hora?' <span class="tm2">'+esc(v.hora)+'</span>':'')+'</td>'+
       '<td>'+bMov(v.movimiento)+'</td><td>'+esc(v.producto||'---')+'</td><td>'+(v.cantidad||0)+'</td>'+
       '<td><strong>S/ '+Number(v.total||0).toFixed(2)+'</strong></td><td>'+bEst(v.estado)+'</td>'+
       '<td style="white-space:nowrap;"><button class="btn btn-sm" style="background:var(--sky4);color:var(--brand);border:1px solid var(--sky);" onclick="verDetalle(\''+esc(v.id)+'\')">Ver detalle</button>'+
