@@ -217,6 +217,8 @@ var _materiales=[];
 var _invMov=[];
 var _segmentos=[];
 var _clientesVet=[];
+var _etiquetas=[];          // catálogo global: {id,nombre,color}
+var _clienteEtiquetas=[];   // asignaciones: {id,cliente_id,etiqueta_id}
 var _invLastPage='inv-historial';
 var _filtVendedor='';
 var _histPag=1;
@@ -355,7 +357,16 @@ function reloadNiveles(){
   return _loadOne('niveles_config','order=orden.asc',function(r){_niveles=r;});
 }
 function reloadClientesVet(){
-  return _loadOne('clientes_vet','select=nombre_vet,doctora,zona,direccion,distrito,num_medico,ruc&order=nombre_vet.asc',function(r){_clientesVet=r;});
+  // id y created_at se agregan para etiquetas (cliente_etiquetas.cliente_id)
+  // y para calcular el badge "Nuevo" (< 30 días desde el alta), que no vive
+  // como etiqueta real — se calcula solo desde este campo.
+  return _loadOne('clientes_vet','select=id,nombre_vet,doctora,zona,direccion,distrito,num_medico,ruc,created_at&order=nombre_vet.asc',function(r){_clientesVet=r;});
+}
+function reloadEtiquetas(){
+  return Promise.all([
+    _loadOne('etiquetas_cliente','select=id,nombre,color&order=nombre.asc',function(r){_etiquetas=r;}),
+    _loadOne('cliente_etiquetas','select=id,cliente_id,etiqueta_id',function(r){_clienteEtiquetas=r;})
+  ]);
 }
 
 function loadAll(){
@@ -369,7 +380,8 @@ function loadAll(){
     reloadMateriales(),
     reloadSegmentos(),
     reloadNiveles(),
-    reloadClientesVet()
+    reloadClientesVet(),
+    reloadEtiquetas()
   ]);
 }
 

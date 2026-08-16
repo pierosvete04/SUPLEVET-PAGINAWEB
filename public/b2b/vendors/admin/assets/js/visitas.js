@@ -1361,6 +1361,7 @@ function cliVerEntidad(tipo,nombre){
     var pendTotalHist=ventas.reduce(function(s,v){return s+((v.estado==='⏳ Pendiente'||v.estado==='❌ Vencido')?(v.total||0):0);},0);
     elEstado.innerHTML=pendTotalHist>0?'<span class="b b-vencido">Con deuda · S/ '+pendTotalHist.toFixed(2)+'</span>':'<span class="b b-pagado">Al día</span>';
   }
+  cliRenderTagsPerfil();
   cliRenderTrend(ventas);
   // Tarjetas de productos pendientes
   cliRenderProdCards(ventas);
@@ -1515,6 +1516,116 @@ var _cliEntHistVerTodo=false;
 var _cliEntHistUltimasVentas=[];
 var _cliEntHistUltimoMes='';
 
+// ── ETIQUETAS ──
+// "Nuevo" no es una fila en cliente_etiquetas: se calcula al vuelo desde
+// clientes_vet.created_at, así que no hace falta ningún cron para que
+// "se quite sola" al mes — simplemente deja de cumplir la condición.
+var DIAS_CLIENTE_NUEVO=30;
+function _esClienteNuevo(createdAt){
+  if(!createdAt)return false;
+  var d=new Date(createdAt);
+  if(isNaN(d.getTime()))return false;
+  var dias=(Date.now()-d.getTime())/86400000;
+  return dias>=0 && dias<DIAS_CLIENTE_NUEVO;
+}
+// Texto legible (blanco o casi-negro) sobre un color hex arbitrario elegido
+// a mano con el color picker — sin esto un amarillo con texto blanco sería
+// ilegible.
+function _colorTextoLegible(hex){
+  hex=(hex||'').replace('#','');
+  if(hex.length===3)hex=hex.split('').map(function(c){return c+c;}).join('');
+  if(hex.length!==6)return '#fff';
+  var r=parseInt(hex.substr(0,2),16),g=parseInt(hex.substr(2,2),16),b=parseInt(hex.substr(4,2),16);
+  var luz=(0.299*r+0.587*g+0.114*b)/255;
+  return luz>0.6?'#1a2535':'#fff';
+}
+function _etiquetasDeCliente(clienteId){
+  if(!clienteId)return [];
+  var ids={};
+  _clienteEtiquetas.forEach(function(ce){if(ce.cliente_id===clienteId)ids[ce.etiqueta_id]=1;});
+  return (_etiquetas||[]).filter(function(e){return ids[e.id];});
+}
+function _chipEtiqueta(et,activa,onclickAttr){
+  var estilo=activa
+    ?'background:'+et.color+';color:'+_colorTextoLegible(et.color)+';border:1.5px solid '+et.color+';'
+    :'background:transparent;color:var(--tl);border:1.5px dashed var(--bd2);';
+  return '<span class="cli-chip" style="'+estilo+'font-weight:700;'+(onclickAttr?'cursor:pointer;':'')+'"'+(onclickAttr?' onclick="'+onclickAttr+'"':'')+'>'+esc(et.nombre)+'</span>';
+}
+// Perfil (solo lectura): badge "Nuevo" + etiquetas asignadas.
+function cliRenderTagsPerfil(){
+  var el=gel('cli-ent-tags');if(!el)return;
+  var modal=gel('modal-cli-ent');
+  var tipo=modal&&modal.dataset.tipo, nombre=modal&&modal.dataset.nombre;
+  var html='';
+  if(tipo==='vets'){
+    var info=_cliVetInfo(nombre);
+    if(info&&_esClienteNuevo(info.created_at))html+='<span class="b b-contado">Nuevo</span>';
+    if(info)_etiquetasDeCliente(info.id).forEach(function(et){html+=_chipEtiqueta(et,true,null);});
+  }
+  el.innerHTML=html;
+}
+// Edición: catálogo completo como chips togglables (rellena = asignada).
+function cliRenderTagsEdit(){
+  var wrap=gel('cli-edit-etiquetas-wrap');
+  var tipo=val('cli-edit-tipo');
+  if(wrap)wrap.style.display=tipo==='vets'?'block':'none';
+  if(tipo!=='vets')return;
+  var el=gel('cli-edit-etiquetas-chips');if(!el)return;
+  var nombre=val('cli-edit-nombre-orig');
+  var info=_cliVetInfo(nombre);
+  var asignadas={};
+  if(info)_etiquetasDeCliente(info.id).forEach(function(et){asignadas[et.id]=1;});
+  el.innerHTML=(_etiquetas||[]).map(function(et){
+    return _chipEtiqueta(et,!!asignadas[et.id],"cliToggleEtiqueta('"+et.id+"')");
+  }).join('')||'<span style="font-size:12px;color:var(--tl);">Todavía no hay etiquetas creadas.</span>';
+}
+// La veterinaria puede no tener fila propia en clientes_vet todavía (solo
+// tiene ventas históricas) — se crea igual que en el resto de flujos de
+// sincronización (RUC, ubicación) antes de poder asignarle una etiqueta.
+function _cliEntObtenerOCrearClienteId(nombre){
+  var info=_cliVetInfo(nombre);
+  if(info&&info.id)return Promise.resolve(info.id);
+  return sbP('clientes_vet',{nombre_vet:nombre}).then(function(r){
+    var fila=r&&r[0];
+    if(fila)_clientesVet.push(fila);
+    return fila&&fila.id;
+  });
+}
+function cliToggleEtiqueta(etiquetaId){
+  var nombre=val('cli-edit-nombre-orig');
+  _cliEntObtenerOCrearClienteId(nombre).then(function(clienteId){
+    if(!clienteId)return;
+    var existente=null;
+    for(var i=0;i<_clienteEtiquetas.length;i++){
+      var ce=_clienteEtiquetas[i];
+      if(ce.cliente_id===clienteId&&ce.etiqueta_id===etiquetaId){existente=ce;break;}
+    }
+    if(existente){
+      return sbDel('cliente_etiquetas','id=eq.'+existente.id).then(function(){
+        _clienteEtiquetas=_clienteEtiquetas.filter(function(ce){return ce.id!==existente.id;});
+      });
+    }
+    return sbP('cliente_etiquetas',{cliente_id:clienteId,etiqueta_id:etiquetaId}).then(function(r){
+      if(r&&r[0])_clienteEtiquetas.push(r[0]);
+    });
+  }).then(function(){
+    cliRenderTagsEdit();
+    cliRenderTagsPerfil();
+  }).catch(function(e){showToast(e.message||'No se pudo actualizar la etiqueta','er');});
+}
+function cliCrearEtiqueta(){
+  var nombre=(gel('cli-edit-etiqueta-nombre').value||'').trim();
+  var color=gel('cli-edit-etiqueta-color')?gel('cli-edit-etiqueta-color').value:'#253C61';
+  if(!nombre){showToast('Escribe un nombre para la etiqueta','er');return;}
+  sbP('etiquetas_cliente',{nombre:nombre,color:color||'#253C61'}).then(function(r){
+    var fila=r&&r[0];
+    if(fila)_etiquetas.push(fila);
+    gel('cli-edit-etiqueta-nombre').value='';
+    cliRenderTagsEdit();
+    showToast('Etiqueta creada','ok');
+  }).catch(function(e){showToast(e.message||'No se pudo crear la etiqueta (¿ya existe ese nombre?)','er');});
+}
+
 function cliEntAbrirEditar(){
   var modal=gel('modal-cli-ent');if(!modal)return;
   var tipo=modal.dataset.tipo,nombre=modal.dataset.nombre;
@@ -1555,6 +1666,7 @@ function cliEntAbrirEditar(){
   _cliEditRels=Object.keys(relMap).map(function(k){return relMap[k];});
   _cliEditRelsRemoved=[];
   cliRenderRels(tipo);
+  cliRenderTagsEdit();
 
   // Ubicaci\u00f3n: s\u00f3lo aplica a veterinarias (clientes_vet guarda una fila por vet, no por doctor).
   // Mismo flujo que el panel del vendedor: sincroniza la fila can\u00f3nica de clientes_vet

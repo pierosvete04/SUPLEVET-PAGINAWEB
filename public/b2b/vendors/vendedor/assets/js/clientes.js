@@ -107,12 +107,13 @@ function verEntidad(tipo,nombre){
     };
     pintarDatos(lastConDatos.num_medico||lastConDatos.celular||'',lastConDatos.ruc||'','');
     if(tipo==='vet'){
-      sbG('clientes_vet','nombre_vet=ilike.'+encodeURIComponent(nombre)+'&select=ruc,num_medico,direccion,distrito')
+      sbG('clientes_vet','nombre_vet=ilike.'+encodeURIComponent(nombre)+'&select=id,ruc,num_medico,direccion,distrito,created_at')
       .then(function(r){
         var fila=r&&r[0];
         if(!fila)return;
         var dir=[fila.direccion,fila.distrito].filter(Boolean).join(', ');
         pintarDatos(fila.num_medico||lastConDatos.num_medico||lastConDatos.celular||'',fila.ruc||lastConDatos.ruc||'',dir);
+        cliPintarTags(fila);
       }).catch(function(){});
     }
   }
@@ -125,6 +126,42 @@ function verEntidad(tipo,nombre){
   cliRenderTrend(ventas);
   renderModalVentas(ventas,'');
   modal.classList.add('open');
+}
+
+// ── ETIQUETAS (solo lectura) ──
+// La gestión de etiquetas (crear/asignar) vive en el panel admin; acá solo
+// se muestran. "Nuevo" no es una etiqueta guardada: se calcula al vuelo
+// desde clientes_vet.created_at (< 30 días), así que no hace falta nada
+// para que "se quite sola" al mes.
+var DIAS_CLIENTE_NUEVO=30;
+function _esClienteNuevo(createdAt){
+  if(!createdAt)return false;
+  var d=new Date(createdAt);
+  if(isNaN(d.getTime()))return false;
+  var dias=(Date.now()-d.getTime())/86400000;
+  return dias>=0 && dias<DIAS_CLIENTE_NUEVO;
+}
+function _colorTextoLegible(hex){
+  hex=(hex||'').replace('#','');
+  if(hex.length===3)hex=hex.split('').map(function(c){return c+c;}).join('');
+  if(hex.length!==6)return '#fff';
+  var r=parseInt(hex.substr(0,2),16),g=parseInt(hex.substr(2,2),16),b=parseInt(hex.substr(4,2),16);
+  var luz=(0.299*r+0.587*g+0.114*b)/255;
+  return luz>0.6?'#1a2535':'#fff';
+}
+function cliPintarTags(fila){
+  var el=gel('cli-tags');if(!el)return;
+  var html=_esClienteNuevo(fila.created_at)?'<span class="b b-contado">Nuevo</span>':'';
+  el.innerHTML=html;
+  if(!fila.id)return;
+  sbG('cliente_etiquetas','cliente_id=eq.'+fila.id+'&select=etiquetas_cliente(nombre,color)')
+  .then(function(rows){
+    (rows||[]).forEach(function(row){
+      var et=row.etiquetas_cliente;if(!et)return;
+      html+='<span class="cli-chip" style="background:'+et.color+';color:'+_colorTextoLegible(et.color)+';border:1.5px solid '+et.color+';font-weight:700;">'+esc(et.nombre)+'</span>';
+    });
+    el.innerHTML=html;
+  }).catch(function(){});
 }
 
 // Tendencia de compra: total vendido por mes en los últimos 6 meses, sobre
