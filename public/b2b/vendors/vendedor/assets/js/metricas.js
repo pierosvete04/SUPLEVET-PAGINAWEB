@@ -113,6 +113,7 @@ function rMetricas(){
       '<div class="sc"><div class="sl">Total visitas</div><div class="sv sv-b">'+totalVisitas+'</div><div class="ss">'+diasTrabajados+' día'+(diasTrabajados!==1?'s':'')+' trabajado'+(diasTrabajados!==1?'s':'')+'</div></div>'+
       '<div class="sc"><div class="sl">Ventas / visitas</div><div class="sv sv-s">'+tasaConversion.toFixed(0)+'%</div><div class="ss">'+visitasConVenta+' de '+totalVisitas+' visitas vendieron algo</div></div>'+
       '<div class="sc"><div class="sl">Ventas del mes</div><div class="sv sv-b">S/ '+totalVentaMes.toFixed(2)+'</div></div>'+
+      '<div class="sc"><div class="sl">Cantidad de ventas</div><div class="sv" style="color:var(--brand);">'+transaccMes+'</div><div class="ss">venta'+(transaccMes!==1?'s':'')+' este mes</div></div>'+
       '<div class="sc"><div class="sl">Ventas diarias promedio</div><div class="sv sv-o">S/ '+ventaDiariaProm.toFixed(2)+'</div><div class="ss">por día trabajado</div></div>'+
       '<div class="sc"><div class="sl">Ticket promedio</div><div class="sv sv-g">S/ '+ticketProm.toFixed(2)+'</div></div>'+
       '<div class="sc"><div class="sl">Prom. visitas / día</div><div class="sv" style="color:var(--brand);">'+promVisitasDia.toFixed(1)+'</div></div>';
