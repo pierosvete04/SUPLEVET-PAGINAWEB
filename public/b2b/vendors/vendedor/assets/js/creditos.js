@@ -234,6 +234,9 @@ function confirmarMarcarPagado(){
   var _docsMp=docsSerializar('mp');
   _cobUploadImages('mp').then(function(imgUrl){
     return sbU('ventas',id,{
+      // Se reasigna a quien cobra, no a quien dejó el crédito — ver nota en
+      // registro-visita.js sobre el caso "vendedor dado de baja".
+      vendedor_id:CUR.id,
       estado:'✅ Pagado',
       movimiento:'Cobro de credito',
       fecha:fecha,
@@ -365,6 +368,9 @@ function confirmarCobroParcial(){
 
   _cobUploadImages('cp').then(function(imgUrl){
     var comun={
+      // Se reasigna a quien cobra, no a quien dejó el crédito — ver nota en
+      // registro-visita.js sobre el caso "vendedor dado de baja".
+      vendedor_id:CUR.id,
       estado:'✅ Pagado',
       movimiento:'Cobro de credito',
       fecha:fechaCobro,

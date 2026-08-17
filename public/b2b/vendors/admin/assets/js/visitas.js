@@ -1072,6 +1072,13 @@ function rvGuardar(){
         // sumaban el original, y un "Cobrar todo" convertía un crédito de
         // S/ 950 en un cobro de S/ 1,000.
         var comun={
+          // vendedor_id se reasigna a quien está cobrando (vid), no al que
+          // dejó el crédito originalmente — sin esto, un crédito que un
+          // vendedor dado de baja dejó abierto seguía apareciendo a su
+          // nombre para siempre, aunque lo cobrara otra persona (reportado:
+          // Gabriel Hidalgo inactivo, cobro hecho por Administrador Suplevet
+          // seguía mostrando "Gabriel Hidalgo").
+          vendedor_id: vid,
           estado:'✅ Pagado', movimiento:'Cobro de credito',
           fecha:fc, fecha_cobro:fc,
           notas:SVCobros.notaCobro(v,rep,m.modo,fTxt),

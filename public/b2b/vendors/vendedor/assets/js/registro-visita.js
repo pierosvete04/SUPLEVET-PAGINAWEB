@@ -1161,6 +1161,11 @@ function mvGuardarVisita(){
         // S/ 950 en un cobro de S/ 1,000.
         var notaCobro=(v.notas?v.notas+' | ':'')+SVCobros.notaCobro(v,rep,m.modo,fTxt);
         var _comun={
+          // vendedor_id se reasigna a quien est\u00e1 cobrando (CUR.id), no al
+          // que dej\u00f3 el cr\u00e9dito originalmente \u2014 sin esto, un cr\u00e9dito que un
+          // vendedor dado de baja dej\u00f3 abierto segu\u00eda apareciendo a su
+          // nombre para siempre, aunque lo cobrara otra persona.
+          vendedor_id:CUR.id,
           estado:'\u2705 Pagado', movimiento:'Cobro de credito',
           fecha:fc, fecha_cobro:fc, notas:notaCobro,
           tipo_documento:tipoDoc||null,
