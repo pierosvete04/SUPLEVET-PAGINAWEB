@@ -104,7 +104,20 @@
         return _get('vendedores', 'id=eq.' + userId + '&activo=eq.true&select=*', token)
           .then(function (vrows) {
             if (vrows && vrows.length) return { role: 'vendedor', user: vrows[0] };
-            return null;
+            // Ni admin ni vendedor activo. Antes de decir "sin panel asignado"
+            // (mensaje pensado para una cuenta que nunca tuvo acceso), hay que
+            // distinguir el caso real: la fila existe pero está desactivada.
+            // Sin esto un vendedor dado de baja veía el mismo mensaje genérico
+            // que alguien que nunca tuvo cuenta, que confunde al usuario.
+            return _get('vendedores', 'id=eq.' + userId + '&activo=eq.false&select=id', token)
+              .then(function (bajaV) {
+                if (bajaV && bajaV.length) return { code: 'baja' };
+                return _get('admins', 'id=eq.' + userId + '&activo=eq.false&select=id', token)
+                  .then(function (bajaA) {
+                    if (bajaA && bajaA.length) return { code: 'baja' };
+                    return null;
+                  });
+              });
           });
       });
   }
@@ -114,7 +127,7 @@
   /**
    * Autentica contra Supabase y resuelve el rol.
    * Resuelve con {role, user}; rechaza con un Error cuyo .code es
-   * 'bad_credentials' | 'no_role' | 'network'.
+   * 'bad_credentials' | 'no_role' | 'baja' | 'network'.
    */
   function login(email, password, persist) {
     return fetch(SB + '/auth/v1/token?grant_type=password', {
@@ -137,9 +150,11 @@
       })
       .then(function (auth) {
         return _resolveRole(auth.user.id, auth.access_token).then(function (resolved) {
-          if (!resolved) {
-            var e = new Error('Esta cuenta no tiene un panel asignado');
-            e.code = 'no_role';
+          if (!resolved || resolved.code === 'baja') {
+            var e = resolved && resolved.code === 'baja'
+              ? new Error('Te han dado de baja')
+              : new Error('Esta cuenta no tiene un panel asignado');
+            e.code = resolved && resolved.code === 'baja' ? 'baja' : 'no_role';
             throw e;
           }
           _session = {

@@ -545,6 +545,23 @@ function _reasignarTransaccionesZonas(zonas, destinoId){
   });
 }
 
+// Cambia la contraseña REAL del vendedor en Supabase Auth vía Edge Function
+// (requiere service_role, que nunca debe estar en este archivo estático).
+// Antes esto solo actualizaba vendedores.contrasena (columna de referencia)
+// sin tocar Auth, así que el vendedor seguía entrando con la contraseña vieja.
+function _resetPasswordVendedor(vendedorId,newPassword){
+  return fetch(SB+'/functions/v1/admin-reset-vendedor-password',{
+    method:'POST',
+    headers:getHeaders(),
+    body:JSON.stringify({vendedorId:vendedorId,newPassword:newPassword})
+  }).then(function(r){
+    return r.json().catch(function(){return {};}).then(function(j){
+      if(!r.ok) throw new Error(j.error||'No se pudo cambiar la contraseña');
+      return j;
+    });
+  });
+}
+
 function guardarVendedor(){
   var id=val('vf-id');
   var nombre=val('vf-nombre'),usuario=val('vf-usuario'),pass=val('vf-pass');
@@ -601,8 +618,16 @@ function _guardarVendedorFinal(id,row,usuario,pass,zonasNuevas){
       row.origen_direccion=origen.direccionFinal;
     }
     if(id){
-      // Editar vendedor existente
-      return _reasignarTransaccionesZonas(zonasNuevas,id)
+      // Editar vendedor existente.
+      // Si se escribi\u00f3 una contrase\u00f1a nueva, `row.contrasena` ya la trae,
+      // pero eso solo actualiza la copia de referencia en la tabla \u2014 la
+      // contrase\u00f1a REAL vive en Supabase Auth y hace falta la Edge Function
+      // (usa la service_role key, que no puede estar en este archivo) para
+      // cambiarla de verdad. Sin esto el vendedor sigue entrando con la
+      // contrase\u00f1a vieja aunque el admin "la haya cambiado".
+      var cambioPass=pass?_resetPasswordVendedor(id,pass):Promise.resolve();
+      return cambioPass
+      .then(function(){return _reasignarTransaccionesZonas(zonasNuevas,id);})
       .then(function(){return sbU('vendedores',id,row);})
       .then(function(){return Promise.all([reloadVendedores(), reloadVentas()]);})
       .then(function(){

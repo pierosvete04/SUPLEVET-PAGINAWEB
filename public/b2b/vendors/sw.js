@@ -9,7 +9,8 @@
 // siguiente visita. Hay que subirlo cuando cambia algo del shell.
 // v3: fix de seguridad en session.js (un vendedor dado de baja podía seguir
 // entrando/renovando sesión) — hay que invalidar el caché para que llegue.
-const CACHE = 'suplevet-portal-v3';
+// v4: mensaje de login distingue "dado de baja" de "sin panel asignado".
+const CACHE = 'suplevet-portal-v4';
 
 // Shell mínimo. Los assets de cada panel entran al caché solos, la primera
 // vez que se piden (no los pre-cacheamos: son ~1 MB entre los dos y la

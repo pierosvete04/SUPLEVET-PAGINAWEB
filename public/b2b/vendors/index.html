@@ -98,7 +98,7 @@
 // también el sitio principal de suplevet.pe.
 if('serviceWorker' in navigator){window.addEventListener('load',function(){navigator.serviceWorker.register('sw.js',{scope:'./'}).catch(function(){});});}
 </script>
-<script src="assets/js/session.js?v=20260817-baja"></script>
+<script src="assets/js/session.js?v=20260817-baja2"></script>
 <script>
 (function () {
   'use strict';
@@ -118,6 +118,7 @@ if('serviceWorker' in navigator){window.addEventListener('load',function(){navig
   var MESSAGES = {
     bad_credentials: 'El correo o la contraseña no coinciden. Revísalos e inténtalo otra vez.',
     no_role: 'Tu cuenta existe pero todavía no tiene un panel asignado. Pídele a un administrador que te dé acceso.',
+    baja: 'Te han dado de baja. Tu acceso a este panel fue desactivado — si crees que es un error, contacta a un administrador.',
     network: 'No pudimos conectar con el servidor. Revisa tu conexión e inténtalo de nuevo.',
     empty: 'Escribe tu correo y tu contraseña para continuar.'
   };
