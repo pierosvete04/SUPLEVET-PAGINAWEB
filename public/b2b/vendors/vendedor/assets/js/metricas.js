@@ -228,11 +228,14 @@ function metRenderCreditos(ventasMes,mes){
   var el=gel('met-creditos-kpis'); if(!el) return;
   var todas=_ventas||[];
 
-  // Créditos DEJADOS este mes (en soles) — no es lo mismo que "cobrados":
-  // esto es cuánto le fiaste a la calle, sin importar si ya te lo pagaron.
+  // Créditos DEJADOS este mes que SIGUEN sin cobrar (en soles) — a propósito
+  // distinto de "cobrados": si ya se cobró, esa plata ya está en "Ventas del
+  // mes" (como Cobro de credito) y contarla acá también sería duplicarla.
+  // Esto es solo lo que sigue como deuda abierta de lo que fiaste este mes.
   // Usa created_at (fecha de alta real) porque `fecha` se pisa al cobrar.
   var creditosDejadosMes=todas.filter(function(v){
-    return (v.movimiento==='Credito a 15 dias'||v.movimiento==='Cobro de credito') && v.created_at && v.created_at.substring(0,7)===mes;
+    return v.movimiento==='Credito a 15 dias' && (v.estado==='⏳ Pendiente'||v.estado==='❌ Vencido')
+      && v.created_at && v.created_at.substring(0,7)===mes;
   });
   var totalDejadoMes=creditosDejadosMes.reduce(function(s,v){return s+(v.total||0);},0);
   _metCache.creditosDejadosMes=creditosDejadosMes;
@@ -284,7 +287,7 @@ function metRenderCreditos(ventasMes,mes){
   var pctSeguimiento=pendientes.length ? (conSeguimiento/pendientes.length*100) : 0;
 
   el.innerHTML=
-    '<div class="sc"'+(creditosDejadosMes.length?' style="cursor:pointer;" onclick="metVerCreditosDejadosDetalle()" title="Ver créditos dejados"':'')+'><div class="sl">Créditos dejados este mes</div><div class="sv sv-o">S/ '+totalDejadoMes.toFixed(2)+'</div><div class="ss">'+creditosDejadosMes.length+' crédito'+(creditosDejadosMes.length!==1?'s':'')+'</div></div>'+
+    '<div class="sc"'+(creditosDejadosMes.length?' style="cursor:pointer;" onclick="metVerCreditosDejadosDetalle()" title="Ver créditos pendientes de este mes"':'')+'><div class="sl">Créditos de este mes sin cobrar</div><div class="sv sv-o">S/ '+totalDejadoMes.toFixed(2)+'</div><div class="ss">'+creditosDejadosMes.length+' crédito'+(creditosDejadosMes.length!==1?'s':'')+' todavía pendiente'+(creditosDejadosMes.length!==1?'s':'')+'</div></div>'+
     '<div class="sc" style="cursor:pointer;" onclick="metVerCreditosCobradosDetalle()" title="Ver créditos cobrados"><div class="sl">Créditos cobrados este mes</div><div class="sv sv-g">'+cobradosMes.length+'</div><div class="ss">S/ '+totalCobradoMes.toFixed(2)+'</div></div>'+
     '<div class="sc"'+(visitasHasta.length?' style="cursor:pointer;" onclick="metVerVisitasHastaDetalle()" title="Ver detalle"':'')+'><div class="sl">Visitas hasta cobrar</div><div class="sv" style="color:var(--brand);">'+(visitasHasta.length?promVisitasHasta.toFixed(1):'—')+'</div><div class="ss">promedio, todo tu historial</div></div>'+
     '<div class="sc"'+(sinSeguimiento.length?' style="cursor:pointer;" onclick="metVerSeguimientoDetalle()" title="Ver créditos sin seguimiento"':'')+'><div class="sl">Seguimiento a créditos abiertos</div><div class="sv '+(pctSeguimiento>=70?'sv-g':pctSeguimiento>=40?'sv-w':'sv-r')+'">'+(pendientes.length?pctSeguimiento.toFixed(0)+'%':'—')+'</div><div class="ss">'+conSeguimiento+' de '+pendientes.length+' créditos pendientes con visita después</div></div>';
@@ -321,12 +324,12 @@ function metRenderCartera(todas){
   el.innerHTML=
     '<div class="sc"'+(vencidos.length?' style="cursor:pointer;" onclick="metVerCarteraDetalle(\'vencidos\')"':'')+'><div class="sl">Vencidos</div><div class="sv sv-r">S/ '+sum(vencidos).toFixed(2)+'</div><div class="ss">'+vencidos.length+' cliente'+(vencidos.length!==1?'s':'')+'</div></div>'+
     '<div class="sc"'+(porVencer.length?' style="cursor:pointer;" onclick="metVerCarteraDetalle(\'porVencer\')"':'')+'><div class="sl">Por vencer (7 días)</div><div class="sv sv-w">S/ '+sum(porVencer).toFixed(2)+'</div><div class="ss">'+porVencer.length+' cliente'+(porVencer.length!==1?'s':'')+'</div></div>'+
-    '<div class="sc"'+(resto.length?' style="cursor:pointer;" onclick="metVerCarteraDetalle(\'resto\')"':'')+'><div class="sl">Resto pendiente</div><div class="sv" style="color:var(--brand);">S/ '+sum(resto).toFixed(2)+'</div><div class="ss">'+resto.length+' cliente'+(resto.length!==1?'s':'')+'</div></div>';
+    '<div class="sc"'+(resto.length?' style="cursor:pointer;" onclick="metVerCarteraDetalle(\'resto\')"':'')+'><div class="sl">Con plazo todavía</div><div class="sv" style="color:var(--brand);">S/ '+sum(resto).toFixed(2)+'</div><div class="ss">'+resto.length+' cliente'+(resto.length!==1?'s':'')+' · vencen en más de '+MET_DIAS_POR_VENCER+' días</div></div>';
 }
 
 function metVerCarteraDetalle(grupo){
   var rows=grupo==='vencidos'?_metCache.carteraVencidos:grupo==='porVencer'?_metCache.carteraPorVencer:_metCache.carteraResto;
-  var titulo=grupo==='vencidos'?'Créditos vencidos':grupo==='porVencer'?'Créditos por vencer (7 días)':'Resto de la cartera pendiente';
+  var titulo=grupo==='vencidos'?'Créditos vencidos':grupo==='porVencer'?'Créditos por vencer (7 días)':'Créditos con plazo todavía (vencen en más de '+MET_DIAS_POR_VENCER+' días)';
   if(!rows||!rows.length){metAbrirDetalle(titulo,'<div class="es" style="padding:1rem;"><strong>No hay créditos en este grupo.</strong></div>');return;}
   var ordenadas=rows.slice().sort(function(a,b){return (a.fecha_cobro||'').localeCompare(b.fecha_cobro||'');});
   var html='<div class="tw"><table><thead><tr><th>Cliente</th><th>Producto</th><th>Vence</th><th>Monto</th></tr></thead><tbody>'+
@@ -338,7 +341,7 @@ function metVerCarteraDetalle(grupo){
 
 function metVerCreditosDejadosDetalle(){
   var rows=_metCache.creditosDejadosMes;
-  metAbrirDetalle('Créditos dejados · '+_metCache.mesLabel, _metTablaVentas(rows));
+  metAbrirDetalle('Créditos de '+_metCache.mesLabel+' aún sin cobrar', _metTablaVentas(rows));
 }
 
 function metVerCreditosCobradosDetalle(){
