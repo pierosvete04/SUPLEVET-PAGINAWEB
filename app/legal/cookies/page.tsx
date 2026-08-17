@@ -11,7 +11,7 @@ export const metadata: Metadata = {
 
 export default function CookiesPage() {
   return (
-    <LegalDoc titulo="Política de Cookies" actualizado="4 de julio de 2026">
+    <LegalDoc titulo="Política de Cookies" actualizado="17 de agosto de 2026">
       <BorradorNotice />
       <p>
         Usamos cookies y tecnologías similares para que el sitio funcione correctamente, recordar
@@ -30,7 +30,17 @@ export default function CookiesPage() {
         sitio (páginas vistas, productos de interés) y así mejorar la experiencia de compra.
       </p>
 
-      <h2>3. Cómo gestionar las cookies</h2>
+      <h2>3. Cookies de publicidad</h2>
+      <p>
+        Usamos el Píxel de Meta (Facebook/Instagram) y el Píxel de TikTok para medir el
+        rendimiento de nuestros anuncios y mostrarte publicidad relevante de Suplevet en esas
+        plataformas. Estas herramientas registran eventos como páginas vistas, productos añadidos
+        al carrito y compras realizadas. Cuando corresponde, cierta información de contacto (como
+        tu correo o teléfono) se envía de forma cifrada (hasheada) para vincular estos eventos con
+        tu cuenta en Meta o TikTok, sin que la plataforma reciba el dato original en texto plano.
+      </p>
+
+      <h2>4. Cómo gestionar las cookies</h2>
       <p>
         Puedes configurar tu navegador para rechazar cookies, aunque esto puede afectar el
         funcionamiento del carrito de compras y el checkout.

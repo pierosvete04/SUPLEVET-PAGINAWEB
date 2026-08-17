@@ -25,15 +25,23 @@ export function AnalyticsScripts() {
       {/* Google Tag Manager — el ID de contenedor no es un dato sensible,
           queda visible en el HTML/red de cualquier sitio que use GTM (así
           funciona la herramienta: el navegador debe poder cargarlo).
-          `lazyOnload` (no `afterInteractive`) porque GTM arrastra además el
-          pixel de Meta y su clientParamBuilder: entre los tres sumaban ~540 KB
-          y casi 300 ms de hilo principal peleando con la hidratación de React
-          — el Total Blocking Time de 1210 ms que reportó PageSpeed en mobile.
-          Con lazyOnload todo eso corre recién después del evento `load`, o sea
-          con la página ya pintada y usable. No se pierde ningún evento:
+          `afterInteractive` (no `lazyOnload`): `lazyOnload` esperaba al
+          evento `load` y encima usaba `requestIdleCallback`, que los
+          navegadores retrasan o directamente suspenden cuando la pestaña no
+          está visible/enfocada (pestañas de fondo, o el verificador
+          automático de TikTok renderizando sin foco real). El 2026-08-17 se
+          confirmó así: TikTok Events Manager nunca marcaba "Browser events
+          received" pese a que el pixel estaba bien instalado — GTM
+          simplemente no llegaba a cargar a tiempo. `afterInteractive` carga
+          apenas React termina de hidratar, sin depender de visibilidad, a
+          cambio de volver a sumar algo del Total Blocking Time que
+          `lazyOnload` había recortado (~300 ms de hilo principal, ver
+          historial). Se prioriza que los pixeles de ads disparen de forma
+          confiable: una conversión no medida sale más cara que unos ms de
+          TBT. No se pierde ningún evento tampoco con esta estrategia:
           trackEvent() (lib/analytics.ts) crea window.dataLayer si no existe y
           encola ahí, y GTM procesa la cola entera al inicializarse. */}
-      <Script id="gtm" strategy="lazyOnload">
+      <Script id="gtm" strategy="afterInteractive">
         {`(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
         new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
         j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=

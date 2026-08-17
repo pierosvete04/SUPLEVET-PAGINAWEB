@@ -6,6 +6,7 @@ import { sendTransactionalEmail } from "@/lib/emails/send";
 import { notificarEquipoVentas } from "@/lib/emails/notificar-ventas";
 import { notificarPedidoTelegram } from "@/lib/notificaciones/pedido-telegram";
 import { whatsappPedido } from "@/lib/whatsapp-mensajes";
+import { enviarCompletePaymentTikTok } from "@/lib/tiktok-events-api";
 
 // Mercado Pago llama a esta URL (configurada como notification_url en la
 // preferencia, ver app/api/checkout/mercadopago) cada vez que un pago cambia
@@ -186,6 +187,19 @@ export async function POST(request: Request) {
 
   if (sendError) {
     console.error("No se pudo enviar el correo de resultado de pago:", sendError);
+  }
+
+  if (nuevoEstado === "pagado") {
+    const { error: tiktokError } = await enviarCompletePaymentTikTok({
+      pedidoId,
+      numeroPedido,
+      valor: pedido.total ?? 0,
+      clienteEmail: pedido.cliente_email,
+      clienteTelefono: pedido.cliente_telefono,
+    });
+    if (tiktokError) {
+      console.error("No se pudo enviar CompletePayment a TikTok Events API:", tiktokError);
+    }
   }
 
   // Este webhook solo dispara para pagos con tarjeta (ver comentario de
