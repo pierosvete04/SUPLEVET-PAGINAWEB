@@ -17,6 +17,10 @@
 // inline) — se centraliza acá solo para este módulo.
 function _metEsDevolucion(mov){return mov==='Devolucion'||mov==='Devolución';}
 
+// Caché de lo último calculado, para que los clics de "ver detalle" no
+// tengan que recalcular todo — solo filtran sobre lo que ya se pintó.
+var _metCache={ventasMes:[],zonasMes:{},cobradosMes:[],visitasHastaDetalle:[]};
+
 function poblarMesesMet(){
   var sel=gel('met-mes'); if(!sel) return;
   var meses=[], seen={};
@@ -59,6 +63,8 @@ function rMetricas(){
   if(!mes) mes=hoy().substring(0,7);
 
   var ventasMes=(_ventas||[]).filter(function(v){return v.fecha && v.fecha.indexOf(mes)===0;});
+  _metCache.ventasMes=ventasMes;
+  _metCache.mesLabel=gel('met-mes')?(gel('met-mes').options[gel('met-mes').selectedIndex]?gel('met-mes').options[gel('met-mes').selectedIndex].textContent:mes):mes;
 
   // Mes anterior, para medir crecimiento por zona.
   var p=mes.split('-'), y=parseInt(p[0],10), mo=parseInt(p[1],10)-1;
@@ -96,13 +102,37 @@ function rMetricas(){
   }
 
   metRenderZonas(ventasMes,ventasMesAnt);
-  metRenderTopClientes(visitasArr);
+  metRenderTopClientes(visitasArr,ventasMes);
   metRenderCreditos(ventasMes);
   metRenderTrend();
+  metRenderRiesgo();
 }
 
-// Suma vendida por zona (ventas reales, no visitas) para poder comparar
-// contra el mes anterior — "creciendo" o "cayendo" en cada zona.
+// ── MODAL DE DETALLE (genérico) ──
+function metAbrirDetalle(titulo,bodyHtml){
+  var t=gel('met-detalle-titulo'),b=gel('met-detalle-body'),m=gel('modal-met-detalle');
+  if(t)t.textContent=titulo;
+  if(b)b.innerHTML=bodyHtml;
+  if(m)m.classList.add('open');
+}
+function metCerrarDetalle(){var m=gel('modal-met-detalle');if(m)m.classList.remove('open');}
+
+function _metTablaVentas(rows){
+  if(!rows.length) return '<div class="es" style="padding:1rem;"><strong>Sin movimientos.</strong></div>';
+  var ordenadas=rows.slice().sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');});
+  return '<div class="tw"><table><thead><tr><th>Fecha</th><th>Cliente</th><th>Movimiento</th><th>Producto</th><th>Total</th><th>Estado</th></tr></thead><tbody>'+
+    ordenadas.map(function(v){
+      return '<tr><td style="white-space:nowrap;">'+fmt(v.fecha)+'</td>'+
+        '<td>'+esc(v.veterinaria||v.doctora||'---')+'</td>'+
+        '<td>'+bMov(v.movimiento)+'</td>'+
+        '<td>'+esc(v.producto||'---')+'</td>'+
+        '<td><strong>S/ '+Number(v.total||0).toFixed(2)+'</strong></td>'+
+        '<td>'+bEst(v.estado)+'</td></tr>';
+    }).join('')+
+  '</tbody></table></div>';
+}
+
+// ── Ventas por zona (con crecimiento vs. mes anterior) ──
 function _metVentasPorZona(rows){
   var m={};
   rows.forEach(function(v){
@@ -130,9 +160,9 @@ function metRenderZonas(ventasMes,ventasMesAnt){
     }else if(val>0){
       crecTxt='Nuevo este mes'; crecColor='var(--brand)';
     }
-    return '<div style="margin-bottom:.7rem;">'+
+    return '<div style="margin-bottom:.7rem;cursor:pointer;" onclick="metVerZonaDetalle(\''+z.replace(/'/g,"\\'")+'\')" title="Ver ventas de '+esc(z)+'">'+
       '<div style="display:flex;justify-content:space-between;align-items:baseline;font-size:12.5px;margin-bottom:4px;gap:6px;">'+
-        '<strong style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+esc(z)+'</strong>'+
+        '<strong style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--brand);text-decoration:underline dotted;">'+esc(z)+'</strong>'+
         '<span style="white-space:nowrap;">S/ '+val.toFixed(2)+(crecTxt?' <span style="color:'+crecColor+';font-weight:700;">('+crecTxt+')</span>':'')+'</span>'+
       '</div>'+
       '<div style="background:var(--gry);border-radius:20px;height:8px;overflow:hidden;"><div style="width:'+pct+'%;height:100%;background:var(--sky);"></div></div>'+
@@ -140,37 +170,54 @@ function metRenderZonas(ventasMes,ventasMesAnt){
   }).join('');
 }
 
-function metRenderTopClientes(visitasArr){
+function metVerZonaDetalle(zona){
+  var rows=_metCache.ventasMes.filter(function(v){
+    return (v.zona||'Sin zona')===zona && !_metEsDevolucion(v.movimiento) && v.estado!=='Anulado' && v.movimiento!=='Visita' && v.movimiento!=='Solo visita';
+  });
+  var total=rows.reduce(function(s,v){return s+(v.total||0);},0);
+  metAbrirDetalle('Ventas en '+zona+' · '+_metCache.mesLabel,
+    '<div style="font-size:12px;color:var(--tl);margin-bottom:.7rem;">'+rows.length+' movimiento'+(rows.length!==1?'s':'')+' · <strong style="color:var(--brand);">S/ '+total.toFixed(2)+'</strong></div>'+
+    _metTablaVentas(rows));
+}
+
+// ── Clientes más recurrentes: visitas Y ventas de cada uno ──
+function metRenderTopClientes(visitasArr,ventasMes){
   var el=gel('met-top-clientes'); if(!el) return;
-  var conteo={};
-  visitasArr.forEach(function(x){conteo[x.cliente]=(conteo[x.cliente]||0)+1;});
-  var top=Object.keys(conteo).sort(function(a,b){return conteo[b]-conteo[a];}).slice(0,6);
+  var visitas={}, ventasCant={}, ventasMonto={};
+  visitasArr.forEach(function(x){visitas[x.cliente]=(visitas[x.cliente]||0)+1;});
+  ventasMes.forEach(function(v){
+    var cliente=(v.veterinaria||v.doctora||'').trim(); if(!cliente) return;
+    if(_metEsDevolucion(v.movimiento)||v.estado==='Anulado'||v.movimiento==='Visita'||v.movimiento==='Solo visita') return;
+    ventasCant[cliente]=(ventasCant[cliente]||0)+1;
+    ventasMonto[cliente]=(ventasMonto[cliente]||0)+(v.total||0);
+  });
+  var top=Object.keys(visitas).sort(function(a,b){return visitas[b]-visitas[a];}).slice(0,6);
   if(!top.length){el.innerHTML='<div class="es" style="padding:1rem;"><strong>Sin visitas este mes.</strong></div>';return;}
   el.innerHTML=top.map(function(c,i){
-    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;'+(i<top.length-1?'border-bottom:1px solid var(--bd);':'')+'">'+
-      '<span style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding-right:8px;">'+(i+1)+'. '+esc(c)+'</span>'+
-      '<span class="b b-visita" style="flex-shrink:0;">'+conteo[c]+' visita'+(conteo[c]!==1?'s':'')+'</span>'+
+    var nVentas=ventasCant[c]||0, monto=ventasMonto[c]||0;
+    return '<div style="padding:.5rem 0;'+(i<top.length-1?'border-bottom:1px solid var(--bd);':'')+'">'+
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;">'+
+        '<span style="font-size:13px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+(i+1)+'. '+esc(c)+'</span>'+
+        '<span class="b b-visita" style="flex-shrink:0;">'+visitas[c]+' visita'+(visitas[c]!==1?'s':'')+'</span>'+
+      '</div>'+
+      '<div style="font-size:11px;color:var(--tl);margin-top:2px;">'+(nVentas?nVentas+' venta'+(nVentas!==1?'s':'')+' · S/ '+monto.toFixed(2):'Sin ventas este mes')+'</div>'+
     '</div>';
   }).join('');
 }
 
-// Créditos cobrados ESTE mes (movimiento ya pasó a "Cobro de credito", con
-// fecha pisada a la fecha real del cobro). "Visitas hasta cobrar" y
-// "Seguimiento" miran el historial completo, no solo el mes — un crédito
-// dejado hace 2 meses y cobrado ahora igual cuenta para "cuántas visitas
-// tardó", y un crédito pendiente de hace tiempo igual cuenta para
-// "¿le hice seguimiento?".
+// ── Créditos: cobrados, visitas hasta cobrar, seguimiento a pendientes ──
 function metRenderCreditos(ventasMes){
   var el=gel('met-creditos-kpis'); if(!el) return;
   var todas=_ventas||[];
 
   var cobradosMes=ventasMes.filter(function(v){return v.movimiento==='Cobro de credito' && v.estado==='✅ Pagado';});
   var totalCobradoMes=cobradosMes.reduce(function(s,v){return s+(v.total||0);},0);
+  _metCache.cobradosMes=cobradosMes;
 
   // Visitas hasta cobrar: created_at (fecha de alta real, no se pisa) es el
   // origen; fecha (pisada al cobrar) es el cobro. Se cuentan los días
   // distintos en que hubo CUALQUIER movimiento con ese cliente en el rango.
-  var visitasHasta=[];
+  var visitasHasta=[], detalleVisitasHasta=[];
   cobradosMes.forEach(function(v){
     if(!v.created_at||!v.fecha) return;
     var origen=v.created_at.substring(0,10);
@@ -182,8 +229,11 @@ function metRenderCreditos(ventasMes){
       if(c2!==cliente || !v2.fecha) return;
       if(v2.fecha>=origen && v2.fecha<=v.fecha) dias[v2.fecha]=1;
     });
-    visitasHasta.push(Object.keys(dias).length);
+    var n=Object.keys(dias).length;
+    visitasHasta.push(n);
+    detalleVisitasHasta.push({cliente:v.veterinaria||v.doctora,origen:origen,cobro:v.fecha,visitas:n,monto:v.total||0});
   });
+  _metCache.visitasHastaDetalle=detalleVisitasHasta;
   var promVisitasHasta=visitasHasta.length ? (visitasHasta.reduce(function(a,b){return a+b;},0)/visitasHasta.length) : 0;
 
   // Seguimiento: de los créditos que TODAVÍA están pendientes, ¿a cuántos les
@@ -192,7 +242,7 @@ function metRenderCreditos(ventasMes){
   var pendientes=todas.filter(function(v){
     return v.movimiento==='Credito a 15 dias' && (v.estado==='⏳ Pendiente'||v.estado==='❌ Vencido') && v.created_at;
   });
-  var conSeguimiento=0;
+  var conSeguimiento=0, sinSeguimiento=[];
   pendientes.forEach(function(v){
     var origen=v.created_at.substring(0,10);
     var cliente=(v.veterinaria||v.doctora||'').trim().toLowerCase();
@@ -201,26 +251,60 @@ function metRenderCreditos(ventasMes){
       return c2===cliente && v2.id!==v.id && v2.fecha && v2.fecha>origen;
     });
     if(hubo) conSeguimiento++;
+    else sinSeguimiento.push(v);
   });
+  _metCache.sinSeguimiento=sinSeguimiento;
   var pctSeguimiento=pendientes.length ? (conSeguimiento/pendientes.length*100) : 0;
 
   el.innerHTML=
-    '<div class="sc"><div class="sl">Créditos cobrados este mes</div><div class="sv sv-g">'+cobradosMes.length+'</div><div class="ss">S/ '+totalCobradoMes.toFixed(2)+'</div></div>'+
-    '<div class="sc"><div class="sl">Visitas hasta cobrar</div><div class="sv" style="color:var(--brand);">'+(visitasHasta.length?promVisitasHasta.toFixed(1):'—')+'</div><div class="ss">promedio, todo tu historial</div></div>'+
-    '<div class="sc"><div class="sl">Seguimiento a créditos abiertos</div><div class="sv '+(pctSeguimiento>=70?'sv-g':pctSeguimiento>=40?'sv-w':'sv-r')+'">'+(pendientes.length?pctSeguimiento.toFixed(0)+'%':'—')+'</div><div class="ss">'+conSeguimiento+' de '+pendientes.length+' créditos pendientes con visita después</div></div>';
+    '<div class="sc" style="cursor:pointer;" onclick="metVerCreditosCobradosDetalle()" title="Ver créditos cobrados"><div class="sl">Créditos cobrados este mes</div><div class="sv sv-g">'+cobradosMes.length+'</div><div class="ss">S/ '+totalCobradoMes.toFixed(2)+'</div></div>'+
+    '<div class="sc"'+(visitasHasta.length?' style="cursor:pointer;" onclick="metVerVisitasHastaDetalle()" title="Ver detalle"':'')+'><div class="sl">Visitas hasta cobrar</div><div class="sv" style="color:var(--brand);">'+(visitasHasta.length?promVisitasHasta.toFixed(1):'—')+'</div><div class="ss">promedio, todo tu historial</div></div>'+
+    '<div class="sc"'+(sinSeguimiento.length?' style="cursor:pointer;" onclick="metVerSeguimientoDetalle()" title="Ver créditos sin seguimiento"':'')+'><div class="sl">Seguimiento a créditos abiertos</div><div class="sv '+(pctSeguimiento>=70?'sv-g':pctSeguimiento>=40?'sv-w':'sv-r')+'">'+(pendientes.length?pctSeguimiento.toFixed(0)+'%':'—')+'</div><div class="ss">'+conSeguimiento+' de '+pendientes.length+' créditos pendientes con visita después</div></div>';
 }
 
-// Tendencia de ventas de los últimos 6 meses — mismo patrón visual que la
-// ficha de cliente (cliRenderTrend en clientes.js), sobre TODAS tus ventas.
+function metVerCreditosCobradosDetalle(){
+  var rows=_metCache.cobradosMes;
+  metAbrirDetalle('Créditos cobrados · '+_metCache.mesLabel, _metTablaVentas(rows));
+}
+
+function metVerVisitasHastaDetalle(){
+  var rows=_metCache.visitasHastaDetalle;
+  if(!rows.length){metAbrirDetalle('Visitas hasta cobrar','<div class="es" style="padding:1rem;"><strong>Sin créditos cobrados este mes.</strong></div>');return;}
+  var html='<div class="tw"><table><thead><tr><th>Cliente</th><th>Crédito otorgado</th><th>Cobrado</th><th>Visitas</th><th>Monto</th></tr></thead><tbody>'+
+    rows.map(function(r){
+      return '<tr><td>'+esc(r.cliente||'---')+'</td><td>'+fmt(r.origen)+'</td><td>'+fmt(r.cobro)+'</td>'+
+        '<td style="text-align:center;"><strong>'+r.visitas+'</strong></td><td>S/ '+r.monto.toFixed(2)+'</td></tr>';
+    }).join('')+'</tbody></table></div>';
+  metAbrirDetalle('Visitas hasta cobrar · '+_metCache.mesLabel, html);
+}
+
+function metVerSeguimientoDetalle(){
+  var rows=_metCache.sinSeguimiento||[];
+  if(!rows.length){metAbrirDetalle('Créditos sin seguimiento','<div class="es" style="padding:1rem;"><strong>Todos tus créditos abiertos ya tuvieron seguimiento. 🎉</strong></div>');return;}
+  var html='<div style="font-size:12px;color:var(--tl);margin-bottom:.7rem;">Estos créditos siguen pendientes y no has vuelto a visitar a ese cliente desde que se los dejaste.</div>'+
+    '<div class="tw"><table><thead><tr><th>Cliente</th><th>Otorgado</th><th>Monto</th><th>Días abierto</th></tr></thead><tbody>'+
+    rows.map(function(v){
+      var dias=Math.round((new Date(hoy())-new Date(v.created_at.substring(0,10)))/86400000);
+      return '<tr><td>'+esc(v.veterinaria||v.doctora||'---')+'</td><td>'+fmt(v.created_at.substring(0,10))+'</td><td>S/ '+Number(v.total||0).toFixed(2)+'</td><td>'+dias+'</td></tr>';
+    }).join('')+'</tbody></table></div>';
+  metAbrirDetalle('Créditos abiertos sin seguimiento', html);
+}
+
+// ── Tendencia de ventas: desde julio del año en curso hasta el mes actual
+// (no una ventana fija de 6 meses) — crece cada mes que pasa. ──
+var MET_TREND_DESDE_MES=7; // Julio
 function metRenderTrend(){
   var el=gel('met-trend'); if(!el) return;
   var nombresMes=['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
   var hoyD=new Date();
+  var anio=hoyD.getFullYear(), mesActual=hoyD.getMonth()+1; // 1-12
+  var desde=MET_TREND_DESDE_MES>mesActual?1:MET_TREND_DESDE_MES; // si aún no llega julio, arranca en enero
   var meses=[];
-  for(var i=5;i>=0;i--){
-    var d=new Date(hoyD.getFullYear(),hoyD.getMonth()-i,1);
-    meses.push({key:d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'),lbl:nombresMes[d.getMonth()],total:0,esActual:i===0});
+  for(var m=desde;m<=mesActual;m++){
+    meses.push({key:anio+'-'+String(m).padStart(2,'0'),lbl:nombresMes[m-1],total:0,esActual:m===mesActual});
   }
+  var titEl=gel('met-trend-titulo');
+  if(titEl)titEl.textContent='Tendencia de ventas (desde '+nombresMes[desde-1]+')';
   var byKey={}; meses.forEach(function(m){byKey[m.key]=m;});
   (_ventas||[]).forEach(function(v){
     if(_metEsDevolucion(v.movimiento)||v.estado==='Anulado'||v.movimiento==='Visita'||v.movimiento==='Solo visita') return;
@@ -229,9 +313,45 @@ function metRenderTrend(){
   });
   var max=Math.max.apply(null,meses.map(function(m){return m.total;}).concat([1]));
   var hayDatos=meses.some(function(m){return m.total>0;});
-  if(!hayDatos){el.innerHTML='<div class="es" style="padding:.5rem;width:100%;"><strong>Sin ventas en los últimos 6 meses.</strong></div>';return;}
+  if(!hayDatos){el.innerHTML='<div class="es" style="padding:.5rem;width:100%;"><strong>Sin ventas todavía.</strong></div>';return;}
   el.innerHTML=meses.map(function(m){
     var h=Math.max(6,Math.round((m.total/max)*100));
     return '<div class="ctb'+(m.esActual?' now':'')+'"><b>'+(m.total>0?'S/ '+m.total.toFixed(0):'')+'</b><i style="height:'+h+'%;" title="'+m.lbl+': S/ '+m.total.toFixed(2)+'"></i><span>'+m.lbl+'</span></div>';
+  }).join('');
+}
+
+// ── Clientes en riesgo: recurrentes (2+ visitas en tu historial) que llevan
+// 20+ días sin que los visites. Es la contracara de "clientes más
+// recurrentes": a quién le debo una visita antes de que se enfríe. ──
+var MET_DIAS_RIESGO=20;
+function metRenderRiesgo(){
+  var el=gel('met-riesgo-lista'); if(!el) return;
+  var porCliente={};
+  (_ventas||[]).forEach(function(v){
+    var cliente=(v.veterinaria||v.doctora||'').trim(); if(!cliente||!v.fecha) return;
+    var key=cliente.toLowerCase();
+    if(!porCliente[key]) porCliente[key]={nombre:cliente,fechas:{}};
+    porCliente[key].fechas[v.fecha]=1;
+  });
+  var hoyD=new Date(hoy());
+  var lista=Object.keys(porCliente).map(function(k){
+    var c=porCliente[k];
+    var fechas=Object.keys(c.fechas).sort();
+    var visitas=fechas.length;
+    var ultima=fechas[fechas.length-1];
+    var dias=Math.round((hoyD-new Date(ultima))/86400000);
+    return {nombre:c.nombre,visitas:visitas,ultima:ultima,dias:dias};
+  }).filter(function(c){return c.visitas>=2 && c.dias>=MET_DIAS_RIESGO;})
+    .sort(function(a,b){return b.dias-a.dias;})
+    .slice(0,8);
+  if(!lista.length){
+    el.innerHTML='<div class="es" style="padding:.7rem;"><strong>Ninguno — tu cartera recurrente está al día. 👍</strong></div>';
+    return;
+  }
+  el.innerHTML=lista.map(function(c,i){
+    return '<div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;'+(i<lista.length-1?'border-bottom:1px solid var(--bd);':'')+'">'+
+      '<div><span style="font-size:13px;font-weight:600;">'+esc(c.nombre)+'</span><div style="font-size:11px;color:var(--tl);">'+c.visitas+' visitas en tu historial · última: '+fmt(c.ultima)+'</div></div>'+
+      '<span class="b b-vencido">'+c.dias+' días</span>'+
+    '</div>';
   }).join('');
 }
