@@ -16,6 +16,15 @@
 // Este panel no tiene un esDevolucion() compartido (cada archivo lo repite
 // inline) — se centraliza acá solo para este módulo.
 function _metEsDevolucion(mov){return mov==='Devolucion'||mov==='Devolución';}
+// "Venta realizada" = plata que YA es tuya, mismo criterio que rVentas()
+// en historial.js ("Mis Ventas"): contado, delivery o cobro de crédito.
+// Un "Credito a 15 dias" todavía pendiente NO cuenta acá — recién cuenta
+// cuando se cobra y pasa a ser "Cobro de credito". Usar este helper en
+// TODO lo que sea plata (ventas del mes, zonas, tendencia, top clientes)
+// para que ninguna tarjeta se desalinee de otra.
+function _metEsVentaRealizada(v){
+  return (v.movimiento==='Venta al contado'||v.movimiento==='Venta delivery'||v.movimiento==='Cobro de credito') && v.estado!=='Anulado';
+}
 
 // Caché de lo último calculado, para que los clics de "ver detalle" no
 // tengan que recalcular todo — solo filtran sobre lo que ya se pintó.
@@ -83,11 +92,14 @@ function rMetricas(){
   var promVisitasDia=diasTrabajados>0 ? (totalVisitas/diasTrabajados) : 0;
 
   // ── Ventas y ticket promedio ──
+  // OJO: mismo criterio que "Mis Ventas" (rVentas en historial.js) — ahí
+  // "Ventas" es plata YA REALIZADA, no incluye créditos todavía pendientes
+  // de cobro. Antes esta tarjeta sí los sumaba y por eso no cuadraba con
+  // "Mis Ventas" (reportado: acá salía S/1300 de más, exactamente el
+  // crédito abierto del mes).
   var totalVentaMes=0, transaccMes=0;
   ventasMes.forEach(function(v){
-    if(!_metEsDevolucion(v.movimiento) && v.estado!=='Anulado' && v.movimiento!=='Visita' && v.movimiento!=='Solo visita'){
-      totalVentaMes+=(v.total||0); transaccMes++;
-    }
+    if(_metEsVentaRealizada(v)){ totalVentaMes+=(v.total||0); transaccMes++; }
   });
   var ticketProm=transaccMes>0 ? (totalVentaMes/transaccMes) : 0;
   // Ventas diarias promedio: sobre días TRABAJADOS (no días de calendario)
@@ -108,7 +120,7 @@ function rMetricas(){
 
   metRenderZonas(ventasMes,ventasMesAnt);
   metRenderTopClientes(visitasArr,ventasMes);
-  metRenderCreditos(ventasMes);
+  metRenderCreditos(ventasMes,mes);
   metRenderTrend();
   metRenderRiesgo();
 }
@@ -141,7 +153,7 @@ function _metTablaVentas(rows){
 function _metVentasPorZona(rows){
   var m={};
   rows.forEach(function(v){
-    if(_metEsDevolucion(v.movimiento)||v.estado==='Anulado'||v.movimiento==='Visita'||v.movimiento==='Solo visita') return;
+    if(!_metEsVentaRealizada(v)) return;
     var z=v.zona||'Sin zona';
     m[z]=(m[z]||0)+(v.total||0);
   });
@@ -177,7 +189,7 @@ function metRenderZonas(ventasMes,ventasMesAnt){
 
 function metVerZonaDetalle(zona){
   var rows=_metCache.ventasMes.filter(function(v){
-    return (v.zona||'Sin zona')===zona && !_metEsDevolucion(v.movimiento) && v.estado!=='Anulado' && v.movimiento!=='Visita' && v.movimiento!=='Solo visita';
+    return (v.zona||'Sin zona')===zona && _metEsVentaRealizada(v);
   });
   var total=rows.reduce(function(s,v){return s+(v.total||0);},0);
   metAbrirDetalle('Ventas en '+zona+' · '+_metCache.mesLabel,
@@ -192,7 +204,7 @@ function metRenderTopClientes(visitasArr,ventasMes){
   visitasArr.forEach(function(x){visitas[x.cliente]=(visitas[x.cliente]||0)+1;});
   ventasMes.forEach(function(v){
     var cliente=(v.veterinaria||v.doctora||'').trim(); if(!cliente) return;
-    if(_metEsDevolucion(v.movimiento)||v.estado==='Anulado'||v.movimiento==='Visita'||v.movimiento==='Solo visita') return;
+    if(!_metEsVentaRealizada(v)) return;
     ventasCant[cliente]=(ventasCant[cliente]||0)+1;
     ventasMonto[cliente]=(ventasMonto[cliente]||0)+(v.total||0);
   });
@@ -210,10 +222,19 @@ function metRenderTopClientes(visitasArr,ventasMes){
   }).join('');
 }
 
-// ── Créditos: cobrados, visitas hasta cobrar, seguimiento a pendientes ──
-function metRenderCreditos(ventasMes){
+// ── Créditos: dejados, cobrados, visitas hasta cobrar, seguimiento ──
+function metRenderCreditos(ventasMes,mes){
   var el=gel('met-creditos-kpis'); if(!el) return;
   var todas=_ventas||[];
+
+  // Créditos DEJADOS este mes (en soles) — no es lo mismo que "cobrados":
+  // esto es cuánto le fiaste a la calle, sin importar si ya te lo pagaron.
+  // Usa created_at (fecha de alta real) porque `fecha` se pisa al cobrar.
+  var creditosDejadosMes=todas.filter(function(v){
+    return (v.movimiento==='Credito a 15 dias'||v.movimiento==='Cobro de credito') && v.created_at && v.created_at.substring(0,7)===mes;
+  });
+  var totalDejadoMes=creditosDejadosMes.reduce(function(s,v){return s+(v.total||0);},0);
+  _metCache.creditosDejadosMes=creditosDejadosMes;
 
   var cobradosMes=ventasMes.filter(function(v){return v.movimiento==='Cobro de credito' && v.estado==='✅ Pagado';});
   var totalCobradoMes=cobradosMes.reduce(function(s,v){return s+(v.total||0);},0);
@@ -262,9 +283,61 @@ function metRenderCreditos(ventasMes){
   var pctSeguimiento=pendientes.length ? (conSeguimiento/pendientes.length*100) : 0;
 
   el.innerHTML=
+    '<div class="sc"'+(creditosDejadosMes.length?' style="cursor:pointer;" onclick="metVerCreditosDejadosDetalle()" title="Ver créditos dejados"':'')+'><div class="sl">Créditos dejados este mes</div><div class="sv sv-o">S/ '+totalDejadoMes.toFixed(2)+'</div><div class="ss">'+creditosDejadosMes.length+' crédito'+(creditosDejadosMes.length!==1?'s':'')+'</div></div>'+
     '<div class="sc" style="cursor:pointer;" onclick="metVerCreditosCobradosDetalle()" title="Ver créditos cobrados"><div class="sl">Créditos cobrados este mes</div><div class="sv sv-g">'+cobradosMes.length+'</div><div class="ss">S/ '+totalCobradoMes.toFixed(2)+'</div></div>'+
     '<div class="sc"'+(visitasHasta.length?' style="cursor:pointer;" onclick="metVerVisitasHastaDetalle()" title="Ver detalle"':'')+'><div class="sl">Visitas hasta cobrar</div><div class="sv" style="color:var(--brand);">'+(visitasHasta.length?promVisitasHasta.toFixed(1):'—')+'</div><div class="ss">promedio, todo tu historial</div></div>'+
     '<div class="sc"'+(sinSeguimiento.length?' style="cursor:pointer;" onclick="metVerSeguimientoDetalle()" title="Ver créditos sin seguimiento"':'')+'><div class="sl">Seguimiento a créditos abiertos</div><div class="sv '+(pctSeguimiento>=70?'sv-g':pctSeguimiento>=40?'sv-w':'sv-r')+'">'+(pendientes.length?pctSeguimiento.toFixed(0)+'%':'—')+'</div><div class="ss">'+conSeguimiento+' de '+pendientes.length+' créditos pendientes con visita después</div></div>';
+
+  metRenderCartera(todas);
+}
+
+// ── Cartera pendiente: proyección de "si cobro todo lo que me deben, a
+// cuánto llegaría" — separada en vencidos / por vencer en 7 días / resto,
+// porque no es lo mismo un vencido que un crédito recién dejado. Mira TODO
+// el historial pendiente, no solo el mes elegido: una deuda no caduca sola.
+var MET_DIAS_POR_VENCER=7;
+function metRenderCartera(todas){
+  var totalEl=gel('met-cartera-total'), el=gel('met-cartera-kpis');
+  if(!el) return;
+  var pend=todas.filter(function(v){
+    return v.movimiento==='Credito a 15 dias' && (v.estado==='⏳ Pendiente'||v.estado==='❌ Vencido');
+  });
+  var hoyD=new Date(hoy());
+  var vencidos=[], porVencer=[], resto=[];
+  pend.forEach(function(v){
+    if(!v.fecha_cobro){resto.push(v);return;}
+    var dias=Math.round((new Date(v.fecha_cobro)-hoyD)/86400000);
+    if(v.estado==='❌ Vencido'||dias<0) vencidos.push(v);
+    else if(dias<=MET_DIAS_POR_VENCER) porVencer.push(v);
+    else resto.push(v);
+  });
+  var sum=function(rows){return rows.reduce(function(s,v){return s+(v.total||0);},0);};
+  var totalPend=sum(pend);
+  _metCache.carteraVencidos=vencidos;
+  _metCache.carteraPorVencer=porVencer;
+  _metCache.carteraResto=resto;
+  if(totalEl) totalEl.textContent='S/ '+totalPend.toFixed(2);
+  el.innerHTML=
+    '<div class="sc"'+(vencidos.length?' style="cursor:pointer;" onclick="metVerCarteraDetalle(\'vencidos\')"':'')+'><div class="sl">Vencidos</div><div class="sv sv-r">S/ '+sum(vencidos).toFixed(2)+'</div><div class="ss">'+vencidos.length+' cliente'+(vencidos.length!==1?'s':'')+'</div></div>'+
+    '<div class="sc"'+(porVencer.length?' style="cursor:pointer;" onclick="metVerCarteraDetalle(\'porVencer\')"':'')+'><div class="sl">Por vencer (7 días)</div><div class="sv sv-w">S/ '+sum(porVencer).toFixed(2)+'</div><div class="ss">'+porVencer.length+' cliente'+(porVencer.length!==1?'s':'')+'</div></div>'+
+    '<div class="sc"'+(resto.length?' style="cursor:pointer;" onclick="metVerCarteraDetalle(\'resto\')"':'')+'><div class="sl">Resto pendiente</div><div class="sv" style="color:var(--brand);">S/ '+sum(resto).toFixed(2)+'</div><div class="ss">'+resto.length+' cliente'+(resto.length!==1?'s':'')+'</div></div>';
+}
+
+function metVerCarteraDetalle(grupo){
+  var rows=grupo==='vencidos'?_metCache.carteraVencidos:grupo==='porVencer'?_metCache.carteraPorVencer:_metCache.carteraResto;
+  var titulo=grupo==='vencidos'?'Créditos vencidos':grupo==='porVencer'?'Créditos por vencer (7 días)':'Resto de la cartera pendiente';
+  if(!rows||!rows.length){metAbrirDetalle(titulo,'<div class="es" style="padding:1rem;"><strong>No hay créditos en este grupo.</strong></div>');return;}
+  var ordenadas=rows.slice().sort(function(a,b){return (a.fecha_cobro||'').localeCompare(b.fecha_cobro||'');});
+  var html='<div class="tw"><table><thead><tr><th>Cliente</th><th>Producto</th><th>Vence</th><th>Monto</th></tr></thead><tbody>'+
+    ordenadas.map(function(v){
+      return '<tr><td>'+esc(v.veterinaria||v.doctora||'---')+'</td><td>'+esc(v.producto||'---')+'</td><td>'+fmt(v.fecha_cobro)+'</td><td><strong>S/ '+Number(v.total||0).toFixed(2)+'</strong></td></tr>';
+    }).join('')+'</tbody></table></div>';
+  metAbrirDetalle(titulo, html);
+}
+
+function metVerCreditosDejadosDetalle(){
+  var rows=_metCache.creditosDejadosMes;
+  metAbrirDetalle('Créditos dejados · '+_metCache.mesLabel, _metTablaVentas(rows));
 }
 
 function metVerCreditosCobradosDetalle(){
@@ -312,7 +385,7 @@ function metRenderTrend(){
   if(titEl)titEl.textContent='Tendencia de ventas (desde '+nombresMes[desde-1]+')';
   var byKey={}; meses.forEach(function(m){byKey[m.key]=m;});
   (_ventas||[]).forEach(function(v){
-    if(_metEsDevolucion(v.movimiento)||v.estado==='Anulado'||v.movimiento==='Visita'||v.movimiento==='Solo visita') return;
+    if(!_metEsVentaRealizada(v)) return;
     var k=v.fecha?v.fecha.substring(0,7):null;
     if(k&&byKey[k]) byKey[k].total+=(v.total||0);
   });
