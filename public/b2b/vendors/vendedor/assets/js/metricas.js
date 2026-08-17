@@ -90,6 +90,10 @@ function rMetricas(){
     }
   });
   var ticketProm=transaccMes>0 ? (totalVentaMes/transaccMes) : 0;
+  // Ventas diarias promedio: sobre días TRABAJADOS (no días de calendario)
+  // — mismo criterio que "Prom. visitas / día", para que ambas respondan
+  // "¿cómo me rinde un día que salgo a la calle?", no "¿cómo rinde el mes?".
+  var ventaDiariaProm=diasTrabajados>0 ? (totalVentaMes/diasTrabajados) : 0;
 
   var elKpi=gel('met-kpis');
   if(elKpi){
@@ -97,6 +101,7 @@ function rMetricas(){
       '<div class="sc"><div class="sl">Total visitas</div><div class="sv sv-b">'+totalVisitas+'</div><div class="ss">'+diasTrabajados+' día'+(diasTrabajados!==1?'s':'')+' trabajado'+(diasTrabajados!==1?'s':'')+'</div></div>'+
       '<div class="sc"><div class="sl">Ventas / visitas</div><div class="sv sv-s">'+tasaConversion.toFixed(0)+'%</div><div class="ss">'+visitasConVenta+' de '+totalVisitas+' visitas vendieron algo</div></div>'+
       '<div class="sc"><div class="sl">Ventas del mes</div><div class="sv sv-b">S/ '+totalVentaMes.toFixed(2)+'</div></div>'+
+      '<div class="sc"><div class="sl">Ventas diarias promedio</div><div class="sv sv-o">S/ '+ventaDiariaProm.toFixed(2)+'</div><div class="ss">por día trabajado</div></div>'+
       '<div class="sc"><div class="sl">Ticket promedio</div><div class="sv sv-g">S/ '+ticketProm.toFixed(2)+'</div></div>'+
       '<div class="sc"><div class="sl">Prom. visitas / día</div><div class="sv" style="color:var(--brand);">'+promVisitasDia.toFixed(1)+'</div></div>';
   }
