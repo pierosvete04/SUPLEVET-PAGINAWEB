@@ -101,6 +101,7 @@ function transferirCartera(origenId, destinoId, filtros, tipo, motivo){
     // monto_pendiente_movido acumula el total de TODAS las transacciones movidas
     // (no solo créditos pendientes), para reflejar el monto real transferido.
     var aggMap={};
+    var vetsTransferidas={};
     ventasMover.forEach(function(v){
       var key=(v.zona||'')+'|'+(v.veterinaria||'')+'|'+(v.doctora||'');
       if(!aggMap[key]) aggMap[key]={
@@ -113,11 +114,39 @@ function transferirCartera(origenId, destinoId, filtros, tipo, motivo){
       };
       aggMap[key].num_ventas_movidas++;
       aggMap[key].monto_pendiente_movido += Number(v.total||0);
+      if(v.veterinaria) vetsTransferidas[v.veterinaria]=1;
     });
     var rows=Object.keys(aggMap).map(function(k){return aggMap[k];});
+
+    // Si alguna de las veterinarias movidas tenía "vendedor asignado" (override
+    // de exclusividad, ej. Animal 24 Horas San Miguel) apuntando al origen, ese
+    // override se queda apuntando al vendedor viejo si no lo actualizamos acá —
+    // el destino nunca vería la veterinaria (la sigue "viendo" solo el origen,
+    // que si fue dado de baja, la deja sin nadie con acceso). Se sincroniza
+    // solo cuando el override actual ES el origen: si estaba en "se reparte
+    // por zona" (null) o apuntaba a un tercero, eso no lo tocamos.
+    var vetNames=Object.keys(vetsTransferidas);
+    // Un PATCH por veterinaria (mismo patrón =eq. que usa el resto del panel)
+    // en vez de un solo in.(...) — evita depender del escapado de comillas
+    // de PostgREST para nombres con comas o comillas.
+    var syncAsignado=vetNames.reduce(function(chain, nombreVet){
+      return chain.then(function(){
+        return fetch(SB+'/rest/v1/clientes_vet?vendedor_asignado_id=eq.'+encodeURIComponent(origenId)+
+          '&nombre_vet=eq.'+encodeURIComponent(nombreVet),{
+          method:'PATCH',
+          headers:Object.assign(getHeaders(),{'Prefer':'return=minimal'}),
+          body:JSON.stringify({vendedor_asignado_id:destinoId})
+        }).catch(function(e){
+          if(window.console) console.warn('No se pudo sincronizar vendedor_asignado_id de '+nombreVet+':', e.message);
+        });
+      });
+    }, Promise.resolve());
+
     // Best-effort audit (no bloquea si falla la tabla aún no existe)
-    return sbP('transferencias_cartera', rows).catch(function(e){
-      if(window.console) console.warn('No se pudo registrar auditoría de transferencia:', e.message);
+    return syncAsignado.then(function(){
+      return sbP('transferencias_cartera', rows).catch(function(e){
+        if(window.console) console.warn('No se pudo registrar auditoría de transferencia:', e.message);
+      });
     }).then(function(){return {numVentas:ids.length, montoPend:monto};});
   });
 }
