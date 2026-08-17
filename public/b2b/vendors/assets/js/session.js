@@ -98,7 +98,10 @@
         if (rows && rows.length) {
           return { role: 'admin', user: rows[0] };
         }
-        return _get('vendedores', 'id=eq.' + userId + '&select=*', token)
+        // activo=eq.true acá también: un vendedor dado de baja NO debe poder
+        // loguearse aunque su fila siga existiendo. Antes solo se filtraba
+        // para admins — un vendedor desactivado sí conseguía sesión nueva.
+        return _get('vendedores', 'id=eq.' + userId + '&activo=eq.true&select=*', token)
           .then(function (vrows) {
             if (vrows && vrows.length) return { role: 'vendedor', user: vrows[0] };
             return null;
@@ -176,8 +179,11 @@
       .then(function (auth) {
         // Releer el perfil para que cambios de zona, productos asignados o
         // una baja de vendedor se apliquen sin obligar a cerrar sesión.
+        // activo=eq.true SIEMPRE (antes solo se aplicaba para admin): sin
+        // esto, un vendedor dado de baja seguía renovando su sesión cada
+        // 45 min indefinidamente y nunca era expulsado del panel.
         var table = saved.role === 'admin' ? 'admins' : 'vendedores';
-        var q = 'id=eq.' + saved.user.id + '&select=*' + (saved.role === 'admin' ? '&activo=eq.true' : '');
+        var q = 'id=eq.' + saved.user.id + '&select=*&activo=eq.true';
         return _get(table, q, auth.access_token)
           .then(function (rows) {
             if (!rows || !rows.length) {
