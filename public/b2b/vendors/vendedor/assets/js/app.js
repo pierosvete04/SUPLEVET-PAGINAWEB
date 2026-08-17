@@ -4,7 +4,7 @@
 var _loadErrors = [];
 
 var _navFromHash = false;
-var _VALID_PAGES = ['dashboard','registrar','plan','ruta','creditos','mercaderia','historial','pdf','ventas','clientes'];
+var _VALID_PAGES = ['dashboard','metricas','registrar','plan','ruta','creditos','mercaderia','historial','pdf','ventas','clientes'];
 
 function goTo(p){
   // Validate page — fall back to dashboard if unknown
@@ -38,6 +38,7 @@ function goTo(p){
   // Cancel any pending post-save redirect if user navigates manually
   if(p!=='registrar'&&typeof _mvPostSaveTimer!=='undefined'&&_mvPostSaveTimer){clearTimeout(_mvPostSaveTimer);_mvPostSaveTimer=null;}
   if(p==='dashboard')rDash();
+  if(p==='metricas'&&typeof rMetricas==='function')rMetricas();
   if(p==='creditos')rCreditos();
   if(p==='ventas'){poblarMesesVt();rVentas();}
   if(p==='registrar')mvInicializar();

@@ -733,6 +733,9 @@ main:focus{outline:none;}
 .svui-error[hidden]{display:none;}
 
 /* En móvil el diálogo sube desde abajo, como el resto de modales. */
+@media (max-width:700px){
+  .met-grid-2{grid-template-columns:1fr!important;}
+}
 @media (max-width:600px){
   .mo[id^="svui-"] .md{
     width:100%!important;max-width:100%!important;
