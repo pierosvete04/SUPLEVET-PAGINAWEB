@@ -17,6 +17,49 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ColumnPicker } from "@/components/admin/editores/ColumnPicker";
+import { useColumnasVisibles } from "@/hooks/useColumnasVisibles";
+import {
+  agruparMetricasPorCampana,
+  derivarMetricas,
+  METRICAS_VACIAS,
+  sumarMetricas,
+  type FilaMetricaDiaria,
+  type MetricasAgregadas,
+} from "@/lib/meta-ads-metrics";
+
+type ColumnaMetrica =
+  | "plataforma"
+  | "nivel"
+  | "estado"
+  | "gasto"
+  | "impresiones"
+  | "clics"
+  | "ctr"
+  | "cpc"
+  | "cpm"
+  | "videoViews"
+  | "resultados"
+  | "costoPorResultado"
+  | "valorResultados"
+  | "roasMeta";
+
+const COLUMNAS_DISPONIBLES: { valor: ColumnaMetrica; label: string }[] = [
+  { valor: "plataforma", label: "Plataforma" },
+  { valor: "nivel", label: "Nivel" },
+  { valor: "estado", label: "Estado" },
+  { valor: "gasto", label: "Gasto" },
+  { valor: "impresiones", label: "Impresiones" },
+  { valor: "clics", label: "Clics" },
+  { valor: "ctr", label: "CTR" },
+  { valor: "cpc", label: "CPC" },
+  { valor: "cpm", label: "CPM" },
+  { valor: "videoViews", label: "Video views" },
+  { valor: "resultados", label: "Resultados" },
+  { valor: "costoPorResultado", label: "Costo/Resultado" },
+  { valor: "valorResultados", label: "Valor resultados" },
+  { valor: "roasMeta", label: "ROAS (Meta)" },
+];
 
 interface CuentaAds {
   external_id: string;
@@ -49,57 +92,17 @@ interface CuponOpcion {
   editor_id: string | null;
 }
 
-// Solo se suman los valores ADITIVOS (gasto, impresiones, clics, video
-// views, resultados, valor de resultados) — CTR/CPC/CPM se recalculan a
-// partir de esa suma, nunca sumando directamente los % o promedios diarios
-// que devuelve Meta (sumar tasas de días distintos da un número sin sentido).
-interface MetricasAgregadas {
-  spend: number;
-  impresiones: number;
-  clics: number;
-  videoViews: number;
-  resultados: number;
-  valorResultados: number;
-}
-
-const METRICAS_VACIAS: MetricasAgregadas = {
-  spend: 0,
-  impresiones: 0,
-  clics: 0,
-  videoViews: 0,
-  resultados: 0,
-  valorResultados: 0,
-};
-
 const SIN_ASIGNAR = "__sin_asignar__";
 const TODOS = "__todos__";
 const NIVEL_LABEL: Record<CampanaAds["nivel"], string> = { campana: "Campaña", conjunto: "Conjunto de anuncios" };
 const PLATAFORMA_LABEL: Record<CampanaAds["plataforma"], string> = { meta: "Meta", tiktok: "TikTok" };
 const ESTADOS_ACTIVOS = ["ACTIVE", "CAMPAIGN_ACTIVE"];
 
-function sumarMetricas(a: MetricasAgregadas, b: MetricasAgregadas): MetricasAgregadas {
-  return {
-    spend: a.spend + b.spend,
-    impresiones: a.impresiones + b.impresiones,
-    clics: a.clics + b.clics,
-    videoViews: a.videoViews + b.videoViews,
-    resultados: a.resultados + b.resultados,
-    valorResultados: a.valorResultados + b.valorResultados,
-  };
-}
-
-// Derivados a partir de las sumas aditivas — ver comentario de MetricasAgregadas.
-function derivarMetricas(m: MetricasAgregadas) {
-  return {
-    ctr: m.impresiones > 0 ? (m.clics / m.impresiones) * 100 : null,
-    cpc: m.clics > 0 ? m.spend / m.clics : null,
-    cpm: m.impresiones > 0 ? (m.spend / m.impresiones) * 1000 : null,
-    costoPorResultado: m.resultados > 0 ? m.spend / m.resultados : null,
-    roasMeta: m.spend > 0 ? m.valorResultados / m.spend : null,
-  };
-}
-
 export default function AdminCampanasAdsPage() {
+  const { visibles: columnasVisibles, toggle: toggleColumna } = useColumnasVisibles<ColumnaMetrica>(
+    "campanas-ads-columnas",
+    COLUMNAS_DISPONIBLES.map((c) => c.valor)
+  );
   const [cuentas, setCuentas] = useState<CuentaAds[]>([]);
   const [buscandoCuentas, setBuscandoCuentas] = useState(false);
   const [campanas, setCampanas] = useState<CampanaAds[]>([]);
@@ -153,31 +156,7 @@ export default function AdminCampanasAdsPage() {
     }
     setCuponesPorCampana(vinculos);
 
-    const agregadas = new Map<string, MetricasAgregadas>();
-    interface FilaMetrica {
-      campana_ads_id: string;
-      spend: number;
-      impresiones: number;
-      clics: number;
-      video_views: number;
-      resultados: number;
-      valor_resultados: number;
-    }
-    for (const m of (metricasData as FilaMetrica[]) ?? []) {
-      const actual = agregadas.get(m.campana_ads_id) ?? METRICAS_VACIAS;
-      agregadas.set(
-        m.campana_ads_id,
-        sumarMetricas(actual, {
-          spend: Number(m.spend),
-          impresiones: m.impresiones,
-          clics: m.clics,
-          videoViews: m.video_views,
-          resultados: m.resultados,
-          valorResultados: Number(m.valor_resultados),
-        })
-      );
-    }
-    setMetricas(agregadas);
+    setMetricas(agruparMetricasPorCampana((metricasData as FilaMetricaDiaria[]) ?? []));
     setCargando(false);
   }, []);
 
@@ -374,6 +353,9 @@ export default function AdminCampanasAdsPage() {
             </SelectContent>
           </Select>
         </div>
+        <div className="ml-auto">
+          <ColumnPicker opciones={COLUMNAS_DISPONIBLES} visibles={columnasVisibles} onToggle={toggleColumna} />
+        </div>
       </div>
 
       {/* Resumen del filtro actual: al elegir un editor, esto ES su resumen. */}
@@ -401,20 +383,20 @@ export default function AdminCampanasAdsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Nombre</TableHead>
-                <TableHead>Plataforma</TableHead>
-                <TableHead>Nivel</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Gasto</TableHead>
-                <TableHead>Impresiones</TableHead>
-                <TableHead>Clics</TableHead>
-                <TableHead>CTR</TableHead>
-                <TableHead>CPC</TableHead>
-                <TableHead>CPM</TableHead>
-                <TableHead>Video views</TableHead>
-                <TableHead>Resultados</TableHead>
-                <TableHead>Costo/Resultado</TableHead>
-                <TableHead>Valor resultados</TableHead>
-                <TableHead>ROAS (Meta)</TableHead>
+                {columnasVisibles.has("plataforma") && <TableHead>Plataforma</TableHead>}
+                {columnasVisibles.has("nivel") && <TableHead>Nivel</TableHead>}
+                {columnasVisibles.has("estado") && <TableHead>Estado</TableHead>}
+                {columnasVisibles.has("gasto") && <TableHead>Gasto</TableHead>}
+                {columnasVisibles.has("impresiones") && <TableHead>Impresiones</TableHead>}
+                {columnasVisibles.has("clics") && <TableHead>Clics</TableHead>}
+                {columnasVisibles.has("ctr") && <TableHead>CTR</TableHead>}
+                {columnasVisibles.has("cpc") && <TableHead>CPC</TableHead>}
+                {columnasVisibles.has("cpm") && <TableHead>CPM</TableHead>}
+                {columnasVisibles.has("videoViews") && <TableHead>Video views</TableHead>}
+                {columnasVisibles.has("resultados") && <TableHead>Resultados</TableHead>}
+                {columnasVisibles.has("costoPorResultado") && <TableHead>Costo/Resultado</TableHead>}
+                {columnasVisibles.has("valorResultados") && <TableHead>Valor resultados</TableHead>}
+                {columnasVisibles.has("roasMeta") && <TableHead>ROAS (Meta)</TableHead>}
                 <TableHead>Editor</TableHead>
                 <TableHead>Cupón vinculado</TableHead>
               </TableRow>
@@ -422,7 +404,7 @@ export default function AdminCampanasAdsPage() {
             <TableBody>
               {!cargando && campanasFiltradas.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={17} className="text-center text-muted-foreground">
+                  <TableCell colSpan={columnasVisibles.size + 3} className="text-center text-muted-foreground">
                     {campanas.length === 0
                       ? 'Sin campañas sincronizadas todavía — usa "Sincronizar ahora".'
                       : "Ninguna campaña coincide con estos filtros."}
@@ -441,30 +423,50 @@ export default function AdminCampanasAdsPage() {
                         <p className="text-xs text-muted-foreground">Dentro de campaña {c.campana_external_id}</p>
                       )}
                     </TableCell>
-                    <TableCell>{PLATAFORMA_LABEL[c.plataforma]}</TableCell>
-                    <TableCell>{NIVEL_LABEL[c.nivel]}</TableCell>
-                    <TableCell>
-                      <Badge color={ESTADOS_ACTIVOS.includes(c.estado ?? "") ? "verde" : "gris"}>{c.estado ?? "—"}</Badge>
-                    </TableCell>
-                    <TableCell>S/.{m.spend.toFixed(2)}</TableCell>
-                    <TableCell className="text-muted-foreground">{m.impresiones.toLocaleString("es-PE")}</TableCell>
-                    <TableCell className="text-muted-foreground">{m.clics.toLocaleString("es-PE")}</TableCell>
-                    <TableCell className="text-muted-foreground">{d.ctr === null ? "—" : `${d.ctr.toFixed(2)}%`}</TableCell>
-                    <TableCell className="text-muted-foreground">{d.cpc === null ? "—" : `S/.${d.cpc.toFixed(2)}`}</TableCell>
-                    <TableCell className="text-muted-foreground">{d.cpm === null ? "—" : `S/.${d.cpm.toFixed(2)}`}</TableCell>
-                    <TableCell className="text-muted-foreground">{m.videoViews.toLocaleString("es-PE")}</TableCell>
-                    <TableCell>{m.resultados}</TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {d.costoPorResultado === null ? "—" : `S/.${d.costoPorResultado.toFixed(2)}`}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">S/.{m.valorResultados.toFixed(2)}</TableCell>
-                    <TableCell>
-                      {d.roasMeta === null ? (
-                        "—"
-                      ) : (
-                        <Badge color={d.roasMeta >= 1 ? "verde" : "naranja"}>{d.roasMeta.toFixed(2)}x</Badge>
-                      )}
-                    </TableCell>
+                    {columnasVisibles.has("plataforma") && <TableCell>{PLATAFORMA_LABEL[c.plataforma]}</TableCell>}
+                    {columnasVisibles.has("nivel") && <TableCell>{NIVEL_LABEL[c.nivel]}</TableCell>}
+                    {columnasVisibles.has("estado") && (
+                      <TableCell>
+                        <Badge color={ESTADOS_ACTIVOS.includes(c.estado ?? "") ? "verde" : "gris"}>{c.estado ?? "—"}</Badge>
+                      </TableCell>
+                    )}
+                    {columnasVisibles.has("gasto") && <TableCell>S/.{m.spend.toFixed(2)}</TableCell>}
+                    {columnasVisibles.has("impresiones") && (
+                      <TableCell className="text-muted-foreground">{m.impresiones.toLocaleString("es-PE")}</TableCell>
+                    )}
+                    {columnasVisibles.has("clics") && (
+                      <TableCell className="text-muted-foreground">{m.clics.toLocaleString("es-PE")}</TableCell>
+                    )}
+                    {columnasVisibles.has("ctr") && (
+                      <TableCell className="text-muted-foreground">{d.ctr === null ? "—" : `${d.ctr.toFixed(2)}%`}</TableCell>
+                    )}
+                    {columnasVisibles.has("cpc") && (
+                      <TableCell className="text-muted-foreground">{d.cpc === null ? "—" : `S/.${d.cpc.toFixed(2)}`}</TableCell>
+                    )}
+                    {columnasVisibles.has("cpm") && (
+                      <TableCell className="text-muted-foreground">{d.cpm === null ? "—" : `S/.${d.cpm.toFixed(2)}`}</TableCell>
+                    )}
+                    {columnasVisibles.has("videoViews") && (
+                      <TableCell className="text-muted-foreground">{m.videoViews.toLocaleString("es-PE")}</TableCell>
+                    )}
+                    {columnasVisibles.has("resultados") && <TableCell>{m.resultados}</TableCell>}
+                    {columnasVisibles.has("costoPorResultado") && (
+                      <TableCell className="text-muted-foreground">
+                        {d.costoPorResultado === null ? "—" : `S/.${d.costoPorResultado.toFixed(2)}`}
+                      </TableCell>
+                    )}
+                    {columnasVisibles.has("valorResultados") && (
+                      <TableCell className="text-muted-foreground">S/.{m.valorResultados.toFixed(2)}</TableCell>
+                    )}
+                    {columnasVisibles.has("roasMeta") && (
+                      <TableCell>
+                        {d.roasMeta === null ? (
+                          "—"
+                        ) : (
+                          <Badge color={d.roasMeta >= 1 ? "verde" : "naranja"}>{d.roasMeta.toFixed(2)}x</Badge>
+                        )}
+                      </TableCell>
+                    )}
                     <TableCell>
                       <Select
                         value={c.editor_id ?? SIN_ASIGNAR}

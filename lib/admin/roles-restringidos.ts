@@ -1,4 +1,4 @@
-import { FileText, Inbox, LayoutDashboard, Plus } from "lucide-react";
+import { BarChart3, FileText, History, Inbox, LayoutDashboard, Plus, Ticket } from "lucide-react";
 import type { NavEntry } from "@/components/admin/nav/NavMain";
 
 // Roles restringidos (pensados para personal externo): solo las secciones
@@ -30,6 +30,9 @@ export const ROLES_RESTRINGIDOS = {
     items: [
       { title: "Mi dashboard", url: "/admin/mi-panel", icon: LayoutDashboard },
       { title: "Crear pedido", url: "/admin/mi-panel/nuevo", icon: Plus },
+      { title: "Ventas", url: "/admin/mi-panel/ventas", icon: Ticket },
+      { title: "Historial", url: "/admin/mi-panel/historial", icon: History },
+      { title: "Analíticas", url: "/admin/mi-panel/analiticas", icon: BarChart3 },
     ] satisfies NavEntry[],
   },
 } as const;

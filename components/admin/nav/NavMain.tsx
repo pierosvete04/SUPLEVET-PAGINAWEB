@@ -45,14 +45,24 @@ export function NavMain({ items }: NavMainProps) {
   const pathname = usePathname();
   const { state, setOpen } = useSidebar();
 
+  // Una sola URL "ganadora" en TODO el árbol (hojas sueltas + hojas dentro de
+  // grupos) — antes cada botón se comparaba solo, así que en "/admin/mi-panel/nuevo"
+  // tanto "Mi dashboard" (/admin/mi-panel, prefijo válido) como "Crear pedido"
+  // (match exacto) quedaban resaltados a la vez. Al competir todas las URLs
+  // juntas por la coincidencia más larga, gana una sola.
+  const urlActivaGlobal = useMemo(() => {
+    const todasLasUrls = items.flatMap((entry) => (esGrupo(entry) ? entry.items.map((leaf) => leaf.url) : entry.url));
+    return urlActivaEn(pathname, todasLasUrls);
+  }, [items, pathname]);
+
   // Grupo al que pertenece la ruta actual, para abrir el drill-down
   // automáticamente al entrar directo por URL a una página del grupo.
   const grupoActivo = useMemo(() => {
     const grupo = items.find(
-      (entry): entry is NavGroup => esGrupo(entry) && !!urlActivaEn(pathname, entry.items.map((leaf) => leaf.url))
+      (entry): entry is NavGroup => esGrupo(entry) && entry.items.some((leaf) => leaf.url === urlActivaGlobal)
     );
     return grupo?.title ?? null;
-  }, [items, pathname]);
+  }, [items, urlActivaGlobal]);
 
   const [grupoAbierto, setGrupoAbierto] = useState<string | null>(grupoActivo);
 
@@ -65,8 +75,6 @@ export function NavMain({ items }: NavMainProps) {
   );
 
   if (grupoActual) {
-    const urlActiva = urlActivaEn(pathname, grupoActual.items.map((leaf) => leaf.url));
-
     return (
       <SidebarGroup>
         <SidebarGroupContent className="flex flex-col gap-2">
@@ -80,7 +88,7 @@ export function NavMain({ items }: NavMainProps) {
           </SidebarMenu>
           <SidebarMenu>
             {grupoActual.items.map((leaf) => {
-              const activo = leaf.url === urlActiva;
+              const activo = leaf.url === urlActivaGlobal;
               return (
                 <SidebarMenuItem key={leaf.url}>
                   <SidebarMenuButton
@@ -129,7 +137,7 @@ export function NavMain({ items }: NavMainProps) {
               );
             }
 
-            const activo = entry.url === urlActivaEn(pathname, [entry.url]);
+            const activo = entry.url === urlActivaGlobal;
             return (
               <SidebarMenuItem key={entry.url}>
                 <SidebarMenuButton

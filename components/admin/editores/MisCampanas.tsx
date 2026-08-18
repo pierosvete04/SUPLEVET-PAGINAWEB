@@ -5,6 +5,15 @@ import { createClient } from "@/lib/supabase/client";
 import { Badge } from "@/components/admin/Badge";
 import { TableCard } from "@/components/admin/table/TableCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { ColumnPicker } from "@/components/admin/editores/ColumnPicker";
+import { useColumnasVisibles } from "@/hooks/useColumnasVisibles";
+import {
+  agruparMetricasPorCampana,
+  derivarMetricas,
+  METRICAS_VACIAS,
+  type FilaMetricaDiaria,
+  type MetricasAgregadas,
+} from "@/lib/meta-ads-metrics";
 
 interface CampanaAds {
   id: string;
@@ -21,18 +30,56 @@ interface VentasReales {
   exclusiva: boolean;
 }
 
+type ColumnaMetrica =
+  | "plataforma"
+  | "nivel"
+  | "estado"
+  | "impresiones"
+  | "clics"
+  | "ctr"
+  | "cpc"
+  | "cpm"
+  | "videoViews"
+  | "resultados"
+  | "costoPorResultado"
+  | "valorResultados"
+  | "roasMeta";
+
+const COLUMNAS_DISPONIBLES: { valor: ColumnaMetrica; label: string }[] = [
+  { valor: "plataforma", label: "Plataforma" },
+  { valor: "nivel", label: "Nivel" },
+  { valor: "estado", label: "Estado" },
+  { valor: "impresiones", label: "Impresiones" },
+  { valor: "clics", label: "Clics" },
+  { valor: "ctr", label: "CTR" },
+  { valor: "cpc", label: "CPC" },
+  { valor: "cpm", label: "CPM" },
+  { valor: "videoViews", label: "Video views" },
+  { valor: "resultados", label: "Resultados (plataforma)" },
+  { valor: "costoPorResultado", label: "Costo/Resultado" },
+  { valor: "valorResultados", label: "Valor resultados (plataforma)" },
+  { valor: "roasMeta", label: "ROAS (plataforma)" },
+];
+
 const DIAS_VENTANA = 30;
 const NIVEL_LABEL: Record<CampanaAds["nivel"], string> = { campana: "Campaña", conjunto: "Conjunto de anuncios" };
 const PLATAFORMA_LABEL: Record<CampanaAds["plataforma"], string> = { meta: "Meta", tiktok: "TikTok" };
 
 // Solo lectura: el objetivo es que el editor compare, para cada video/
-// campaña suya, lo que Meta/TikTok reporta contra sus ventas REALES (por
-// cupón) — nunca sumados, siempre uno al lado del otro. Si el admin vinculó
-// un cupón específico a esa campaña, la venta es exacta; si no, se muestra
-// el total del periodo con una nota de que no es exclusivo de ese video.
+// campaña suya, TODAS las métricas que reporta Meta/TikTok contra sus
+// ventas REALES (por cupón) — nunca sumados, siempre uno al lado del otro.
+// Si el admin vinculó cupones específicos a esa campaña, la venta es exacta;
+// si no, se muestra el total del periodo con una nota de que no es
+// exclusivo de ese video. Gasto/Ventas reales/ROAS real siempre visibles —
+// el resto de métricas de la plataforma son elegibles con el selector de
+// columnas ("dashboard personalizado").
 export function MisCampanas({ editorId, codigosCupon }: { editorId: string; codigosCupon: string[] }) {
+  const { visibles: columnasVisibles, toggle: toggleColumna } = useColumnasVisibles<ColumnaMetrica>(
+    "mi-panel-analiticas-columnas",
+    COLUMNAS_DISPONIBLES.map((c) => c.valor)
+  );
   const [campanas, setCampanas] = useState<CampanaAds[]>([]);
-  const [metricas, setMetricas] = useState<Map<string, { spend: number; resultados: number }>>(new Map());
+  const [metricas, setMetricas] = useState<Map<string, MetricasAgregadas>>(new Map());
   const [ventasPorFila, setVentasPorFila] = useState<Map<string, VentasReales>>(new Map());
   const [cargando, setCargando] = useState(true);
 
@@ -56,10 +103,10 @@ export function MisCampanas({ editorId, codigosCupon }: { editorId: string; codi
         idsCampanas.length > 0
           ? supabase
               .from("campanas_ads_metricas_diarias")
-              .select("campana_ads_id, spend, resultados")
+              .select("campana_ads_id, spend, impresiones, clics, video_views, resultados, valor_resultados")
               .in("campana_ads_id", idsCampanas)
               .gte("fecha", desde)
-          : Promise.resolve({ data: [] as { campana_ads_id: string; spend: number; resultados: number }[] }),
+          : Promise.resolve({ data: [] as FilaMetricaDiaria[] }),
         // Un editor puede correr varios cupones dentro de la misma campaña —
         // por eso esto es N a N (campanas_ads_cupones), no un cupon_id único.
         idsCampanas.length > 0
@@ -78,12 +125,7 @@ export function MisCampanas({ editorId, codigosCupon }: { editorId: string; codi
           : Promise.resolve({ data: [] as { total: number }[] }),
       ]);
 
-      const metricasMap = new Map<string, { spend: number; resultados: number }>();
-      for (const m of metricasData ?? []) {
-        const actual = metricasMap.get(m.campana_ads_id) ?? { spend: 0, resultados: 0 };
-        metricasMap.set(m.campana_ads_id, { spend: actual.spend + Number(m.spend), resultados: actual.resultados + m.resultados });
-      }
-      setMetricas(metricasMap);
+      setMetricas(agruparMetricasPorCampana((metricasData as FilaMetricaDiaria[]) ?? []));
 
       const vinculos = (vinculosData ?? []) as { campana_ads_id: string; cupones: { codigo: string } | null }[];
       const codigosPorCampana = new Map<string, string[]>();
@@ -143,63 +185,114 @@ export function MisCampanas({ editorId, codigosCupon }: { editorId: string; codi
 
   return (
     <div className="flex flex-col gap-3">
-      <div>
-        <h3 className="text-sm font-semibold">Mis campañas</h3>
-        <p className="text-xs text-muted-foreground">
-          Últimos {DIAS_VENTANA} días. &quot;Resultados&quot; es lo que reporta la plataforma — &quot;Ventas
-          reales&quot; sale de tus pedidos, nunca se suman entre sí.
-        </p>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h3 className="text-sm font-semibold">Mis campañas</h3>
+          <p className="text-xs text-muted-foreground">
+            Últimos {DIAS_VENTANA} días. Las métricas con &quot;plataforma&quot; las reporta Meta/TikTok — las
+            ventas reales salen de tus pedidos, nunca se suman entre sí.
+          </p>
+        </div>
+        <ColumnPicker opciones={COLUMNAS_DISPONIBLES} visibles={columnasVisibles} onToggle={toggleColumna} />
       </div>
 
       <TableCard badge={<Badge color="gris">{campanas.length}</Badge>}>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Campaña</TableHead>
-              <TableHead>Plataforma</TableHead>
-              <TableHead>Gasto</TableHead>
-              <TableHead>Resultados (plataforma)</TableHead>
-              <TableHead>Ventas reales</TableHead>
-              <TableHead>ROAS real</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {!cargando && campanas.length === 0 && (
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground">
-                  Todavía no tienes campañas asignadas.
-                </TableCell>
+                <TableHead>Campaña</TableHead>
+                {columnasVisibles.has("plataforma") && <TableHead>Plataforma</TableHead>}
+                {columnasVisibles.has("nivel") && <TableHead>Nivel</TableHead>}
+                {columnasVisibles.has("estado") && <TableHead>Estado</TableHead>}
+                <TableHead>Gasto</TableHead>
+                {columnasVisibles.has("impresiones") && <TableHead>Impresiones</TableHead>}
+                {columnasVisibles.has("clics") && <TableHead>Clics</TableHead>}
+                {columnasVisibles.has("ctr") && <TableHead>CTR</TableHead>}
+                {columnasVisibles.has("cpc") && <TableHead>CPC</TableHead>}
+                {columnasVisibles.has("cpm") && <TableHead>CPM</TableHead>}
+                {columnasVisibles.has("videoViews") && <TableHead>Video views</TableHead>}
+                {columnasVisibles.has("resultados") && <TableHead>Resultados (plataforma)</TableHead>}
+                {columnasVisibles.has("costoPorResultado") && <TableHead>Costo/Resultado</TableHead>}
+                {columnasVisibles.has("valorResultados") && <TableHead>Valor resultados (plataforma)</TableHead>}
+                {columnasVisibles.has("roasMeta") && <TableHead>ROAS (plataforma)</TableHead>}
+                <TableHead>Ventas reales</TableHead>
+                <TableHead>ROAS real</TableHead>
               </TableRow>
-            )}
-            {campanas.map((c) => {
-              const m = metricas.get(c.id) ?? { spend: 0, resultados: 0 };
-              const v = ventasPorFila.get(c.id) ?? { revenue: 0, pedidos: 0, exclusiva: false };
-              const roas = m.spend > 0 ? v.revenue / m.spend : null;
-              return (
-                <TableRow key={c.id}>
-                  <TableCell>
-                    <p className="font-medium">{c.nombre}</p>
-                    <p className="text-xs text-muted-foreground">{NIVEL_LABEL[c.nivel]}</p>
-                  </TableCell>
-                  <TableCell>{PLATAFORMA_LABEL[c.plataforma]}</TableCell>
-                  <TableCell>S/.{m.spend.toFixed(2)}</TableCell>
-                  <TableCell className="text-muted-foreground">{m.resultados}</TableCell>
-                  <TableCell>
-                    <p>
-                      S/.{v.revenue.toFixed(2)} ({v.pedidos})
-                    </p>
-                    {!v.exclusiva && (
-                      <p className="text-xs text-muted-foreground">Total del periodo, no exclusivo de este video</p>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    {roas === null ? "—" : <Badge color={roas >= 1 ? "verde" : "naranja"}>{roas.toFixed(2)}x</Badge>}
+            </TableHeader>
+            <TableBody>
+              {!cargando && campanas.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={columnasVisibles.size + 3} className="text-center text-muted-foreground">
+                    Todavía no tienes campañas asignadas.
                   </TableCell>
                 </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+              )}
+              {campanas.map((c) => {
+                const m = metricas.get(c.id) ?? METRICAS_VACIAS;
+                const d = derivarMetricas(m);
+                const v = ventasPorFila.get(c.id) ?? { revenue: 0, pedidos: 0, exclusiva: false };
+                const roasReal = m.spend > 0 ? v.revenue / m.spend : null;
+                return (
+                  <TableRow key={c.id}>
+                    <TableCell>
+                      <p className="font-medium">{c.nombre}</p>
+                    </TableCell>
+                    {columnasVisibles.has("plataforma") && <TableCell>{PLATAFORMA_LABEL[c.plataforma]}</TableCell>}
+                    {columnasVisibles.has("nivel") && <TableCell>{NIVEL_LABEL[c.nivel]}</TableCell>}
+                    {columnasVisibles.has("estado") && <TableCell className="text-muted-foreground">{c.estado ?? "—"}</TableCell>}
+                    <TableCell>S/.{m.spend.toFixed(2)}</TableCell>
+                    {columnasVisibles.has("impresiones") && (
+                      <TableCell className="text-muted-foreground">{m.impresiones.toLocaleString("es-PE")}</TableCell>
+                    )}
+                    {columnasVisibles.has("clics") && (
+                      <TableCell className="text-muted-foreground">{m.clics.toLocaleString("es-PE")}</TableCell>
+                    )}
+                    {columnasVisibles.has("ctr") && (
+                      <TableCell className="text-muted-foreground">{d.ctr === null ? "—" : `${d.ctr.toFixed(2)}%`}</TableCell>
+                    )}
+                    {columnasVisibles.has("cpc") && (
+                      <TableCell className="text-muted-foreground">{d.cpc === null ? "—" : `S/.${d.cpc.toFixed(2)}`}</TableCell>
+                    )}
+                    {columnasVisibles.has("cpm") && (
+                      <TableCell className="text-muted-foreground">{d.cpm === null ? "—" : `S/.${d.cpm.toFixed(2)}`}</TableCell>
+                    )}
+                    {columnasVisibles.has("videoViews") && (
+                      <TableCell className="text-muted-foreground">{m.videoViews.toLocaleString("es-PE")}</TableCell>
+                    )}
+                    {columnasVisibles.has("resultados") && <TableCell className="text-muted-foreground">{m.resultados}</TableCell>}
+                    {columnasVisibles.has("costoPorResultado") && (
+                      <TableCell className="text-muted-foreground">
+                        {d.costoPorResultado === null ? "—" : `S/.${d.costoPorResultado.toFixed(2)}`}
+                      </TableCell>
+                    )}
+                    {columnasVisibles.has("valorResultados") && (
+                      <TableCell className="text-muted-foreground">S/.{m.valorResultados.toFixed(2)}</TableCell>
+                    )}
+                    {columnasVisibles.has("roasMeta") && (
+                      <TableCell className="text-muted-foreground">{d.roasMeta === null ? "—" : `${d.roasMeta.toFixed(2)}x`}</TableCell>
+                    )}
+                    <TableCell>
+                      <p>
+                        S/.{v.revenue.toFixed(2)} ({v.pedidos})
+                      </p>
+                      {!v.exclusiva && (
+                        <p className="text-xs text-muted-foreground">Total del periodo, no exclusivo de este video</p>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {roasReal === null ? (
+                        "—"
+                      ) : (
+                        <Badge color={roasReal >= 1 ? "verde" : "naranja"}>{roasReal.toFixed(2)}x</Badge>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
       </TableCard>
     </div>
   );
