@@ -28,12 +28,16 @@ export interface Cupon {
   fecha_inicio: string | null;
   fecha_fin: string | null;
   activo: boolean;
+  editor_id?: string | null;
 }
 
 interface CuponFormProps {
   cupon: Cupon | null;
   onClose: () => void;
   onSaved: () => void;
+  /** Cuando se abre desde /admin/editores/[id]: el cupón nuevo queda atado a
+   * ese editor (atribución de ventas), sin mostrar el campo en el formulario. */
+  editorId?: string;
 }
 
 const VACIO: Omit<Cupon, "id"> = {
@@ -55,8 +59,16 @@ const TIPOS: { value: Cupon["tipo"]; label: string }[] = [
   { value: "monto_fijo_producto", label: "Monto fijo de descuento en producto" },
 ];
 
-export function CuponForm({ cupon, onClose, onSaved }: CuponFormProps) {
-  const [form, setForm] = useState<Omit<Cupon, "id">>(cupon ?? VACIO);
+export function CuponForm({ cupon, onClose, onSaved, editorId }: CuponFormProps) {
+  const [form, setForm] = useState<Omit<Cupon, "id">>(
+    cupon ?? {
+      ...VACIO,
+      editor_id: editorId ?? null,
+      // Los cupones de editores casi siempre son "10% en producto" — se puede
+      // ajustar igual, es solo el punto de partida más común.
+      ...(editorId ? { tipo: "pct_producto" as const, valor: 10 } : {}),
+    }
+  );
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

@@ -13,6 +13,7 @@ interface CookieToSet {
 // mano. El resto de admins (rol admin/superadmin) no se ve afectado.
 const PREFIJO_POR_ROL: Record<string, string> = {
   oportunidad_negocio: "/admin/oportunidad",
+  editor: "/admin/mi-panel",
 };
 
 export async function middleware(request: NextRequest) {

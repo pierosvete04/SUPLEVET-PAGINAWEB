@@ -33,6 +33,8 @@ export interface PedidoAdmin {
   captura_pago_url: string | null;
   subtotal: number;
   total: number;
+  descuento_monto: number;
+  codigo_descuento: string | null;
   productos: ItemPedido[];
   zona_envio: string | null;
   direccion_envio: DireccionEnvioPedido | null;

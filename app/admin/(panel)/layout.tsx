@@ -1,8 +1,10 @@
 import { redirect } from "next/navigation";
+import { FileText, Inbox, LayoutDashboard, Plus } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { getUsuarioSesion } from "@/lib/supabase/usuario";
 import { AppSidebar } from "@/components/admin/AppSidebar";
 import { RestrictedSidebar } from "@/components/admin/RestrictedSidebar";
+import type { NavEntry } from "@/components/admin/nav/NavMain";
 import { SiteHeader } from "@/components/admin/SiteHeader";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Toaster } from "@/components/ui/sonner";
@@ -10,8 +12,23 @@ import { Toaster } from "@/components/ui/sonner";
 // Roles restringidos (pensados para personal externo) no ven el sidebar
 // completo — solo su única sección permitida, con un header minimalista.
 // El middleware ya se encarga de rebotarlos si intentan otra ruta /admin/*.
-const TITULOS_ROL_RESTRINGIDO: Record<string, string> = {
-  oportunidad_negocio: "Oportunidad de negocio",
+const ROL_RESTRINGIDO: Record<string, { titulo: string; homeUrl: string; items: NavEntry[] }> = {
+  oportunidad_negocio: {
+    titulo: "Oportunidad de negocio",
+    homeUrl: "/admin/oportunidad",
+    items: [
+      { title: "Contenido web", url: "/admin/oportunidad", icon: FileText },
+      { title: "Postulaciones", url: "/admin/oportunidad/postulaciones", icon: Inbox },
+    ],
+  },
+  editor: {
+    titulo: "Panel de editor",
+    homeUrl: "/admin/mi-panel",
+    items: [
+      { title: "Mi dashboard", url: "/admin/mi-panel", icon: LayoutDashboard },
+      { title: "Crear pedido", url: "/admin/mi-panel/nuevo", icon: Plus },
+    ],
+  },
 };
 
 export default async function AdminPanelLayout({ children }: { children: React.ReactNode }) {
@@ -31,11 +48,16 @@ export default async function AdminPanelLayout({ children }: { children: React.R
 
   if (!admin || !admin.activo) redirect("/admin/login");
 
-  const tituloRestringido = TITULOS_ROL_RESTRINGIDO[admin.rol ?? ""];
-  if (tituloRestringido) {
+  const restringido = ROL_RESTRINGIDO[admin.rol ?? ""];
+  if (restringido) {
     return (
       <SidebarProvider className="font-body">
-        <RestrictedSidebar admin={{ nombre: admin.nombre, usuario: admin.usuario }} titulo={tituloRestringido} />
+        <RestrictedSidebar
+          admin={{ nombre: admin.nombre, usuario: admin.usuario }}
+          titulo={restringido.titulo}
+          items={restringido.items}
+          homeUrl={restringido.homeUrl}
+        />
         {/* min-w-0: SidebarInset es un flex item junto al sidebar y por defecto
             no puede encogerse por debajo del ancho de su contenido, así que una
             tabla ancha estiraba TODA la página en vez de scrollear dentro de su

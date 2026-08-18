@@ -33,6 +33,8 @@ import {
   FileText,
   FileWarning,
   Inbox,
+  Megaphone,
+  BarChart3,
 } from "lucide-react";
 import { NavMain, type NavEntry } from "@/components/admin/nav/NavMain";
 import { NavSecondary } from "@/components/admin/nav/NavSecondary";
@@ -88,6 +90,8 @@ const navMain: NavEntry[] = [
       { title: "SuplePoints", url: "/admin/suplepuntos", icon: Star },
     ],
   },
+  { title: "Editores", url: "/admin/editores", icon: Megaphone },
+  { title: "Campañas de Ads", url: "/admin/campanas-ads", icon: BarChart3 },
   {
     title: "Oportunidad de negocio",
     icon: Handshake,

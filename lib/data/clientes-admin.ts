@@ -11,6 +11,7 @@ export interface ClienteResumen {
   nivel: string | null;
   total_compras: number | null;
   ultima_compra_at: string | null;
+  editor_asignado_id: string | null;
 }
 
 export const BADGE_NIVEL: Record<string, "gris" | "celeste" | "naranja" | "azul"> = {
