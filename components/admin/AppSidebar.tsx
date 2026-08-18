@@ -90,8 +90,14 @@ const navMain: NavEntry[] = [
       { title: "SuplePoints", url: "/admin/suplepuntos", icon: Star },
     ],
   },
-  { title: "Editores", url: "/admin/editores", icon: Megaphone },
-  { title: "Campañas de Ads", url: "/admin/campanas-ads", icon: BarChart3 },
+  {
+    title: "Editores",
+    icon: Megaphone,
+    items: [
+      { title: "Usuarios de editores", url: "/admin/editores", icon: Users },
+      { title: "Campañas de Ads", url: "/admin/campanas-ads", icon: BarChart3 },
+    ],
+  },
   {
     title: "Oportunidad de negocio",
     icon: Handshake,

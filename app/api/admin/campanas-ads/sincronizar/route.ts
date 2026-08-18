@@ -108,6 +108,7 @@ export async function POST() {
           clics: insights.clics,
           video_views: insights.videoViews,
           resultados: insights.resultados,
+          valor_resultados: insights.valorResultados,
         }));
         if (filasMetricas.length > 0) {
           await supabase

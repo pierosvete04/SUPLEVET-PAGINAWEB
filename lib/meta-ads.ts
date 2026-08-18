@@ -32,6 +32,8 @@ export interface MetaInsights {
   clics: number;
   videoViews: number;
   resultados: number;
+  /** Valor de las compras auto-atribuidas por Meta (para el "ROAS Meta"). */
+  valorResultados: number;
 }
 
 export interface MetaCuentaPublicitaria {
@@ -117,23 +119,25 @@ interface InsightsRaw {
   impressions?: string;
   clicks?: string;
   actions?: { action_type: string; value: string }[];
+  action_values?: { action_type: string; value: string }[];
   video_play_actions?: { action_type: string; value: string }[];
 }
 
 // "Resultados" toma omni_purchase (compras auto-atribuidas por Meta) — es el
 // número que se muestra al lado de, nunca sumado a, las ventas reales.
-function extraerAccion(acciones: InsightsRaw["actions"], tipo: string): number {
+function extraerAccion(acciones: { action_type: string; value: string }[] | undefined, tipo: string): number {
   return Number(acciones?.find((a) => a.action_type === tipo)?.value ?? 0);
 }
 
 function filaAInsights(fila: InsightsRaw | undefined): MetaInsights {
-  if (!fila) return { spend: 0, impresiones: 0, clics: 0, videoViews: 0, resultados: 0 };
+  if (!fila) return { spend: 0, impresiones: 0, clics: 0, videoViews: 0, resultados: 0, valorResultados: 0 };
   return {
     spend: Number(fila.spend ?? 0),
     impresiones: Number(fila.impressions ?? 0),
     clics: Number(fila.clicks ?? 0),
     videoViews: extraerAccion(fila.video_play_actions, "video_view"),
     resultados: extraerAccion(fila.actions, "omni_purchase"),
+    valorResultados: extraerAccion(fila.action_values, "omni_purchase"),
   };
 }
 
@@ -145,7 +149,7 @@ export async function obtenerInsights(objectId: string, desde: string, hasta: st
   const data = await llamarGraphApi<{ data: InsightsRaw[] }>(
     `/${objectId}/insights`,
     {
-      fields: "spend,impressions,clicks,actions,video_play_actions",
+      fields: "spend,impressions,clicks,actions,action_values,video_play_actions",
       time_range: JSON.stringify({ since: desde, until: hasta }),
     },
     creds.token
@@ -170,7 +174,7 @@ export async function obtenerInsightsDiarios(
   const data = await llamarGraphApi<{ data: (InsightsRaw & { date_start: string })[] }>(
     `/${objectId}/insights`,
     {
-      fields: "spend,impressions,clicks,actions,video_play_actions",
+      fields: "spend,impressions,clicks,actions,action_values,video_play_actions",
       time_range: JSON.stringify({ since: desde, until: hasta }),
       time_increment: "1",
     },

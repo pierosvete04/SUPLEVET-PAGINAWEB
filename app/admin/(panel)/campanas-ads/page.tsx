@@ -1,13 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { RefreshCw, Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Badge } from "@/components/admin/Badge";
 import { TableCard } from "@/components/admin/table/TableCard";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -43,14 +43,55 @@ interface CuponOpcion {
   editor_id: string | null;
 }
 
+// Solo se suman los valores ADITIVOS (gasto, impresiones, clics, video
+// views, resultados, valor de resultados) — CTR/CPC/CPM se recalculan a
+// partir de esa suma, nunca sumando directamente los % o promedios diarios
+// que devuelve Meta (sumar tasas de días distintos da un número sin sentido).
 interface MetricasAgregadas {
   spend: number;
+  impresiones: number;
+  clics: number;
+  videoViews: number;
   resultados: number;
+  valorResultados: number;
 }
 
+const METRICAS_VACIAS: MetricasAgregadas = {
+  spend: 0,
+  impresiones: 0,
+  clics: 0,
+  videoViews: 0,
+  resultados: 0,
+  valorResultados: 0,
+};
+
 const SIN_ASIGNAR = "__sin_asignar__";
+const TODOS = "__todos__";
 const NIVEL_LABEL: Record<CampanaAds["nivel"], string> = { campana: "Campaña", conjunto: "Conjunto de anuncios" };
 const PLATAFORMA_LABEL: Record<CampanaAds["plataforma"], string> = { meta: "Meta", tiktok: "TikTok" };
+const ESTADOS_ACTIVOS = ["ACTIVE", "CAMPAIGN_ACTIVE"];
+
+function sumarMetricas(a: MetricasAgregadas, b: MetricasAgregadas): MetricasAgregadas {
+  return {
+    spend: a.spend + b.spend,
+    impresiones: a.impresiones + b.impresiones,
+    clics: a.clics + b.clics,
+    videoViews: a.videoViews + b.videoViews,
+    resultados: a.resultados + b.resultados,
+    valorResultados: a.valorResultados + b.valorResultados,
+  };
+}
+
+// Derivados a partir de las sumas aditivas — ver comentario de MetricasAgregadas.
+function derivarMetricas(m: MetricasAgregadas) {
+  return {
+    ctr: m.impresiones > 0 ? (m.clics / m.impresiones) * 100 : null,
+    cpc: m.clics > 0 ? m.spend / m.clics : null,
+    cpm: m.impresiones > 0 ? (m.spend / m.impresiones) * 1000 : null,
+    costoPorResultado: m.resultados > 0 ? m.spend / m.resultados : null,
+    roasMeta: m.spend > 0 ? m.valorResultados / m.spend : null,
+  };
+}
 
 export default function AdminCampanasAdsPage() {
   const [cuentas, setCuentas] = useState<CuentaAds[]>([]);
@@ -61,6 +102,12 @@ export default function AdminCampanasAdsPage() {
   const [cupones, setCupones] = useState<CuponOpcion[]>([]);
   const [cargando, setCargando] = useState(true);
   const [sincronizando, setSincronizando] = useState(false);
+
+  // Vista por defecto: solo campañas activas — las pausadas/archivadas rara
+  // vez son lo que se quiere analizar de entrada, quedan a un filtro.
+  const [filtroNivel, setFiltroNivel] = useState<"campana" | "conjunto" | "todos">("campana");
+  const [filtroEstado, setFiltroEstado] = useState<"activas" | "todas">("activas");
+  const [filtroEditor, setFiltroEditor] = useState<string>(TODOS);
 
   const cargar = useCallback(async () => {
     setCargando(true);
@@ -73,7 +120,7 @@ export default function AdminCampanasAdsPage() {
         supabase.from("cupones").select("id, codigo, editor_id"),
         supabase
           .from("campanas_ads_metricas_diarias")
-          .select("campana_ads_id, spend, resultados")
+          .select("campana_ads_id, spend, impresiones, clics, video_views, resultados, valor_resultados")
           .gte("fecha", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)),
       ]);
 
@@ -83,9 +130,28 @@ export default function AdminCampanasAdsPage() {
     setCupones((cuponesData as CuponOpcion[]) ?? []);
 
     const agregadas = new Map<string, MetricasAgregadas>();
-    for (const m of (metricasData as { campana_ads_id: string; spend: number; resultados: number }[]) ?? []) {
-      const actual = agregadas.get(m.campana_ads_id) ?? { spend: 0, resultados: 0 };
-      agregadas.set(m.campana_ads_id, { spend: actual.spend + Number(m.spend), resultados: actual.resultados + m.resultados });
+    interface FilaMetrica {
+      campana_ads_id: string;
+      spend: number;
+      impresiones: number;
+      clics: number;
+      video_views: number;
+      resultados: number;
+      valor_resultados: number;
+    }
+    for (const m of (metricasData as FilaMetrica[]) ?? []) {
+      const actual = agregadas.get(m.campana_ads_id) ?? METRICAS_VACIAS;
+      agregadas.set(
+        m.campana_ads_id,
+        sumarMetricas(actual, {
+          spend: Number(m.spend),
+          impresiones: m.impresiones,
+          clics: m.clics,
+          videoViews: m.video_views,
+          resultados: m.resultados,
+          valorResultados: Number(m.valor_resultados),
+        })
+      );
     }
     setMetricas(agregadas);
     setCargando(false);
@@ -141,6 +207,24 @@ export default function AdminCampanasAdsPage() {
     await createClient().from("campanas_ads").update({ cupon_id: cuponId }).eq("id", campanaId);
   }
 
+  const campanasFiltradas = useMemo(() => {
+    return campanas.filter((c) => {
+      if (filtroNivel !== "todos" && c.nivel !== filtroNivel) return false;
+      if (filtroEstado === "activas" && !ESTADOS_ACTIVOS.includes(c.estado ?? "")) return false;
+      if (filtroEditor === TODOS) return true;
+      if (filtroEditor === SIN_ASIGNAR) return !c.editor_id;
+      return c.editor_id === filtroEditor;
+    });
+  }, [campanas, filtroNivel, filtroEstado, filtroEditor]);
+
+  // Resumen del filtro actual — al elegir un editor puntual, esto ES su
+  // resumen "editor vs. métricas" que pediste, sin necesitar una vista aparte.
+  const resumenFiltrado = useMemo(
+    () => campanasFiltradas.reduce((acc, c) => sumarMetricas(acc, metricas.get(c.id) ?? METRICAS_VACIAS), METRICAS_VACIAS),
+    [campanasFiltradas, metricas]
+  );
+  const derivadoResumen = derivarMetricas(resumenFiltrado);
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
@@ -179,10 +263,7 @@ export default function AdminCampanasAdsPage() {
           ) : (
             <div className="flex flex-wrap gap-3">
               {cuentas.map((c) => (
-                <label
-                  key={c.external_id}
-                  className="flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm"
-                >
+                <label key={c.external_id} className="flex items-center gap-2 rounded-md border px-3 py-1.5 text-sm">
                   <Checkbox
                     checked={c.sincronizar}
                     onCheckedChange={(checked) => toggleCuenta(c.external_id, checked === true)}
@@ -196,88 +277,183 @@ export default function AdminCampanasAdsPage() {
         </CardContent>
       </Card>
 
-      <TableCard badge={<Badge color="gris">{campanas.length}</Badge>}>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nombre</TableHead>
-              <TableHead>Plataforma</TableHead>
-              <TableHead>Nivel</TableHead>
-              <TableHead>Estado</TableHead>
-              <TableHead>Gasto (30 días)</TableHead>
-              <TableHead>Resultados (Meta)</TableHead>
-              <TableHead>Editor</TableHead>
-              <TableHead>Cupón vinculado</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {!cargando && campanas.length === 0 && (
+      <div className="flex flex-wrap items-end gap-3">
+        <div className="grid gap-1.5">
+          <label className="text-xs font-medium text-muted-foreground">Nivel</label>
+          <Select value={filtroNivel} onValueChange={(v) => setFiltroNivel(v as typeof filtroNivel)}>
+            <SelectTrigger className="w-52 bg-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="campana">Solo campañas</SelectItem>
+              <SelectItem value="conjunto">Solo conjuntos de anuncios</SelectItem>
+              <SelectItem value="todos">Campañas y conjuntos</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid gap-1.5">
+          <label className="text-xs font-medium text-muted-foreground">Estado</label>
+          <Select value={filtroEstado} onValueChange={(v) => setFiltroEstado(v as typeof filtroEstado)}>
+            <SelectTrigger className="w-44 bg-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="activas">Solo activas</SelectItem>
+              <SelectItem value="todas">Todas (incl. pausadas)</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="grid gap-1.5">
+          <label className="text-xs font-medium text-muted-foreground">Editor</label>
+          <Select value={filtroEditor} onValueChange={setFiltroEditor}>
+            <SelectTrigger className="w-52 bg-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={TODOS}>Todos los editores</SelectItem>
+              <SelectItem value={SIN_ASIGNAR}>Sin asignar</SelectItem>
+              {editores.map((e) => (
+                <SelectItem key={e.id} value={e.id}>
+                  {e.nombre}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
+
+      {/* Resumen del filtro actual: al elegir un editor, esto ES su resumen. */}
+      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+        {[
+          { label: "Gasto", valor: `S/.${resumenFiltrado.spend.toFixed(2)}` },
+          { label: "Impresiones", valor: resumenFiltrado.impresiones.toLocaleString("es-PE") },
+          { label: "CTR", valor: derivadoResumen.ctr === null ? "—" : `${derivadoResumen.ctr.toFixed(2)}%` },
+          { label: "Resultados (Meta)", valor: resumenFiltrado.resultados.toLocaleString("es-PE") },
+          { label: "Valor resultados (Meta)", valor: `S/.${resumenFiltrado.valorResultados.toFixed(2)}` },
+          { label: "ROAS (Meta)", valor: derivadoResumen.roasMeta === null ? "—" : `${derivadoResumen.roasMeta.toFixed(2)}x` },
+        ].map((item) => (
+          <Card key={item.label}>
+            <CardHeader className="pb-2">
+              <CardDescription className="text-xs">{item.label}</CardDescription>
+            </CardHeader>
+            <CardTitle className="px-6 pb-4 text-lg font-semibold tabular-nums">{item.valor}</CardTitle>
+          </Card>
+        ))}
+      </div>
+
+      <TableCard badge={<Badge color="gris">{campanasFiltradas.length}</Badge>}>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell colSpan={8} className="text-center text-muted-foreground">
-                  Sin campañas sincronizadas todavía — usa &quot;Sincronizar ahora&quot;.
-                </TableCell>
+                <TableHead>Nombre</TableHead>
+                <TableHead>Plataforma</TableHead>
+                <TableHead>Nivel</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead>Gasto</TableHead>
+                <TableHead>Impresiones</TableHead>
+                <TableHead>Clics</TableHead>
+                <TableHead>CTR</TableHead>
+                <TableHead>CPC</TableHead>
+                <TableHead>CPM</TableHead>
+                <TableHead>Video views</TableHead>
+                <TableHead>Resultados</TableHead>
+                <TableHead>Costo/Resultado</TableHead>
+                <TableHead>Valor resultados</TableHead>
+                <TableHead>ROAS (Meta)</TableHead>
+                <TableHead>Editor</TableHead>
+                <TableHead>Cupón vinculado</TableHead>
               </TableRow>
-            )}
-            {campanas.map((c) => {
-              const m = metricas.get(c.id);
-              const cuponesDelEditor = cupones.filter((cu) => cu.editor_id === c.editor_id);
-              return (
-                <TableRow key={c.id}>
-                  <TableCell>
-                    <p className="font-medium">{c.nombre}</p>
-                    {c.nivel === "conjunto" && c.campana_external_id && (
-                      <p className="text-xs text-muted-foreground">Dentro de campaña {c.campana_external_id}</p>
-                    )}
-                  </TableCell>
-                  <TableCell>{PLATAFORMA_LABEL[c.plataforma]}</TableCell>
-                  <TableCell>{NIVEL_LABEL[c.nivel]}</TableCell>
-                  <TableCell>
-                    <Badge color={c.estado === "ACTIVE" ? "verde" : "gris"}>{c.estado ?? "—"}</Badge>
-                  </TableCell>
-                  <TableCell>S/.{(m?.spend ?? 0).toFixed(2)}</TableCell>
-                  <TableCell className="text-muted-foreground">{m?.resultados ?? 0}</TableCell>
-                  <TableCell>
-                    <Select
-                      value={c.editor_id ?? SIN_ASIGNAR}
-                      onValueChange={(v) => asignarEditor(c.id, v === SIN_ASIGNAR ? null : v)}
-                    >
-                      <SelectTrigger className="w-44">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={SIN_ASIGNAR}>Sin asignar</SelectItem>
-                        {editores.map((e) => (
-                          <SelectItem key={e.id} value={e.id}>
-                            {e.nombre}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </TableCell>
-                  <TableCell>
-                    <Select
-                      value={c.cupon_id ?? SIN_ASIGNAR}
-                      onValueChange={(v) => asignarCupon(c.id, v === SIN_ASIGNAR ? null : v)}
-                      disabled={!c.editor_id}
-                    >
-                      <SelectTrigger className="w-40">
-                        <SelectValue placeholder="Sin vincular" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value={SIN_ASIGNAR}>Sin vincular</SelectItem>
-                        {cuponesDelEditor.map((cu) => (
-                          <SelectItem key={cu.id} value={cu.id}>
-                            {cu.codigo}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+            </TableHeader>
+            <TableBody>
+              {!cargando && campanasFiltradas.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={17} className="text-center text-muted-foreground">
+                    {campanas.length === 0
+                      ? 'Sin campañas sincronizadas todavía — usa "Sincronizar ahora".'
+                      : "Ninguna campaña coincide con estos filtros."}
                   </TableCell>
                 </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+              )}
+              {campanasFiltradas.map((c) => {
+                const m = metricas.get(c.id) ?? METRICAS_VACIAS;
+                const d = derivarMetricas(m);
+                const cuponesDelEditor = cupones.filter((cu) => cu.editor_id === c.editor_id);
+                return (
+                  <TableRow key={c.id}>
+                    <TableCell>
+                      <p className="font-medium">{c.nombre}</p>
+                      {c.nivel === "conjunto" && c.campana_external_id && (
+                        <p className="text-xs text-muted-foreground">Dentro de campaña {c.campana_external_id}</p>
+                      )}
+                    </TableCell>
+                    <TableCell>{PLATAFORMA_LABEL[c.plataforma]}</TableCell>
+                    <TableCell>{NIVEL_LABEL[c.nivel]}</TableCell>
+                    <TableCell>
+                      <Badge color={ESTADOS_ACTIVOS.includes(c.estado ?? "") ? "verde" : "gris"}>{c.estado ?? "—"}</Badge>
+                    </TableCell>
+                    <TableCell>S/.{m.spend.toFixed(2)}</TableCell>
+                    <TableCell className="text-muted-foreground">{m.impresiones.toLocaleString("es-PE")}</TableCell>
+                    <TableCell className="text-muted-foreground">{m.clics.toLocaleString("es-PE")}</TableCell>
+                    <TableCell className="text-muted-foreground">{d.ctr === null ? "—" : `${d.ctr.toFixed(2)}%`}</TableCell>
+                    <TableCell className="text-muted-foreground">{d.cpc === null ? "—" : `S/.${d.cpc.toFixed(2)}`}</TableCell>
+                    <TableCell className="text-muted-foreground">{d.cpm === null ? "—" : `S/.${d.cpm.toFixed(2)}`}</TableCell>
+                    <TableCell className="text-muted-foreground">{m.videoViews.toLocaleString("es-PE")}</TableCell>
+                    <TableCell>{m.resultados}</TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {d.costoPorResultado === null ? "—" : `S/.${d.costoPorResultado.toFixed(2)}`}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">S/.{m.valorResultados.toFixed(2)}</TableCell>
+                    <TableCell>
+                      {d.roasMeta === null ? (
+                        "—"
+                      ) : (
+                        <Badge color={d.roasMeta >= 1 ? "verde" : "naranja"}>{d.roasMeta.toFixed(2)}x</Badge>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        value={c.editor_id ?? SIN_ASIGNAR}
+                        onValueChange={(v) => asignarEditor(c.id, v === SIN_ASIGNAR ? null : v)}
+                      >
+                        <SelectTrigger className="w-40">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={SIN_ASIGNAR}>Sin asignar</SelectItem>
+                          {editores.map((e) => (
+                            <SelectItem key={e.id} value={e.id}>
+                              {e.nombre}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell>
+                      <Select
+                        value={c.cupon_id ?? SIN_ASIGNAR}
+                        onValueChange={(v) => asignarCupon(c.id, v === SIN_ASIGNAR ? null : v)}
+                        disabled={!c.editor_id}
+                      >
+                        <SelectTrigger className="w-36">
+                          <SelectValue placeholder="Sin vincular" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={SIN_ASIGNAR}>Sin vincular</SelectItem>
+                          {cuponesDelEditor.map((cu) => (
+                            <SelectItem key={cu.id} value={cu.id}>
+                              {cu.codigo}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
       </TableCard>
     </div>
   );
