@@ -72,6 +72,9 @@ export async function POST(request: Request) {
   const total = subtotal + costoEnvio;
 
   const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
   const clienteResuelto = await resolverClienteId(supabase, {
     clienteId,
     email: clienteEmail,
@@ -123,6 +126,7 @@ export async function POST(request: Request) {
       captura_pago_url: capturaPagoUrl,
       zona_envio: zonaEnvio,
       direccion_envio: direccionEnvio,
+      creado_por_admin_id: user?.id ?? null,
       regalo_bandana: bandanasAsignadas[0]?.slug ?? null,
       regalo_bandanas: bandanasAsignadas,
     })

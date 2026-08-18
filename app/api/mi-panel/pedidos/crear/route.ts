@@ -49,18 +49,23 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Cuerpo inválido" }, { status: 400 });
   }
 
+  // El cupón es OPCIONAL: el editor puede armar una venta sin aplicarle
+  // descuento al cliente (ej. ya viene con el precio acordado por otro
+  // lado). Eso sí — si manda uno, tiene que ser suyo. Ojo con la
+  // implicación: sin cupón, el pedido no queda atribuido a este editor en
+  // ningún lado del panel (Historial/Analíticas se filtran por cupón), pero
+  // el pedido igual se crea.
   const codigoCupon = texto(body.codigo_cupon)?.toUpperCase() ?? null;
-  if (!codigoCupon) {
-    return NextResponse.json({ error: "Elige con qué cupón se factura esta venta" }, { status: 400 });
-  }
-  const { data: cuponPropio } = await supabase
-    .from("cupones")
-    .select("id")
-    .eq("editor_id", user.id)
-    .eq("codigo", codigoCupon)
-    .maybeSingle();
-  if (!cuponPropio) {
-    return NextResponse.json({ error: "Ese cupón no es tuyo." }, { status: 403 });
+  if (codigoCupon) {
+    const { data: cuponPropio } = await supabase
+      .from("cupones")
+      .select("id")
+      .eq("editor_id", user.id)
+      .eq("codigo", codigoCupon)
+      .maybeSingle();
+    if (!cuponPropio) {
+      return NextResponse.json({ error: "Ese cupón no es tuyo." }, { status: 403 });
+    }
   }
 
   const clienteEmail = typeof body.cliente_email === "string" ? body.cliente_email.trim() : "";
@@ -117,6 +122,10 @@ export async function POST(request: Request) {
     p_cliente_telefono: clienteTelefono,
     p_regalo_bandana: null,
     p_regalo_bandanas: bandanas.length > 0 ? bandanas : null,
+    // Sin esto, un pedido creado sin cupón (codigoCupon opcional) queda sin
+    // ninguna forma de que el propio editor lo vuelva a leer — ni RLS por
+    // cupón ni por cliente_id (no es su cuenta) se lo permiten.
+    p_creado_por: user.id,
   });
 
   const rpc = resultado as RpcResultado | null;

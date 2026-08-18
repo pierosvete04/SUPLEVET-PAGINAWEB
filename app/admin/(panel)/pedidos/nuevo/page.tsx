@@ -23,6 +23,7 @@ import {
   type ClientePedidoSeleccionado,
   type PerfilCliente,
 } from "@/components/admin/pedidos/ClienteSelector";
+import { GenerarLinkPago } from "@/components/admin/pedidos/GenerarLinkPago";
 import { ShippingStep, direccionVacia, type DireccionEnvio } from "@/components/checkout/ShippingStep";
 import { SelectorRegaloBandanas } from "@/components/regalos/SelectorRegaloBandanas";
 import type { BandanaSeleccion } from "@/lib/cart/CartContext";
@@ -60,6 +61,7 @@ export default function AdminCrearPedidoPage() {
   const [subiendoComprobante, setSubiendoComprobante] = useState(false);
   const [guardando, setGuardando] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pedidoCreado, setPedidoCreado] = useState<{ id: string; numero: string } | null>(null);
   const inputComprobanteRef = useRef<HTMLInputElement>(null);
 
   const subtotal = productos.reduce((acc, i) => acc + i.precio * i.cantidad, 0);
@@ -182,7 +184,36 @@ export default function AdminCrearPedidoPage() {
       return;
     }
     toast.success("Pedido creado.");
+    // Solo se detiene a mostrar el botón de link de pago cuando tiene sentido
+    // (tarjeta + todavía pendiente de verificación) — para el resto de casos
+    // sigue directo al pedido, como siempre.
+    if (formaPago === "tarjeta" && estadoPago === "pendiente_verificacion") {
+      setPedidoCreado({ id: data.pedido_id, numero: data.numero_pedido ?? data.pedido_id });
+      setGuardando(false);
+      return;
+    }
     router.push(`/admin/pedidos/${data.numero_pedido ?? data.pedido_id}`);
+  }
+
+  if (pedidoCreado) {
+    return (
+      <div className="flex flex-col gap-6">
+        <Link href="/admin/pedidos" className="flex w-fit items-center gap-1 text-sm font-medium text-secondary">
+          <ArrowLeft className="h-4 w-4" /> Volver a pedidos
+        </Link>
+        <Card className="max-w-lg">
+          <CardHeader>
+            <CardTitle>Pedido {pedidoCreado.numero} creado</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <GenerarLinkPago pedidoId={pedidoCreado.id} formaPago={formaPago} estadoPago={estadoPago} />
+            <Button asChild className="w-fit">
+              <Link href={`/admin/pedidos/${pedidoCreado.numero}`}>Ver pedido</Link>
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (

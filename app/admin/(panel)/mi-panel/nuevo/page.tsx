@@ -1,10 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { ArrowLeft, Plus, Trash2 } from "lucide-react";
-import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -17,6 +15,7 @@ import {
   type ClientePedidoSeleccionado,
   type PerfilCliente,
 } from "@/components/admin/pedidos/ClienteSelector";
+import { GenerarLinkPago } from "@/components/admin/pedidos/GenerarLinkPago";
 import { ShippingStep, direccionVacia, type DireccionEnvio } from "@/components/checkout/ShippingStep";
 import { SelectorRegaloBandanas } from "@/components/regalos/SelectorRegaloBandanas";
 import type { BandanaSeleccion } from "@/lib/cart/CartContext";
@@ -32,14 +31,21 @@ interface CuponPropio {
   valor: number;
 }
 
+const SIN_CUPON = "__sin_cupon__";
+
+interface PedidoCreado {
+  id: string;
+  numero: string;
+}
+
 // El equivalente de /admin/pedidos/nuevo para un editor: mismos pasos de
 // entrega (ShippingStep) y regalos, pero factura siempre con uno de sus
 // propios cupones y pasa por el RPC registrar_pedido_web en vez de un
 // INSERT directo — ver /api/mi-panel/pedidos/crear.
 export default function CrearPedidoEditorPage() {
-  const router = useRouter();
   const [cupones, setCupones] = useState<CuponPropio[]>([]);
-  const [codigoCupon, setCodigoCupon] = useState("");
+  const [codigoCupon, setCodigoCupon] = useState(SIN_CUPON);
+  const [pedidoCreado, setPedidoCreado] = useState<PedidoCreado | null>(null);
   const [cliente, setCliente] = useState<ClientePedidoSeleccionado | null>(null);
   const [productos, setProductos] = useState<ItemPedido[]>([]);
   const [buscandoProducto, setBuscandoProducto] = useState(false);
@@ -79,8 +85,7 @@ export default function CrearPedidoEditorPage() {
   const combosQty = productos
     .filter((i) => i.categoria === "combo")
     .reduce((acc, i) => acc + i.cantidad, 0);
-  const puedeGuardar =
-    !!cliente && !!direccion.nombre.trim() && productos.length > 0 && !!codigoCupon && !guardando;
+  const puedeGuardar = !!cliente && !!direccion.nombre.trim() && productos.length > 0 && !guardando;
 
   useEffect(() => {
     if (!envioEditadoAMano && costoTarifa !== null) setCostoEnvio(costoTarifa);
@@ -131,14 +136,14 @@ export default function CrearPedidoEditorPage() {
   }
 
   async function guardarPedido() {
-    if (!cliente || productos.length === 0 || !codigoCupon) return;
+    if (!cliente || productos.length === 0) return;
     setGuardando(true);
     setError(null);
     const res = await fetch("/api/mi-panel/pedidos/crear", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        codigo_cupon: codigoCupon,
+        codigo_cupon: codigoCupon === SIN_CUPON ? null : codigoCupon,
         cliente_id: cliente.id,
         cliente_email: cliente.email,
         cliente_nombre: direccion.nombre,
@@ -170,8 +175,46 @@ export default function CrearPedidoEditorPage() {
       setGuardando(false);
       return;
     }
-    toast.success("Pedido creado. Queda pendiente de verificación de pago.");
-    router.push("/admin/mi-panel");
+    setPedidoCreado({ id: data.pedido_id, numero: data.numero_pedido ?? data.pedido_id });
+    setGuardando(false);
+  }
+
+  if (pedidoCreado) {
+    return (
+      <div className="flex flex-col gap-6">
+        <Link href="/admin/mi-panel" className="flex w-fit items-center gap-1 text-sm font-medium text-secondary">
+          <ArrowLeft className="h-4 w-4" /> Volver a mi dashboard
+        </Link>
+        <Card className="max-w-lg">
+          <CardHeader>
+            <CardTitle>Pedido {pedidoCreado.numero} creado</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-col gap-4">
+            <p className="text-sm text-muted-foreground">
+              Queda pendiente de verificación de pago — el equipo de Suplevet lo confirma después.
+            </p>
+            <GenerarLinkPago pedidoId={pedidoCreado.id} formaPago={formaPago} />
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setPedidoCreado(null);
+                  setCliente(null);
+                  setProductos([]);
+                  setDireccion(direccionVacia);
+                  setBandanas([]);
+                }}
+              >
+                Crear otro pedido
+              </Button>
+              <Button asChild>
+                <Link href="/admin/mi-panel">Volver a mi dashboard</Link>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
   }
 
   return (
@@ -189,31 +232,30 @@ export default function CrearPedidoEditorPage() {
 
       {error && <p className="rounded-md bg-red-50 px-3 py-2 text-sm text-red-600">{error}</p>}
 
-      {cupones.length === 0 ? (
-        <p className="rounded-md bg-orange-50 px-3 py-2 text-sm text-orange-700">
-          Todavía no tienes ningún cupón activo asignado — pídele uno al equipo de Suplevet antes de registrar una
-          venta.
-        </p>
-      ) : (
-        <Card>
-          <CardContent className="flex flex-col gap-1.5 pt-6">
-            <Label>Cupón con el que se factura esta venta</Label>
-            <Select value={codigoCupon} onValueChange={setCodigoCupon}>
-              <SelectTrigger className="w-64">
-                <SelectValue placeholder="Elige un cupón" />
-              </SelectTrigger>
-              <SelectContent>
-                {cupones.map((c) => (
-                  <SelectItem key={c.id} value={c.codigo}>
-                    {c.codigo}
-                    {c.tipo !== "envio_gratis" && ` (${c.tipo.startsWith("pct") ? `${c.valor}%` : `S/.${c.valor}`})`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </CardContent>
-        </Card>
-      )}
+      <Card>
+        <CardContent className="flex flex-col gap-1.5 pt-6">
+          <Label>Cupón con el que se factura esta venta (opcional)</Label>
+          <Select value={codigoCupon} onValueChange={setCodigoCupon}>
+            <SelectTrigger className="w-64">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={SIN_CUPON}>Sin cupón</SelectItem>
+              {cupones.map((c) => (
+                <SelectItem key={c.id} value={c.codigo}>
+                  {c.codigo}
+                  {c.tipo !== "envio_gratis" && ` (${c.tipo.startsWith("pct") ? `${c.valor}%` : `S/.${c.valor}`})`}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {codigoCupon === SIN_CUPON && (
+            <p className="text-xs text-muted-foreground">
+              Sin cupón, este pedido no te va a salir en Historial ni Analíticas — no queda atribuido a ti.
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="flex flex-col gap-6 lg:col-span-2">
