@@ -3,8 +3,9 @@
 import type * as React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { NavMain, type NavEntry } from "@/components/admin/nav/NavMain";
+import { NavMain } from "@/components/admin/nav/NavMain";
 import { NavUser } from "@/components/admin/nav/NavUser";
+import { ROLES_RESTRINGIDOS, type RolRestringido } from "@/lib/admin/roles-restringidos";
 import {
   Sidebar,
   SidebarContent,
@@ -17,16 +18,12 @@ import {
 
 interface RestrictedSidebarProps extends React.ComponentProps<typeof Sidebar> {
   admin: { nombre: string; usuario: string };
-  titulo: string;
-  /** Únicas secciones visibles para este rol — el middleware ya rebota a
-   * cualquier otra ruta /admin/* que no empiece con su prefijo permitido. */
-  items: NavEntry[];
-  homeUrl: string;
+  rol: RolRestringido;
 }
 
-// Sidebar de roles restringidos (ej. "oportunidad_negocio", "editor",
-// pensados para personal externo): solo las secciones que le corresponden.
-export function RestrictedSidebar({ admin, titulo, items, homeUrl, ...props }: RestrictedSidebarProps) {
+export function RestrictedSidebar({ admin, rol, ...props }: RestrictedSidebarProps) {
+  const { titulo, homeUrl, items } = ROLES_RESTRINGIDOS[rol];
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
