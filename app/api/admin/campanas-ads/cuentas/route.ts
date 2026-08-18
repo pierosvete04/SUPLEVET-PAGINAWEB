@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { listarCuentasPublicitarias, metaAdsConfigurado } from "@/lib/meta-ads";
+import { listarCuentasPublicitarias as listarCuentasMeta, metaAdsConfigurado } from "@/lib/meta-ads";
+import { listarCuentasPublicitarias as listarCuentasTikTok, tiktokAdsConfigurado } from "@/lib/tiktok-ads";
 
-// Refresca `campanas_ads_cuentas` con lo que el token puede ver AHORA MISMO
-// en Meta y devuelve la lista guardada (ya con el flag `sincronizar` que el
-// admin haya marcado). Así, si se crea una cuenta publicitaria nueva, basta
-// con abrir /admin/campanas-ads para que aparezca sola — sin tocar código.
+// Refresca `campanas_ads_cuentas` con lo que los tokens configurados pueden
+// ver AHORA MISMO (Meta y/o TikTok — cualquiera de las dos que esté
+// configurada) y devuelve la lista guardada (ya con el flag `sincronizar`
+// que el admin haya marcado). Así, si se crea una cuenta publicitaria
+// nueva, basta con abrir /admin/campanas-ads para que aparezca sola.
 export async function GET() {
   const supabase = await createClient();
   const {
@@ -20,25 +22,58 @@ export async function GET() {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 
-  if (!metaAdsConfigurado()) {
-    return NextResponse.json({ error: "Meta Ads no está configurado (falta META_ADS_ACCESS_TOKEN)." }, { status: 503 });
+  if (!metaAdsConfigurado() && !tiktokAdsConfigurado()) {
+    return NextResponse.json(
+      { error: "Ni Meta Ads ni TikTok Ads están configurados — falta el token de al menos una plataforma." },
+      { status: 503 }
+    );
   }
 
-  try {
-    const cuentas = await listarCuentasPublicitarias();
-    if (cuentas.length > 0) {
-      // No pisa `sincronizar` de cuentas ya conocidas — el upsert solo toca
-      // nombre/descubierta_at; el flag lo controla el admin desde el checkbox.
-      await supabase.from("campanas_ads_cuentas").upsert(
-        cuentas.map((c) => ({ external_id: c.id, plataforma: "meta" as const, nombre: c.nombre, descubierta_at: new Date().toISOString() })),
-        { onConflict: "external_id", ignoreDuplicates: false }
+  const errores: string[] = [];
+  const filas: { external_id: string; plataforma: "meta" | "tiktok"; nombre: string; descubierta_at: string }[] = [];
+
+  if (metaAdsConfigurado()) {
+    try {
+      const cuentas = await listarCuentasMeta();
+      filas.push(
+        ...cuentas.map((c) => ({
+          external_id: c.id,
+          plataforma: "meta" as const,
+          nombre: c.nombre,
+          descubierta_at: new Date().toISOString(),
+        }))
       );
+    } catch (error: unknown) {
+      errores.push(`Meta: ${error instanceof Error ? error.message : "error desconocido"}`);
     }
-  } catch (error: unknown) {
-    const mensaje = error instanceof Error ? error.message : "Error consultando Meta Ads";
-    return NextResponse.json({ error: mensaje }, { status: 502 });
+  }
+
+  if (tiktokAdsConfigurado()) {
+    try {
+      const cuentas = await listarCuentasTikTok();
+      filas.push(
+        ...cuentas.map((c) => ({
+          external_id: c.id,
+          plataforma: "tiktok" as const,
+          nombre: c.nombre,
+          descubierta_at: new Date().toISOString(),
+        }))
+      );
+    } catch (error: unknown) {
+      errores.push(`TikTok: ${error instanceof Error ? error.message : "error desconocido"}`);
+    }
+  }
+
+  if (filas.length > 0) {
+    // No pisa `sincronizar` de cuentas ya conocidas — el upsert solo toca
+    // nombre/descubierta_at; el flag lo controla el admin desde el checkbox.
+    await supabase.from("campanas_ads_cuentas").upsert(filas, { onConflict: "external_id", ignoreDuplicates: false });
+  }
+
+  if (filas.length === 0 && errores.length > 0) {
+    return NextResponse.json({ error: errores.join(" · ") }, { status: 502 });
   }
 
   const { data: guardadas } = await supabase.from("campanas_ads_cuentas").select("*").order("nombre");
-  return NextResponse.json({ ok: true, cuentas: guardadas ?? [] });
+  return NextResponse.json({ ok: true, cuentas: guardadas ?? [], errores });
 }
