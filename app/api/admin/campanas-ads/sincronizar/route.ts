@@ -57,6 +57,7 @@ export async function POST() {
         nivel: "campana" as const,
         external_id: c.id,
         campana_external_id: null as string | null,
+        cuenta_external_id: c.cuentaId,
         nombre: c.nombre,
         estado: c.estado,
         objectId: c.id,
@@ -66,14 +67,17 @@ export async function POST() {
         nivel: "conjunto" as const,
         external_id: a.id,
         campana_external_id: a.campanaId,
+        cuenta_external_id: a.cuentaId,
         nombre: a.nombre,
         estado: a.estado,
         objectId: a.id,
       })),
     ];
 
-    // Upsert por (plataforma, nivel, external_id) — conserva el editor_id y
-    // cupon_id ya asignados, el `unique` de la migración se encarga de eso.
+    // Upsert por (plataforma, nivel, external_id) — conserva el editor_id ya
+    // asignado (los cupones vinculados viven aparte, en
+    // campanas_ads_cupones, así que ni se tocan acá), el `unique` de la
+    // migración se encarga de eso.
     const { data: guardadas, error: upsertError } = await supabase
       .from("campanas_ads")
       .upsert(

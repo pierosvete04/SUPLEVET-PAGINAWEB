@@ -17,6 +17,7 @@ export interface MetaCampania {
   id: string;
   nombre: string;
   estado: string;
+  cuentaId: string;
 }
 
 export interface MetaConjuntoAnuncios {
@@ -24,6 +25,7 @@ export interface MetaConjuntoAnuncios {
   campanaId: string;
   nombre: string;
   estado: string;
+  cuentaId: string;
 }
 
 export interface MetaInsights {
@@ -92,10 +94,10 @@ export async function listarCampanias(cuentaIds: string[]): Promise<MetaCampania
         `/${cuentaId}/campaigns`,
         { fields: "id,name,effective_status", limit: "200" },
         creds.token
-      )
+      ).then((data) => data.data.map((c) => ({ id: c.id, nombre: c.name, estado: c.effective_status, cuentaId })))
     )
   );
-  return porCuenta.flatMap((data) => data.data.map((c) => ({ id: c.id, nombre: c.name, estado: c.effective_status })));
+  return porCuenta.flat();
 }
 
 export async function listarConjuntosAnuncios(cuentaIds: string[]): Promise<MetaConjuntoAnuncios[]> {
@@ -106,12 +108,19 @@ export async function listarConjuntosAnuncios(cuentaIds: string[]): Promise<Meta
     cuentaIds.map((cuentaId) =>
       llamarGraphApi<{
         data: { id: string; name: string; effective_status: string; campaign_id: string }[];
-      }>(`/${cuentaId}/adsets`, { fields: "id,name,effective_status,campaign_id", limit: "500" }, creds.token)
+      }>(`/${cuentaId}/adsets`, { fields: "id,name,effective_status,campaign_id", limit: "500" }, creds.token).then(
+        (data) =>
+          data.data.map((a) => ({
+            id: a.id,
+            campanaId: a.campaign_id,
+            nombre: a.name,
+            estado: a.effective_status,
+            cuentaId,
+          }))
+      )
     )
   );
-  return porCuenta.flatMap((data) =>
-    data.data.map((a) => ({ id: a.id, campanaId: a.campaign_id, nombre: a.name, estado: a.effective_status }))
-  );
+  return porCuenta.flat();
 }
 
 interface InsightsRaw {

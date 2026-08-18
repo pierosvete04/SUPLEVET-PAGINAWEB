@@ -2,13 +2,19 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
-import { RefreshCw, Search } from "lucide-react";
+import { ChevronDown, RefreshCw, Search } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Badge } from "@/components/admin/Badge";
 import { TableCard } from "@/components/admin/table/TableCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
@@ -25,10 +31,10 @@ interface CampanaAds {
   nivel: "campana" | "conjunto";
   external_id: string;
   campana_external_id: string | null;
+  cuenta_external_id: string | null;
   nombre: string;
   estado: string | null;
   editor_id: string | null;
-  cupon_id: string | null;
   sincronizado_at: string;
 }
 
@@ -100,6 +106,9 @@ export default function AdminCampanasAdsPage() {
   const [metricas, setMetricas] = useState<Map<string, MetricasAgregadas>>(new Map());
   const [editores, setEditores] = useState<EditorOpcion[]>([]);
   const [cupones, setCupones] = useState<CuponOpcion[]>([]);
+  // campana_ads_id -> Set<cupon_id> — un editor puede correr varios cupones
+  // distintos dentro de la misma campaña, no es una relación 1 a 1.
+  const [cuponesPorCampana, setCuponesPorCampana] = useState<Map<string, Set<string>>>(new Map());
   const [cargando, setCargando] = useState(true);
   const [sincronizando, setSincronizando] = useState(false);
 
@@ -112,22 +121,37 @@ export default function AdminCampanasAdsPage() {
   const cargar = useCallback(async () => {
     setCargando(true);
     const supabase = createClient();
-    const [{ data: cuentasData }, { data: campanasData }, { data: editoresData }, { data: cuponesData }, { data: metricasData }] =
-      await Promise.all([
-        supabase.from("campanas_ads_cuentas").select("*").order("nombre"),
-        supabase.from("campanas_ads").select("*").order("nombre"),
-        supabase.from("editores_resumen").select("id, nombre").eq("activo", true).order("nombre"),
-        supabase.from("cupones").select("id, codigo, editor_id"),
-        supabase
-          .from("campanas_ads_metricas_diarias")
-          .select("campana_ads_id, spend, impresiones, clics, video_views, resultados, valor_resultados")
-          .gte("fecha", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)),
-      ]);
+    const [
+      { data: cuentasData },
+      { data: campanasData },
+      { data: editoresData },
+      { data: cuponesData },
+      { data: metricasData },
+      { data: vinculosData },
+    ] = await Promise.all([
+      supabase.from("campanas_ads_cuentas").select("*").order("nombre"),
+      supabase.from("campanas_ads").select("*").order("nombre"),
+      supabase.from("editores_resumen").select("id, nombre").eq("activo", true).order("nombre"),
+      supabase.from("cupones").select("id, codigo, editor_id"),
+      supabase
+        .from("campanas_ads_metricas_diarias")
+        .select("campana_ads_id, spend, impresiones, clics, video_views, resultados, valor_resultados")
+        .gte("fecha", new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10)),
+      supabase.from("campanas_ads_cupones").select("campana_ads_id, cupon_id"),
+    ]);
 
     setCuentas((cuentasData as CuentaAds[]) ?? []);
     setCampanas((campanasData as CampanaAds[]) ?? []);
     setEditores((editoresData as EditorOpcion[]) ?? []);
     setCupones((cuponesData as CuponOpcion[]) ?? []);
+
+    const vinculos = new Map<string, Set<string>>();
+    for (const v of (vinculosData as { campana_ads_id: string; cupon_id: string }[]) ?? []) {
+      const actual = vinculos.get(v.campana_ads_id) ?? new Set<string>();
+      actual.add(v.cupon_id);
+      vinculos.set(v.campana_ads_id, actual);
+    }
+    setCuponesPorCampana(vinculos);
 
     const agregadas = new Map<string, MetricasAgregadas>();
     interface FilaMetrica {
@@ -198,24 +222,54 @@ export default function AdminCampanasAdsPage() {
   }
 
   async function asignarEditor(campanaId: string, editorId: string | null) {
-    setCampanas((prev) => prev.map((c) => (c.id === campanaId ? { ...c, editor_id: editorId, cupon_id: null } : c)));
-    await createClient().from("campanas_ads").update({ editor_id: editorId, cupon_id: null }).eq("id", campanaId);
+    setCampanas((prev) => prev.map((c) => (c.id === campanaId ? { ...c, editor_id: editorId } : c)));
+    // Cambiar de editor invalida los cupones vinculados de antes — eran de
+    // otra persona, ya no aplican.
+    setCuponesPorCampana((prev) => {
+      const copia = new Map(prev);
+      copia.delete(campanaId);
+      return copia;
+    });
+    const supabase = createClient();
+    await Promise.all([
+      supabase.from("campanas_ads").update({ editor_id: editorId }).eq("id", campanaId),
+      supabase.from("campanas_ads_cupones").delete().eq("campana_ads_id", campanaId),
+    ]);
   }
 
-  async function asignarCupon(campanaId: string, cuponId: string | null) {
-    setCampanas((prev) => prev.map((c) => (c.id === campanaId ? { ...c, cupon_id: cuponId } : c)));
-    await createClient().from("campanas_ads").update({ cupon_id: cuponId }).eq("id", campanaId);
+  async function toggleCupon(campanaId: string, cuponId: string, incluir: boolean) {
+    setCuponesPorCampana((prev) => {
+      const copia = new Map(prev);
+      const actual = new Set(copia.get(campanaId) ?? []);
+      if (incluir) actual.add(cuponId);
+      else actual.delete(cuponId);
+      copia.set(campanaId, actual);
+      return copia;
+    });
+    const supabase = createClient();
+    if (incluir) {
+      await supabase.from("campanas_ads_cupones").insert({ campana_ads_id: campanaId, cupon_id: cuponId });
+    } else {
+      await supabase.from("campanas_ads_cupones").delete().eq("campana_ads_id", campanaId).eq("cupon_id", cuponId);
+    }
   }
+
+  const cuentasPorId = useMemo(() => new Map(cuentas.map((c) => [c.external_id, c])), [cuentas]);
 
   const campanasFiltradas = useMemo(() => {
     return campanas.filter((c) => {
+      // El checkbox de "sincronizar" también oculta/muestra sus campañas ya
+      // guardadas, no solo controla la próxima sincronización — es lo que se
+      // espera de un filtro de cuentas.
+      const cuenta = c.cuenta_external_id ? cuentasPorId.get(c.cuenta_external_id) : undefined;
+      if (cuenta && !cuenta.sincronizar) return false;
       if (filtroNivel !== "todos" && c.nivel !== filtroNivel) return false;
       if (filtroEstado === "activas" && !ESTADOS_ACTIVOS.includes(c.estado ?? "")) return false;
       if (filtroEditor === TODOS) return true;
       if (filtroEditor === SIN_ASIGNAR) return !c.editor_id;
       return c.editor_id === filtroEditor;
     });
-  }, [campanas, filtroNivel, filtroEstado, filtroEditor]);
+  }, [campanas, cuentasPorId, filtroNivel, filtroEstado, filtroEditor]);
 
   // Resumen del filtro actual — al elegir un editor puntual, esto ES su
   // resumen "editor vs. métricas" que pediste, sin necesitar una vista aparte.
@@ -247,8 +301,8 @@ export default function AdminCampanasAdsPage() {
             <div>
               <h3 className="text-sm font-semibold">Cuentas publicitarias</h3>
               <p className="text-xs text-muted-foreground">
-                Marca cuáles sincronizar — &quot;Sincronizar ahora&quot; solo trae campañas de las marcadas. Si
-                creas una cuenta nueva en Meta, búscala acá para que aparezca.
+                Desmarcar una cuenta oculta sus campañas de la tabla de abajo Y la excluye de la próxima
+                sincronización. Si creas una cuenta nueva en Meta, búscala acá para que aparezca.
               </p>
             </div>
             <Button size="sm" variant="outline" onClick={buscarCuentasNuevas} disabled={buscandoCuentas}>
@@ -430,23 +484,42 @@ export default function AdminCampanasAdsPage() {
                       </Select>
                     </TableCell>
                     <TableCell>
-                      <Select
-                        value={c.cupon_id ?? SIN_ASIGNAR}
-                        onValueChange={(v) => asignarCupon(c.id, v === SIN_ASIGNAR ? null : v)}
-                        disabled={!c.editor_id}
-                      >
-                        <SelectTrigger className="w-36">
-                          <SelectValue placeholder="Sin vincular" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value={SIN_ASIGNAR}>Sin vincular</SelectItem>
-                          {cuponesDelEditor.map((cu) => (
-                            <SelectItem key={cu.id} value={cu.id}>
-                              {cu.codigo}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      {(() => {
+                        const seleccionados = cuponesPorCampana.get(c.id) ?? new Set<string>();
+                        return (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="outline" size="sm" disabled={!c.editor_id} className="w-40 justify-between">
+                                <span className="truncate">
+                                  {seleccionados.size === 0
+                                    ? "Sin vincular"
+                                    : cuponesDelEditor
+                                        .filter((cu) => seleccionados.has(cu.id))
+                                        .map((cu) => cu.codigo)
+                                        .join(", ")}
+                                </span>
+                                <ChevronDown className="h-4 w-4 shrink-0 opacity-50" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="start">
+                              {cuponesDelEditor.length === 0 ? (
+                                <p className="px-2 py-1.5 text-sm text-muted-foreground">Este editor no tiene cupones.</p>
+                              ) : (
+                                cuponesDelEditor.map((cu) => (
+                                  <DropdownMenuCheckboxItem
+                                    key={cu.id}
+                                    checked={seleccionados.has(cu.id)}
+                                    onCheckedChange={(checked) => toggleCupon(c.id, cu.id, checked === true)}
+                                    onSelect={(e) => e.preventDefault()}
+                                  >
+                                    {cu.codigo}
+                                  </DropdownMenuCheckboxItem>
+                                ))
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        );
+                      })()}
                     </TableCell>
                   </TableRow>
                 );

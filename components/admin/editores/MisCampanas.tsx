@@ -12,7 +12,6 @@ interface CampanaAds {
   nivel: "campana" | "conjunto";
   nombre: string;
   estado: string | null;
-  cupon_id: string | null;
 }
 
 interface VentasReales {
@@ -45,16 +44,15 @@ export function MisCampanas({ editorId, codigosCupon }: { editorId: string; codi
 
       const { data: campanasData } = await supabase
         .from("campanas_ads")
-        .select("id, plataforma, nivel, nombre, estado, cupon_id")
+        .select("id, plataforma, nivel, nombre, estado")
         .eq("editor_id", editorId)
         .order("nombre");
       const filas = (campanasData as CampanaAds[]) ?? [];
       setCampanas(filas);
 
       const idsCampanas = filas.map((f) => f.id);
-      const cuponIds = filas.map((f) => f.cupon_id).filter((id): id is string => !!id);
 
-      const [{ data: metricasData }, { data: cuponesData }, { data: pedidosFallback }] = await Promise.all([
+      const [{ data: metricasData }, { data: vinculosData }, { data: pedidosFallback }] = await Promise.all([
         idsCampanas.length > 0
           ? supabase
               .from("campanas_ads_metricas_diarias")
@@ -62,9 +60,14 @@ export function MisCampanas({ editorId, codigosCupon }: { editorId: string; codi
               .in("campana_ads_id", idsCampanas)
               .gte("fecha", desde)
           : Promise.resolve({ data: [] as { campana_ads_id: string; spend: number; resultados: number }[] }),
-        cuponIds.length > 0
-          ? supabase.from("cupones").select("id, codigo").in("id", cuponIds)
-          : Promise.resolve({ data: [] as { id: string; codigo: string }[] }),
+        // Un editor puede correr varios cupones dentro de la misma campaña —
+        // por eso esto es N a N (campanas_ads_cupones), no un cupon_id único.
+        idsCampanas.length > 0
+          ? supabase
+              .from("campanas_ads_cupones")
+              .select("campana_ads_id, cupones(codigo)")
+              .in("campana_ads_id", idsCampanas)
+          : Promise.resolve({ data: [] as { campana_ads_id: string; cupones: { codigo: string } | null }[] }),
         codigosCupon.length > 0
           ? supabase
               .from("pedidos")
@@ -82,15 +85,23 @@ export function MisCampanas({ editorId, codigosCupon }: { editorId: string; codi
       }
       setMetricas(metricasMap);
 
-      const codigoPorCuponId = new Map((cuponesData ?? []).map((c) => [c.id, c.codigo]));
+      const vinculos = (vinculosData ?? []) as { campana_ads_id: string; cupones: { codigo: string } | null }[];
+      const codigosPorCampana = new Map<string, string[]>();
+      for (const v of vinculos) {
+        if (!v.cupones?.codigo) continue;
+        const actual = codigosPorCampana.get(v.campana_ads_id) ?? [];
+        actual.push(v.cupones.codigo);
+        codigosPorCampana.set(v.campana_ads_id, actual);
+      }
+
       const fallback = {
         revenue: (pedidosFallback ?? []).reduce((acc, p) => acc + Number(p.total), 0),
         pedidos: (pedidosFallback ?? []).length,
       };
 
-      // Ventas exactas por cupón vinculado, calculadas todas juntas para no
-      // hacer un round-trip por fila.
-      const codigosEspecificos = Array.from(new Set(Array.from(codigoPorCuponId.values())));
+      // Ventas exactas por los cupones vinculados, calculadas todas juntas
+      // para no hacer un round-trip por fila.
+      const codigosEspecificos = Array.from(new Set(Array.from(codigosPorCampana.values()).flat()));
       const { data: pedidosEspecificos } =
         codigosEspecificos.length > 0
           ? await supabase
@@ -109,10 +120,16 @@ export function MisCampanas({ editorId, codigosCupon }: { editorId: string; codi
 
       const ventas = new Map<string, VentasReales>();
       for (const fila of filas) {
-        if (fila.cupon_id) {
-          const codigo = codigoPorCuponId.get(fila.cupon_id);
-          const v = codigo ? ventasPorCodigo.get(codigo) : undefined;
-          ventas.set(fila.id, { revenue: v?.revenue ?? 0, pedidos: v?.pedidos ?? 0, exclusiva: true });
+        const codigos = codigosPorCampana.get(fila.id) ?? [];
+        if (codigos.length > 0) {
+          const total = codigos.reduce(
+            (acc, codigo) => {
+              const v = ventasPorCodigo.get(codigo);
+              return { revenue: acc.revenue + (v?.revenue ?? 0), pedidos: acc.pedidos + (v?.pedidos ?? 0) };
+            },
+            { revenue: 0, pedidos: 0 }
+          );
+          ventas.set(fila.id, { ...total, exclusiva: true });
         } else {
           ventas.set(fila.id, { ...fallback, exclusiva: false });
         }
