@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Badge } from "@/components/admin/Badge";
 import { TableCard } from "@/components/admin/table/TableCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ColumnPicker } from "@/components/admin/editores/ColumnPicker";
 import { useColumnasVisibles } from "@/hooks/useColumnasVisibles";
 import {
@@ -82,6 +83,9 @@ export function MisCampanas({ editorId, codigosCupon }: { editorId: string; codi
   const [metricas, setMetricas] = useState<Map<string, MetricasAgregadas>>(new Map());
   const [ventasPorFila, setVentasPorFila] = useState<Map<string, VentasReales>>(new Map());
   const [cargando, setCargando] = useState(true);
+  // "Todas" junta Meta y TikTok en la misma tabla (ya era el comportamiento
+  // por defecto) — este filtro solo acota a una plataforma cuando se quiere.
+  const [filtroPlataforma, setFiltroPlataforma] = useState<"todas" | "meta" | "tiktok">("todas");
 
   useEffect(() => {
     async function cargar() {
@@ -183,6 +187,11 @@ export function MisCampanas({ editorId, codigosCupon }: { editorId: string; codi
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editorId, codigosCupon.join(",")]);
 
+  const campanasFiltradas = useMemo(
+    () => (filtroPlataforma === "todas" ? campanas : campanas.filter((c) => c.plataforma === filtroPlataforma)),
+    [campanas, filtroPlataforma]
+  );
+
   return (
     <div className="flex flex-col gap-3">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -193,10 +202,22 @@ export function MisCampanas({ editorId, codigosCupon }: { editorId: string; codi
             ventas reales salen de tus pedidos, nunca se suman entre sí.
           </p>
         </div>
-        <ColumnPicker opciones={COLUMNAS_DISPONIBLES} visibles={columnasVisibles} onToggle={toggleColumna} />
+        <div className="flex items-center gap-2">
+          <Select value={filtroPlataforma} onValueChange={(v) => setFiltroPlataforma(v as typeof filtroPlataforma)}>
+            <SelectTrigger className="w-40 bg-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="todas">Todas las plataformas</SelectItem>
+              <SelectItem value="meta">Meta</SelectItem>
+              <SelectItem value="tiktok">TikTok</SelectItem>
+            </SelectContent>
+          </Select>
+          <ColumnPicker opciones={COLUMNAS_DISPONIBLES} visibles={columnasVisibles} onToggle={toggleColumna} />
+        </div>
       </div>
 
-      <TableCard badge={<Badge color="gris">{campanas.length}</Badge>}>
+      <TableCard badge={<Badge color="gris">{campanasFiltradas.length}</Badge>}>
         <div className="overflow-x-auto">
           <Table>
             <TableHeader>
@@ -221,14 +242,16 @@ export function MisCampanas({ editorId, codigosCupon }: { editorId: string; codi
               </TableRow>
             </TableHeader>
             <TableBody>
-              {!cargando && campanas.length === 0 && (
+              {!cargando && campanasFiltradas.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={columnasVisibles.size + 3} className="text-center text-muted-foreground">
-                    Todavía no tienes campañas asignadas.
+                    {campanas.length === 0
+                      ? "Todavía no tienes campañas asignadas."
+                      : "Ninguna campaña de esta plataforma todavía."}
                   </TableCell>
                 </TableRow>
               )}
-              {campanas.map((c) => {
+              {campanasFiltradas.map((c) => {
                 const m = metricas.get(c.id) ?? METRICAS_VACIAS;
                 const d = derivarMetricas(m);
                 const v = ventasPorFila.get(c.id) ?? { revenue: 0, pedidos: 0, exclusiva: false };
