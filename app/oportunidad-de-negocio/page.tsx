@@ -18,12 +18,44 @@ import type { ConfiguracionSitio } from "@/lib/data/configuracion";
 import { getConfiguracionPublica, getVentajasPublicas } from "@/lib/data/publico";
 import { siteConfig } from "@/lib/site-config";
 
-export const metadata: Metadata = {
-  title: "Oportunidad de negocio — Distribuidor Estratégico Suplevet",
-  description:
-    "Conviértete en Distribuidor Estratégico de Suplevet. Un negocio de bienestar animal a tu manera: producto respaldado por ciencia, resultados reales en las mascotas y acompañamiento para crecer.",
-  alternates: { canonical: `${siteConfig.siteUrl}/oportunidad-de-negocio` },
-};
+const TITULO_SEO = "Oportunidad de negocio — Distribuidor Estratégico Suplevet";
+const DESCRIPCION_SEO =
+  "Conviértete en Distribuidor Estratégico de Suplevet. Un negocio de bienestar animal a tu manera: producto respaldado por ciencia, resultados reales en las mascotas y acompañamiento para crecer.";
+const URL_SEO = `${siteConfig.siteUrl}/oportunidad-de-negocio`;
+
+// generateMetadata (y no un `metadata` estático) porque la miniatura que se ve
+// al pegar el link en WhatsApp/Facebook tiene que ser la PORTADA de esta página,
+// no la imagen genérica del sitio (el perro con el sobre) que define
+// app/layout.tsx para todas las rutas. La portada se edita desde /admin, así que
+// el valor solo se conoce en tiempo de ejecución.
+export async function generateMetadata(): Promise<Metadata> {
+  const config = await getConfiguracionPublica();
+  // La miniatura no apunta al archivo de R2 sino a app/oportunidad-de-negocio/og,
+  // que lo re-codifica a 1200x630 y ~100 KB (WhatsApp descarta las miniaturas
+  // de mas de ~600 KB y la portada original pesa 700 KB). Ver esa ruta.
+  const portada = config?.oportunidad_hero_imagen ?? config?.oportunidad_hero_imagen_mobile;
+  const miniatura = portada ? `${URL_SEO}/og` : undefined;
+
+  return {
+    title: TITULO_SEO,
+    description: DESCRIPCION_SEO,
+    alternates: { canonical: URL_SEO },
+    openGraph: {
+      type: "website",
+      url: URL_SEO,
+      title: TITULO_SEO,
+      description: DESCRIPCION_SEO,
+      // Sin `images` hereda la del layout; solo se sobrescribe si hay portada.
+      images: miniatura ? [{ url: miniatura, width: 1200, height: 630 }] : undefined,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: TITULO_SEO,
+      description: DESCRIPCION_SEO,
+      images: miniatura ? [miniatura] : undefined,
+    },
+  };
+}
 
 // Debe coincidir con ICONOS_DISPONIBLES en components/admin/oportunidad/VentajaForm.tsx
 const ICONOS: Record<string, LucideIcon> = {
