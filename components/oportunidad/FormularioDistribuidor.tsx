@@ -37,7 +37,16 @@ const CAMPOS_VACIOS = {
   distrito: "",
   experiencia: "",
   mensaje: "",
+  // "Actualmente, ¿eres asesora de una marca de venta directa?" — "" = sin
+  // responder todavía, para que ninguna de las dos opciones salga marcada.
+  asesoraVentaDirecta: "" as "" | "si" | "no",
+  marcaVentaDirecta: "",
 };
+
+const OPCIONES_ASESORA = [
+  { valor: "si", label: "Sí" },
+  { valor: "no", label: "No" },
+] as const;
 
 const INPUT_CLASS =
   "w-full rounded-[var(--radius-card,1rem)] border border-border bg-white px-4 py-3 font-body text-sm text-secondary outline-none transition-colors focus:border-accent focus:ring-2 focus:ring-accent/40";
@@ -63,6 +72,16 @@ export function FormularioDistribuidor() {
 
   function actualizar<K extends keyof typeof CAMPOS_VACIOS>(campo: K, valor: string) {
     setForm((f) => ({ ...f, [campo]: valor }));
+  }
+
+  // Al pasar a "No" se limpia la marca para no guardar un dato contradictorio
+  // si la persona escribió algo y luego cambió de opinión.
+  function setAsesoraVentaDirecta(valor: "si" | "no") {
+    setForm((f) => ({
+      ...f,
+      asesoraVentaDirecta: valor,
+      marcaVentaDirecta: valor === "si" ? f.marcaVentaDirecta : "",
+    }));
   }
 
   function setDni(numero: string) {
@@ -111,6 +130,13 @@ export function FormularioDistribuidor() {
       (form.direccion.trim() ? `Dirección: ${form.direccion.trim()}\n` : "") +
       (ubicacion ? `Ubicación: ${ubicacion}\n` : "") +
       (form.experiencia.trim() ? `Ocupación / experiencia: ${form.experiencia.trim()}\n` : "") +
+      (form.asesoraVentaDirecta
+        ? `Asesora de venta directa: ${
+            form.asesoraVentaDirecta === "si"
+              ? `Sí${form.marcaVentaDirecta.trim() ? ` (${form.marcaVentaDirecta.trim()})` : ""}`
+              : "No"
+          }\n`
+        : "") +
       (form.mensaje.trim() ? `\nMensaje: ${form.mensaje.trim()}` : "")
     );
   }
@@ -141,6 +167,10 @@ export function FormularioDistribuidor() {
         ciudad: [form.distrito, form.provincia].filter(Boolean).join(", ") || null,
         experiencia: form.experiencia.trim() || null,
         mensaje: form.mensaje.trim() || null,
+        es_asesora_venta_directa: form.asesoraVentaDirecta === "si",
+        // La marca solo tiene sentido si respondió que sí.
+        marca_venta_directa:
+          form.asesoraVentaDirecta === "si" ? form.marcaVentaDirecta.trim() || null : null,
       });
       if (dbError) {
         // Se registra pero no se bloquea: seguimos abriendo WhatsApp.
@@ -320,6 +350,47 @@ export function FormularioDistribuidor() {
         onChange={(e) => actualizar("experiencia", e.target.value)}
         className={INPUT_CLASS}
       />
+
+      {/* Sí/No como radios (no un select) para que las dos opciones se vean de
+          una sola pasada: son solo dos y el campo de marca depende de cuál se
+          elija. */}
+      <fieldset className="flex flex-col gap-2">
+        <legend className="mb-1 font-body text-sm text-secondary">
+          Actualmente, ¿eres asesora de una marca de venta directa?
+        </legend>
+        <div className="flex gap-3">
+          {OPCIONES_ASESORA.map(({ valor, label }) => (
+            <label
+              key={valor}
+              className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-[var(--radius-card,1rem)] border px-4 py-3 font-body text-sm font-bold transition-colors ${
+                form.asesoraVentaDirecta === valor
+                  ? "border-accent bg-accent/20 text-secondary"
+                  : "border-border text-muted-foreground hover:bg-soft-gray"
+              }`}
+            >
+              <input
+                type="radio"
+                name="asesora-venta-directa"
+                value={valor}
+                checked={form.asesoraVentaDirecta === valor}
+                onChange={() => setAsesoraVentaDirecta(valor)}
+                className="h-4 w-4 accent-secondary"
+              />
+              {label}
+            </label>
+          ))}
+        </div>
+        {form.asesoraVentaDirecta === "si" && (
+          <input
+            type="text"
+            maxLength={80}
+            placeholder="¿De qué marca?"
+            value={form.marcaVentaDirecta}
+            onChange={(e) => actualizar("marcaVentaDirecta", e.target.value)}
+            className={INPUT_CLASS}
+          />
+        )}
+      </fieldset>
 
       <textarea
         rows={3}

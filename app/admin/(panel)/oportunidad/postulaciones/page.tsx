@@ -37,6 +37,8 @@ interface DistribuidorLead {
   departamento: string | null;
   experiencia: string | null;
   mensaje: string | null;
+  es_asesora_venta_directa: boolean | null;
+  marca_venta_directa: string | null;
   estado: string;
 }
 
@@ -98,6 +100,7 @@ export default function AdminOportunidadPostulacionesPage() {
                 <TableHead>Dirección</TableHead>
                 <TableHead>Distrito / Región</TableHead>
                 <TableHead>Ocupación</TableHead>
+                <TableHead>Venta directa</TableHead>
                 <TableHead>Fecha</TableHead>
                 <TableHead>Estado</TableHead>
               </TableRow>
@@ -105,7 +108,7 @@ export default function AdminOportunidadPostulacionesPage() {
             <TableBody>
               {leads.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center text-muted-foreground">
+                  <TableCell colSpan={9} className="text-center text-muted-foreground">
                     Sin postulaciones todavía.
                   </TableCell>
                 </TableRow>
@@ -128,6 +131,22 @@ export default function AdminOportunidadPostulacionesPage() {
                     )}
                   </TableCell>
                   <TableCell className="max-w-xs text-muted-foreground">{l.experiencia || "—"}</TableCell>
+                  {/* Sí/No de "¿eres asesora de una marca de venta directa?" con
+                      la marca declarada debajo — el equipo prioriza estos leads. */}
+                  <TableCell className="text-muted-foreground">
+                    {l.es_asesora_venta_directa ? (
+                      <>
+                        <Badge color="verde">Sí</Badge>
+                        {l.marca_venta_directa && (
+                          <span className="mt-1 block text-xs text-muted-foreground/70">
+                            {l.marca_venta_directa}
+                          </span>
+                        )}
+                      </>
+                    ) : (
+                      "No"
+                    )}
+                  </TableCell>
                   <TableCell className="text-muted-foreground">
                     {new Date(l.created_at).toLocaleDateString("es-PE")}
                   </TableCell>

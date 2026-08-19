@@ -29,6 +29,7 @@ interface TextosOportunidad {
   oportunidad_hero_titulo: string | null;
   oportunidad_hero_texto: string | null;
   oportunidad_hero_imagen: string | null;
+  oportunidad_hero_imagen_mobile: string | null;
   oportunidad_intro_titulo: string | null;
   oportunidad_intro_texto_1: string | null;
   oportunidad_intro_texto_2: string | null;
@@ -154,7 +155,11 @@ export default function AdminOportunidadPage() {
   }
 
   async function subirImagen(
-    campo: "oportunidad_hero_imagen" | "oportunidad_intro_imagen" | "oportunidad_producto_imagen",
+    campo:
+      | "oportunidad_hero_imagen"
+      | "oportunidad_hero_imagen_mobile"
+      | "oportunidad_intro_imagen"
+      | "oportunidad_producto_imagen",
     file: File
   ) {
     setSubiendo(true);
@@ -170,6 +175,7 @@ export default function AdminOportunidadPage() {
       p_hero_titulo: textos.oportunidad_hero_titulo,
       p_hero_texto: textos.oportunidad_hero_texto,
       p_hero_imagen: textos.oportunidad_hero_imagen,
+      p_hero_imagen_mobile: textos.oportunidad_hero_imagen_mobile,
       p_intro_titulo: textos.oportunidad_intro_titulo,
       p_intro_texto_1: textos.oportunidad_intro_texto_1,
       p_intro_texto_2: textos.oportunidad_intro_texto_2,
@@ -256,10 +262,19 @@ export default function AdminOportunidadPage() {
               />
               <CampoImagen
                 id="op-hero-img"
-                label="Imagen de fondo del hero"
+                label="Imagen de fondo del hero (escritorio)"
                 value={textos.oportunidad_hero_imagen ?? ""}
                 subiendo={subiendo}
                 onUpload={(file) => subirImagen("oportunidad_hero_imagen", file)}
+              />
+              {/* Opcional: sin esta, en celular se usa la de escritorio. Se
+                  agregó porque la apaisada quedaba mal recortada en vertical. */}
+              <CampoImagen
+                id="op-hero-img-mobile"
+                label="Imagen de fondo del hero (móvil) — opcional, formato vertical o cuadrado"
+                value={textos.oportunidad_hero_imagen_mobile ?? ""}
+                subiendo={subiendo}
+                onUpload={(file) => subirImagen("oportunidad_hero_imagen_mobile", file)}
               />
             </CardContent>
             <CardFooter>

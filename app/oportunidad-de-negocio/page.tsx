@@ -66,13 +66,33 @@ export default async function OportunidadDeNegocioPage() {
           pantalla completa justo debajo del header. */}
       <section className="relative flex min-h-[60vh] items-center overflow-hidden bg-gradient-to-br from-secondary to-[#0f1b2e] text-white">
         <PageBreadcrumbs items={[{ label: "Oportunidad de negocio" }]} overlay />
+        {/* Dos archivos distintos, no uno reencuadrado: la foto de desktop es
+            apaisada y al recortarla al alto del celular quedaban las personas
+            fuera de cuadro. Se renderizan las dos y CSS decide cuál se ve, así
+            el HTML sigue siendo estático (la página es server component). El
+            navegador solo descarga la que corresponde porque la otra está en
+            `hidden` — con `sizes` distintos next/image además pide el ancho
+            justo de cada una. Si no hay imagen de móvil cargada, la de desktop
+            se muestra en ambos anchos (comportamiento anterior). */}
         {config?.oportunidad_hero_imagen && (
           <Image
             src={config.oportunidad_hero_imagen}
             alt=""
             fill
             priority
-            className="object-cover opacity-60"
+            className={`object-cover opacity-60 ${
+              config.oportunidad_hero_imagen_mobile ? "hidden md:block" : ""
+            }`}
+            sizes="100vw"
+          />
+        )}
+        {config?.oportunidad_hero_imagen_mobile && (
+          <Image
+            src={config.oportunidad_hero_imagen_mobile}
+            alt=""
+            fill
+            priority
+            className="object-cover object-top opacity-60 md:hidden"
             sizes="100vw"
           />
         )}
