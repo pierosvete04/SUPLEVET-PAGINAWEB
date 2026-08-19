@@ -17,6 +17,11 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
   const esPanel =
     pathname?.startsWith("/admin") || pathname?.startsWith("/mi-cuenta") || pathname?.startsWith("/vet");
 
+  // La franja de "envío gratis desde S/.170" es una promo del consumidor final:
+  // no aplica a quien entra a /oportunidad-de-negocio (mayorista/distribuidor,
+  // con sus propias condiciones de envío), así que ahí no se muestra.
+  const ocultarAnuncio = pathname?.startsWith("/oportunidad-de-negocio");
+
   if (esPanel) return <>{children}</>;
 
   return (
@@ -30,7 +35,7 @@ export function SiteChrome({ children }: { children: React.ReactNode }) {
       >
         Saltar al contenido
       </a>
-      <AnnouncementBar />
+      {!ocultarAnuncio && <AnnouncementBar />}
       <Header />
       <main id="main-content" className="flex-1">
         <PageTransition>{children}</PageTransition>
