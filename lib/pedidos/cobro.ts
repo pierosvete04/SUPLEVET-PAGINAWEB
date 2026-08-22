@@ -1,13 +1,23 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
+import type { ComprobantePago } from "@/lib/data/pedidos-admin";
 
 // Único lugar que decide cuánto se lleva cobrado de un pedido y qué estado de
 // pago le corresponde.
 //
-// Existió un momento en que esto vivía en dos sitios —el diálogo de "pago
-// parcial" escribía monto_pagado a mano, y la ruta de comprobantes lo
-// recalculaba sumando el array— y se pisaban entre sí: un pedido quedaba con
-// "Cobrado S/ 90" y un comprobante que decía S/ 179.90. Ahora monto_pagado es
-// el dato mandante y los comprobantes solo lo suman o lo restan.
+// La regla es una sola y no admite excepciones: **lo cobrado es la suma de los
+// pagos registrados**. Cada pago es una entrada de pedidos.comprobantes, con o
+// sin imagen (el efectivo en la puerta no deja voucher).
+//
+// Antes esto se llevaba con ajustes relativos —sumar lo nuevo, restar lo
+// viejo— sobre un total que se guardaba aparte, y bastaba con que los dos
+// números se desalinearan una vez para que corregir un comprobante de 179.90 a
+// 90 dejara "Cobrado S/ 90.10". Sumar la lista entera cada vez no puede
+// desalinearse: el resultado siempre se puede verificar mirando la pantalla.
+
+/** Suma de los pagos registrados, redondeada a céntimos. */
+export function sumarComprobantes(comprobantes: ComprobantePago[]): number {
+  return Math.round(comprobantes.reduce((acc, c) => acc + Number(c.monto ?? 0), 0) * 100) / 100;
+}
 
 /** Redondeo a céntimos: los montos vienen de inputs de texto y sin esto la
  * suma arrastra decimales de coma flotante que dejan saldos de S/ 0.0000001. */

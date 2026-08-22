@@ -13,9 +13,16 @@ export interface ItemPedido {
 }
 
 /** Un pago registrado del pedido. El caso típico es el cliente que adelanta
- * el 50% al hacer el pedido y paga el resto cuando Dinsides se lo entrega. */
+ * el 50% al hacer el pedido y paga el resto cuando Dinsides se lo entrega.
+ *
+ * `monto_pagado` del pedido es SIEMPRE la suma de estos montos: un pago que no
+ * está en esta lista no existe. Eso evita el enredo de tener el total cobrado
+ * por un lado y los comprobantes por otro, que terminaba mostrando "Cobrado
+ * S/ 90.10" cuando el único pago registrado era de S/ 90. */
 export interface ComprobantePago {
-  url: string;
+  /** Null cuando el pago no dejó voucher: efectivo en la puerta, o la captura
+   * todavía no llegó. */
+  url: string | null;
   monto: number;
   /** ISO. Cuándo se registró el pago, no cuándo se subió la imagen. */
   fecha: string;

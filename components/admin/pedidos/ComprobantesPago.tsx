@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
-import { Check, Pencil, Trash2, Upload, X } from "lucide-react";
+import { Check, Pencil, Receipt, Trash2, Upload, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,9 @@ import {
 // Un pago se puede registrar CON o SIN comprobante: el cobro en efectivo en la
 // puerta no deja voucher, y a veces la captura llega horas después del pago.
 // Por eso hay dos botones y no uno.
+//
+// "Cobrado" es siempre la suma de los pagos de la lista — no hay un total
+// guardado aparte que pueda desalinearse (ver lib/pedidos/cobro).
 
 interface Props {
   pedido: PedidoAdmin;
@@ -88,7 +91,8 @@ export function ComprobantesPago({ pedido, formaPagoLabel, requiereComprobante, 
     );
   }
 
-  /** Registra el pago sin voucher: fija cuánto se lleva cobrado en total. */
+  /** Registra el pago sin voucher: entra a la lista como un pago más, solo
+   * que sin imagen. Lo cobrado sigue siendo la suma de la lista. */
   async function registrarSinComprobante() {
     const montoNumero = montoAUsar();
     if (montoNumero === null) {
@@ -97,10 +101,10 @@ export function ComprobantesPago({ pedido, formaPagoLabel, requiereComprobante, 
     }
 
     setGuardando(true);
-    const res = await fetch(`/api/admin/pedidos/${pedido.id}/monto-cobrado`, {
+    const res = await fetch(`/api/admin/pedidos/${pedido.id}/comprobantes`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ monto_pagado: cobrado + montoNumero }),
+      body: JSON.stringify({ monto: montoNumero, nota }),
     });
     const data = await res.json().catch(() => null);
     setGuardando(false);
@@ -199,7 +203,7 @@ export function ComprobantesPago({ pedido, formaPagoLabel, requiereComprobante, 
           <p className={`text-sm ${requiereComprobante ? "text-amber-700" : "text-muted-foreground"}`}>
             {requiereComprobante
               ? `Este pedido usa ${formaPagoLabel.toLowerCase()}: registra el comprobante antes de poder confirmar el pago.`
-              : "Todavía no hay comprobantes registrados en este pedido."}
+              : "Todavía no hay pagos registrados en este pedido."}
           </p>
         ) : (
           <ul className="flex flex-col gap-3">
@@ -353,14 +357,23 @@ function ComprobanteItem({
 
   return (
     <li className="flex gap-3 rounded-lg border p-3">
-      <a
-        href={comprobante.url}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="relative h-24 w-20 shrink-0 overflow-hidden rounded-md bg-soft-gray"
-      >
-        <Image src={comprobante.url} alt={etiqueta} fill className="object-contain" sizes="80px" />
-      </a>
+      {comprobante.url ? (
+        <a
+          href={comprobante.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="relative h-24 w-20 shrink-0 overflow-hidden rounded-md bg-soft-gray"
+        >
+          <Image src={comprobante.url} alt={etiqueta} fill className="object-contain" sizes="80px" />
+        </a>
+      ) : (
+        // Pago sin voucher (efectivo en la puerta, o la captura aún no llega):
+        // se sigue viendo como un pago más, con su hueco donde iría la imagen.
+        <div className="flex h-24 w-20 shrink-0 flex-col items-center justify-center gap-1 rounded-md border border-dashed bg-soft-gray text-muted-foreground">
+          <Receipt className="h-5 w-5" strokeWidth={1.5} />
+          <span className="px-1 text-center text-[10px] leading-tight">Sin comprobante</span>
+        </div>
+      )}
       <div className="flex min-w-0 flex-1 flex-col justify-center gap-0.5">
         <p className="text-xs text-muted-foreground">{etiqueta}</p>
         {editando ? (
