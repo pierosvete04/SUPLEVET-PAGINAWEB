@@ -329,6 +329,7 @@ function Rotulo({
 }: RotuloProps) {
   const m = MEDIDAS[orientacion];
   const esVertical = orientacion === "vertical";
+  const destacar = cobrar || pagoSinConfirmar;
   return (
     <div
       className="rotulo bg-white text-black shadow-md"
@@ -419,14 +420,15 @@ function Rotulo({
           style={{
             flex: 1.4,
             minWidth: 0,
-            // Negativo (fondo negro) para los dos casos que exigen algo del
+            // Todo en blanco con letras negras: la impresora térmica no
+            // imprime fondos rellenos. Los dos casos que exigen algo del
             // motorizado en la puerta —cobrar, o consultar porque el pago no
-            // está confirmado—, para que ninguno se confunda con un paquete
-            // ya pagado.
-            background: cobrar || pagoSinConfirmar ? "#000" : "#fff",
-            color: cobrar || pagoSinConfirmar ? "#fff" : "#000",
-            border: "0.5mm solid #000",
-            padding: "1.8mm 2.5mm",
+            // está confirmado— se destacan con un marco doble grueso en vez de
+            // con un negativo, que es la forma de gritar sin gastar tinta.
+            background: "#fff",
+            color: "#000",
+            border: destacar ? "1mm double #000" : "0.5mm solid #000",
+            padding: destacar ? "1.5mm 2.2mm" : "1.8mm 2.5mm",
           }}
         >
           <p style={{ fontSize: "7pt", letterSpacing: "0.5pt", margin: 0 }}>
