@@ -1,0 +1,78 @@
+{\rtf1\ansi\ansicpg1252\deff0
+{\fonttbl{\f0\fswiss Calibri;}}
+\viewkind4\uc1\pard\sa120\f0\fs22
+
+\pard\sa180\qc\b\fs36 Suplevet\line Google Ads API - Tool Design Document\b0\fs22\par
+\pard\sa180\qc\i Basic Access Application - Supporting Documentation\i0\par
+\pard\sa180\qc Website: https://suplevet.pe\par
+
+\pard\sa120\b\fs28 1. Company Overview\b0\fs22\par
+Suplevet is a Peruvian company that manufactures and sells a veterinary nutritional supplement for dogs and cats. The product is a hyperproteic powder supplement whose formula includes lactoferrin, bovine colostrum, whey protein concentrate, omega-3 fatty acids (DHA and EPA), prebiotics (FOS), and vitamins and minerals.\par
+The product is sold in two presentations (150 g and 250 g) and in combo packages, with prices ranging from PEN 109.90 to PEN 269.90.\par
+Primary website: https://suplevet.pe\par
+Sales channels: our own direct-to-consumer e-commerce website, and a business-to-business channel serving veterinary clinics in Peru.\par
+
+\pard\sa120\b\fs28 2. Business Model\b0\fs22\par
+We are a direct advertiser. We manufacture our own product and sell it to our own customers through our own website.\par
+We are not an advertising agency. We do not manage Google Ads accounts on behalf of third parties. We do not resell, redistribute, sublicense or otherwise make available to any third party any data obtained from the Google Ads API.\par
+
+\pard\sa120\b\fs28 3. Purpose of the Tool\b0\fs22\par
+We are building an internal keyword research module inside the administration panel of our own e-commerce website. Its single purpose is to help our own marketing staff decide which search terms to target in the product pages and articles of suplevet.pe.\par
+The module already integrates the Google Search Console API, which reports the queries for which our website currently receives impressions. Search Console, by design, can only report queries where the site already has some visibility. The Google Ads API is required to close exactly that gap: we need the Keyword Planner idea service to discover related search terms and their approximate monthly search volume in Peru, including terms for which our website currently has no visibility at all.\par
+
+\pard\sa120\b\fs28 4. Intended Audience and Access\b0\fs22\par
+Internal users only - employees of Suplevet.\par
+The tool lives behind the authenticated administration area of suplevet.pe and is restricted by role: only accounts holding the "admin" or "superadmin" role can reach it. Access is enforced in two independent layers: application middleware that blocks the route, and row level security policies in our PostgreSQL database that block the underlying data.\par
+The tool is not exposed to the general public, to our customers, or to any third party.\par
+Estimated number of users: 2 to 4 internal staff members.\par
+
+\pard\sa120\b\fs28 5. Google Ads API Services Used\b0\fs22\par
+The tool calls exactly one endpoint:\par
+\pard\li360\sa120\b KeywordPlanIdeaService.GenerateKeywordIdeas\b0\line POST https://googleads.googleapis.com/v21/customers/\{customerId\}:generateKeywordIdeas\par
+\pard\sa120 Request parameters used:\par
+\pard\li360\sa60 - geoTargetConstants: geoTargetConstants/2604 (Peru)\par
+\pard\li360\sa60 - language: languageConstants/1003 (Spanish)\par
+\pard\li360\sa60 - includeAdultKeywords: false\par
+\pard\li360\sa120 - keywordSeed.keywords: a list of up to 20 seed terms typed by the internal user\par
+\pard\sa120 Response fields consumed:\par
+\pard\li360\sa60 - results[].text\par
+\pard\li360\sa60 - results[].keywordIdeaMetrics.avgMonthlySearches\par
+\pard\li360\sa120 - results[].keywordIdeaMetrics.competition\par
+\pard\sa120 The tool performs read operations only. It does not create, update, remove or pause campaigns, ad groups, ads, budgets, keywords or any other Google Ads resource. It issues no mutate operations of any kind. It does not use App Conversion Tracking or Remarketing.\par
+
+\pard\sa120\b\fs28 6. Functionality and User Flow\b0\fs22\par
+\b Step 1.\b0  An authenticated internal administrator opens the "Keywords" section of the administration panel, at the route /admin/keywords.\par
+\b Step 2.\b0  The page displays a table of search queries already collected from the Google Search Console API, showing impressions, clicks, click-through rate and average position for the last 28 days.\par
+\b Step 3.\b0  Above that table there is a panel titled "Buscar keywords relacionadas" (Search for related keywords). It contains a single text input and a button. The administrator types one or more seed terms - for example a product description such as "suplemento para perros", or a customer problem such as "mi perro no come" - and presses the button.\par
+\b Step 4.\b0  The browser sends the seed terms to our own server endpoint, POST /api/admin/keywords/ideas. The server verifies the user session and the administrator role, and only then calls GenerateKeywordIdeas with those seeds.\par
+\b Step 5.\b0  The server returns the ideas to the browser, which renders them in a read-only table with three columns: keyword text, average monthly searches, and competition level (low, medium, high).\par
+\b Step 6.\b0  The administrator may click "Agregar" (Add) on individual rows to store selected keywords in our own database for later editorial work. Only the rows the administrator explicitly selects are stored. All remaining results are discarded when the page is closed.\par
+\b Step 7.\b0  Stored keywords are later linked to a product page and used to write the page title, the meta description, and article content published on suplevet.pe.\par
+
+\pard\sa120\b\fs28 7. Data Flow\b0\fs22\par
+\pard\li360\sa60 1. Internal administrator, authenticated, in a browser\par
+\pard\li360\sa60 2. Our Next.js server - session and administrator role verified\par
+\pard\li360\sa60 3. Google OAuth 2.0 token endpoint - short-lived access token obtained from a stored refresh token\par
+\pard\li360\sa60 4. Google Ads API - GenerateKeywordIdeas\par
+\pard\li360\sa60 5. Response returned to our server\par
+\pard\li360\sa60 6. Results displayed to the administrator\par
+\pard\li360\sa120 7. Only administrator-selected rows persisted in our PostgreSQL database\par
+\pard\sa120 Credentials - including the developer token, the OAuth client secret and the refresh token - are stored exclusively as server-side environment variables. They are never sent to the browser and never appear in client-side code.\par
+
+\pard\sa120\b\fs28 8. Expected Volume of API Calls\b0\fs22\par
+The tool is used manually and occasionally, as part of editorial planning. We estimate fewer than 20 requests per day and fewer than 300 requests per month.\par
+There is no automated, scheduled or batch calling of the Google Ads API. Every single call is triggered by an explicit action of an internal administrator inside the panel.\par
+
+\pard\sa120\b\fs28 9. Data Storage and Retention\b0\fs22\par
+For the rows an administrator explicitly selects, we store only three values: the keyword text, the approximate average monthly search volume, and the competition level.\par
+This data is kept in our private database, is accessible only to the same internal administrators, and is never published, sold, shared or otherwise made available to any third party.\par
+
+\pard\sa120\b\fs28 10. Compliance Statement\b0\fs22\par
+\pard\li360\sa60 - The tool is used exclusively with our own Google Ads account, for our own website.\par
+\pard\li360\sa60 - No data obtained from the Google Ads API is transferred to any third party.\par
+\pard\li360\sa60 - The tool performs no write operations against the Google Ads API.\par
+\pard\li360\sa120 - The tool is not built on top of, and does not incorporate, any Google Ads API tool developed by someone else.\par
+
+\pard\sa120\b\fs28 11. Technical Stack\b0\fs22\par
+Next.js application written in TypeScript, backed by a PostgreSQL database. Calls to the Google Ads API are made server-side against the REST interface, authenticated with the standard OAuth 2.0 refresh token flow.\par
+}

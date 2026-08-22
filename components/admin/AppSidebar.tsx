@@ -35,6 +35,7 @@ import {
   Inbox,
   Megaphone,
   BarChart3,
+  Search,
 } from "lucide-react";
 import { NavMain, type NavEntry } from "@/components/admin/nav/NavMain";
 import { NavSecondary } from "@/components/admin/nav/NavSecondary";
@@ -57,6 +58,10 @@ const navMain: NavEntry[] = [
   // edita a diario (precios, stock, fotos) y tenerlo a dos clics dentro de un
   // submenú desplegable lo hacía lento de alcanzar.
   { title: "Productos", url: "/admin/productos", icon: Package },
+  // Keywords va en el primer nivel por la misma razón que Productos: es una
+  // pantalla de consulta frecuente, y enterrarla en un submenú la volvería
+  // algo que se revisa "cuando uno se acuerda".
+  { title: "Keywords", url: "/admin/keywords", icon: Search },
   {
     title: "Catálogo",
     icon: Boxes,
