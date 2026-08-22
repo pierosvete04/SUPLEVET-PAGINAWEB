@@ -51,10 +51,13 @@ export function DialogoPagoParcial({ pedido, onCerrar, onGuardado }: Props) {
   async function guardar() {
     if (!pedido || !montoValido) return;
     setGuardando(true);
-    const res = await fetch(`/api/admin/pedidos/${pedido.id}/estado-pago`, {
+    // Un único endpoint escribe el monto cobrado y de ahí sale el estado
+    // (ver lib/pedidos/cobro): así el diálogo y la tarjeta de comprobantes no
+    // se pisan el número entre ellos.
+    const res = await fetch(`/api/admin/pedidos/${pedido.id}/monto-cobrado`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ estado: "parcial", monto_pagado: montoNumero }),
+      body: JSON.stringify({ monto_pagado: montoNumero }),
     });
     const data = await res.json().catch(() => null);
     setGuardando(false);

@@ -51,6 +51,7 @@ import {
   type PedidoAdmin,
 } from "@/lib/data/pedidos-admin";
 import { DialogoPagoParcial } from "@/components/admin/pedidos/DialogoPagoParcial";
+import { liberarInteraccion } from "@/lib/admin/liberar-interaccion";
 import { mesActual, opcionesMes, rangoMes } from "@/lib/admin/filtro-mes";
 import { capitalizar } from "@/lib/utils";
 
@@ -178,6 +179,7 @@ export default function AdminPedidosPage() {
       toast.error(data?.error ?? "No se pudo actualizar el estado del pago.");
     }
     setActualizandoId(null);
+    liberarInteraccion();
   }
 
   async function actualizarEstadoPreparacion(id: string, estado: keyof typeof BADGE_ESTADO_PREPARACION) {
@@ -195,6 +197,7 @@ export default function AdminPedidosPage() {
       toast.error(data?.error ?? "No se pudo actualizar la preparación.");
     }
     setActualizandoId(null);
+    liberarInteraccion();
   }
 
   const pedidosFiltrados = useMemo(() => {
@@ -473,7 +476,10 @@ export default function AdminPedidosPage() {
 
       <DialogoPagoParcial
         pedido={pedidoParcial}
-        onCerrar={() => setPedidoParcial(null)}
+        onCerrar={() => {
+          setPedidoParcial(null);
+          liberarInteraccion();
+        }}
         onGuardado={({ monto_pagado, saldo_pendiente }) =>
           setPedidos((prev) =>
             prev.map((p) =>

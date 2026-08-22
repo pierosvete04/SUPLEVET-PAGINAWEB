@@ -42,6 +42,7 @@ import {
   type ItemPedido,
   type PedidoAdmin,
 } from "@/lib/data/pedidos-admin";
+import { liberarInteraccion } from "@/lib/admin/liberar-interaccion";
 import { ComprobantesPago } from "@/components/admin/pedidos/ComprobantesPago";
 import { DialogoPagoParcial } from "@/components/admin/pedidos/DialogoPagoParcial";
 import { getVariantesPorSlugs, type RegaloVariante } from "@/lib/regalo-variantes";
@@ -192,6 +193,7 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ n
     const data = await res.json().catch(() => null);
     await cargar();
     setActualizando(false);
+    liberarInteraccion();
     if (!res.ok) {
       toast.error(data?.error ?? "No se pudo actualizar el estado del pago.");
       return;
@@ -216,6 +218,7 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ n
     const data = await res.json().catch(() => null);
     await cargar();
     setActualizando(false);
+    liberarInteraccion();
     if (!res.ok) {
       toast.error(data?.error ?? "No se pudo cambiar el método de pago.");
       return;
@@ -249,6 +252,7 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ n
     const data = await res.json().catch(() => null);
     await cargar();
     setActualizando(false);
+    liberarInteraccion();
     if (!res.ok) {
       toast.error(data?.error ?? "No se pudo actualizar el estado de preparación.");
       return;

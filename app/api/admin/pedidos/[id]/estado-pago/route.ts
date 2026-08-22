@@ -10,7 +10,7 @@ import { whatsappPedido } from "@/lib/whatsapp-mensajes";
 // RESEND_API_KEY al navegador del admin. El UPDATE en sí lo sigue autorizando
 // la misma RLS de siempre ("Solo admin actualiza pedidos" -> is_admin()); acá
 // no se duplica esa verificación, se reutiliza la política.
-const ESTADOS_VALIDOS = ["pagado", "parcial", "rechazado", "cancelado"] as const;
+const ESTADOS_VALIDOS = ["pagado", "rechazado", "cancelado"] as const;
 type EstadoPago = (typeof ESTADOS_VALIDOS)[number];
 
 function esEstadoValido(valor: unknown): valor is EstadoPago {
@@ -39,62 +39,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   const supabase = await createClient();
 
-  // "Pago parcial" a mano: el equipo marca que el cliente adelantó una parte
-  // sin tener (todavía) el voucher cargado. El monto NO es opcional aunque el
-  // comprobante sí lo sea: de él sale el saldo que el rótulo le imprime al
-  // motorizado, y un parcial sin monto haría que se cobre el total de nuevo.
-  if (estado === "parcial") {
-    const monto = Number(String(body?.monto_pagado ?? "").replace(",", "."));
-    if (!Number.isFinite(monto) || monto <= 0) {
-      return NextResponse.json(
-        { error: "Escribe cuánto se ha cobrado hasta ahora." },
-        { status: 400 }
-      );
-    }
-
-    const { data: previo } = await supabase
-      .from("pedidos")
-      .select("total")
-      .eq("id", id)
-      .maybeSingle();
-    if (!previo) {
-      return NextResponse.json({ error: "Pedido no encontrado" }, { status: 404 });
-    }
-
-    const total = Number(previo.total);
-    const cobrado = Math.round(monto * 100) / 100;
-    if (cobrado >= total) {
-      return NextResponse.json(
-        { error: `Ese monto cubre el total (${total.toFixed(2)}). Si ya pagó todo, usa "Pagado".` },
-        { status: 400 }
-      );
-    }
-
-    const { error: errorParcial } = await supabase
-      .from("pedidos")
-      .update({ estado_pago: "parcial", monto_pagado: cobrado })
-      .eq("id", id);
-
-    if (errorParcial) {
-      return NextResponse.json({ error: errorParcial.message }, { status: 403 });
-    }
-
-    const { error: telegramError } = await notificarPedidoTelegram("pago_parcial", id);
-    if (telegramError) {
-      console.error("No se pudo enviar el aviso de Telegram del pago parcial:", telegramError);
-    }
-
-    // Sin correo al cliente: no hay plantilla de "pago parcial" y el aviso útil
-    // (cuánto queda por pagar) se le da al coordinar la entrega por WhatsApp,
-    // donde el mensaje ya sale con el saldo exacto (ver lib/whatsapp-pedido).
-    return NextResponse.json({
-      ok: true,
-      estado_pago: "parcial",
-      monto_pagado: cobrado,
-      saldo_pendiente: Math.round((total - cobrado) * 100) / 100,
-    });
-  }
-
+  // "parcial" no se escribe acá: el monto cobrado tiene un único dueño, la
+  // ruta /monto-cobrado (ver lib/pedidos/cobro). Marcar el estado sin el monto
+  // dejaba pedidos "parciales" sin saber cuánto falta, que es justo el dato
+  // que el rótulo necesita.
   if (estado === "pagado") {
     const { data: previo } = await supabase
       .from("pedidos")
