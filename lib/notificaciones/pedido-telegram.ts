@@ -14,12 +14,14 @@ import { enviarMensajeTelegram, escaparHtml, telegramConfigurado } from "./teleg
 export type EventoPedidoTelegram =
   | "nuevo_pedido"
   | "pago_confirmado"
+  | "pago_parcial"
   | "pago_rechazado"
   | "pago_cancelado";
 
 const TITULO_POR_EVENTO: Record<EventoPedidoTelegram, string> = {
   nuevo_pedido: "🛒 NUEVO PEDIDO",
   pago_confirmado: "✅ PAGO CONFIRMADO",
+  pago_parcial: "🟡 PAGO PARCIAL REGISTRADO",
   pago_rechazado: "❌ PAGO RECHAZADO",
   pago_cancelado: "⚠️ PAGO CANCELADO",
 };
@@ -33,6 +35,7 @@ const FORMA_PAGO_LABEL: Record<string, string> = {
 
 const ESTADO_PAGO_LABEL: Record<string, string> = {
   pagado: "✅ Pagado",
+  parcial: "🟡 Pago parcial",
   pendiente_verificacion: "⏳ Pendiente de verificación",
   rechazado: "❌ Rechazado",
   cancelado: "⚠️ Cancelado",
@@ -43,6 +46,11 @@ const METODO_ENVIO_LABEL: Record<string, string> = {
   agencia: "Agencia (recojo en Shalom)",
   shalom: "Agencia Shalom",
 };
+
+interface ComprobanteTelegram {
+  url?: string | null;
+  monto?: number | null;
+}
 
 interface ProductoPedido {
   sku?: string | null;
@@ -75,7 +83,8 @@ const CAMPOS_PEDIDO = `
   numero_pedido, created_at, cliente_nombre, cliente_email, cliente_telefono,
   forma_pago, estado_pago, estado_preparacion, captura_pago_url, productos,
   direccion_envio, zona_envio, courier, courier_otro, subtotal, descuento_monto,
-  codigo_descuento, total, regalo_bandanas, codigo_rotulo
+  codigo_descuento, total, regalo_bandanas, codigo_rotulo,
+  comprobantes, monto_pagado, saldo_pendiente
 `;
 
 function soles(monto: number): string {
@@ -215,7 +224,23 @@ function bloquePago(pedido: Record<string, unknown>): string {
     `Estado: ${ESTADO_PAGO_LABEL[estadoPago] ?? escaparHtml(estadoPago || "—")}`,
   ];
 
-  if (pedido.captura_pago_url) {
+  // Con pago parcial el dato que importa es cuánto falta cobrar: es lo que el
+  // motorizado tiene que pedir al entregar.
+  const saldo = aNumero(pedido.saldo_pendiente);
+  if (saldo > 0 && estadoPago === "parcial") {
+    lineas.push(`Adelanto cobrado: ${soles(aNumero(pedido.monto_pagado))}`);
+    lineas.push(`<b>FALTA COBRAR: ${soles(saldo)}</b>`);
+  }
+
+  const comprobantes = Array.isArray(pedido.comprobantes) ? (pedido.comprobantes as ComprobanteTelegram[]) : [];
+  if (comprobantes.length > 1) {
+    comprobantes.forEach((c, i) => {
+      if (!c?.url) return;
+      lineas.push(
+        `🧾 <a href="${escaparHtml(String(c.url))}">Comprobante ${i + 1}</a> — ${soles(aNumero(c.monto))}`
+      );
+    });
+  } else if (pedido.captura_pago_url) {
     lineas.push(`🧾 <a href="${escaparHtml(String(pedido.captura_pago_url))}">Ver comprobante</a>`);
   }
   if (pedido.codigo_rotulo) {

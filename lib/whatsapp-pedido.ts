@@ -1,4 +1,4 @@
-import type { PedidoAdmin } from "@/lib/data/pedidos-admin";
+import { saldoPedido, type PedidoAdmin } from "@/lib/data/pedidos-admin";
 import { nombreCourier, COURIER_POR_DEFECTO } from "@/lib/couriers";
 import { formatPrecio } from "@/lib/data/productos-shared";
 
@@ -53,6 +53,17 @@ function cuerpo(pedido: PedidoAdmin): string {
 
   if (pedido.estado_pago === "rechazado") {
     return `Te escribimos por tu pedido ${numero}: no pudimos validar el pago. ¿Nos reenvías el comprobante por acá para revisarlo?`;
+  }
+
+  // Pago parcial: el cliente adelantó una parte y paga el resto al recibir.
+  // Es el mensaje donde más importa ser exacto con el monto — de acá sale lo
+  // que va a tener que darle al repartidor.
+  if (pedido.estado_pago === "parcial") {
+    const saldo = formatPrecio(saldoPedido(pedido));
+    const entregado = pedido.estado_preparacion === "entregado";
+    return entregado
+      ? `Te escribimos por tu pedido ${numero}: ya lo recibiste y nos queda pendiente el saldo de ${saldo}. ¿Nos confirmas por acá cuando lo hayas enviado?`
+      : `Te escribimos por tu pedido ${numero}: recibimos tu adelanto, ¡gracias! Queda un saldo de ${saldo} que se paga al recibirlo. Te lo enviamos ${courier}.`;
   }
 
   if (pedido.estado_pago === "pendiente_verificacion") {

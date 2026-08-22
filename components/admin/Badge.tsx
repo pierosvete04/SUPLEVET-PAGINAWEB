@@ -1,6 +1,9 @@
 const COLORES = {
   verde: "bg-green-100 text-green-700",
   naranja: "bg-orange-100 text-orange-700",
+  // Pago parcial: distinto del naranja de "pendiente de verificación" para que
+  // no se confundan de un vistazo en la lista de pedidos.
+  ambar: "bg-amber-200 text-amber-900",
   rojo: "bg-red-100 text-red-700",
   gris: "bg-gray-200 text-gray-600",
   azul: "bg-blue-100 text-blue-700",

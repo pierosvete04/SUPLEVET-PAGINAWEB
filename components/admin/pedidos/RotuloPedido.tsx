@@ -9,7 +9,8 @@ import { traducirErrorSupabase } from "@/lib/errores-supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { PedidoAdmin } from "@/lib/data/pedidos-admin";
+import { badgeEstadoPago,
+  BADGE_ESTADO_PAGO, saldoPedido, type PedidoAdmin } from "@/lib/data/pedidos-admin";
 import { cobraAlEntregar } from "@/lib/data/productos-shared";
 import { etiquetaCorta } from "@/lib/documento";
 import { COURIER_POR_DEFECTO, nombreCourier } from "@/lib/couriers";
@@ -48,7 +49,25 @@ export function RotuloPedido({ pedido }: { pedido: PedidoAdmin }) {
   const [guardando, setGuardando] = useState(false);
 
   const dir = (pedido.direccion_envio ?? {}) as DireccionConDocumento;
-  const cobrar = cobraAlEntregar(pedido.forma_pago);
+  // Dos motivos para cobrar en la puerta, y el rótulo tiene que reflejar los
+  // dos: el pedido contra entrega (se cobra todo) y el pedido con adelanto
+  // (se cobra solo el saldo). Lo que va impreso es SIEMPRE lo que falta
+  // cobrar, nunca el total — con un adelanto de por medio, imprimir el total
+  // significa cobrarle dos veces al cliente.
+  const saldo = saldoPedido(pedido);
+  const adelanto = Number(pedido.monto_pagado ?? 0);
+  const cobrar = saldo > 0 && (cobraAlEntregar(pedido.forma_pago) || pedido.estado_pago === "parcial");
+  // Tercer caso: el pedido que NO se cobra en la puerta y tampoco tiene el
+  // pago confirmado (una transferencia sin verificar, un pago rechazado).
+  // Antes caía en el "else" y se imprimía "PAGADO — NO COBRAR", justo lo
+  // contrario de lo que pasaba. Y tampoco sirve pedirle algo al courier:
+  // Dinsides cobra y entrega, no consulta ni verifica nada. Así que este
+  // rótulo directamente no se imprime — la regla del negocio es que un
+  // pedido por transferencia sale solo con el pago ya verificado. Las dos
+  // salidas son verificar el pago o pasarlo a contra entrega, ambas en la
+  // ficha del pedido.
+  const pagoConfirmado = pedido.estado_pago === "pagado";
+  const pagoSinConfirmar = !cobrar && !pagoConfirmado;
   const numeroPedido = pedido.numero_pedido ?? `W-${pedido.id.slice(0, 8)}`;
   const documento = dir.numeroDocumento
     ? `${etiquetaCorta(dir.tipoDocumento)} ${dir.numeroDocumento}`
@@ -73,7 +92,7 @@ export function RotuloPedido({ pedido }: { pedido: PedidoAdmin }) {
   // El código va al pedido para no volver a escribirlo si hay que reimprimir
   // el rótulo (paquete dañado, etiqueta despegada, segundo intento de entrega).
   async function imprimir() {
-    if (faltaCodigo) return;
+    if (faltaCodigo || pagoSinConfirmar) return;
     if (codigoLimpio !== (pedido.codigo_rotulo ?? "")) {
       setGuardando(true);
       const { error: saveError } = await createClient()
@@ -179,6 +198,23 @@ export function RotuloPedido({ pedido }: { pedido: PedidoAdmin }) {
             </div>
           </div>
 
+          {/* Solo en pantalla: quien imprime se entera antes de despachar,
+              no cuando el motorizado ya está en la puerta. No bloquea la
+              impresión — hay casos legítimos (el cliente ya transfirió y el
+              comprobante llega después) y trabar el despacho sería peor. */}
+          {pagoSinConfirmar && (
+            <div className="mt-4 rounded-md border border-destructive/40 bg-destructive/5 p-3 text-xs text-destructive">
+              <p className="font-semibold">
+                No se puede imprimir: el pago no está confirmado ({badgeEstadoPago(pedido.estado_pago).label}).
+              </p>
+              <p className="mt-1 text-foreground/80">
+                {courierNombre} cobra y entrega, no verifica pagos. Antes de despachar, desde la ficha del
+                pedido {numeroPedido}: confirma el pago (si ya te transfirieron) o cambia el método a
+                <strong> pago contra entrega</strong>, y el rótulo saldrá con el monto a cobrar.
+              </p>
+            </div>
+          )}
+
           <div className="mt-4 flex flex-wrap items-center gap-3 border-t pt-4">
             <div className="flex rounded-md border p-0.5">
               {(["horizontal", "vertical"] as const).map((o) => (
@@ -195,14 +231,18 @@ export function RotuloPedido({ pedido }: { pedido: PedidoAdmin }) {
               ))}
             </div>
 
-            <Button onClick={imprimir} disabled={guardando || faltaCodigo}>
+            <Button onClick={imprimir} disabled={guardando || faltaCodigo || pagoSinConfirmar}>
               <Printer className="h-4 w-4" /> {guardando ? "Guardando…" : "Imprimir rótulo"}
             </Button>
 
-            <p className={`text-xs ${faltaCodigo ? "font-medium text-destructive" : "text-muted-foreground"}`}>
-              {faltaCodigo
-                ? "Escribe el código de Dinsides para poder imprimir."
-                : "Papel térmico de 80 mm. Si la horizontal sale cortada, usa vertical."}
+            <p
+              className={`text-xs ${faltaCodigo || pagoSinConfirmar ? "font-medium text-destructive" : "text-muted-foreground"}`}
+            >
+              {pagoSinConfirmar
+                ? "Verifica el pago o pásalo a contra entrega para poder imprimir."
+                : faltaCodigo
+                  ? "Escribe el código de Dinsides para poder imprimir."
+                  : "Papel térmico de 80 mm. Si la horizontal sale cortada, usa vertical."}
             </p>
           </div>
         </div>
@@ -216,7 +256,10 @@ export function RotuloPedido({ pedido }: { pedido: PedidoAdmin }) {
           documento={documento}
           zonaEntrega={zonaEntrega || "—"}
           cobrar={cobrar}
-          monto={Number(pedido.total)}
+          pagoSinConfirmar={pagoSinConfirmar}
+          monto={saldo}
+          adelanto={adelanto}
+          total={Number(pedido.total)}
           fechaEntrega={formatFechaRotulo(fechaDesdeInput(fecha))}
           courier={nombreCourier(pedido.courier ?? COURIER_POR_DEFECTO, pedido.courier_otro)}
           orientacion={orientacion}
@@ -233,7 +276,15 @@ interface RotuloProps {
   documento: string | null;
   zonaEntrega: string;
   cobrar: boolean;
+  /** El pago no está confirmado y tampoco es un cobro en la puerta: hay que
+   * consultar antes de entregar. */
+  pagoSinConfirmar: boolean;
+  /** Lo que hay que cobrar al entregar: el saldo, no el total del pedido. */
   monto: number;
+  /** Lo que el cliente ya adelantó. Se imprime junto al saldo para que el
+   * motorizado pueda responder "ya pagué la mitad" sin llamar a nadie. */
+  adelanto: number;
+  total: number;
   fechaEntrega: string;
   courier: string | null;
   orientacion: Orientacion;
@@ -268,7 +319,10 @@ function Rotulo({
   documento,
   zonaEntrega,
   cobrar,
+  pagoSinConfirmar,
   monto,
+  adelanto,
+  total,
   fechaEntrega,
   courier,
   orientacion,
@@ -365,20 +419,45 @@ function Rotulo({
           style={{
             flex: 1.4,
             minWidth: 0,
-            // Contra entrega va en negativo (fondo negro) para que el
-            // motorizado no pueda confundirlo con un paquete ya pagado.
-            background: cobrar ? "#000" : "#fff",
-            color: cobrar ? "#fff" : "#000",
+            // Negativo (fondo negro) para los dos casos que exigen algo del
+            // motorizado en la puerta —cobrar, o consultar porque el pago no
+            // está confirmado—, para que ninguno se confunda con un paquete
+            // ya pagado.
+            background: cobrar || pagoSinConfirmar ? "#000" : "#fff",
+            color: cobrar || pagoSinConfirmar ? "#fff" : "#000",
             border: "0.5mm solid #000",
             padding: "1.8mm 2.5mm",
           }}
         >
           <p style={{ fontSize: "7pt", letterSpacing: "0.5pt", margin: 0 }}>
-            {cobrar ? "COBRAR AL ENTREGAR" : "ESTADO DE PAGO"}
+            {cobrar
+              ? adelanto > 0
+                ? "COBRAR SALDO AL ENTREGAR"
+                : "COBRAR AL ENTREGAR"
+              : pagoSinConfirmar
+                ? "PAGO NO CONFIRMADO"
+                : "ESTADO DE PAGO"}
+            {/* Este rótulo no llega a imprimirse: el bloque de arriba
+                deshabilita el botón mientras el pago siga sin confirmar. */}
           </p>
-          <p style={{ fontSize: cobrar ? m.monto : "12pt", fontWeight: 700, margin: 0 }}>
-            {cobrar ? `S/ ${monto.toFixed(2)}` : "PAGADO — NO COBRAR"}
+          <p
+            style={{
+              fontSize: cobrar ? m.monto : "12pt",
+              fontWeight: 700,
+              margin: 0,
+            }}
+          >
+            {cobrar
+              ? `S/ ${monto.toFixed(2)}`
+              : pagoSinConfirmar
+                ? "NO DESPACHAR"
+                : "PAGADO — NO COBRAR"}
           </p>
+          {cobrar && adelanto > 0 && (
+            <p style={{ fontSize: "8pt", fontWeight: 700, margin: 0 }}>
+              YA ADELANTÓ S/ {adelanto.toFixed(2)} DE S/ {total.toFixed(2)}
+            </p>
+          )}
         </div>
 
         <div style={{ flex: 1, minWidth: 0, border: "0.5mm solid #000", padding: "1.8mm 2.5mm" }}>

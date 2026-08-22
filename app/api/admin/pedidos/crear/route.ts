@@ -124,6 +124,20 @@ export async function POST(request: Request) {
       estado_preparacion: "no_preparado",
       forma_pago: formaPago,
       captura_pago_url: capturaPagoUrl,
+      // El comprobante que trae el pedido nuevo también entra a la lista, para
+      // que la tarjeta de comprobantes del panel no lo ignore. Si el pedido
+      // nace pendiente, el monto va en 0: todavía no se cobró nada, solo se
+      // adjuntó la imagen.
+      comprobantes: capturaPagoUrl
+        ? [
+            {
+              url: capturaPagoUrl,
+              monto: estadoPago === "pagado" ? total : 0,
+              fecha: new Date().toISOString(),
+              nota: null,
+            },
+          ]
+        : [],
       zona_envio: zonaEnvio,
       direccion_envio: direccionEnvio,
       creado_por_admin_id: user?.id ?? null,

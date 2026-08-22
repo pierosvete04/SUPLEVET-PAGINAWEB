@@ -18,7 +18,8 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { BADGE_ESTADO_PAGO, formatFechaPedido, type PedidoAdmin } from "@/lib/data/pedidos-admin";
+import { badgeEstadoPago,
+  BADGE_ESTADO_PAGO, formatFechaPedido, type PedidoAdmin } from "@/lib/data/pedidos-admin";
 import { mesActual, opcionesMes, rangoMes } from "@/lib/admin/filtro-mes";
 
 interface PedidosPorCuponesProps {
@@ -195,7 +196,7 @@ export function PedidosPorCupones({ codigos, linkDetalle }: PedidosPorCuponesPro
                   </TableRow>
                 )}
                 {pageRows.map((p) => {
-                  const badge = BADGE_ESTADO_PAGO[p.estado_pago];
+                  const badge = badgeEstadoPago(p.estado_pago);
                   const fila = (
                     <>
                       <TableCell className="font-medium">{p.numero_pedido ?? p.id.slice(0, 8)}</TableCell>

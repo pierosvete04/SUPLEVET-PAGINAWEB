@@ -8,6 +8,7 @@ import type { BadgeColor } from "@/components/admin/Badge";
 const COLOR_HEX: Record<BadgeColor, string> = {
   verde: "#16a34a",
   naranja: "#ea580c",
+  ambar: "#b45309",
   rojo: "#dc2626",
   gris: "#6b7280",
   azul: "#2563eb",

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { AlertCircle, PackageSearch } from "lucide-react";
+import { AlertCircle, PackageSearch, Wallet } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { Badge } from "@/components/admin/Badge";
 import { SectionCards } from "@/components/admin/SectionCards";
@@ -34,7 +34,8 @@ import {
   type DashboardStats,
   type PresetPeriodo,
 } from "@/lib/data/dashboard-admin";
-import { BADGE_ESTADO_PAGO, formatFechaPedido } from "@/lib/data/pedidos-admin";
+import { badgeEstadoPago,
+  BADGE_ESTADO_PAGO, formatFechaPedido, formatSoles } from "@/lib/data/pedidos-admin";
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -99,7 +100,7 @@ export default function AdminDashboardPage() {
         <>
           <SectionCards stats={stats} />
 
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <div className={`grid grid-cols-1 gap-4 ${stats.pedidosPorCobrar > 0 ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
             <Link
               href="/admin/pedidos?estado_pago=pendiente_verificacion"
               className="flex items-center gap-3 rounded-md border border-orange-200 bg-orange-50 p-4 transition-colors hover:bg-orange-100"
@@ -119,6 +120,20 @@ export default function AdminDashboardPage() {
                 <span className="font-semibold">{stats.alertaPorPreparar}</span> pedidos por preparar
               </p>
             </Link>
+            {/* Solo aparece si hay algo que cobrar: una tarjeta en cero todos
+                los días entrena al equipo a ignorar la fila de alertas. */}
+            {stats.pedidosPorCobrar > 0 && (
+              <Link
+                href="/admin/pedidos?estado_pago=parcial"
+                className="flex items-center gap-3 rounded-md border border-amber-300 bg-amber-50 p-4 transition-colors hover:bg-amber-100"
+              >
+                <Wallet className="h-5 w-5 shrink-0 text-amber-700" />
+                <p className="text-sm">
+                  <span className="font-semibold">{formatSoles(stats.montoPorCobrar)}</span> por cobrar en{" "}
+                  {stats.pedidosPorCobrar} pedido{stats.pedidosPorCobrar === 1 ? "" : "s"} con pago parcial
+                </p>
+              </Link>
+            )}
           </div>
 
           <Card>
@@ -233,7 +248,7 @@ export default function AdminDashboardPage() {
                   </TableRow>
                 ) : (
                   stats.pedidosRecientes.map((p) => {
-                    const pago = BADGE_ESTADO_PAGO[p.estado_pago];
+                    const pago = badgeEstadoPago(p.estado_pago);
                     return (
                       <TableRow
                         key={p.id}

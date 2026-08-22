@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useRef, useState, use as usePromise } from "react";
+import { useEffect, useState, use as usePromise } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { ArrowLeft, Gift, MessageCircle, Package, Printer, Upload } from "lucide-react";
+import { ArrowLeft, Gift, MessageCircle, Package, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { createClient } from "@/lib/supabase/client";
 import { traducirErrorSupabase } from "@/lib/errores-supabase";
@@ -33,12 +33,16 @@ import { whatsappLink } from "@/lib/site-config";
 import { mensajeWhatsappPedido } from "@/lib/whatsapp-pedido";
 import { BrandedLoader } from "@/components/ui/branded-loader";
 import {
+  badgeEstadoPago,
   BADGE_ESTADO_PAGO,
   BADGE_ESTADO_PREPARACION,
   formatFechaPedido,
+  formatSoles,
+  saldoPedido,
   type ItemPedido,
   type PedidoAdmin,
 } from "@/lib/data/pedidos-admin";
+import { ComprobantesPago } from "@/components/admin/pedidos/ComprobantesPago";
 import { getVariantesPorSlugs, type RegaloVariante } from "@/lib/regalo-variantes";
 import { COURIER_POR_DEFECTO, COURIERS } from "@/lib/couriers";
 import {
@@ -88,14 +92,12 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ n
   const [imagenesPorSlug, setImagenesPorSlug] = useState<Record<string, string>>({});
   const [cargando, setCargando] = useState(true);
   const [actualizando, setActualizando] = useState(false);
-  const [subiendoComprobante, setSubiendoComprobante] = useState(false);
   const [confirmarEstadoPago, setConfirmarEstadoPago] = useState<"pagado" | "rechazado" | "cancelado" | null>(
     null
   );
   const [notificarEstadoPago, setNotificarEstadoPago] = useState(true);
   const [confirmarEstadoPreparacion, setConfirmarEstadoPreparacion] = useState<string | null>(null);
   const [notificarEstadoPreparacion, setNotificarEstadoPreparacion] = useState(true);
-  const inputComprobanteRef = useRef<HTMLInputElement>(null);
 
   async function cargar() {
     setCargando(true);
@@ -157,7 +159,6 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ n
   const LABEL_CAMPO: Record<string, string> = {
     courier: "Empresa de envío",
     courier_otro: "Nombre del courier",
-    captura_pago_url: "el comprobante de pago",
   };
 
   async function actualizarCampo(campo: string, valor: string) {
@@ -171,18 +172,6 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ n
       return;
     }
     toast.success(`Se actualizó "${LABEL_CAMPO[campo] ?? "el pedido"}".`);
-  }
-
-  async function subirComprobante(file: File) {
-    if (!pedido) return;
-    setSubiendoComprobante(true);
-    const url = await uploadFileToR2("pedidos-comprobantes", file, pedido.id);
-    setSubiendoComprobante(false);
-    if (!url) {
-      toast.error("No se pudo subir el comprobante. Intenta de nuevo.");
-      return;
-    }
-    await actualizarCampo("captura_pago_url", url);
   }
 
   // A diferencia de actualizarCampo(), este pasa por una ruta API en vez de
@@ -262,6 +251,16 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ n
       toast.error(data?.error ?? "No se pudo actualizar el estado de preparación.");
       return;
     }
+    // Entregar con saldo pendiente es válido (el motorizado cobra el resto en
+    // la puerta), pero no puede pasar en silencio: la plata sigue en la calle
+    // y los SuplePoints del cliente quedan en pausa hasta registrarla.
+    if (estado === "entregado" && data?.saldoPendiente > 0) {
+      toast.warning(
+        `Pedido entregado, pero faltan ${formatSoles(data.saldoPendiente)} por cobrar. Sube el comprobante del saldo para cerrarlo y acreditar los SuplePoints.`,
+        { duration: 10000 }
+      );
+      return;
+    }
     toast.success("Estado de preparación actualizado.");
   }
 
@@ -269,10 +268,12 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ n
   if (!pedido) return <p className="text-sm text-muted-foreground">Pedido no encontrado.</p>;
 
   const dir = pedido.direccion_envio as DireccionEnvioPedidoAdmin | null;
-  const pago = BADGE_ESTADO_PAGO[pedido.estado_pago];
+  const pago = badgeEstadoPago(pedido.estado_pago);
   const requiereComprobante = FORMAS_QUE_EXIGEN_COMPROBANTE.includes(pedido.forma_pago ?? "");
   const formaPagoBloqueada = FORMAS_PAGO_NO_EDITABLES[pedido.forma_pago ?? ""];
   const comprobantePendiente = requiereComprobante && !pedido.captura_pago_url;
+  const saldo = saldoPedido(pedido);
+  const pagoParcial = pedido.estado_pago === "parcial";
 
   return (
     <div className="flex flex-col gap-6">
@@ -290,7 +291,9 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ n
               <Printer className="h-4 w-4" /> Rótulo
             </Link>
           </Button>
-          <Badge color={pago.color}>{pago.label}</Badge>
+          <Badge color={pago.color}>
+            {pagoParcial ? `${pago.label} — faltan ${formatSoles(saldo)}` : pago.label}
+          </Badge>
         </div>
       </div>
 
@@ -364,58 +367,12 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ n
             onGuardado={cargar}
           />
 
-          {(pedido.captura_pago_url || requiereComprobante) && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-sm text-muted-foreground">
-                  Captura de pago ({FORMA_PAGO_LABEL[pedido.forma_pago ?? ""] ?? pedido.forma_pago})
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="flex flex-col gap-3">
-                {pedido.captura_pago_url ? (
-                  <div className="relative h-96 w-full overflow-hidden rounded-lg bg-soft-gray">
-                    <Image
-                      src={pedido.captura_pago_url}
-                      alt="Captura de pago"
-                      fill
-                      className="object-contain"
-                    />
-                  </div>
-                ) : (
-                  <p className="text-sm text-amber-600">
-                    Este pedido usa {FORMA_PAGO_LABEL[pedido.forma_pago ?? ""]?.toLowerCase()}: sube el comprobante
-                    antes de poder confirmar el pago.
-                  </p>
-                )}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="w-fit"
-                  disabled={subiendoComprobante || actualizando}
-                  onClick={() => inputComprobanteRef.current?.click()}
-                >
-                  <Upload className="h-4 w-4" />
-                  {subiendoComprobante
-                    ? "Subiendo…"
-                    : pedido.captura_pago_url
-                      ? "Reemplazar comprobante"
-                      : "Subir comprobante"}
-                </Button>
-                <input
-                  ref={inputComprobanteRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) subirComprobante(file);
-                    e.target.value = "";
-                  }}
-                />
-              </CardContent>
-            </Card>
-          )}
+          <ComprobantesPago
+            pedido={pedido}
+            formaPagoLabel={FORMA_PAGO_LABEL[pedido.forma_pago ?? ""] ?? pedido.forma_pago ?? "sin método"}
+            requiereComprobante={requiereComprobante}
+            onCambio={cargar}
+          />
         </div>
 
         <div className="flex flex-col gap-6">
@@ -470,6 +427,19 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ n
                 <p className="text-sm text-muted-foreground">Este pago ya fue confirmado. No hay nada más que verificar.</p>
               ) : (
                 <>
+                  {pagoParcial && (
+                    // El camino normal para cerrar un pedido parcial es
+                    // registrar el comprobante del saldo (así queda la
+                    // evidencia del segundo cobro). "Confirmar" queda como
+                    // salida de emergencia: da el total por cobrado sin
+                    // voucher, y por eso se avisa qué implica.
+                    <p className="rounded-md bg-amber-50 p-2.5 text-xs text-amber-800">
+                      Cobrado {formatSoles(Number(pedido.monto_pagado ?? 0))} de{" "}
+                      {formatSoles(Number(pedido.total))}. Faltan{" "}
+                      <strong>{formatSoles(saldo)}</strong>: regístralos con su comprobante abajo. Si
+                      confirmas acá, el pedido queda como cobrado por completo sin ese voucher.
+                    </p>
+                  )}
                   {comprobantePendiente && (
                     <p className="text-xs text-amber-600">
                       Sube el comprobante de pago en la tarjeta &quot;Captura de pago&quot; para poder confirmar.

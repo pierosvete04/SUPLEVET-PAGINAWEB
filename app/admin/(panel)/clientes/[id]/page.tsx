@@ -8,6 +8,8 @@ import { Badge } from "@/components/admin/Badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BADGE_NIVEL, formatFecha, nivelLabel, type ClienteResumen } from "@/lib/data/clientes-admin";
 import {
+  badgeEstadoPago,
+  badgeEstadoPreparacion,
   BADGE_ESTADO_PAGO,
   BADGE_ESTADO_PREPARACION,
   formatFechaPedido,
@@ -113,8 +115,8 @@ export default function AdminClienteDetallePage({ params }: { params: Promise<{ 
               ) : (
                 <div className="flex flex-col gap-3">
                   {pedidos.map((p) => {
-                    const pago = BADGE_ESTADO_PAGO[p.estado_pago];
-                    const prep = BADGE_ESTADO_PREPARACION[p.estado_preparacion];
+                    const pago = badgeEstadoPago(p.estado_pago);
+                    const prep = badgeEstadoPreparacion(p.estado_preparacion);
                     return (
                       <Link
                         key={p.id}

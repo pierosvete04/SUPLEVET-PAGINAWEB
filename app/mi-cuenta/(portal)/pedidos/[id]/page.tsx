@@ -43,6 +43,8 @@ interface PedidoDetalle {
   shopify_order_id: string | null;
   estado: string;
   estado_pago: string | null;
+  monto_pagado: number | null;
+  saldo_pendiente: number | null;
   estado_preparacion: string;
   forma_pago: string | null;
   total: number;
@@ -84,7 +86,7 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
     supabase
       .from("pedidos")
       .select(
-        "id, numero_pedido, shopify_order_id, estado, estado_pago, estado_preparacion, forma_pago, total, productos, puntos_acreditados, fecha_agotamiento_estimada, fecha_pago, fecha_entrega, direccion_envio, zona_envio, regalo_bandana, regalo_bandanas, courier, courier_otro, created_at"
+        "id, numero_pedido, shopify_order_id, estado, estado_pago, estado_preparacion, forma_pago, total, monto_pagado, saldo_pendiente, productos, puntos_acreditados, fecha_agotamiento_estimada, fecha_pago, fecha_entrega, direccion_envio, zona_envio, regalo_bandana, regalo_bandanas, courier, courier_otro, created_at"
       )
       .eq("id", id)
       .eq("cliente_id", user.id)
@@ -142,7 +144,12 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
     ? `${etiquetaCorta(direccion.tipoDocumento)} ${direccion.numeroDocumento}`
     : null;
   const entregaPorTexto = nombreCourier(p.courier, p.courier_otro) ?? metodoEnvioTexto;
-  const enCurso = !["entregado", "devuelto"].includes(p.estado_preparacion) && p.estado_pago === "pagado";
+  // El pedido con adelanto también está en curso: se prepara y se despacha
+  // igual, solo que el saldo se cobra al entregarlo.
+  const enCurso =
+    !["entregado", "devuelto"].includes(p.estado_preparacion) &&
+    ["pagado", "parcial"].includes(p.estado_pago ?? "");
+  const saldoPorPagar = p.estado_pago === "parcial" ? Number(p.saldo_pendiente ?? 0) : 0;
 
   return (
     <div className="flex flex-col gap-4">
@@ -172,6 +179,22 @@ export default async function PortalPedidoDetalleRoute({ params }: { params: Pro
             <span className="font-display text-xl font-bold text-portal-navy">{formatPrecio(Number(p.total))}</span>
           </div>
         </div>
+
+        {saldoPorPagar > 0 && (
+          <div className="mt-4 flex items-center gap-3 rounded-2xl bg-[#fef3c7] p-3">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#fde68a]">
+              <PortalIcon name="payments" className="text-[#92400e]" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-[11px] font-bold uppercase tracking-wide text-[#92400e]">
+                Saldo por pagar al recibir
+              </p>
+              <p className="text-sm font-semibold text-[#78350f]">
+                {formatPrecio(saldoPorPagar)} · ya adelantaste {formatPrecio(Number(p.monto_pagado ?? 0))}
+              </p>
+            </div>
+          </div>
+        )}
 
         {enCurso && entregaPorTexto && (
           <div className="mt-4 flex items-center gap-3 rounded-2xl bg-portal-surface-low p-3">

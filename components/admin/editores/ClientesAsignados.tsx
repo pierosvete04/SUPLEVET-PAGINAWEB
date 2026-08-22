@@ -16,7 +16,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BADGE_NIVEL, formatFecha, nivelLabel, type ClienteResumen } from "@/lib/data/clientes-admin";
-import { BADGE_ESTADO_PAGO } from "@/lib/data/pedidos-admin";
+import { badgeEstadoPago,
+  BADGE_ESTADO_PAGO } from "@/lib/data/pedidos-admin";
 import { opcionesMes, rangoMes } from "@/lib/admin/filtro-mes";
 
 interface ClientesAsignadosProps {
@@ -309,7 +310,7 @@ export function ClientesAsignados({ editorId, codigosCupon, puedeAsignar }: Clie
             )}
             {pageRows.map((c) => {
               const estado = estadoPorCliente.get(c.id);
-              const badge = estado ? BADGE_ESTADO_PAGO[estado] : null;
+              const badge = estado ? badgeEstadoPago(estado) : null;
               const nombreCompleto = c.nombre || c.apellido ? `${c.nombre ?? ""} ${c.apellido ?? ""}`.trim() : "Sin nombre";
               // El editor no tiene acceso a /admin/clientes/[id] (middleware lo
               // rebota a su prefijo permitido) — el detalle con link solo tiene

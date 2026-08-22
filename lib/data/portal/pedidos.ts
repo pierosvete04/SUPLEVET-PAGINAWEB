@@ -36,6 +36,7 @@ export const ESTADO_PEDIDO: Record<string, { bg: string; color: string; texto: s
   pendiente_verificacion: { bg: "#fef3c7", color: "#92400e", texto: "Pendiente de verificación" },
   rechazado: { bg: "#fee2e2", color: "#991b1b", texto: "Pago rechazado" },
   pagado: { bg: "#fef3c7", color: "#92400e", texto: "Pagado" },
+  parcial: { bg: "#fde68a", color: "#78350f", texto: "Adelanto recibido" },
   en_camino: { bg: "#dbeafe", color: "#1e40af", texto: "En camino" },
   entregado: { bg: "#dcfce7", color: "#166534", texto: "Entregado" },
   cancelado: { bg: "#fee2e2", color: "#991b1b", texto: "Cancelado" },

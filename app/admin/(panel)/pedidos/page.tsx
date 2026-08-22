@@ -41,9 +41,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import {
+  badgeEstadoPago,
+  badgeEstadoPreparacion,
   BADGE_ESTADO_PAGO,
   BADGE_ESTADO_PREPARACION,
   formatFechaPedido,
+  formatSoles,
+  saldoPedido,
   type PedidoAdmin,
 } from "@/lib/data/pedidos-admin";
 import { mesActual, opcionesMes, rangoMes } from "@/lib/admin/filtro-mes";
@@ -230,6 +234,7 @@ export default function AdminPedidosPage() {
             <SelectContent>
               <SelectItem value="todos">Todos los estados de pago</SelectItem>
               <SelectItem value="pendiente_verificacion">Pendiente de verificación</SelectItem>
+              <SelectItem value="parcial">Pago parcial (falta cobrar)</SelectItem>
               <SelectItem value="pagado">Pagado</SelectItem>
               <SelectItem value="rechazado">Rechazado</SelectItem>
               <SelectItem value="cancelado">Cancelado</SelectItem>
@@ -371,8 +376,8 @@ export default function AdminPedidosPage() {
               </TableRow>
             )}
             {pageRows.map((p) => {
-              const pago = BADGE_ESTADO_PAGO[p.estado_pago];
-              const prep = BADGE_ESTADO_PREPARACION[p.estado_preparacion];
+              const pago = badgeEstadoPago(p.estado_pago);
+              const prep = badgeEstadoPreparacion(p.estado_preparacion);
               const actualizando = actualizandoId === p.id;
               return (
                 <TableRow
@@ -409,14 +414,24 @@ export default function AdminPedidosPage() {
                         }
                       >
                         <SelectTrigger className="h-auto w-fit gap-1.5 border-none bg-transparent p-0 shadow-none focus:ring-0 [&_svg]:opacity-50">
-                          <Badge color={pago.color}>{pago.label}</Badge>
+                          <Badge color={pago.color}>
+                            {p.estado_pago === "parcial"
+                              ? `Falta ${formatSoles(saldoPedido(p))}`
+                              : pago.label}
+                          </Badge>
                         </SelectTrigger>
                         <SelectContent>
-                          {Object.entries(BADGE_ESTADO_PAGO).map(([valor, { label }]) => (
-                            <SelectItem key={valor} value={valor}>
-                              {label}
-                            </SelectItem>
-                          ))}
+                          {Object.entries(BADGE_ESTADO_PAGO)
+                            // "Pago parcial" no se elige a mano: sale de sumar
+                            // los comprobantes registrados en la ficha del
+                            // pedido. Ofrecerlo acá dejaría pedidos marcados
+                            // como parciales sin un solo sol registrado.
+                            .filter(([valor]) => valor !== "parcial")
+                            .map(([valor, { label }]) => (
+                              <SelectItem key={valor} value={valor}>
+                                {label}
+                              </SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                     </div>

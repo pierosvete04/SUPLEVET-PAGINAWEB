@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { sendTransactionalEmail } from "@/lib/emails/send";
 import { whatsappPedido } from "@/lib/whatsapp-mensajes";
+import { acreditarPuntosPedido } from "@/lib/pedidos/acreditar-puntos";
 
 // Llamado por el selector de "Estado de preparación" en
 // app/admin/(panel)/pedidos/[id]. Cada transición manda un aviso al cliente
@@ -117,35 +118,23 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ ok: true });
   }
 
-  // acreditar_puntos_pedido_web ya trae su propio candado is_admin() + chequeo
-  // de idempotencia (pedidos.puntos_acreditados > 0) — no se duplica acá.
-  const { data: resultado, error: rpcError } = await supabase.rpc("acreditar_puntos_pedido_web", {
-    p_pedido_id: id,
+  // Los SuplePoints ahora exigen el pedido cobrado por completo: si se entrega
+  // con saldo pendiente (el cliente paga el resto al motorizado), quedan en
+  // pausa y los suelta /api/admin/pedidos/[id]/comprobantes al registrarse el
+  // pago final. La acreditación en sí vive en lib/pedidos/acreditar-puntos.
+  const { data: cobro } = await supabase
+    .from("pedidos")
+    .select("saldo_pendiente")
+    .eq("id", id)
+    .maybeSingle();
+
+  const resultado = await acreditarPuntosPedido(supabase, id, pedido, notificar);
+
+  return NextResponse.json({
+    ok: true,
+    puntos: resultado.acreditados,
+    // El panel usa esto para avisar "entregado, pero faltan S/ X por cobrar"
+    // en vez de dar la entrega por cerrada.
+    saldoPendiente: Number(cobro?.saldo_pendiente ?? 0),
   });
-
-  if (rpcError || !resultado?.ok) {
-    console.error("No se pudo acreditar SuplePoints del pedido:", rpcError ?? resultado?.error);
-    return NextResponse.json({ ok: true, puntos: false });
-  }
-
-  if (resultado.ya_procesado || !pedido.cliente_email || !notificar) {
-    return NextResponse.json({ ok: true, puntos: !!resultado.ya_procesado });
-  }
-
-  const { error: sendError } = await sendTransactionalEmail(pedido.cliente_email, {
-    tipo: "puntos_acreditados",
-    data: {
-      nombre: pedido.cliente_nombre ?? "cliente",
-      puntosGanados: resultado.puntos,
-      saldoAnterior: resultado.saldo_anterior,
-      saldoNuevo: resultado.saldo_nuevo,
-      origen: `tu pedido ${pedido.numero_pedido ?? ""}`,
-    },
-  });
-
-  if (sendError) {
-    console.error("No se pudo enviar el correo de puntos acreditados:", sendError);
-  }
-
-  return NextResponse.json({ ok: true, puntos: true, detalle: resultado });
 }

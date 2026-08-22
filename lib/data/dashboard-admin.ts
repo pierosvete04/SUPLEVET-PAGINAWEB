@@ -1,6 +1,7 @@
 import type { createClient } from "@/lib/supabase/client";
 import type { BadgeColor } from "@/components/admin/Badge";
 import {
+  montoCobrado,
   BADGE_ESTADO_PAGO,
   BADGE_ESTADO_PREPARACION,
   type ItemPedido,
@@ -136,6 +137,9 @@ export interface DashboardStats {
   deltaClientesNuevos: number | null;
   alertaPendientesVerificacion: number;
   alertaPorPreparar: number;
+  /** Suma de los saldos de los pedidos con pago parcial del período. */
+  montoPorCobrar: number;
+  pedidosPorCobrar: number;
   serieTiempo: PuntoSerieTiempo[];
   pedidosPorEstadoPago: ConteoEstado[];
   pedidosPorEstadoPreparacion: ConteoEstado[];
@@ -155,10 +159,25 @@ type PedidoResumenAgregado = Pick<
   | "cliente_nombre"
   | "cliente_email"
   | "productos"
+  | "monto_pagado"
+  | "saldo_pendiente"
 >;
 
-function agregarIngresosPagados(pedidos: { total: number; estado_pago: string }[]): number {
-  return pedidos.filter((p) => p.estado_pago === "pagado").reduce((acc, p) => acc + Number(p.total), 0);
+// Ingresos = plata efectivamente cobrada, no facturada. Un pedido con pago
+// parcial suma solo su adelanto; el resto entra cuando se registre el
+// comprobante del saldo. Ver montoCobrado() en lib/data/pedidos-admin.
+function agregarIngresosPagados(
+  pedidos: { total: number; estado_pago: string; monto_pagado?: number | null }[]
+): number {
+  return pedidos.reduce((acc, p) => acc + montoCobrado(p), 0);
+}
+
+/** Plata en la calle: la suma de los saldos de los pedidos que se despacharon
+ * con un adelanto. Es lo que el equipo tiene que ir a cobrar. */
+function agregarPorCobrar(pedidos: { estado_pago: string; saldo_pendiente?: number | null }[]): number {
+  return pedidos
+    .filter((p) => p.estado_pago === "parcial")
+    .reduce((acc, p) => acc + Number(p.saldo_pendiente ?? 0), 0);
 }
 
 export async function getDashboardStats(
@@ -167,7 +186,7 @@ export async function getDashboardStats(
 ): Promise<DashboardStats> {
   const anterior = rangoAnterior(rango);
   const columnas =
-    "id, created_at, total, estado_pago, estado_preparacion, cliente_id, cliente_nombre, cliente_email, productos";
+    "id, created_at, total, estado_pago, estado_preparacion, cliente_id, cliente_nombre, cliente_email, productos, monto_pagado, saldo_pendiente";
 
   const [
     actualRes,
@@ -181,7 +200,7 @@ export async function getDashboardStats(
     supabase.from("pedidos").select(columnas).gte("created_at", rango.desde).lt("created_at", rango.hasta),
     supabase
       .from("pedidos")
-      .select("total, estado_pago")
+      .select("total, estado_pago, monto_pagado")
       .gte("created_at", anterior.desde)
       .lt("created_at", anterior.hasta),
     supabase
@@ -203,17 +222,21 @@ export async function getDashboardStats(
   ]);
 
   const pedidos = (actualRes.data as PedidoResumenAgregado[]) ?? [];
-  const pedidosAnteriores = (anteriorRes.data as { total: number; estado_pago: string }[]) ?? [];
+  const pedidosAnteriores =
+    (anteriorRes.data as { total: number; estado_pago: string; monto_pagado: number }[]) ?? [];
 
   const totalPedidos = pedidos.length;
   const ingresosTotales = agregarIngresosPagados(pedidos);
-  const pedidosPagados = pedidos.filter((p) => p.estado_pago === "pagado");
+  // El ticket promedio divide entre los pedidos que aportaron ingresos, así
+  // que los parciales cuentan igual que los pagados: si no, un mes con muchos
+  // adelantos inflaría el promedio repartiendo su plata entre menos pedidos.
+  const pedidosPagados = pedidos.filter((p) => montoCobrado(p) > 0);
   const ticketPromedio = pedidosPagados.length > 0 ? ingresosTotales / pedidosPagados.length : 0;
   const clientesNuevos = clientesActualRes.count ?? 0;
 
   const totalPedidosAnterior = pedidosAnteriores.length;
   const ingresosAnteriores = agregarIngresosPagados(pedidosAnteriores);
-  const pedidosPagadosAnteriores = pedidosAnteriores.filter((p) => p.estado_pago === "pagado");
+  const pedidosPagadosAnteriores = pedidosAnteriores.filter((p) => montoCobrado(p) > 0);
   const ticketPromedioAnterior =
     pedidosPagadosAnteriores.length > 0 ? ingresosAnteriores / pedidosPagadosAnteriores.length : 0;
   const clientesNuevosAnterior = clientesAnteriorRes.count ?? 0;
@@ -223,7 +246,7 @@ export async function getDashboardStats(
     const fecha = p.created_at.slice(0, 10);
     const punto = serieMap.get(fecha) ?? { ingresos: 0, pedidos: 0 };
     punto.pedidos += 1;
-    if (p.estado_pago === "pagado") punto.ingresos += Number(p.total);
+    punto.ingresos += montoCobrado(p);
     serieMap.set(fecha, punto);
   }
   const serieTiempo: PuntoSerieTiempo[] = Array.from(serieMap.entries())
@@ -262,13 +285,13 @@ export async function getDashboardStats(
 
   const clientesMap = new Map<string, { nombre: string; total: number; pedidos: number }>();
   for (const p of pedidos) {
-    if (!p.cliente_id || p.estado_pago !== "pagado") continue;
+    if (!p.cliente_id || montoCobrado(p) <= 0) continue;
     const acumulado = clientesMap.get(p.cliente_id) ?? {
       nombre: p.cliente_nombre ?? p.cliente_email,
       total: 0,
       pedidos: 0,
     };
-    acumulado.total += Number(p.total);
+    acumulado.total += montoCobrado(p);
     acumulado.pedidos += 1;
     clientesMap.set(p.cliente_id, acumulado);
   }
@@ -288,6 +311,8 @@ export async function getDashboardStats(
     deltaClientesNuevos: variacionPorcentual(clientesNuevos, clientesNuevosAnterior),
     alertaPendientesVerificacion: pendientesRes.count ?? 0,
     alertaPorPreparar: porPrepararRes.count ?? 0,
+    montoPorCobrar: agregarPorCobrar(pedidos),
+    pedidosPorCobrar: pedidos.filter((p) => p.estado_pago === "parcial").length,
     serieTiempo,
     pedidosPorEstadoPago,
     pedidosPorEstadoPreparacion,
