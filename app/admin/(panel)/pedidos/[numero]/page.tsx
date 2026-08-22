@@ -43,6 +43,7 @@ import {
   type PedidoAdmin,
 } from "@/lib/data/pedidos-admin";
 import { ComprobantesPago } from "@/components/admin/pedidos/ComprobantesPago";
+import { DialogoPagoParcial } from "@/components/admin/pedidos/DialogoPagoParcial";
 import { getVariantesPorSlugs, type RegaloVariante } from "@/lib/regalo-variantes";
 import { COURIER_POR_DEFECTO, COURIERS } from "@/lib/couriers";
 import {
@@ -96,6 +97,7 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ n
     null
   );
   const [notificarEstadoPago, setNotificarEstadoPago] = useState(true);
+  const [abrirPagoParcial, setAbrirPagoParcial] = useState(false);
   const [confirmarEstadoPreparacion, setConfirmarEstadoPreparacion] = useState<string | null>(null);
   const [notificarEstadoPreparacion, setNotificarEstadoPreparacion] = useState(true);
 
@@ -462,6 +464,19 @@ export default function AdminPedidoDetallePage({ params }: { params: Promise<{ n
                       Rechazar
                     </Button>
                   </div>
+                  {/* Marcar el adelanto sin tener el voucher a mano. Con el
+                      voucher, el camino mejor es la tarjeta de comprobantes:
+                      deja la evidencia y calcula el monto solo. */}
+                  {!pagoParcial && (
+                    <Button
+                      disabled={actualizando}
+                      onClick={() => setAbrirPagoParcial(true)}
+                      variant="outline"
+                      className="w-full"
+                    >
+                      Marcar pago parcial
+                    </Button>
+                  )}
                   <Button
                     disabled={actualizando}
                     onClick={() => setConfirmarEstadoPago("cancelado")}

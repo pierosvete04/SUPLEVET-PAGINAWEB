@@ -50,6 +50,7 @@ import {
   saldoPedido,
   type PedidoAdmin,
 } from "@/lib/data/pedidos-admin";
+import { DialogoPagoParcial } from "@/components/admin/pedidos/DialogoPagoParcial";
 import { mesActual, opcionesMes, rangoMes } from "@/lib/admin/filtro-mes";
 import { capitalizar } from "@/lib/utils";
 
@@ -94,6 +95,7 @@ export default function AdminPedidosPage() {
   });
   const [actualizandoId, setActualizandoId] = useState<string | null>(null);
   const [seleccionados, setSeleccionados] = useState<Set<string>>(new Set());
+  const [pedidoParcial, setPedidoParcial] = useState<PedidoAdmin | null>(null);
   const [confirmarAnular, setConfirmarAnular] = useState(false);
   const [anulando, setAnulando] = useState(false);
   const [busqueda, setBusqueda] = useState("");
@@ -410,7 +412,12 @@ export default function AdminPedidosPage() {
                         value={p.estado_pago}
                         disabled={actualizando}
                         onValueChange={(valor) =>
-                          actualizarEstadoPago(p.id, valor as keyof typeof BADGE_ESTADO_PAGO)
+                          // "Pago parcial" no se puede aplicar de una: necesita
+                          // el monto ya cobrado, así que abre su diálogo en vez
+                          // de guardar directo.
+                          valor === "parcial"
+                            ? setPedidoParcial(p)
+                            : actualizarEstadoPago(p.id, valor as keyof typeof BADGE_ESTADO_PAGO)
                         }
                       >
                         <SelectTrigger className="h-auto w-fit gap-1.5 border-none bg-transparent p-0 shadow-none focus:ring-0 [&_svg]:opacity-50">
@@ -421,17 +428,11 @@ export default function AdminPedidosPage() {
                           </Badge>
                         </SelectTrigger>
                         <SelectContent>
-                          {Object.entries(BADGE_ESTADO_PAGO)
-                            // "Pago parcial" no se elige a mano: sale de sumar
-                            // los comprobantes registrados en la ficha del
-                            // pedido. Ofrecerlo acá dejaría pedidos marcados
-                            // como parciales sin un solo sol registrado.
-                            .filter(([valor]) => valor !== "parcial")
-                            .map(([valor, { label }]) => (
-                              <SelectItem key={valor} value={valor}>
-                                {label}
-                              </SelectItem>
-                            ))}
+                          {Object.entries(BADGE_ESTADO_PAGO).map(([valor, { label }]) => (
+                            <SelectItem key={valor} value={valor}>
+                              {label}
+                            </SelectItem>
+                          ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -469,6 +470,20 @@ export default function AdminPedidosPage() {
         </Table>
         <TablePagination page={page} totalPages={totalPages} totalRows={totalRows} onPageChange={setPage} />
       </TableCard>
+
+      <DialogoPagoParcial
+        pedido={pedidoParcial}
+        onCerrar={() => setPedidoParcial(null)}
+        onGuardado={({ monto_pagado, saldo_pendiente }) =>
+          setPedidos((prev) =>
+            prev.map((p) =>
+              p.id === pedidoParcial?.id
+                ? { ...p, estado_pago: "parcial", monto_pagado, saldo_pendiente }
+                : p
+            )
+          )
+        }
+      />
 
       <AlertDialog open={confirmarAnular} onOpenChange={(open) => !open && setConfirmarAnular(false)}>
         <AlertDialogContent>
